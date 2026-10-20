@@ -237,10 +237,27 @@ type Verdicts struct {
 	Claims  []Claim `json:"claims"`
 }
 
+// Page budget for pages/_conflicts.md: sections with more rows than this are
+// summarized per document (conflicts are listed up to their own, larger cap).
+var (
+	ConflictsPageMaxRows         = 300
+	ConflictsPageMaxConflictRows = 1000
+)
+
 // RenderConflicts renders pages/_conflicts.md and facts/requirements.json from checked claims.
 func RenderConflicts(claims []Claim, g *model.Graph, commit string) (*wiki.Page, []model.Requirement) {
 	var reqs []model.Requirement
 	anchorSet := map[string]bool{}
+	nVerified := 0
+	for _, c := range claims {
+		if c.Status == ClaimVerified {
+			nVerified++
+		}
+	}
+	// a summarized verified section does not anchor the page on every
+	// verified claim's symbols (thousands of frontmatter lines); claims are
+	// re-checked on every ingest / compound anyway
+	bigVerified := nVerified > ConflictsPageMaxRows
 	bySrc := map[string][]Claim{}
 	var srcs []string
 	counts := map[string]int{}
@@ -257,7 +274,7 @@ func RenderConflicts(claims []Claim, g *model.Graph, commit string) (*wiki.Page,
 		for _, a := range c.Anchors {
 			if s := g.Get(a); s != nil {
 				r.Anchors = append(r.Anchors, model.Anchor{Sym: s.ID, Hash: s.Hash})
-				if c.Status != ClaimUnverifiable {
+				if c.Status == ClaimConflict || (c.Status == ClaimVerified && !bigVerified) {
 					anchorSet[s.ID] = true
 				}
 			}
@@ -270,11 +287,13 @@ func RenderConflicts(claims []Claim, g *model.Graph, commit string) (*wiki.Page,
 	fmt.Fprintf(&b, "| 状态 | 数量 |\n|---|---|\n| conflict（与代码冲突） | %d |\n| verified（有代码锚点） | %d |\n| unverifiable（无证据，不提升为知识） | %d |\n", counts[ClaimConflict], counts[ClaimVerified], counts[ClaimUnverifiable])
 	section := func(title, status string) {
 		var rows []string
+		perDoc := map[string]int{}
 		for _, s := range srcs {
 			for _, c := range bySrc[s] {
 				if c.Status != status {
 					continue
 				}
+				perDoc[s]++
 				ev := strings.Join(c.Evidence, "；")
 				rows = append(rows, fmt.Sprintf("- **%s** （[%s](../%s) L%d）%s\n  - 证据：%s", c.ID, s, c.Raw, c.Line, inertLinks(c.Text), ev))
 			}
@@ -284,7 +303,28 @@ func RenderConflicts(claims []Claim, g *model.Graph, commit string) (*wiki.Page,
 			b.WriteString("（无）\n")
 			return
 		}
-		b.WriteString(strings.Join(rows, "\n") + "\n")
+		limit := ConflictsPageMaxRows
+		if status == ClaimConflict {
+			limit = ConflictsPageMaxConflictRows
+		}
+		if len(rows) <= limit {
+			b.WriteString(strings.Join(rows, "\n") + "\n")
+			return
+		}
+		// Page token budget: on large doc sets (NextE: 3,351 claims, a 2.2 MB
+		// page) only a per-document summary is rendered; every claim stays in
+		// facts/requirements.json and `kb conflicts`.
+		if status == ClaimConflict {
+			b.WriteString(strings.Join(rows[:limit], "\n") + "\n")
+			fmt.Fprintf(&b, "\n…另有 %d 条冲突未列出（页面预算）。完整列表：`kb conflicts` 或 facts/requirements.json。\n", len(rows)-limit)
+			return
+		}
+		fmt.Fprintf(&b, "共 %d 条，超过页面预算（%d），只列每篇文档的数量；逐条内容见 facts/requirements.json（`kb conflicts --all --json`、`kb search`）。\n\n| 文档 | 数量 |\n|---|---|\n", len(rows), limit)
+		for _, s := range srcs {
+			if perDoc[s] > 0 {
+				fmt.Fprintf(&b, "| %s | %d |\n", s, perDoc[s])
+			}
+		}
 	}
 	var sus []string
 	for _, s := range srcs {

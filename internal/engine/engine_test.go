@@ -2,6 +2,7 @@ package engine
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -491,5 +492,31 @@ func TestCompoundLockIsPerWiki(t *testing.T) {
 	defer u2()
 	if _, err := lock(dir, "lock-a-wiki"); err == nil {
 		t.Fatal("same wiki must stay locked")
+	}
+}
+
+// Page token budget: NextE's 3,351 claims rendered a 2.2 MB _conflicts.md
+// (5,684 frontmatter anchor lines). Large verified / unverifiable sections are
+// summarized per document; conflicts stay listed; requirements keep all.
+func TestConflictsPageBudget(t *testing.T) {
+	g := &model.Graph{Symbols: []*model.Symbol{{ID: "android://a.kt#A", Name: "A", Hash: "h1"}, {ID: "android://b.kt#B", Name: "B", Hash: "h2"}}}
+	var claims []Claim
+	for i := 0; i < ConflictsPageMaxRows+50; i++ {
+		claims = append(claims, Claim{ID: fmt.Sprintf("v%d", i), Source: "docs/a.md", Raw: "raw/docs/a.md", Line: i + 1, Text: "x", Status: ClaimVerified, Anchors: []string{"android://a.kt#A"}})
+	}
+	claims = append(claims, Claim{ID: "c1", Source: "docs/b.md", Raw: "raw/docs/b.md", Line: 3, Text: "`B` is 5", Status: ClaimConflict, Anchors: []string{"android://b.kt#B"}, Evidence: []string{"B = 6"}})
+	pg, reqs := RenderConflicts(claims, g, "abc")
+	if len(reqs) != len(claims) {
+		t.Fatalf("requirements must keep every claim: %d", len(reqs))
+	}
+	if strings.Contains(pg.Body, "**v1**") || !strings.Contains(pg.Body, "| docs/a.md | 350 |") || !strings.Contains(pg.Body, "**c1**") {
+		t.Fatalf("budgeted page:\n%s", pg.Body)
+	}
+	if len(pg.Front.Sources) != 1 || pg.Front.Sources[0].Sym != "android://b.kt#B" {
+		t.Fatalf("summarized verified claims must not anchor the page: %+v", pg.Front.Sources)
+	}
+	small, _ := RenderConflicts(claims[ConflictsPageMaxRows:], g, "abc")
+	if !strings.Contains(small.Body, "**v300**") || len(small.Front.Sources) != 2 {
+		t.Fatalf("small doc sets stay fully listed:\n%s", small.Body)
 	}
 }
