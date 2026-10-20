@@ -408,6 +408,99 @@
       ]
     },
     {
+      "id": "PRODUCTS-9035af",
+      "source": "docs/legacy/products.md",
+      "raw": "raw/docs/docs/legacy/products.md",
+      "line": 3,
+      "text": "商品列表 testID 为 `product_list`，单个商品为 `product_item_\u003cid\u003e`。",
+      "style": "statement",
+      "status": "verified",
+      "anchors": [
+        "android://app/src/main/java/com/minishop/ui/products/ProductsScreen.kt#ProductsScreen",
+        "harmony://entry/src/main/ets/pages/ProductsPage.ets#ProductsPage.build",
+        "ios://MiniShop/Features/Products/ProductsView.swift#ProductsView.body"
+      ],
+      "route_ids": [
+        "products"
+      ],
+      "evidence": [
+        "testID `product_list` 存在",
+        "testID `product_item_\u003cid\u003e` 存在"
+      ]
+    },
+    {
+      "id": "PRODUCTS-f83d5a",
+      "source": "docs/legacy/products.md",
+      "raw": "raw/docs/docs/legacy/products.md",
+      "line": 4,
+      "text": "商品列表接口为 `GET /api/products`，支持 `page` 与 `size` 分页参数。",
+      "style": "statement",
+      "status": "verified",
+      "anchors": [
+        "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.listProducts",
+        "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.total",
+        "harmony://entry/src/main/ets/common/Api.ets#Api.fetchProducts",
+        "ios://MiniShop/Features/Products/ProductsViewModel.swift#ProductsViewModel.loadProducts"
+      ],
+      "route_ids": [
+        "products"
+      ],
+      "evidence": [
+        "接口 `GET /api/products` 存在（android, harmony, ios）",
+        "`size` 出现在代码中（android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.total）"
+      ]
+    },
+    {
+      "id": "PRODUCTS-d3d40e",
+      "source": "docs/legacy/products.md",
+      "raw": "raw/docs/docs/legacy/products.md",
+      "line": 5,
+      "text": "商品详情页右上角有分享按钮（testID `share_button`）。",
+      "style": "statement",
+      "status": "unverifiable",
+      "evidence": [
+        "`share_button` 在代码中找不到（无法确定性判断）",
+        "没有可确定性校验的锚点（需要 LLM 语义核对）"
+      ]
+    },
+    {
+      "id": "PRODUCTS-c697e6",
+      "source": "docs/legacy/products.md",
+      "raw": "raw/docs/docs/legacy/products.md",
+      "line": 6,
+      "text": "下单成功后，订单状态展示在 `order_status` 上。",
+      "style": "statement",
+      "status": "verified",
+      "anchors": [
+        "android://app/src/main/java/com/minishop/ui/order/OrderDetailScreen.kt#OrderDetailScreen",
+        "harmony://entry/src/main/ets/pages/OrderDetailPage.ets#OrderDetailPage.build",
+        "ios://MiniShop/Features/Order/OrderDetailView.swift#OrderDetailView.body"
+      ],
+      "route_ids": [
+        "order_detail"
+      ],
+      "evidence": [
+        "testID `order_status` 存在"
+      ]
+    },
+    {
+      "id": "PRODUCTS-dfb70a",
+      "source": "docs/legacy/products.md",
+      "raw": "raw/docs/docs/legacy/products.md",
+      "line": 7,
+      "text": "下单接口返回 `orderId` 与 `status` 字段。",
+      "style": "statement",
+      "status": "verified",
+      "anchors": [
+        "ios://MiniShop/Networking/APIClient.swift#OrderResponse.orderId",
+        "ios://MiniShop/Networking/APIClient.swift#OrderResponse.status"
+      ],
+      "evidence": [
+        "符号 `orderId` 存在（1 处）",
+        "符号 `status` 存在（1 处）"
+      ]
+    },
+    {
       "id": "PLAN-404208",
       "source": "specs/001-cart/plan.md",
       "raw": "raw/docs/specs/001-cart/plan.md",

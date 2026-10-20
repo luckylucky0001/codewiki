@@ -1,15 +1,15 @@
 # codewiki demo summary
 
 - mode: `template` (bootstrap writer: `template`)
-- date (UTC): 20261020T170146Z
+- date (UTC): 20261020T173200Z
 - repo: `demo/output/<run>/repo` (temp git repo, branch master)
 - kb: `kb 0.1.0`
 
 ## Ingest
 
-Discovered docs: 8 (adr=1, agent-guide=1, design=1, doc=2, readme=1, spec=2)
+Discovered docs: 9 (adr=1, agent-guide=1, design=1, doc=3, readme=1, spec=2)
 
-Claims: conflict=6, unverifiable=2, verified=20
+Claims: conflict=6, unverifiable=3, verified=24
 
 Conflicts (code wins):
 
@@ -38,7 +38,7 @@ Conflicts (code wins):
 ### 05-01-cart-limit
 
 ```
-diff: base 8b9db05 → head 516a1c3
+diff: base 3cb7c04 → head 47c975a
 diff:   unchanged  212
 diff:   body       2
 diff:   signature  0
@@ -49,19 +49,19 @@ status(before): stale pages/_conflicts.md (2 anchors: CartViewModel.MAX_CART_ITE
 status(before): stale pages/features/cart.md (1 anchors: CartViewModel.MAX_CART_ITEMS)
 status(before): stale pages/features/product_detail.md (1 anchors: CartViewModel.MAX_CART_ITEMS)
 status(before): stale pages/parity.md (generated facts out of date)
-  t01-_conflicts recheck pages/_conflicts.md            write_set=[.kb/ingest/verdicts.json] reasons=[anchor_body_changed:CartViewModel.MAX_CART_ITEMS, anchor_body_changed:MAX_CART_ITEMS]
-  t02-features-cart update  pages/features/cart.md         write_set=[pages/features/cart.md] reasons=[anchor_body_changed:CartViewModel.MAX_CART_ITEMS]
-  t03-features-product_detail update  pages/features/product_detail.md write_set=[pages/features/product_detail.md] reasons=[anchor_body_changed:CartViewModel.MAX_CART_ITEMS]
+  t01-_conflicts recheck pages/_conflicts.md            p3 write_set=[.kb/ingest/verdicts.json] reasons=[anchor_body_changed:CartViewModel.MAX_CART_ITEMS, anchor_body_changed:MAX_CART_ITEMS]
+  t02-features-cart update  pages/features/cart.md         p1 write_set=[pages/features/cart.md] reasons=[anchor_body_changed:CartViewModel.MAX_CART_ITEMS]
+  t03-features-product_detail update  pages/features/product_detail.md p2 write_set=[pages/features/product_detail.md] reasons=[anchor_body_changed:CartViewModel.MAX_CART_ITEMS]
   task t01-_conflicts               ok       template 
   task t02-features-cart            ok       template 
   task t03-features-product_detail  ok       template 
-verify PASS: 23 pages, 336 anchors, 0 errors, 0 warnings
+verify PASS: 23 pages, 353 anchors, 0 errors, 0 warnings
 ```
 
 ### 06-02-arkts-api-rename
 
 ```
-diff: base 516a1c3 → head 9c3c23e
+diff: base 47c975a → head dac9f37
 diff:   unchanged  208
 diff:   body       4
 diff:   signature  1
@@ -69,26 +69,26 @@ diff:   added      0
 diff:   deleted    0
 status(before): stale facts/apis.json (generated facts out of date)
 status(before): stale facts/harmony/apis.md (generated facts out of date)
-status(before): stale facts/requirements.json (4 anchors: ProductDetailPage.build, CartStore, ProductDetailPage.build, …+1)
-status(before): stale pages/_conflicts.md (2 anchors: CartStore, ProductDetailPage.build)
+status(before): stale facts/requirements.json (5 anchors: ProductDetailPage.build, Api.loadProducts, CartStore, …+2)
+status(before): stale pages/_conflicts.md (3 anchors: Api.loadProducts, CartStore, ProductDetailPage.build)
 status(before): stale pages/concepts/shared-components.md (1 anchors: Api)
 status(before): stale pages/features/product_detail.md (2 anchors: CartStore.addItem, ProductDetailPage.build)
 status(before): stale pages/features/products.md (2 anchors: Api.loadProducts, ProductsPage.aboutToAppear)
-  t01-_conflicts recheck pages/_conflicts.md            write_set=[.kb/ingest/verdicts.json] reasons=[anchor_body_changed:CartStore, anchor_body_changed:ProductDetailPage.build]
-  t02-concepts-shared-components update  pages/concepts/shared-components.md write_set=[pages/concepts/shared-components.md] reasons=[anchor_body_changed:Api]
-  t03-features-product_detail update  pages/features/product_detail.md write_set=[pages/features/product_detail.md] reasons=[anchor_signature_changed:CartStore.addItem, anchor_body_changed:ProductDetailPage.build]
-  t04-features-products update  pages/features/products.md     write_set=[pages/features/products.md] reasons=[anchor_renamed:Api.loadProducts, anchor_body_changed:ProductsPage.aboutToAppear, anchor_added:Api.fetchProducts]
+  t01-_conflicts recheck pages/_conflicts.md            p4 write_set=[.kb/ingest/verdicts.json] reasons=[anchor_renamed:Api.loadProducts, anchor_body_changed:CartStore, anchor_body_changed:ProductDetailPage.build]
+  t02-concepts-shared-components update  pages/concepts/shared-components.md p3 write_set=[pages/concepts/shared-components.md] reasons=[anchor_body_changed:Api]
+  t03-features-product_detail update  pages/features/product_detail.md p2 write_set=[pages/features/product_detail.md] reasons=[anchor_signature_changed:CartStore.addItem, anchor_body_changed:ProductDetailPage.build]
+  t04-features-products update  pages/features/products.md     p1 write_set=[pages/features/products.md] reasons=[anchor_renamed:Api.loadProducts, anchor_body_changed:ProductsPage.aboutToAppear, anchor_added:Api.fetchProducts]
   task t01-_conflicts               ok       template 
   task t02-concepts-shared-components ok       template 
   task t03-features-product_detail  ok       template 
   task t04-features-products        ok       template 
-verify PASS: 23 pages, 336 anchors, 0 errors, 0 warnings
+verify PASS: 23 pages, 353 anchors, 0 errors, 0 warnings
 ```
 
 ### 07-03-profile-route
 
 ```
-diff: base 9c3c23e → head c2e1c52
+diff: base dac9f37 → head d36d971
 diff:   unchanged  210
 diff:   body       4
 diff:   signature  0
@@ -107,15 +107,15 @@ status(before): stale facts/routes.json (generated facts out of date)
 status(before): stale facts/testids.json (generated facts out of date)
 status(before): stale pages/concepts/navigation.md (3 anchors: MiniShopNavHost, Routes, Route)
 status(before): stale pages/parity.md (generated facts out of date)
-  t01-concepts-navigation update  pages/concepts/navigation.md   write_set=[pages/concepts/navigation.md] reasons=[anchor_body_changed:MiniShopNavHost, anchor_body_changed:Routes, anchor_body_changed:Route, anchor_added:Routes.PROFILE, …+2]
-  t02-concepts-shared-components update  pages/concepts/shared-components.md write_set=[pages/concepts/shared-components.md] reasons=[anchor_added:LoginResponse.token, anchor_added:TokenStore.token]
-  t03-features-profile create  pages/features/profile.md      write_set=[pages/features/profile.md] reasons=[route_added]
-  t04-overview update  pages/overview.md              write_set=[pages/overview.md] reasons=[route_set_changed]
+  t01-concepts-navigation update  pages/concepts/navigation.md   p2 write_set=[pages/concepts/navigation.md] reasons=[anchor_body_changed:MiniShopNavHost, anchor_body_changed:Routes, anchor_body_changed:Route, anchor_added:Routes.PROFILE, …+2]
+  t02-concepts-shared-components update  pages/concepts/shared-components.md p3 write_set=[pages/concepts/shared-components.md] reasons=[anchor_added:LoginResponse.token, anchor_added:TokenStore.token]
+  t03-features-profile create  pages/features/profile.md      p1 write_set=[pages/features/profile.md] reasons=[route_added]
+  t04-overview update  pages/overview.md              p4 write_set=[pages/overview.md] reasons=[route_set_changed]
   task t01-concepts-navigation      ok       template 
   task t02-concepts-shared-components ok       template 
   task t03-features-profile         ok       template 
   task t04-overview                 ok       template 
-verify PASS: 24 pages, 355 anchors, 0 errors, 0 warnings
+verify PASS: 24 pages, 372 anchors, 0 errors, 0 warnings
 ```
 
 ## Parity（三端一致性）
@@ -123,6 +123,16 @@ verify PASS: 24 pages, 355 anchors, 0 errors, 0 warnings
 Gaps after the last merge: 1; constants that differ across platforms:
 
 - `max_cart_items`: android=50, harmony=50, ios=99
+
+## Eval（golden set，template）
+
+```
+claim verification (template, 33 labelled): accuracy 0.82
+  verified      precision 0.88 recall 0.92 f1 0.90 (tp 22 fp 3 fn 2)
+  conflict      precision 1.00 recall 0.56 f1 0.72 (tp 5 fp 0 fn 4)
+  unverifiable  precision 0.00 recall 0.00 f1 0.00 (tp 0 fp 3 fn 0)
+plan impact: micro precision 0.82 recall 1.00 f1 0.90
+```
 
 ## Queries
 
@@ -137,19 +147,19 @@ Gaps after the last merge: 1; constants that differ across platforms:
 
 ```
 file android/app/src/main/java/com/minishop/ui/cart/CartViewModel.kt
-pages (4):
-  pages/_conflicts.md — 文档核对（冲突与已验证断言） [current] anchors=2
-  pages/concepts/shared-components.md — 共享组件 [current] anchors=1
-  pages/features/cart.md — 购物车（cart） [current] anchors=5
-  pages/features/product_detail.md — 商品详情（product_detail） [current] anchors=5
+pages (3):
+  pages/_conflicts.md — 文档核对（冲突与已验证断言） [current] anchors=3
+  pages/features/cart.md — 购物车（cart） [current] anchors=6
+  pages/features/product_detail.md — 商品详情（product_detail） [current] anchors=6
 symbols (7):
   L10   class      android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel
   L23   property   android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.MAX_CART_ITEMS
   L13   function   android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.addItem
   L11   property   android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.items
   L24   property   android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.pending
+  L26   function   android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.preload
 ```
 
-Final verify: PASS — 24 pages, 355 anchors.
+Final verify: PASS — 24 pages, 372 anchors.
 
 Files: see `template-final/` (numbered by step); the final wiki is in `repo/wiki/`.

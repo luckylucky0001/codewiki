@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "base": "8b9db05263d91b9576e2dafa0fc34a645b42e806",
-  "head": "516a1c39572862c1cce9c6c42cb1c8e9d7c7125d",
+  "base": "3cb7c040b25ba1a481e24c52970609b9a546184a",
+  "head": "47c975a6814e5a2a5cba678b1dc516a4bce2f0b4",
   "mode": "incremental",
   "reason": "anchors changed ∪ signature changes propagated along reference edges",
   "stats": {
@@ -35,7 +35,8 @@
           "sym": "harmony://entry/src/main/ets/common/CartStore.ets#MAX_CART_ITEMS"
         }
       ],
-      "context": []
+      "context": [],
+      "priority": 3
     },
     {
       "id": "t02-features-cart",
@@ -58,6 +59,7 @@
         "android://app/src/main/java/com/minishop/ui/cart/CartScreen.kt#CartScreen",
         "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.MAX_CART_ITEMS",
         "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.addItem",
+        "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.items",
         "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.pending",
         "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.preload",
         "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.total",
@@ -74,8 +76,10 @@
         "ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.pending",
         "ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.total",
         "ios://MiniShop/Networking/APIClient.swift#CartRequest.quantity",
-        "ios://MiniShop/Networking/APIClient.swift#CartRequest.sku"
-      ]
+        "ios://MiniShop/Networking/APIClient.swift#CartRequest.sku",
+        "ios://MiniShop/Networking/APIClient.swift#CartResponse.count"
+      ],
+      "priority": 1
     },
     {
       "id": "t03-features-product_detail",
@@ -96,9 +100,9 @@
       "context": [
         "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.addToCart",
         "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.getProduct",
-        "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.listProducts",
         "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.MAX_CART_ITEMS",
         "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.addItem",
+        "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.items",
         "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.pending",
         "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.preload",
         "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.total",
@@ -124,7 +128,8 @@
         "ios://MiniShop/Networking/APIClient.swift#Product.id",
         "ios://MiniShop/Networking/APIClient.swift#Product.price",
         "ios://MiniShop/Networking/APIClient.swift#Product.title"
-      ]
+      ],
+      "priority": 2
     }
   ],
   "changed_route_ids": [

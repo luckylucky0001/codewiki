@@ -9,6 +9,8 @@ sources:
     hash: 16dddab20b7b2f5889cfa94f4855b4859621c873dce95bbfd7c3f540e8d5a39e
   - sym: android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.getProduct
     hash: aec1ad5dda84abee9cd40ac64626e5c14c13d9d6063352d0d6a1b1e1a0b04cbd
+  - sym: android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.listProducts
+    hash: 811ab70ffe53f90e955509d706154fc4ac2a5a73f93d1085bec1db580e8dfe1c
   - sym: android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.login
     hash: 16d311d2a6158c5d17707cadc88b03bbe10eb3bc49d630600109bbafc5d030d8
   - sym: android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.save
@@ -19,6 +21,8 @@ sources:
     hash: 0cc2ef4b4d87270da9c0d1c4190a5204f22d91b75fc765e6bf1143d689a38c4d
   - sym: android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.MAX_CART_ITEMS
     hash: c874d1a813b4bf8aa6817442999368d7da32979bf689f785a5cea94c2ca423bb
+  - sym: android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.total
+    hash: 83e05d402203fec9ac172c0203a32fc1bcccf25f2f905b17212c5d2bd4742856
   - sym: android://app/src/main/java/com/minishop/ui/checkout/CheckoutScreen.kt#CheckoutScreen
     hash: 1940402765a35c64188391d26cfe364248f8ccbf9b3cd29e06a3b2d7e30a77a1
   - sym: android://app/src/main/java/com/minishop/ui/components/MiniShopTopBar.kt#MiniShopTopBar
@@ -37,6 +41,8 @@ sources:
     hash: 2ba9b9e96f64cd43188e28c0cb0ce068718daeb724decbed662b193352e8d65e
   - sym: harmony://entry/src/main/ets/common/Api.ets#Api.createOrder
     hash: b4ac085d45415e75d5d9157f62d8918021490b4203ced3aef25a71b76ac45462
+  - sym: harmony://entry/src/main/ets/common/Api.ets#Api.fetchProducts
+    hash: c0e47bff3aac1f68c711e60bd88daea456a44f44f68a1a7596be32bca71e52a2
   - sym: harmony://entry/src/main/ets/common/Api.ets#Api.loadProduct
     hash: f4de4914781b649378fafa141d22475f8206203a2886b6e36659e5dcb7d10e90
   - sym: harmony://entry/src/main/ets/common/Api.ets#Api.login
@@ -107,9 +113,15 @@ sources:
     hash: 7a64a7d803afea6b7b33b92e965f69ab18a0ec34476e5c0d8d8b2584cb8e1cc4
   - sym: ios://MiniShop/Features/Products/ProductsViewModel.swift#ProductsViewModel.loadProduct
     hash: 745aa82c439b155cd921a3ff09c785faed15a4b24560c9f29a8953cf85972c04
+  - sym: ios://MiniShop/Features/Products/ProductsViewModel.swift#ProductsViewModel.loadProducts
+    hash: a071fb3b1d942a23576e555477e6265a5504dcdbf8b5bf792da7dabf7e56e086
+  - sym: ios://MiniShop/Networking/APIClient.swift#OrderResponse.orderId
+    hash: ead55dc30df1719756ce3396b0c48010bbe572c178892e9d115a3436087714e2
+  - sym: ios://MiniShop/Networking/APIClient.swift#OrderResponse.status
+    hash: 19364be6e63ee5d8f917f567b981834d91e24c5d6a119d578912f788e44f0cb6
   - sym: ios://MiniShop/Networking/APIClient.swift#TokenStore.save
     hash: f0e91ef8b002ef95a2de1eb4665dd1fd8d0906cb506a4adebb688455f571984a
-source_commit: 9c3c23e
+source_commit: dac9f37
 status: current
 ---
 # 文档核对：冲突与已验证断言
@@ -119,8 +131,8 @@ status: current
 | 状态 | 数量 |
 |---|---|
 | conflict（与代码冲突） | 6 |
-| verified（有代码锚点） | 20 |
-| unverifiable（无证据，不提升为知识） | 2 |
+| verified（有代码锚点） | 24 |
+| unverifiable（无证据，不提升为知识） | 3 |
 
 ## 冲突 conflicts（文档已过时，以代码为准）
 
@@ -165,6 +177,14 @@ status: current
   - 证据：deeplink `minishop://products` 存在
 - **LOGIN-120849** （[docs/legacy/login.md](../raw/docs/docs/legacy/login.md) L6）登录逻辑集中在 `LoginViewModel.login` 中。
   - 证据：符号 `LoginViewModel.login` 存在（2 处）
+- **PRODUCTS-9035af** （[docs/legacy/products.md](../raw/docs/docs/legacy/products.md) L3）商品列表 testID 为 `product_list`，单个商品为 `product_item_<id>`。
+  - 证据：testID `product_list` 存在；testID `product_item_<id>` 存在
+- **PRODUCTS-f83d5a** （[docs/legacy/products.md](../raw/docs/docs/legacy/products.md) L4）商品列表接口为 `GET /api/products`，支持 `page` 与 `size` 分页参数。
+  - 证据：接口 `GET /api/products` 存在（android, harmony, ios）；`size` 出现在代码中（android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.total）
+- **PRODUCTS-c697e6** （[docs/legacy/products.md](../raw/docs/docs/legacy/products.md) L6）下单成功后，订单状态展示在 `order_status` 上。
+  - 证据：testID `order_status` 存在
+- **PRODUCTS-dfb70a** （[docs/legacy/products.md](../raw/docs/docs/legacy/products.md) L7）下单接口返回 `orderId` 与 `status` 字段。
+  - 证据：符号 `orderId` 存在（1 处）；符号 `status` 存在（1 处）
 - **PLAN-404208** （[specs/001-cart/plan.md](../raw/docs/specs/001-cart/plan.md) L3）Android: `CartViewModel` (Compose + ViewModel)；iOS: `CartViewModel` (ObservableObject)；HarmonyOS: `CartStore`。
   - 证据：符号 `CartViewModel` 存在（2 处）；符号 `CartViewModel` 存在（2 处）；符号 `CartStore` 存在（1 处）
 - **PLAN-3e24ef** （[specs/001-cart/plan.md](../raw/docs/specs/001-cart/plan.md) L4）三端共享上限常量，接口 `POST /api/cart`。
@@ -186,3 +206,5 @@ status: current
   - 证据：没有可确定性校验的锚点（需要 LLM 语义核对）
 - **0001-NAVIGATION-ad00b5** （[docs/adr/0001-navigation.md](../raw/docs/docs/adr/0001-navigation.md) L9）所有页面 MUST 支持 `minishop://<pattern>` 深链，并支持测试参数 `?token=<t>&cart=<sku,sku>` 注入状态。
   - 证据：没有可确定性校验的锚点（需要 LLM 语义核对）
+- **PRODUCTS-d3d40e** （[docs/legacy/products.md](../raw/docs/docs/legacy/products.md) L5）商品详情页右上角有分享按钮（testID `share_button`）。
+  - 证据：`share_button` 在代码中找不到（无法确定性判断）；没有可确定性校验的锚点（需要 LLM 语义核对）

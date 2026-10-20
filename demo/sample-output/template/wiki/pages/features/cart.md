@@ -13,6 +13,8 @@ sources:
     hash: c874d1a813b4bf8aa6817442999368d7da32979bf689f785a5cea94c2ca423bb
   - sym: android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.addItem
     hash: 31497a415b9556bb374e5e6171fae5b2b1eb67ea5b9b009000bd7d2d63366b79
+  - sym: android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.items
+    hash: 6933c36bf1380135f949cc722b04f5f4ca17951c7af709a0d83f4a7bc818c3c7
   - sym: android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.pending
     hash: cdb3e2698d888b400e74a4bbc9d61a3211ed7109a074fa4b698ed66de0209bd7
   - sym: android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.preload
@@ -47,7 +49,9 @@ sources:
     hash: 525f20e30a2e21fe83e0ef115cbd52f06ac4fc2b4e63cd75cf2c58631d2f668b
   - sym: ios://MiniShop/Networking/APIClient.swift#CartRequest.sku
     hash: 10ec028d43c7dd167b9a8947e75e6cc9b4156869852986128bb1a7e723ea14e4
-source_commit: 516a1c3
+  - sym: ios://MiniShop/Networking/APIClient.swift#CartResponse.count
+    hash: 7ccd9948ba99f0e16f94e88d2a0b4cd26c8a16dcf86de7f21b9f6d77eb857118
+source_commit: 47c975a
 status: current
 ---
 # 购物车（cart）
@@ -94,6 +98,7 @@ status: current
 - `android://app/src/main/java/com/minishop/ui/cart/CartScreen.kt#CartScreen` — composable `@Composable fun CartScreen(onCheckout: () -> Unit, onBack: () -> Unit, vm: CartViewModel = viewModel())`
 - `android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.MAX_CART_ITEMS` — property `const val MAX_CART_ITEMS`
 - `android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.addItem` — function `fun addItem(sku: String): Boolean`
+- `android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.items` — property `val items`
 - `android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.pending` — property `private val pending`
 - `android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.preload` — function `fun preload(sku: String)`
 - `android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.total` — function `fun total(): Int`
@@ -117,6 +122,7 @@ status: current
 - `ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.total` — function `func total() -> Int`
 - `ios://MiniShop/Networking/APIClient.swift#CartRequest.quantity` — property `let quantity: Int`
 - `ios://MiniShop/Networking/APIClient.swift#CartRequest.sku` — property `let sku: String`
+- `ios://MiniShop/Networking/APIClient.swift#CartResponse.count` — property `let count: Int`
 
 ## 相关页面
 

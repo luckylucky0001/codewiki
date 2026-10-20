@@ -10,8 +10,6 @@ sources:
     hash: 7dcd362edc1216606ccf4916aed55fc74855c4095cc2b4583fa705a55c7959a9
   - sym: android://app/src/main/java/com/minishop/data/ApiService.kt#ApiClient.service
     hash: 3fe962f0317cd2eb2057b5d5b2a5825fa045583e3425e998d41e5e76a56e1a05
-  - sym: android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.items
-    hash: 6933c36bf1380135f949cc722b04f5f4ca17951c7af709a0d83f4a7bc818c3c7
   - sym: android://app/src/main/java/com/minishop/ui/components/MiniShopTopBar.kt#MiniShopTopBar
     hash: a950939b071b355f1752ab5ba76842b203ccc17a22905e00e98b7cce1f172af5
   - sym: harmony://entry/src/main/ets/common/Api.ets#Api
@@ -38,8 +36,6 @@ sources:
     hash: b6f29af6cc3428a33a0672d119e060c8983c74a2f3131f01378651ee4362e43e
   - sym: ios://MiniShop/Networking/APIClient.swift#APIClient.shared
     hash: 74c5c163f81b3f1a5f29c398419c92c86ef926961f9820a252da3c3a06c310b9
-  - sym: ios://MiniShop/Networking/APIClient.swift#CartResponse.count
-    hash: 7ccd9948ba99f0e16f94e88d2a0b4cd26c8a16dcf86de7f21b9f6d77eb857118
   - sym: ios://MiniShop/Networking/APIClient.swift#LoginResponse.token
     hash: d31dd686a0bb1c46c11e0ebcd19b599d5aa898cb82b6ce956b5f579cba6d3e17
   - sym: ios://MiniShop/Networking/APIClient.swift#TokenStore
@@ -50,7 +46,7 @@ sources:
     hash: 160dd603b73cd275a6b0089cbe4b95d633ac45773c271403286088aa378bff21
   - sym: ios://MiniShop/Networking/APIClient.swift#TokenStore.token
     hash: cc9a2bad373da05b2c10efdd69bf76de940bebff0e4ee5477b4b4cd213b4dc72
-source_commit: c2e1c52
+source_commit: d36d971
 status: current
 ---
 # 共享组件
@@ -64,7 +60,6 @@ status: current
 | object | `android://app/src/main/java/com/minishop/data/ApiService.kt#ApiClient` | `object ApiClient` | （routes: cart, checkout, login, product_detail, products） |
 | property | `android://app/src/main/java/com/minishop/data/ApiService.kt#ApiClient.BASE_URL` | `const val BASE_URL` |  |
 | property | `android://app/src/main/java/com/minishop/data/ApiService.kt#ApiClient.service` | `val service: ApiService` | （routes: cart, checkout, login, product_detail, products） |
-| property | `android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.items` | `val items` | （routes: cart, product_detail, products） |
 | composable | `android://app/src/main/java/com/minishop/ui/components/MiniShopTopBar.kt#MiniShopTopBar` | `@Composable fun MiniShopTopBar(title: String, onBack: (() -> Unit)? = null)` | （routes: cart, checkout, order_detail, product_detail, profile） |
 
 ## harmony
@@ -81,14 +76,13 @@ status: current
 | kind | 符号 | 签名 | 使用方 |
 |---|---|---|---|
 | struct | `ios://MiniShop/Components/BackButton.swift#BackButton` | `struct BackButton: View` | （routes: cart, checkout, order_detail, product_detail, profile） |
-| property | `ios://MiniShop/Components/BackButton.swift#BackButton.body` | `var body: some View` |  |
-| property | `ios://MiniShop/Components/BackButton.swift#BackButton.dismiss` | `@Environment(\.dismiss) private var dismiss` |  |
+| property | `ios://MiniShop/Components/BackButton.swift#BackButton.body` | `var body: some View` | （routes: cart, checkout, order_detail, product_detail, profile） |
+| property | `ios://MiniShop/Components/BackButton.swift#BackButton.dismiss` | `@Environment(\.dismiss) private var dismiss` | （routes: cart, checkout, order_detail, product_detail, profile） |
 | class | `ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel` | `@MainActor final class CartViewModel: ObservableObject` | （routes: cart, checkout, login, product_detail, products, profile） |
 | function | `ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.preload` | `static func preload(_ skus: [String])` | （routes: cart, checkout, login, products, profile） |
 | class | `ios://MiniShop/Networking/APIClient.swift#APIClient` | `final class APIClient` | （routes: cart, checkout, login, product_detail, products） |
 | function | `ios://MiniShop/Networking/APIClient.swift#APIClient.send` | `func send<T: Decodable>(_ method: HTTPMethod, path: String, body: Encodable? = nil) async throws -> T` | （routes: cart, checkout, login, product_detail, products） |
 | property | `ios://MiniShop/Networking/APIClient.swift#APIClient.shared` | `static let shared` | （routes: cart, checkout, login, product_detail, products） |
-| property | `ios://MiniShop/Networking/APIClient.swift#CartResponse.count` | `let count: Int` | （routes: cart, checkout, login, product_detail, products, profile） |
 | property | `ios://MiniShop/Networking/APIClient.swift#LoginResponse.token` | `let token: String` | （routes: checkout, login, profile） |
 | class | `ios://MiniShop/Networking/APIClient.swift#TokenStore` | `final class TokenStore` | （routes: cart, checkout, login, products, profile） |
 | function | `ios://MiniShop/Networking/APIClient.swift#TokenStore.save` | `func save(_ token: String)` | （routes: cart, checkout, login, products, profile） |

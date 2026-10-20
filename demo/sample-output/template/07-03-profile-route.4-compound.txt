@@ -1,11 +1,11 @@
-compound 20261020T170150-c2e1c52: base 9c3c23e → head c2e1c52, mode incremental, llm template
+compound 20261020T173205-d36d971: base dac9f37 → head d36d971, mode incremental, llm template
 mode incremental — anchors changed ∪ signature changes propagated along reference edges
 changed_route_ids: [profile]; changed_files: 8
 stats: symbols=224 changes=map[added:10 body:4 unchanged:210] module_ratio=0.22 structural_ratio=0.04 hops=1 propagated=0
-  t01-concepts-navigation update  pages/concepts/navigation.md   write_set=[pages/concepts/navigation.md] reasons=[anchor_body_changed:MiniShopNavHost, anchor_body_changed:Routes, anchor_body_changed:Route, anchor_added:Routes.PROFILE, …+2]
-  t02-concepts-shared-components update  pages/concepts/shared-components.md write_set=[pages/concepts/shared-components.md] reasons=[anchor_added:LoginResponse.token, anchor_added:TokenStore.token]
-  t03-features-profile create  pages/features/profile.md      write_set=[pages/features/profile.md] reasons=[route_added]
-  t04-overview update  pages/overview.md              write_set=[pages/overview.md] reasons=[route_set_changed]
+  t01-concepts-navigation update  pages/concepts/navigation.md   p2 write_set=[pages/concepts/navigation.md] reasons=[anchor_body_changed:MiniShopNavHost, anchor_body_changed:Routes, anchor_body_changed:Route, anchor_added:Routes.PROFILE, …+2]
+  t02-concepts-shared-components update  pages/concepts/shared-components.md p3 write_set=[pages/concepts/shared-components.md] reasons=[anchor_added:LoginResponse.token, anchor_added:TokenStore.token]
+  t03-features-profile create  pages/features/profile.md      p1 write_set=[pages/features/profile.md] reasons=[route_added]
+  t04-overview update  pages/overview.md              p4 write_set=[pages/overview.md] reasons=[route_set_changed]
   task t01-concepts-navigation      ok       template 
   task t02-concepts-shared-components ok       template 
   task t03-features-profile         ok       template 
@@ -34,5 +34,5 @@ changed files: 23
   pages/features/profile.md
   pages/overview.md
   pages/parity.md
-verify PASS: 24 pages, 355 anchors, 0 errors, 0 warnings
+verify PASS: 24 pages, 372 anchors, 0 errors, 0 warnings
 published 23 changed file(s) to demo/output/<run>/repo/wiki

@@ -9,12 +9,12 @@ sources:
     hash: 04fc4a76c52c7def97e7e7e8c75b25f3609ef967500beb8ffe9b5b493a46ad02
   - sym: android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.getProduct
     hash: aec1ad5dda84abee9cd40ac64626e5c14c13d9d6063352d0d6a1b1e1a0b04cbd
-  - sym: android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.listProducts
-    hash: 811ab70ffe53f90e955509d706154fc4ac2a5a73f93d1085bec1db580e8dfe1c
   - sym: android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.MAX_CART_ITEMS
     hash: c874d1a813b4bf8aa6817442999368d7da32979bf689f785a5cea94c2ca423bb
   - sym: android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.addItem
     hash: 31497a415b9556bb374e5e6171fae5b2b1eb67ea5b9b009000bd7d2d63366b79
+  - sym: android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.items
+    hash: 6933c36bf1380135f949cc722b04f5f4ca17951c7af709a0d83f4a7bc818c3c7
   - sym: android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.pending
     hash: cdb3e2698d888b400e74a4bbc9d61a3211ed7109a074fa4b698ed66de0209bd7
   - sym: android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.preload
@@ -65,7 +65,7 @@ sources:
     hash: 3ee801bf69a8b65767a6aac58bb85ae9f15efd745d969198ab4a71956e822945
   - sym: ios://MiniShop/Networking/APIClient.swift#Product.title
     hash: be0eb9a3cabfe19db23b6287518ceb5b1fd2513d7ed2f9e89878c29f277bfcc5
-source_commit: 9c3c23e
+source_commit: dac9f37
 status: current
 ---
 # 商品详情（product_detail）
@@ -95,7 +95,6 @@ status: current
 | 平台 | 方法 | 路径 | 调用符号 |
 |---|---|---|---|
 | android | POST | `/api/cart` | `android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.addToCart` |
-| android | GET | `/api/products` | `android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.listProducts` |
 | android | GET | `/api/products/{id}` | `android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.getProduct` |
 | harmony | GET | `/api/products/{id}` | `harmony://entry/src/main/ets/common/Api.ets#Api.loadProduct` |
 | ios | POST | `/api/cart` | `ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.addItem` |
@@ -111,9 +110,9 @@ status: current
 
 - `android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.addToCart` — function `@POST("/api/cart") suspend fun addToCart(@Body body: CartRequest): CartResponse`
 - `android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.getProduct` — function `@GET("/api/products/{id}") suspend fun getProduct(@Path("id") id: String): Product`
-- `android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.listProducts` — function `@GET("/api/products") suspend fun listProducts(): List<Product>`
 - `android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.MAX_CART_ITEMS` — property `const val MAX_CART_ITEMS`
 - `android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.addItem` — function `fun addItem(sku: String): Boolean`
+- `android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.items` — property `val items`
 - `android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.pending` — property `private val pending`
 - `android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.preload` — function `fun preload(sku: String)`
 - `android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.total` — function `fun total(): Int`

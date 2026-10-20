@@ -82,7 +82,7 @@ sources:
     hash: 0fbe631d08afe24b8d26ee6911bafb84fad369e681ecfe0c1308b7d0b484d8a2
   - sym: ios://MiniShop/Navigation/Route.swift#Route.profile
     hash: b4eeb3dba90bf3318c66b05247e35a69b93faa580f5dccccb1aa35bc61f0d6dd
-source_commit: c2e1c52
+source_commit: d36d971
 status: current
 ---
 # 导航与深链
@@ -129,18 +129,18 @@ status: current
 | class | `ios://MiniShop/Navigation/AppRouter.swift#AppRouter` | `final class AppRouter: ObservableObject` | （routes: cart, checkout, login, products, profile） |
 | function | `ios://MiniShop/Navigation/AppRouter.swift#AppRouter.handle` | `func handle(url: URL)` | （routes: cart, checkout, login, products, profile） |
 | function | `ios://MiniShop/Navigation/AppRouter.swift#AppRouter.match` | `func match(host: String, segments: [String]) -> Destination?` | （routes: cart, checkout, login, products, profile） |
-| property | `ios://MiniShop/Navigation/AppRouter.swift#AppRouter.path` | `@Published var path: [Destination]` | （routes: cart, checkout, login, product_detail, products, profile） |
+| property | `ios://MiniShop/Navigation/AppRouter.swift#AppRouter.path` | `@Published var path: [Destination]` | （routes: cart, checkout, login, products, profile） |
 | property | `ios://MiniShop/Navigation/AppRouter.swift#RootView.router` | `@EnvironmentObject var router: AppRouter` |  |
 | struct | `ios://MiniShop/Navigation/Route.swift#Destination` | `struct Destination: Hashable` | （routes: cart, checkout, login, products, profile） |
 | property | `ios://MiniShop/Navigation/Route.swift#Destination.params` | `var params: [String: String]` | （routes: cart, checkout, login, products, profile） |
 | property | `ios://MiniShop/Navigation/Route.swift#Destination.route` | `let route: Route` | （routes: cart, checkout, login, products, profile） |
 | enum | `ios://MiniShop/Navigation/Route.swift#Route` | `enum Route: String, CaseIterable` | （routes: cart, checkout, login, products, profile） |
-| case | `ios://MiniShop/Navigation/Route.swift#Route.cart` | `case cart` | （routes: product_detail） |
+| case | `ios://MiniShop/Navigation/Route.swift#Route.cart` | `case cart` | （routes: products） |
 | case | `ios://MiniShop/Navigation/Route.swift#Route.checkout` | `case checkout` | （routes: cart） |
 | case | `ios://MiniShop/Navigation/Route.swift#Route.login` | `case login` | （routes: profile） |
 | case | `ios://MiniShop/Navigation/Route.swift#Route.orderDetail` | `case orderDetail` | （routes: checkout） |
 | case | `ios://MiniShop/Navigation/Route.swift#Route.productDetail` | `case productDetail` | （routes: products） |
-| case | `ios://MiniShop/Navigation/Route.swift#Route.products` | `case products` |  |
+| case | `ios://MiniShop/Navigation/Route.swift#Route.products` | `case products` | （routes: login） |
 | case | `ios://MiniShop/Navigation/Route.swift#Route.profile` | `case profile` |  |
 
 ## 相关页面

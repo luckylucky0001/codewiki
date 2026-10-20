@@ -1,10 +1,10 @@
-compound 20261020T170148-516a1c3: base 8b9db05 → head 516a1c3, mode incremental, llm template
+compound 20261020T173204-47c975a: base 3cb7c04 → head 47c975a, mode incremental, llm template
 mode incremental — anchors changed ∪ signature changes propagated along reference edges
 changed_route_ids: [cart product_detail]; changed_files: 4
 stats: symbols=214 changes=map[body:2 unchanged:212] module_ratio=0.10 structural_ratio=0.00 hops=1 propagated=0
-  t01-_conflicts recheck pages/_conflicts.md            write_set=[.kb/ingest/verdicts.json] reasons=[anchor_body_changed:CartViewModel.MAX_CART_ITEMS, anchor_body_changed:MAX_CART_ITEMS]
-  t02-features-cart update  pages/features/cart.md         write_set=[pages/features/cart.md] reasons=[anchor_body_changed:CartViewModel.MAX_CART_ITEMS]
-  t03-features-product_detail update  pages/features/product_detail.md write_set=[pages/features/product_detail.md] reasons=[anchor_body_changed:CartViewModel.MAX_CART_ITEMS]
+  t01-_conflicts recheck pages/_conflicts.md            p3 write_set=[.kb/ingest/verdicts.json] reasons=[anchor_body_changed:CartViewModel.MAX_CART_ITEMS, anchor_body_changed:MAX_CART_ITEMS]
+  t02-features-cart update  pages/features/cart.md         p1 write_set=[pages/features/cart.md] reasons=[anchor_body_changed:CartViewModel.MAX_CART_ITEMS]
+  t03-features-product_detail update  pages/features/product_detail.md p2 write_set=[pages/features/product_detail.md] reasons=[anchor_body_changed:CartViewModel.MAX_CART_ITEMS]
   task t01-_conflicts               ok       template 
   task t02-features-cart            ok       template 
   task t03-features-product_detail  ok       template 
@@ -20,5 +20,5 @@ changed files: 11
   pages/features/cart.md
   pages/features/product_detail.md
   pages/parity.md
-verify PASS: 23 pages, 336 anchors, 0 errors, 0 warnings
+verify PASS: 23 pages, 353 anchors, 0 errors, 0 warnings
 published 11 changed file(s) to demo/output/<run>/repo/wiki

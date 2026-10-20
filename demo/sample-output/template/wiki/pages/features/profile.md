@@ -33,7 +33,7 @@ sources:
     hash: d233512d9a5eba4665d4bbedc9d736cf193c2be5d3c778e6241cc183ccd33300
   - sym: ios://MiniShop/Features/Profile/ProfileView.swift#ProfileView.router
     hash: 137f5eb371d4d68983fd5b9b7dc70d78c07c32f8a2dd1dbad99f490707470b9c
-source_commit: c2e1c52
+source_commit: d36d971
 status: current
 ---
 # 个人中心（profile）

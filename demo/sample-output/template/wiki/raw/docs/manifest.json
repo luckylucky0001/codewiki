@@ -47,6 +47,15 @@
       "raw": "raw/docs/docs/legacy/login.md"
     },
     {
+      "path": "docs/legacy/products.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "68905ef2bff516d2e4a5c6b55b974c56fd1fe0b101ef074477d87e0c33e4b80f",
+      "title": "商品与订单（旧文档）",
+      "bytes": 393,
+      "raw": "raw/docs/docs/legacy/products.md"
+    },
+    {
       "path": "specs/001-cart/plan.md",
       "kind": "design",
       "convention": "spec-kit",
