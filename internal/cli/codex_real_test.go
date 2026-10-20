@@ -28,7 +28,10 @@ type mockResponses struct {
 	prompts  []string
 }
 
-var writeSetRe = regexp.MustCompile("(?m)^- `(pages/[^`]+\\.md)`$")
+var (
+	writeSetRe = regexp.MustCompile("(?m)^- `(pages/[^`]+\\.md)`$")
+	claimIDRe  = regexp.MustCompile(`"id":\s*"([^"]+)"`)
+)
 
 func (m *mockResponses) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -83,6 +86,14 @@ func (m *mockResponses) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			p := mm[1]
 			id := strings.TrimSuffix(strings.TrimPrefix(p, "pages/"), ".md")
 			fmt.Fprintf(&sb, "printf -- '---\\nid: %s\\ntitle: codex page\\nsources: []\\n---\\n# codex real page\\n\\n[总览](../overview.md)\\n' > '%s'; ", id, p)
+		}
+		if strings.Contains(ws, "`.kb/ingest/verdicts.json`") {
+			// claim-check task: one verdict per claim id found in the prompt
+			var cl []string
+			for _, mm := range claimIDRe.FindAllStringSubmatch(text.String(), -1) {
+				cl = append(cl, fmt.Sprintf(`{"id":%q,"status":"unverifiable","evidence":["codex mock"]}`, mm[1]))
+			}
+			fmt.Fprintf(&sb, "mkdir -p .kb/ingest && printf '%%s' '{\"version\":1,\"claims\":[%s]}' > .kb/ingest/verdicts.json; ", strings.Join(cl, ","))
 		}
 		sb.WriteString("echo outside > pages/evil-codex.md")
 		args, _ := json.Marshal(map[string]any{"cmd": sb.String()})
@@ -186,6 +197,25 @@ stream_max_retries = 0
 	}
 	if code, _ := runJSON(t, dir, "verify"); code != 0 {
 		t.Fatal("verify")
+	}
+	// claim checking (kb ingest) through the same adapter
+	code, v = runJSON(t, dir, "ingest", filepath.Join(dir, "docs/legacy/cart.md"), "--agent", "codex")
+	if code != 0 {
+		t.Fatalf("ingest --agent codex: %d %v", code, v)
+	}
+	itasks := v["result"].(map[string]any)["tasks"].([]any)
+	if len(itasks) == 0 {
+		t.Fatal("ingest: no tasks")
+	}
+	for _, tk := range itasks {
+		m := tk.(map[string]any)
+		rv, _ := m["reverted"].([]any)
+		if m["agent"] != "codex" || m["status"] != "violation" || len(rv) != 1 || rv[0] != "pages/evil-codex.md" {
+			t.Fatalf("ingest task %v", m)
+		}
+	}
+	if _, err := os.Stat(filepath.Join(dir, "wiki/pages/_conflicts.md")); err != nil {
+		t.Fatal("ingest via codex did not publish _conflicts.md")
 	}
 	t.Logf("real codex: %d tasks, %d model requests, tools offered: %v", len(tasks), mock.requests, mock.tools)
 }

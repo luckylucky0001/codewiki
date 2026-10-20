@@ -453,3 +453,27 @@ func TestInstallCodexAgentsMDWarnings(t *testing.T) {
 		t.Fatalf("unexpected notes on a clean repo: %v", n)
 	}
 }
+
+func TestAgentsCommand(t *testing.T) {
+	dir := t.TempDir()
+	code, v := runJSON(t, dir, "agents")
+	if code != 0 || len(v["agents"].([]any)) != 6 {
+		t.Fatal(v)
+	}
+	for _, a := range v["agents"].([]any) {
+		m := a.(map[string]any)
+		if m["consumer_verification"] == "" {
+			t.Fatalf("missing verification level: %v", m)
+		}
+		if (m["name"] == "cursor" || m["name"] == "copilot") && m["backend_command"] != nil {
+			t.Fatalf("%v must have no backend", m["name"])
+		}
+	}
+	_, out, _ := run(t, dir, "agents", "codex", "--model", "o4-mini")
+	if !strings.HasPrefix(out, "codex exec --sandbox workspace-write") || !strings.Contains(out, "--model o4-mini") {
+		t.Fatalf("kb agents codex: %q", out)
+	}
+	if code, _, _ := run(t, dir, "agents", "vim"); code != ExitUsage {
+		t.Fatal("unknown agent must be a usage error")
+	}
+}
