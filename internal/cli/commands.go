@@ -1423,42 +1423,53 @@ func upsertMarkedBlock(path, block string, dry bool) (bool, error) {
 	return true, wiki.WriteFileAtomic(path, []byte(next))
 }
 
-// queryFacts returns the facts for read-only query commands. When nothing
-// under the platform roots changed since the last query (TreeStamp: path,
-// size, mtime), the facts are loaded from wiki/.kb/cache/facts.json.gz instead
-// of rescanning (reference resolution dominates warm scans on large repos).
-func queryFacts(cfg *config.Config) (*model.Facts, error) {
+// stampCached returns compute()'s result, cached in wiki/.kb/cache/<name>.json.gz
+// under the TreeStamp of the working tree: when nothing under the platform
+// roots changed (path, size, mtime), read-only query commands skip the scan
+// (reference resolution dominates warm scans on large repos).
+func stampCached[T any](cfg *config.Config, name string, compute func() (T, error)) (T, error) {
+	var zero T
 	stamp, err := scan.TreeStamp(cfg)
 	if err != nil {
-		return nil, err
+		return zero, err
 	}
-	p := filepath.Join(cfg.WikiPath(), ".kb", "cache", "facts.json.gz")
+	p := filepath.Join(cfg.WikiPath(), ".kb", "cache", name+".json.gz")
 	type snap struct {
-		Stamp string       `json:"stamp"`
-		Facts *model.Facts `json:"facts"`
+		Stamp string `json:"stamp"`
+		Value *T     `json:"value"`
 	}
 	if fh, err := os.Open(p); err == nil {
 		var s snap
 		zr, zerr := gzip.NewReader(fh)
-		if zerr == nil && json.NewDecoder(zr).Decode(&s) == nil && s.Stamp == stamp && s.Facts != nil {
+		if zerr == nil && json.NewDecoder(zr).Decode(&s) == nil && s.Stamp == stamp && s.Value != nil {
 			fh.Close()
-			return s.Facts, nil
+			return *s.Value, nil
 		}
 		fh.Close()
 	}
-	res, err := scan.ScanRepo(cfg)
+	v, err := compute()
 	if err != nil {
-		return nil, err
+		return zero, err
 	}
-	f := facts.Extract(cfg, res)
 	if st, err := os.Stat(cfg.WikiPath()); err == nil && st.IsDir() {
 		var buf bytes.Buffer
 		zw := gzip.NewWriter(&buf)
-		if json.NewEncoder(zw).Encode(snap{stamp, f}) == nil && zw.Close() == nil {
+		if json.NewEncoder(zw).Encode(snap{stamp, &v}) == nil && zw.Close() == nil {
 			_ = wiki.WriteFileAtomic(p, buf.Bytes())
 		}
 	}
-	return f, nil
+	return v, nil
+}
+
+// queryFacts returns the facts for read-only query commands (cached by TreeStamp).
+func queryFacts(cfg *config.Config) (*model.Facts, error) {
+	return stampCached(cfg, "facts", func() (*model.Facts, error) {
+		res, err := scan.ScanRepo(cfg)
+		if err != nil {
+			return nil, err
+		}
+		return facts.Extract(cfg, res), nil
+	})
 }
 
 // lintTidTop lists the most used testIDs.
@@ -1629,16 +1640,20 @@ func cmdParity(a *app, fs *flag.FlagSet, _ []string) int {
 	if cfg == nil {
 		return code
 	}
-	res, err := scan.ScanRepo(cfg)
-	if err != nil {
-		return a.fail(ExitInternal, err)
-	}
-	f := facts.Extract(cfg, res)
 	var plats []string
 	for _, p := range cfg.Platforms {
 		plats = append(plats, p.Name)
 	}
-	p := engine.ComputeParity(res.Graph, f, plats)
+	p, err := stampCached(cfg, "parity", func() (*engine.Parity, error) {
+		res, err := scan.ScanRepo(cfg)
+		if err != nil {
+			return nil, err
+		}
+		return engine.ComputeParity(res.Graph, facts.Extract(cfg, res), plats), nil
+	})
+	if err != nil {
+		return a.fail(ExitInternal, err)
+	}
 	a.emit(p, func(w io.Writer) {
 		md := string(engine.RenderParity(p))
 		if i := strings.Index(md, "# "); i >= 0 {

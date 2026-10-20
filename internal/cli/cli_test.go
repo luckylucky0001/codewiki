@@ -708,3 +708,25 @@ func TestRoutesAndLintTidPages(t *testing.T) {
 		t.Fatalf("login page testIDs missing: %v", v["pages"])
 	}
 }
+
+// kb parity reuses its TreeStamp-keyed cache when nothing changed and
+// recomputes after an edit.
+func TestParityQueryCache(t *testing.T) {
+	dir := repo(t)
+	run(t, dir, "init")
+	_, out1, _ := run(t, dir, "parity", "--json")
+	if _, err := os.Stat(filepath.Join(dir, "wiki/.kb/cache/parity.json.gz")); err != nil {
+		t.Fatalf("parity cache not written: %v", err)
+	}
+	_, out2, _ := run(t, dir, "parity", "--json")
+	if out1 != out2 {
+		t.Fatalf("cached parity differs:\n%s\n---\n%s", out1, out2)
+	}
+	vm := filepath.Join(dir, "android/app/src/main/java/com/minishop/ui/cart/CartViewModel.kt")
+	b, _ := os.ReadFile(vm)
+	os.WriteFile(vm, []byte(strings.Replace(string(b), "MAX_CART_ITEMS = 99", "MAX_CART_ITEMS = 50", 1)), 0o644)
+	_, out3, _ := run(t, dir, "parity", "--json")
+	if out3 == out1 || !strings.Contains(out3, `"50"`) {
+		t.Fatalf("parity not recomputed after edit:\n%s", out3)
+	}
+}
