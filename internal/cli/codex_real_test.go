@@ -189,3 +189,52 @@ stream_max_retries = 0
 	}
 	t.Logf("real codex: %d tasks, %d model requests, tools offered: %v", len(tasks), mock.requests, mock.tools)
 }
+
+// TestRealCodexConsumesInstall: after `kb install --agent codex --mcp`, the
+// real Codex CLI puts the AGENTS.md block and the kb skills (.agents/skills)
+// into the model input (`codex debug prompt-input`, no model call), and lists
+// the codewiki MCP server from .codex/config.toml once the project is trusted.
+func TestRealCodexConsumesInstall(t *testing.T) {
+	bin := os.Getenv("KB_CODEX_BIN")
+	if bin == "" {
+		bin, _ = exec.LookPath("codex")
+	}
+	if bin == "" {
+		t.Skip("codex CLI not installed (set KB_CODEX_BIN)")
+	}
+	dir := repo(t)
+	run(t, dir, "init")
+	run(t, dir, "compound")
+	if code, v := runJSON(t, dir, "install", "--agent", "codex", "--mcp", "--target", dir); code != 0 {
+		t.Fatal(v)
+	}
+	os.MkdirAll(filepath.Join(dir, "android", "app"), 0o755)
+	home := t.TempDir()
+	codex := func(cwd string, args ...string) string {
+		cmd := exec.Command(bin, args...)
+		cmd.Dir = cwd
+		cmd.Env = append(os.Environ(), "CODEX_HOME="+home)
+		out, err := cmd.Output()
+		if err != nil {
+			t.Fatalf("codex %v: %v", args, err)
+		}
+		return string(out)
+	}
+	// from a subdirectory: AGENTS.md and .agents/skills are found at the git root
+	in := codex(filepath.Join(dir, "android", "app"), "debug", "prompt-input", "hi")
+	if strings.Count(in, "Code-anchored wiki (codewiki)") != 1 || !strings.Contains(in, "Run: `kb routes`") {
+		t.Fatal("AGENTS.md codewiki block not in codex model input")
+	}
+	for _, s := range []string{"kb-query:", "kb-lint:", "kb-compound:", "kb-ingest:"} {
+		if !strings.Contains(in, s) {
+			t.Fatalf("skill %s not listed for codex", s)
+		}
+	}
+	if l := codex(dir, "mcp", "list"); strings.Contains(l, "codewiki") {
+		t.Fatal("untrusted project config must not be loaded (codex behaviour changed?)")
+	}
+	os.WriteFile(filepath.Join(home, "config.toml"), []byte(fmt.Sprintf("[projects.%q]\ntrust_level = \"trusted\"\n", dir)), 0o644)
+	if l := codex(dir, "mcp", "list"); !strings.Contains(l, "codewiki") || !strings.Contains(l, "--root "+dir) {
+		t.Fatalf("codex mcp list (trusted):\n%s", l)
+	}
+}

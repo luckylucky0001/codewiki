@@ -162,3 +162,61 @@ func TestRealGeminiBinaryWithMockModel(t *testing.T) {
 	}
 	t.Logf("real gemini: %d tasks, requests %v, tools offered: %v", len(tasks), mock.paths, mock.tools)
 }
+
+// kbShim puts a `kb` on PATH that runs this test binary as kb.
+func kbShim(t *testing.T) string {
+	t.Helper()
+	dir := t.TempDir()
+	os.WriteFile(filepath.Join(dir, "kb"), []byte("#!/bin/sh\nKB_TEST_AS_KB=1 exec "+os.Args[0]+" \"$@\"\n"), 0o755)
+	return dir
+}
+
+// TestRealGeminiConsumesInstall: after `kb install --agent gemini --mcp`, the
+// real Gemini CLI sends the GEMINI.md block and the kb skills to the model and
+// offers the codewiki MCP tools (served by kb mcp) even in headless -p mode.
+func TestRealGeminiConsumesInstall(t *testing.T) {
+	bin := os.Getenv("KB_GEMINI_BIN")
+	if bin == "" {
+		bin, _ = exec.LookPath("gemini")
+	}
+	if bin == "" {
+		t.Skip("gemini CLI not installed (set KB_GEMINI_BIN)")
+	}
+	mock := &mockGemini{}
+	srv := httptest.NewServer(mock)
+	defer srv.Close()
+	dir := repo(t)
+	run(t, dir, "init")
+	run(t, dir, "compound")
+	if code, v := runJSON(t, dir, "install", "--agent", "gemini", "--mcp", "--target", dir); code != 0 {
+		t.Fatal(v)
+	}
+	ghome := t.TempDir()
+	os.MkdirAll(filepath.Join(ghome, ".gemini"), 0o755)
+	os.WriteFile(filepath.Join(ghome, ".gemini", "settings.json"), []byte(`{"security":{"auth":{"selectedType":"gemini-api-key"}}}`), 0o644)
+	tf, _ := json.Marshal(map[string]string{dir: "TRUST_FOLDER"})
+	os.WriteFile(filepath.Join(ghome, ".gemini", "trustedFolders.json"), tf, 0o644)
+	cmd := exec.Command(bin, "-p", "Which routes does the app have?", "-o", "json")
+	cmd.Dir = dir
+	cmd.Env = append(os.Environ(), "PATH="+kbShim(t)+string(os.PathListSeparator)+os.Getenv("PATH"), "GEMINI_CLI_HOME="+ghome,
+		"GEMINI_API_KEY=dummy", "GOOGLE_GEMINI_BASE_URL="+srv.URL, "NO_PROXY=127.0.0.1,localhost", "no_proxy=127.0.0.1,localhost")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("gemini -p: %v\n%s", err, out)
+	}
+	all := strings.Join(mock.prompts, "\n")
+	if !strings.Contains(all, "Code-anchored wiki (codewiki)") || !strings.Contains(all, "Run: `kb routes`") {
+		t.Fatal("GEMINI.md codewiki block not sent to the model")
+	}
+	for _, s := range []string{"kb-query", "kb-lint"} {
+		if !strings.Contains(all, s) {
+			t.Fatalf("skill %s not visible to the model", s)
+		}
+	}
+	tools := strings.Join(mock.tools, ",")
+	for _, tl := range []string{"mcp_codewiki_kb_search", "mcp_codewiki_kb_context", "mcp_codewiki_kb_conflicts"} {
+		if !strings.Contains(tools, tl) {
+			t.Fatalf("MCP tool %s not offered: %s", tl, tools)
+		}
+	}
+}

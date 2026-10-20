@@ -266,6 +266,9 @@ func installAgents(target string, ads []*agents.Adapter, o installOpts) ([]insta
 				continue
 			}
 			done["m:"+ad.MCP.Path] = true
+			for k, v := range ad.MCP.Extra {
+				server[k] = v
+			}
 			p := filepath.Join(target, filepath.FromSlash(ad.MCP.Path))
 			var act, note string
 			var err error

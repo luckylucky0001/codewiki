@@ -85,9 +85,10 @@ func (u *Usage) String() string {
 
 // MCPTarget says where the project-level MCP registration goes.
 type MCPTarget struct {
-	Path   string // relative to the target repo
-	Format string // "json-mcpServers" | "toml-mcp_servers"
-	Note   string // printed after install (e.g. trust requirement, user-level alternative)
+	Path   string         // relative to the target repo
+	Format string         // "json-mcpServers" | "toml-mcp_servers"
+	Note   string         // printed after install (e.g. trust requirement, user-level alternative)
+	Extra  map[string]any // extra keys for the server entry (e.g. gemini "trust")
 }
 
 // Adapter describes one agent.
@@ -212,10 +213,14 @@ var registry = map[string]*Adapter{
 		ParseUsage:   parseGemini,
 		BackendLevel: MockModel,
 		Instructions: "GEMINI.md", SkillsDir: ".agents/skills",
-		MCP:         &MCPTarget{Path: ".gemini/settings.json", Format: "json-mcpServers"},
+		// trust: kb's MCP tools are read-only; without it gemini -p does not
+		// offer MCP tools at all (verified with gemini-cli 0.65.0). Project
+		// MCP servers also need the folder to be trusted.
+		MCP: &MCPTarget{Path: ".gemini/settings.json", Format: "json-mcpServers", Extra: map[string]any{"trust": true},
+			Note: "Gemini enables project MCP servers only in trusted folders (/permissions or ~/.gemini/trustedFolders.json); \"trust\": true skips confirmations for kb's read-only tools"},
 		MCPHint:     "gemini mcp add codewiki kb mcp --root <repo>",
 		Tools:       neutralTools,
-		ConsumerLvl: DocsOnly,
+		ConsumerLvl: MockModel,
 	},
 	"cursor": {
 		Name: "cursor", Display: "Cursor",

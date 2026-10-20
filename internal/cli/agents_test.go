@@ -277,6 +277,9 @@ func TestInstallAllAgentsIdempotent(t *testing.T) {
 	if len(args) != 3 || args[0] != "mcp" || args[1] != "--root" || args[2] != dir {
 		t.Fatalf("mcp args %v", args)
 	}
+	if !strings.Contains(first[".gemini/settings.json"], `"trust": true`) || strings.Contains(first[".mcp.json"], `"trust"`) {
+		t.Fatal("gemini server entry must be trusted (read-only tools), others unchanged")
+	}
 	if !strings.Contains(first[".gemini/settings.json"], `"theme": "Dracula"`) || !strings.Contains(first[".gemini/settings.json"], `"codewiki"`) || !strings.Contains(first[".cursor/mcp.json"], `"codewiki"`) {
 		t.Fatal("gemini/cursor mcp json")
 	}
