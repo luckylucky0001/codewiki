@@ -516,6 +516,34 @@ func (c *ctx) routes() {
 			add(r)
 		}
 	}
+	// A component whose build() returns NavDestination() is a Navigation
+	// destination even when it is pushed by a computed name
+	// (pushPathByName(item.route)): NextE 44 -> 51 of 51 destination pages.
+	covered := map[string]bool{}
+	for _, r := range c.f.Routes {
+		covered[r.File] = true
+	}
+	for _, file := range c.sortedFiles() {
+		fi := c.g.Files[file]
+		if fi.Lang != "arkts" || covered[file] {
+			continue
+		}
+		for _, call := range c.res.Calls[file] {
+			if !strings.HasSuffix(call.Callee, "NavDestination") {
+				continue // NavDestination(), HdsNavDestination() (HarmonyOS Design System)
+			}
+			top := c.g.Get(call.Enclosing)
+			for top != nil && top.Parent != "" {
+				top = c.g.Get(top.Parent)
+			}
+			if top == nil || top.Kind != "component" || isTestPath(file) {
+				continue
+			}
+			covered[file] = true
+			add(model.Route{Platform: fi.Platform, RouteID: top.Name, Pattern: top.Name, File: file, Symbol: top.ID})
+			break
+		}
+	}
 }
 
 var (
