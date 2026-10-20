@@ -1,0 +1,10 @@
+{
+  "routerMap": [
+    { "name": "login", "pageSourceFile": "src/main/ets/pages/LoginPage.ets", "buildFunction": "LoginBuilder", "data": { "pattern": "login" } },
+    { "name": "products", "pageSourceFile": "src/main/ets/pages/ProductsPage.ets", "buildFunction": "ProductsBuilder", "data": { "pattern": "products" } },
+    { "name": "product_detail", "pageSourceFile": "src/main/ets/pages/ProductDetailPage.ets", "buildFunction": "ProductDetailBuilder", "data": { "pattern": "product/{id}" } },
+    { "name": "cart", "pageSourceFile": "src/main/ets/pages/CartPage.ets", "buildFunction": "CartBuilder", "data": { "pattern": "cart" } },
+    { "name": "checkout", "pageSourceFile": "src/main/ets/pages/CheckoutPage.ets", "buildFunction": "CheckoutBuilder", "data": { "pattern": "checkout" } },
+    { "name": "order_detail", "pageSourceFile": "src/main/ets/pages/OrderDetailPage.ets", "buildFunction": "OrderDetailBuilder", "data": { "pattern": "order/{id}" } }
+  ]
+}

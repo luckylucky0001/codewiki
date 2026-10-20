@@ -1,0 +1,12 @@
+# binaries
+/kb
+/bin/
+*.exe
+*.test
+*.out
+# demo / temp
+demo/output/
+.kb-work/
+tmp/
+# local dev probes
+internal/tsdump*/
