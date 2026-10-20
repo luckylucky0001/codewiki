@@ -48,6 +48,21 @@ type Parity struct {
 	Gaps      int         `json:"gaps"`
 }
 
+// SharedSourceSet reports whether file belongs to a Kotlin Multiplatform
+// common source set (commonMain, or the intermediate sets
+// mobileMain / nonWebMain), which is compiled for every target: a Compose
+// Multiplatform screen there is implemented on Android and iOS alike. Without
+// this, kotlinconf-app showed all 25 shared screens as "missing on iOS".
+func SharedSourceSet(file string) bool {
+	for _, seg := range strings.Split(file, "/") {
+		switch seg {
+		case "commonMain", "mobileMain", "nonWebMain":
+			return true
+		}
+	}
+	return false
+}
+
 // ComputeParity builds the matrix from facts and the symbol graph.
 func ComputeParity(g *model.Graph, f *model.Facts, platforms []string) *Parity {
 	p := &Parity{Platforms: platforms, Features: []ParityRow{}, Constants: []ConstDiff{}}
@@ -70,19 +85,19 @@ func ComputeParity(g *model.Graph, f *model.Facts, platforms []string) *Parity {
 		for _, pl := range platforms {
 			c := ParityCell{TestIDs: []string{}, APIs: []string{}}
 			for _, r := range f.Routes {
-				if r.RouteID == rid && r.Platform == pl {
+				if r.RouteID == rid && (r.Platform == pl || SharedSourceSet(r.File)) {
 					c.Route = true
 				}
 			}
 			tids := map[string]bool{}
 			for _, t := range f.TestIDs {
-				if t.RouteID == rid && t.Platform == pl {
+				if t.RouteID == rid && (t.Platform == pl || SharedSourceSet(t.File)) {
 					tids[t.Tid] = true
 				}
 			}
 			apis := map[string]bool{}
 			for _, a := range f.APIs {
-				if a.Platform == pl && anchors[a.Symbol] {
+				if (a.Platform == pl || SharedSourceSet(a.File)) && anchors[a.Symbol] {
 					apis[a.Method+" "+a.Path] = true
 				}
 			}
