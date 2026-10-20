@@ -1,5 +1,5 @@
 {
-  "base_sha": "0391c27defb5fd393a50222fd36c499c19d546bb",
+  "base_sha": "9c3c23ee2ab173b91d8c9a560003649d1eb40f20",
   "changed": [
     "facts/android/routes.md",
     "facts/android/symbols.md",
@@ -14,27 +14,46 @@
     "facts/testids.json",
     "index.md",
     "llms.txt",
+    "pages/concepts/navigation.md",
+    "pages/concepts/shared-components.md",
     "pages/features/profile.md",
-    "pages/overview.md"
+    "pages/overview.md",
+    "pages/parity.md"
   ],
   "date": "2026-10-20",
-  "head_sha": "4d0fb00a9168e36d012e47e791af60af0d79d1de",
+  "head_sha": "c2e1c5202d4cc0514925eb7d9b452de5c9b7135f",
   "kind": "compound",
   "llm": "template",
   "mode": "incremental",
   "reason": "anchors changed ∪ signature changes propagated along reference edges",
-  "run_id": "20261020T163842-4d0fb00",
+  "run_id": "20261020T170150-c2e1c52",
   "tasks": [
     {
-      "id": "t01-features-profile",
+      "id": "t01-concepts-navigation",
+      "page": "pages/concepts/navigation.md",
+      "op": "update",
+      "writer": "template",
+      "status": "ok",
+      "millis": 2
+    },
+    {
+      "id": "t02-concepts-shared-components",
+      "page": "pages/concepts/shared-components.md",
+      "op": "update",
+      "writer": "template",
+      "status": "ok",
+      "millis": 0
+    },
+    {
+      "id": "t03-features-profile",
       "page": "pages/features/profile.md",
       "op": "create",
       "writer": "template",
       "status": "ok",
-      "millis": 1
+      "millis": 0
     },
     {
-      "id": "t02-overview",
+      "id": "t04-overview",
       "page": "pages/overview.md",
       "op": "update",
       "writer": "template",

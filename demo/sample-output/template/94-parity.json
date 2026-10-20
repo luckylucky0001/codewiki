@@ -1,0 +1,274 @@
+{
+  "platforms": [
+    "android",
+    "ios",
+    "harmony"
+  ],
+  "features": [
+    {
+      "route_id": "cart",
+      "platforms": {
+        "android": {
+          "route": true,
+          "testids": [
+            "cart_checkout"
+          ],
+          "apis": []
+        },
+        "harmony": {
+          "route": true,
+          "testids": [
+            "cart_checkout"
+          ],
+          "apis": []
+        },
+        "ios": {
+          "route": true,
+          "testids": [
+            "cart_checkout"
+          ],
+          "apis": []
+        }
+      },
+      "missing_route": [],
+      "missing_testids": {},
+      "missing_apis": {}
+    },
+    {
+      "route_id": "checkout",
+      "platforms": {
+        "android": {
+          "route": true,
+          "testids": [
+            "checkout_submit"
+          ],
+          "apis": [
+            "POST /api/orders"
+          ]
+        },
+        "harmony": {
+          "route": true,
+          "testids": [
+            "checkout_submit"
+          ],
+          "apis": [
+            "POST /api/orders"
+          ]
+        },
+        "ios": {
+          "route": true,
+          "testids": [
+            "checkout_submit"
+          ],
+          "apis": [
+            "POST /api/orders"
+          ]
+        }
+      },
+      "missing_route": [],
+      "missing_testids": {},
+      "missing_apis": {}
+    },
+    {
+      "route_id": "login",
+      "platforms": {
+        "android": {
+          "route": true,
+          "testids": [
+            "login_password",
+            "login_submit",
+            "login_username"
+          ],
+          "apis": [
+            "POST /api/login"
+          ]
+        },
+        "harmony": {
+          "route": true,
+          "testids": [
+            "login_password",
+            "login_submit",
+            "login_username"
+          ],
+          "apis": [
+            "POST /api/login"
+          ]
+        },
+        "ios": {
+          "route": true,
+          "testids": [
+            "login_password",
+            "login_submit",
+            "login_username"
+          ],
+          "apis": [
+            "POST /api/login"
+          ]
+        }
+      },
+      "missing_route": [],
+      "missing_testids": {},
+      "missing_apis": {}
+    },
+    {
+      "route_id": "order_detail",
+      "platforms": {
+        "android": {
+          "route": true,
+          "testids": [
+            "order_status"
+          ],
+          "apis": []
+        },
+        "harmony": {
+          "route": true,
+          "testids": [
+            "order_status"
+          ],
+          "apis": []
+        },
+        "ios": {
+          "route": true,
+          "testids": [
+            "order_status"
+          ],
+          "apis": []
+        }
+      },
+      "missing_route": [],
+      "missing_testids": {},
+      "missing_apis": {}
+    },
+    {
+      "route_id": "product_detail",
+      "platforms": {
+        "android": {
+          "route": true,
+          "testids": [
+            "add_to_cart"
+          ],
+          "apis": [
+            "GET /api/products/{id}",
+            "POST /api/cart"
+          ]
+        },
+        "harmony": {
+          "route": true,
+          "testids": [
+            "add_to_cart"
+          ],
+          "apis": [
+            "GET /api/products/{id}",
+            "POST /api/cart"
+          ]
+        },
+        "ios": {
+          "route": true,
+          "testids": [
+            "add_to_cart"
+          ],
+          "apis": [
+            "GET /api/products/{id}",
+            "POST /api/cart"
+          ]
+        }
+      },
+      "missing_route": [],
+      "missing_testids": {},
+      "missing_apis": {}
+    },
+    {
+      "route_id": "products",
+      "platforms": {
+        "android": {
+          "route": true,
+          "testids": [
+            "product_item_",
+            "product_list",
+            "tab_cart"
+          ],
+          "apis": [
+            "GET /api/products"
+          ]
+        },
+        "harmony": {
+          "route": true,
+          "testids": [
+            "product_item_",
+            "product_list",
+            "tab_cart"
+          ],
+          "apis": [
+            "GET /api/products"
+          ]
+        },
+        "ios": {
+          "route": true,
+          "testids": [
+            "product_item_",
+            "product_list",
+            "tab_cart"
+          ],
+          "apis": [
+            "GET /api/products"
+          ]
+        }
+      },
+      "missing_route": [],
+      "missing_testids": {},
+      "missing_apis": {}
+    },
+    {
+      "route_id": "profile",
+      "platforms": {
+        "android": {
+          "route": true,
+          "testids": [
+            "profile_logout",
+            "profile_name"
+          ],
+          "apis": []
+        },
+        "harmony": {
+          "route": true,
+          "testids": [
+            "profile_logout",
+            "profile_name"
+          ],
+          "apis": []
+        },
+        "ios": {
+          "route": true,
+          "testids": [
+            "profile_logout",
+            "profile_name"
+          ],
+          "apis": []
+        }
+      },
+      "missing_route": [],
+      "missing_testids": {},
+      "missing_apis": {}
+    }
+  ],
+  "constant_diffs": [
+    {
+      "name": "max_cart_items",
+      "values": {
+        "android": {
+          "value": "50",
+          "symbol": "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.MAX_CART_ITEMS"
+        },
+        "harmony": {
+          "value": "50",
+          "symbol": "harmony://entry/src/main/ets/common/CartStore.ets#MAX_CART_ITEMS"
+        },
+        "ios": {
+          "value": "99",
+          "symbol": "ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.maxCartItems"
+        }
+      }
+    }
+  ],
+  "gaps": 1
+}

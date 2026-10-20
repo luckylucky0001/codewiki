@@ -1,1 +1,1 @@
-verify PASS: 21 pages, 309 anchors, 0 errors, 0 warnings
+verify PASS: 24 pages, 355 anchors, 0 errors, 0 warnings

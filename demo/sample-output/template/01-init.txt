@@ -1,5 +1,5 @@
 created codewiki.yaml
-created .gitignore (+/.kb-work/)
+created .gitignore (+/.kb-work/ /wiki/.kb/cache/)
 created wiki/.kb/.gitkeep
 created wiki/AGENTS.md
 created wiki/facts/.gitkeep

@@ -11,6 +11,8 @@
 ## Pages
 
 - [文档核对（冲突与已验证断言）](pages/_conflicts.md)
+- [导航与深链](pages/concepts/navigation.md)
+- [共享组件](pages/concepts/shared-components.md)
 - [购物车（cart）](pages/features/cart.md)
 - [结算（checkout）](pages/features/checkout.md)
 - [登录（login）](pages/features/login.md)
@@ -19,3 +21,4 @@
 - [商品列表（products）](pages/features/products.md)
 - [个人中心（profile）](pages/features/profile.md)
 - [总览](pages/overview.md)
+- [三端一致性（parity）](pages/parity.md)

@@ -1,9 +1,10 @@
-ingest 20261020T163314-56a5f1a: base  → head 56a5f1a, mode ingest, llm template
+ingest 20261020T170224-56a5f1a: base  → head 56a5f1a, mode ingest, llm template
 mode ingest — check ingested documents against code
+changed_route_ids: []; changed_files: 70
 stats: symbols=323 changes=map[added:323] module_ratio=0.60 structural_ratio=1.00 hops=1 propagated=0
   t01-_conflicts create  pages/_conflicts.md            write_set=[.kb/ingest/verdicts.json] reasons=[full_rebuild]
   task t01-_conflicts               ok       template 
-changed files: 32
+changed files: 33
   .kb/ingest/verdicts.json
   .kb/plan.json
   .kb/update_record.json
@@ -19,6 +20,7 @@ changed files: 32
   llms.txt
   log.md
   pages/_conflicts.md
+  pages/parity.md
   raw/docs/.github/copilot-instructions.md
   raw/docs/AGENTS.md
   raw/docs/CLAUDE.md
@@ -36,5 +38,5 @@ changed files: 32
   raw/docs/lib/helpers/README.md
   raw/docs/manifest.json
   raw/docs/tests/README.md
-verify PASS: 5 pages, 202 anchors, 0 errors, 0 warnings
-published 32 changed file(s) to /tmp/claude-0/-home-user-axios/f608cc50-0c09-5f4c-8195-0e8da779e294/scratchpad/axios-kb2/wiki
+verify PASS: 6 pages, 202 anchors, 0 errors, 0 warnings
+published 33 changed file(s) to /tmp/claude-0/-home-user-axios/f608cc50-0c09-5f4c-8195-0e8da779e294/scratchpad/axios-kb3/wiki

@@ -1,7 +1,8 @@
-head 0391c27, last compound 37c84000dadf99d003ae2f2b585f092669b62a5f
+head 9c3c23e, last compound 516a1c39572862c1cce9c6c42cb1c8e9d7c7125d
 stale facts/apis.json (generated facts out of date)
 stale facts/harmony/apis.md (generated facts out of date)
 stale facts/requirements.json (4 anchors: ProductDetailPage.build, CartStore, ProductDetailPage.build, …+1)
 stale pages/_conflicts.md (2 anchors: CartStore, ProductDetailPage.build)
+stale pages/concepts/shared-components.md (1 anchors: Api)
 stale pages/features/product_detail.md (2 anchors: CartStore.addItem, ProductDetailPage.build)
 stale pages/features/products.md (2 anchors: Api.loadProducts, ProductsPage.aboutToAppear)

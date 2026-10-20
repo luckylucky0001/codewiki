@@ -17,8 +17,6 @@ sources:
     hash: 3cae2cf4e99a8abfdeb5a42e53b6a5ad84baeb843fdb390e10684ac9af6457ce
   - sym: android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.token
     hash: 1ca402643adb65135f33a666a2ecebd23f12ca41a870848b7a176ba98dbae1ea
-  - sym: android://app/src/main/java/com/minishop/ui/components/MiniShopTopBar.kt#MiniShopTopBar
-    hash: a950939b071b355f1752ab5ba76842b203ccc17a22905e00e98b7cce1f172af5
   - sym: android://app/src/main/java/com/minishop/ui/profile/ProfileScreen.kt#ProfileScreen
     hash: 526a91830c13966c759e8bef9d683cb92d4df764d41927bc7b2335e2e796c695
   - sym: harmony://entry/src/main/ets/common/TokenStore.ets#TokenStore.isLoggedIn
@@ -29,29 +27,13 @@ sources:
     hash: 427298d9f218bb76e32738e0d1650ffc5815e7e761fdcc5e11e9fea414c2be0b
   - sym: harmony://entry/src/main/ets/pages/ProfilePage.ets#ProfilePage.build
     hash: d51b95fefb201bb36242a2c23f52dfa9ed8e3c70024aa092f86a322bb86d4dd6
-  - sym: harmony://entry/src/main/ets/pages/ProfilePage.ets#ProfilePage.pathStack
-    hash: d348143e464db81a86e98f370526c7e901585a646f2c2da22b03cd196207ad88
   - sym: ios://MiniShop/Features/Profile/ProfileView.swift#ProfileView
     hash: c1a22c94f601b720d5f949add4283f8b052dd0d2c237e6419319da4059dd7c04
   - sym: ios://MiniShop/Features/Profile/ProfileView.swift#ProfileView.body
     hash: d233512d9a5eba4665d4bbedc9d736cf193c2be5d3c778e6241cc183ccd33300
   - sym: ios://MiniShop/Features/Profile/ProfileView.swift#ProfileView.router
     hash: 137f5eb371d4d68983fd5b9b7dc70d78c07c32f8a2dd1dbad99f490707470b9c
-  - sym: ios://MiniShop/Navigation/AppRouter.swift#AppRouter.handle
-    hash: 4b2d7773068d8cf126bef60046012ded7a2182494966a5907cd13d5ccede6be3
-  - sym: ios://MiniShop/Navigation/AppRouter.swift#AppRouter.match
-    hash: 4277008b895b029f4caf0522de87de218a6dd86ddea121b01be670c4d227e484
-  - sym: ios://MiniShop/Navigation/AppRouter.swift#AppRouter.path
-    hash: 8e630fea62710ade5354d04e1e353ff6e1c5b0ac38acbcbed1796eabc8660b98
-  - sym: ios://MiniShop/Navigation/Route.swift#Destination.route
-    hash: 12d58fa4f87a306c398635b92e2d024d469918b3e33abd03bd572f833d9d2c82
-  - sym: ios://MiniShop/Networking/APIClient.swift#TokenStore.save
-    hash: f0e91ef8b002ef95a2de1eb4665dd1fd8d0906cb506a4adebb688455f571984a
-  - sym: ios://MiniShop/Networking/APIClient.swift#TokenStore.shared
-    hash: 160dd603b73cd275a6b0089cbe4b95d633ac45773c271403286088aa378bff21
-  - sym: ios://MiniShop/Networking/APIClient.swift#TokenStore.token
-    hash: cc9a2bad373da05b2c10efdd69bf76de940bebff0e4ee5477b4b4cd213b4dc72
-source_commit: 4d0fb00
+source_commit: c2e1c52
 status: current
 ---
 # 个人中心（profile）
@@ -83,10 +65,6 @@ status: current
 
 （该功能的锚点符号未直接调用 HTTP 接口）
 
-## 关键常量
-
-- `AppRouter.path` = `[]`（ios）
-
 ## 相关代码
 
 **android**
@@ -97,7 +75,6 @@ status: current
 - `android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.isLoggedIn` — method `public boolean isLoggedIn()`
 - `android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.save` — method `public void save(String token)`
 - `android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.token` — property `private String token;`
-- `android://app/src/main/java/com/minishop/ui/components/MiniShopTopBar.kt#MiniShopTopBar` — composable `@Composable fun MiniShopTopBar(title: String, onBack: (() -> Unit)? = null)`
 - `android://app/src/main/java/com/minishop/ui/profile/ProfileScreen.kt#ProfileScreen` — composable `@Composable fun ProfileScreen(onLogout: () -> Unit, onBack: () -> Unit)`
 
 **harmony**
@@ -106,24 +83,17 @@ status: current
 - `harmony://entry/src/main/ets/common/TokenStore.ets#TokenStore.save` — method `static save(token: string): void`
 - `harmony://entry/src/main/ets/pages/ProfilePage.ets#ProfileBuilder` — function `@Builder export function ProfileBuilder()`
 - `harmony://entry/src/main/ets/pages/ProfilePage.ets#ProfilePage.build` — method `build()`
-- `harmony://entry/src/main/ets/pages/ProfilePage.ets#ProfilePage.pathStack` — property `@Consume('pathStack') pathStack: NavPathStack`
 
 **ios**
 
 - `ios://MiniShop/Features/Profile/ProfileView.swift#ProfileView` — struct `struct ProfileView: View`
 - `ios://MiniShop/Features/Profile/ProfileView.swift#ProfileView.body` — property `var body: some View`
 - `ios://MiniShop/Features/Profile/ProfileView.swift#ProfileView.router` — property `@EnvironmentObject var router: AppRouter`
-- `ios://MiniShop/Navigation/AppRouter.swift#AppRouter.handle` — function `func handle(url: URL)`
-- `ios://MiniShop/Navigation/AppRouter.swift#AppRouter.match` — function `func match(host: String, segments: [String]) -> Destination?`
-- `ios://MiniShop/Navigation/AppRouter.swift#AppRouter.path` — property `@Published var path: [Destination]`
-- `ios://MiniShop/Navigation/Route.swift#Destination.route` — property `let route: Route`
-- `ios://MiniShop/Networking/APIClient.swift#TokenStore.save` — function `func save(_ token: String)`
-- `ios://MiniShop/Networking/APIClient.swift#TokenStore.shared` — property `static let shared`
-- `ios://MiniShop/Networking/APIClient.swift#TokenStore.token` — property `private(set) var token: String?`
 
 ## 相关页面
 
 - [总览](../overview.md)
+- [导航与深链](../concepts/navigation.md) · [共享组件](../concepts/shared-components.md)
 - [android routes facts](../../facts/android/routes.md)
 - [harmony routes facts](../../facts/harmony/routes.md)
 - [ios routes facts](../../facts/ios/routes.md)

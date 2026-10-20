@@ -271,9 +271,9 @@ e2e impact --changed-routes "$ROUTES" --requirements wiki/facts/requirements.jso
 
 | 仓库 | 文件 | 符号 | 冷扫描（无缓存） | 热扫描（全命中） | 1% 文件变化 |
 |---|---|---|---|---|---|
-| 合成仓库 `kb bench --synthetic 3000`（Kotlin/Swift/ArkTS 各 1000） | 3000 | 21000 | 4655 ms | 610 ms | 1145 ms |
-| axios `lib/**/*.js` + `index.js` | 70 | 323 | 376 ms | 30 ms | — |
-| axios 全仓（含 tests、`.d.ts`、examples） | 243 | 1009 | 2399 ms | 98 ms | — |
+| 合成仓库 `kb bench --synthetic 3000`（Kotlin/Swift/ArkTS 各 1000） | 3000 | 21000 | 3711 ms | 463 ms | 974 ms |
+| axios `lib/**/*.js` + `index.js` | 70 | 323 | 191 ms | 25 ms | — |
+| axios 全仓（含 tests、`.d.ts`、examples） | 243 | 1009 | 993 ms | 69 ms | — |
 | examples/minishop（三端） | 42 | 214 | 91 ms | 8 ms | — |
 
 ```bash
@@ -281,7 +281,7 @@ kb bench --synthetic 3000                       # 合成仓库，临时目录
 kb bench --root /path/to/repo --config cfg.yaml  # 真实仓库；缓存写到临时目录，不修改仓库
 ```
 
-优化记录：第一版引用解析对常见名字（如上千个 `items`）逐一打分，合成仓库上冷/热都要约 20 s（热扫描瓶颈不在解析）；改为按文件 / 父类型 / 全局三级索引后，热扫描降到 0.6 s。
+优化记录：第一版引用解析对常见名字（如上千个 `items`）逐一打分，合成仓库上冷/热都要约 20 s（热扫描瓶颈不在解析）；改为按文件 / 父类型 / 全局三级索引后，热扫描降到 0.5 s。
 
 ## 文档发现与断言核对（spec → 知识）
 

@@ -221,7 +221,7 @@
       "evidence": [
         "代码中 `CartViewModel.MAX_CART_ITEMS` = 50（android），文档写的是 10",
         "代码中 `MAX_CART_ITEMS` = 50（harmony），文档写的是 10",
-        "代码中 `CartViewModel.maxCartItems` = 50（ios），文档写的是 10"
+        "代码中 `CartViewModel.maxCartItems` = 99（ios），文档写的是 10"
       ]
     },
     {

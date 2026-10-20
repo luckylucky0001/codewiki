@@ -4,7 +4,7 @@ title: 总览
 kind: overview
 platforms: [android, ios, harmony]
 routes: [cart, checkout, login, order_detail, product_detail, products, profile]
-source_commit: 4d0fb00
+source_commit: c2e1c52
 status: current
 ---
 # 总览：三端路由矩阵
@@ -23,4 +23,4 @@ status: current
 
 深链 scheme：`minishop`；测试态注入：`?token=<t>&cart=<sku,sku>`。
 
-规模：21 条路由、39 个 testID、15 个接口调用点。机器可读：[routes.json](../facts/routes.json) · [testids.json](../facts/testids.json) · [apis.json](../facts/apis.json)
+规模：21 条路由、39 个 testID、15 个接口调用点。三端差异见 [parity.md](parity.md)。机器可读：[routes.json](../facts/routes.json) · [testids.json](../facts/testids.json) · [apis.json](../facts/apis.json)

@@ -82,7 +82,7 @@ sources:
   - sym: ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.addItem
     hash: 88c93466d1e406c1684b1237c4f216e37932aa5f2b8974f54189fa78f10a2d09
   - sym: ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.maxCartItems
-    hash: 85c19669f1a943ad960ceb03fa3da6c605712ca32e18838415b0cddf2aff8d4f
+    hash: ffaf69f8eb9681951eecc75a6643019d4a9398418f99a0ff562c39656344542e
   - sym: ios://MiniShop/Features/Checkout/CheckoutView.swift#CheckoutView
     hash: b33e63205cc465f2fd5986cf24b6edac9b938d724a644f7907cb2a0bf3b16a72
   - sym: ios://MiniShop/Features/Checkout/CheckoutView.swift#CheckoutView.placeOrder
@@ -109,7 +109,7 @@ sources:
     hash: 745aa82c439b155cd921a3ff09c785faed15a4b24560c9f29a8953cf85972c04
   - sym: ios://MiniShop/Networking/APIClient.swift#TokenStore.save
     hash: f0e91ef8b002ef95a2de1eb4665dd1fd8d0906cb506a4adebb688455f571984a
-source_commit: 0391c27
+source_commit: 9c3c23e
 status: current
 ---
 # 文档核对：冲突与已验证断言
@@ -125,7 +125,7 @@ status: current
 ## 冲突 conflicts（文档已过时，以代码为准）
 
 - **CART-43567f** （[docs/legacy/cart.md](../raw/docs/docs/legacy/cart.md) L3）购物车最多 10 件商品（常量 `MAX_CART_ITEMS`，iOS 为 `maxCartItems`）。
-  - 证据：代码中 `CartViewModel.MAX_CART_ITEMS` = 50（android），文档写的是 10；代码中 `MAX_CART_ITEMS` = 50（harmony），文档写的是 10；代码中 `CartViewModel.maxCartItems` = 50（ios），文档写的是 10
+  - 证据：代码中 `CartViewModel.MAX_CART_ITEMS` = 50（android），文档写的是 10；代码中 `MAX_CART_ITEMS` = 50（harmony），文档写的是 10；代码中 `CartViewModel.maxCartItems` = 99（ios），文档写的是 10
 - **CART-7d3eb7** （[docs/legacy/cart.md](../raw/docs/docs/legacy/cart.md) L6）下单接口为 `POST /api/order/create`，成功后进入订单详情 `minishop://order/{id}`。
   - 证据：接口 `POST /api/order/create` 在代码中不存在；deeplink `minishop://order/{id}` 存在
 - **LOGIN-4dbfba** （[docs/legacy/login.md](../raw/docs/docs/legacy/login.md) L3）登录使用手机号 + 短信验证码：先调用 `POST /api/sms/send` 发送验证码，再调用 `POST /api/login` 校验。

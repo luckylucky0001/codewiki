@@ -5,8 +5,8 @@ kind: feature
 platforms: [android, harmony, ios]
 routes: [login]
 sources:
-  - sym: android://app/src/main/java/com/minishop/data/ApiService.kt#ApiClient.service
-    hash: 3fe962f0317cd2eb2057b5d5b2a5825fa045583e3425e998d41e5e76a56e1a05
+  - sym: android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.login
+    hash: 16d311d2a6158c5d17707cadc88b03bbe10eb3bc49d630600109bbafc5d030d8
   - sym: android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.TokenStore
     hash: f549b73c3c010a905c49c7d9e1bc0db31faf1440205dcb28dfda15ff8fc9545c
   - sym: android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.getInstance
@@ -35,8 +35,6 @@ sources:
     hash: db69ad016a1c4ec545413f899b5ba8e37866be783227f74f25db110da6e3a9b9
   - sym: harmony://entry/src/main/ets/pages/LoginPage.ets#LoginPage.password
     hash: cc08a6438b3faf98d1ba25e484f0b60064cf35402a5b4a049abe0abc20cb17c0
-  - sym: harmony://entry/src/main/ets/pages/LoginPage.ets#LoginPage.pathStack
-    hash: d348143e464db81a86e98f370526c7e901585a646f2c2da22b03cd196207ad88
   - sym: harmony://entry/src/main/ets/pages/LoginPage.ets#LoginPage.username
     hash: 0793e47a7768058e3b10a4fccf6ea1d698fdde2a70bcb55e27b2ce669f5a5d34
   - sym: ios://MiniShop/Features/Login/LoginView.swift#LoginView
@@ -51,15 +49,19 @@ sources:
     hash: 4f061012460b0732643a5649e22b9acb5960250c5c557619525fb8069e6f4ba1
   - sym: ios://MiniShop/Features/Login/LoginView.swift#LoginView.vm
     hash: b0ab25a9c4bb1b95548d2982e69b6a98ba44995d79075cbbde4c25e6f2a2c20d
-  - sym: ios://MiniShop/Navigation/AppRouter.swift#AppRouter.handle
-    hash: 4b2d7773068d8cf126bef60046012ded7a2182494966a5907cd13d5ccede6be3
-  - sym: ios://MiniShop/Navigation/AppRouter.swift#AppRouter.match
-    hash: 4277008b895b029f4caf0522de87de218a6dd86ddea121b01be670c4d227e484
-  - sym: ios://MiniShop/Navigation/AppRouter.swift#AppRouter.path
-    hash: 8e630fea62710ade5354d04e1e353ff6e1c5b0ac38acbcbed1796eabc8660b98
+  - sym: ios://MiniShop/Features/Login/LoginViewModel.swift#LoginViewModel.error
+    hash: 1d93ad5e86f07b6e47e1271d5343948dbe103e138545237207c0e10930def63f
+  - sym: ios://MiniShop/Features/Login/LoginViewModel.swift#LoginViewModel.login
+    hash: c7a114bae2e4a6dd1df9f051017b9ec3966962fecbe46f60d258cb0c33f36ed8
   - sym: ios://MiniShop/Networking/APIClient.swift#LoginRequest.password
     hash: d7f1a48269ceb254c79b3dd357d976c890bab9ceb0c6470c1db72796a38d59b3
-source_commit: ad44c25
+  - sym: ios://MiniShop/Networking/APIClient.swift#LoginRequest.username
+    hash: 69cbe8b7dbde9467c32ddc691a59a74de38c51788a10be79f7937294f5a8e03a
+  - sym: ios://MiniShop/Networking/APIClient.swift#LoginResponse.token
+    hash: d31dd686a0bb1c46c11e0ebcd19b599d5aa898cb82b6ce956b5f579cba6d3e17
+  - sym: ios://MiniShop/Networking/APIClient.swift#TokenStore.token
+    hash: cc9a2bad373da05b2c10efdd69bf76de940bebff0e4ee5477b4b4cd213b4dc72
+source_commit: 8b9db05
 status: current
 ---
 # 登录（login）
@@ -94,7 +96,9 @@ status: current
 
 | 平台 | 方法 | 路径 | 调用符号 |
 |---|---|---|---|
+| android | POST | `/api/login` | `android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.login` |
 | harmony | POST | `/api/login` | `harmony://entry/src/main/ets/common/Api.ets#Api.login` |
+| ios | POST | `/api/login` | `ios://MiniShop/Features/Login/LoginViewModel.swift#LoginViewModel.login` |
 
 ## 关键常量
 
@@ -103,13 +107,12 @@ status: current
 - `LoginPage.username` = `""`（harmony）
 - `LoginView.password` = `""`（ios）
 - `LoginView.username` = `""`（ios）
-- `AppRouter.path` = `[]`（ios）
 
 ## 相关代码
 
 **android**
 
-- `android://app/src/main/java/com/minishop/data/ApiService.kt#ApiClient.service` — property `val service: ApiService`
+- `android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.login` — function `@POST("/api/login") suspend fun login(@Body body: LoginRequest): LoginResponse`
 - `android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.TokenStore` — constructor `private TokenStore()`
 - `android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.getInstance` — method `public static synchronized TokenStore getInstance()`
 - `android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.save` — method `public void save(String token)`
@@ -127,7 +130,6 @@ status: current
 - `harmony://entry/src/main/ets/pages/LoginPage.ets#LoginPage.build` — method `build()`
 - `harmony://entry/src/main/ets/pages/LoginPage.ets#LoginPage.onSubmit` — method `async onSubmit(): Promise<void>`
 - `harmony://entry/src/main/ets/pages/LoginPage.ets#LoginPage.password` — property `@State password: string`
-- `harmony://entry/src/main/ets/pages/LoginPage.ets#LoginPage.pathStack` — property `@Consume('pathStack') pathStack: NavPathStack`
 - `harmony://entry/src/main/ets/pages/LoginPage.ets#LoginPage.username` — property `@State username: string`
 
 **ios**
@@ -138,14 +140,17 @@ status: current
 - `ios://MiniShop/Features/Login/LoginView.swift#LoginView.router` — property `@EnvironmentObject var router: AppRouter`
 - `ios://MiniShop/Features/Login/LoginView.swift#LoginView.username` — property `@State private var username`
 - `ios://MiniShop/Features/Login/LoginView.swift#LoginView.vm` — property `@StateObject private var vm`
-- `ios://MiniShop/Navigation/AppRouter.swift#AppRouter.handle` — function `func handle(url: URL)`
-- `ios://MiniShop/Navigation/AppRouter.swift#AppRouter.match` — function `func match(host: String, segments: [String]) -> Destination?`
-- `ios://MiniShop/Navigation/AppRouter.swift#AppRouter.path` — property `@Published var path: [Destination]`
+- `ios://MiniShop/Features/Login/LoginViewModel.swift#LoginViewModel.error` — property `@Published var error: String?`
+- `ios://MiniShop/Features/Login/LoginViewModel.swift#LoginViewModel.login` — function `func login(username: String, password: String) async -> Bool`
 - `ios://MiniShop/Networking/APIClient.swift#LoginRequest.password` — property `let password: String`
+- `ios://MiniShop/Networking/APIClient.swift#LoginRequest.username` — property `let username: String`
+- `ios://MiniShop/Networking/APIClient.swift#LoginResponse.token` — property `let token: String`
+- `ios://MiniShop/Networking/APIClient.swift#TokenStore.token` — property `private(set) var token: String?`
 
 ## 相关页面
 
 - [总览](../overview.md)
+- [导航与深链](../concepts/navigation.md) · [共享组件](../concepts/shared-components.md)
 - [android routes facts](../../facts/android/routes.md)
 - [harmony routes facts](../../facts/harmony/routes.md)
 - [ios routes facts](../../facts/ios/routes.md)

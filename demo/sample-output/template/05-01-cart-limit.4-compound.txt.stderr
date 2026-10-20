@@ -1,4 +1,4 @@
-kb compound: head=37c8400 base=ad44c25 mode=incremental tasks=3 (anchors changed ∪ signature changes propagated along reference edges)
+kb compound: head=516a1c3 base=8b9db05 mode=incremental tasks=3 (anchors changed ∪ signature changes propagated along reference edges)
   [ok] recheck  pages/_conflicts.md                template 
   [ok] update   pages/features/cart.md             template 
   [ok] update   pages/features/product_detail.md   template 

@@ -1,10 +1,11 @@
-base ad44c25 → head 37c8400
-  unchanged  211
-  body       3
+base 8b9db05 → head 516a1c3
+  unchanged  212
+  body       2
   signature  0
   added      0
   deleted    0
   renamed    0
+changed_route_ids: [cart product_detail]
+changed_files: 4
 body      android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.MAX_CART_ITEMS
 body      harmony://entry/src/main/ets/common/CartStore.ets#MAX_CART_ITEMS
-body      ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.maxCartItems

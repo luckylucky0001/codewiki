@@ -1,10 +1,12 @@
-base 0391c27 → head 4d0fb00
+base 9c3c23e → head c2e1c52
   unchanged  210
   body       4
   signature  0
   added      10
   deleted    0
   renamed    0
+changed_route_ids: [profile]
+changed_files: 8
 added     android://app/src/main/java/com/minishop/navigation/Routes.kt#Routes.PROFILE
 added     android://app/src/main/java/com/minishop/ui/profile/ProfileScreen.kt#ProfileScreen
 added     harmony://entry/src/main/ets/pages/ProfilePage.ets#ProfileBuilder
