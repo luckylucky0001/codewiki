@@ -187,3 +187,28 @@ struct OrdersView: View {
 		t.Errorf("order pattern: %+v", rm["order"])
 	}
 }
+
+// compose-samples: Jetcaster tv and wear both register "episode" and both
+// have an EpisodeScreen; each NavHost must keep its own route anchored on its
+// own module's screen.
+func TestSameRouteInTwoModules(t *testing.T) {
+	nav := func(pkg string) string {
+		return "package " + pkg + "\n\nobject Screen {\n    const val EPISODE = \"episode\"\n}\n\nfun NavGraphBuilder.app() {\n    composable(Screen.EPISODE) {\n        EpisodeScreen()\n    }\n}\n"
+	}
+	dir := writeTree(t, map[string]string{
+		"tv/src/main/java/a/App.kt":       nav("a"),
+		"tv/src/main/java/a/Episode.kt":   "package a\n\n@Composable\nfun EpisodeScreen() {}\n",
+		"wear/src/main/java/b/App.kt":     nav("b"),
+		"wear/src/main/java/b/Episode.kt": "package b\n\n@Composable\nfun EpisodeScreen() {}\n",
+	})
+	f := extractTree(t, dir, config.Platform{Name: "android", Root: "."})
+	got := map[string]bool{}
+	for _, r := range f.Routes {
+		if r.RouteID == "episode" {
+			got[r.Symbol] = true
+		}
+	}
+	if len(got) != 2 || !got["android://tv/src/main/java/a/Episode.kt#EpisodeScreen"] || !got["android://wear/src/main/java/b/Episode.kt#EpisodeScreen"] {
+		t.Fatalf("episode routes: %v (all %+v)", got, f.Routes)
+	}
+}

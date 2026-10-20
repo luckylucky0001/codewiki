@@ -182,6 +182,48 @@ func slugPattern(p string) string {
 	return strings.Join(segs, "_")
 }
 
+// findSymNear is findSym preferring the candidate that shares the longest
+// directory prefix with near: a multi-app repo (compose-samples has a
+// PlayerScreen in Jetcaster mobile, tv and wear) must anchor each NavHost on
+// its own module's screen.
+func (c *ctx) findSymNear(platform, name, near string, kinds ...string) *model.Symbol {
+	best := c.findSym(platform, name, kinds...)
+	if best == nil || len(c.byName[platform+"\x00"+name]) < 2 {
+		return best
+	}
+	bestScore := -1
+	for _, s := range c.byName[platform+"\x00"+name] {
+		ok := len(kinds) == 0
+		for _, k := range kinds {
+			if s.Kind == k {
+				ok = true
+			}
+		}
+		if !ok {
+			continue
+		}
+		score := commonPrefix(s.File, near) * 4
+		if !isTestPath(s.File) {
+			score += 2
+		}
+		if s.Parent == "" {
+			score++
+		}
+		if score > bestScore {
+			best, bestScore = s, score
+		}
+	}
+	return best
+}
+
+func commonPrefix(a, b string) int {
+	n := 0
+	for n < len(a) && n < len(b) && a[n] == b[n] {
+		n++
+	}
+	return n
+}
+
 func (c *ctx) findSym(platform, name string, kinds ...string) *model.Symbol {
 	var best *model.Symbol
 	bestScore := -1
@@ -241,22 +283,31 @@ func (c *ctx) sortedFiles() []string {
 // ---------- routes ----------
 
 func (c *ctx) routes() {
-	seen := map[string]bool{}
-	add := func(r model.Route) {
-		k := r.Platform + "|" + r.RouteID + "|" + r.Pattern
-		if seen[k] {
+	seen := map[string]int{} // key -> index in c.f.Routes
+	weak := map[int]bool{}   // routes anchored on the enclosing NavHost, not a screen
+	// site separates the same id + pattern registered in two modules
+	// (Jetcaster tv and wear both have "episode"); one site reported twice
+	// (Kotlin: call + trailing-lambda call) keeps the screen-anchored entry.
+	addAt := func(r model.Route, site string, resolved bool) {
+		k := r.Platform + "|" + r.RouteID + "|" + r.Pattern + "|" + site
+		if i, ok := seen[k]; ok {
+			if weak[i] && resolved {
+				c.f.Routes[i], weak[i] = r, false
+			}
 			return
 		}
-		seen[k] = true
+		seen[k] = len(c.f.Routes)
+		weak[len(c.f.Routes)] = !resolved
 		c.f.Routes = append(c.f.Routes, r)
 	}
+	add := func(r model.Route) { addAt(r, "", true) }
 	for _, file := range c.sortedFiles() {
 		fi := c.g.Files[file]
 		for _, call := range c.res.Calls[file] {
 			if fi.Lang == "kotlin" && len(call.TypeArgs) == 1 && (call.Callee == "composable" || call.Callee == "entry" || call.Callee == "dialog") {
 				// type-safe navigation (Navigation 2.8 composable<T>, Navigation 3 entry<T>)
 				if r, ok := c.typedRoute(fi.Platform, file, call); ok {
-					add(r)
+					addAt(r, file, r.Symbol != call.Enclosing)
 				}
 				continue
 			}
@@ -292,13 +343,13 @@ func (c *ctx) routes() {
 			sym, sfile := call.Enclosing, file
 			for _, in := range call.Inner {
 				if strings.HasSuffix(in, "Screen") {
-					if s := c.findSym(fi.Platform, in, "composable", "function"); s != nil {
+					if s := c.findSymNear(fi.Platform, in, file, "composable", "function"); s != nil {
 						sym, sfile = s.ID, s.File
 						break
 					}
 				}
 			}
-			add(model.Route{Platform: fi.Platform, RouteID: rid, Pattern: v.s, Deeplink: c.deeplink(fi.Platform, v.s), File: sfile, Symbol: sym})
+			addAt(model.Route{Platform: fi.Platform, RouteID: rid, Pattern: v.s, Deeplink: c.deeplink(fi.Platform, v.s), File: sfile, Symbol: sym}, file, sym != call.Enclosing)
 		}
 	}
 	// iOS: enums used as navigationDestination(for: X.self) and String-raw-value
@@ -468,7 +519,7 @@ func (c *ctx) typedRoute(platform, file string, call extract.Call) (model.Route,
 	sym, sfile := call.Enclosing, file
 	for _, in := range call.Inner {
 		if strings.HasSuffix(in, "Screen") || strings.HasSuffix(in, "Route") {
-			if s := c.findSym(platform, in, "composable", "function"); s != nil {
+			if s := c.findSymNear(platform, in, file, "composable", "function"); s != nil {
 				sym, sfile = s.ID, s.File
 				break
 			}
