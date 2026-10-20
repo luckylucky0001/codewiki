@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "note": "Ground truth = examples/minishop after demo/run.sh applied change sets 01-03 (cart limit 50 on Android/HarmonyOS, iOS left at 99; HarmonyOS loadProducts renamed fetchProducts; profile route added). Checks are extended regexes (grep -Ei) run on the final answer with newlines folded to spaces; a question passes when at least `min` of `must` match (default: all) and no `must_not` matches.",
+  "suffix": "只读，不要修改任何文件。请简洁回答，并给出依据（文件或符号）。",
+  "questions": [
+    {"id": "q01-cart-limit", "prompt": "购物车最多能放多少件商品？请分别给出 Android、iOS、HarmonyOS 三端的值。",
+     "must": ["android[^0-9]{0,120}\\b50\\b", "ios[^0-9]{0,120}\\b99\\b", "(harmony|鸿蒙|arkts)[^0-9]{0,120}\\b50\\b"]},
+    {"id": "q02-checkout-api", "prompt": "结算（checkout）页下单时调用哪个 HTTP 接口？给出方法和路径。",
+     "must": ["POST.{0,60}/api/orders\\b"]},
+    {"id": "q03-order-deeplink", "prompt": "直接打开订单详情页的 deeplink 是什么格式？",
+     "must": ["minishop://order/"], "must_not": ["minishop://orders?/detail"]},
+    {"id": "q04-cart-testids", "prompt": "购物车页面（cart 路由）上有哪些 testID？三端是否一致？",
+     "must": ["cart_checkout"], "must_not": ["cart_item_|cart_list|cart_remove"]},
+    {"id": "q05-outdated-docs", "prompt": "仓库里的旧文档（docs/、specs/、.kiro/ 等）有哪些说法已经和当前代码不一致？逐条列出。",
+     "must": ["order/create", "sms|短信", "SessionManager", "share_button|分享", "page|分页", "\\b10\\b"], "min": 4},
+    {"id": "q06-login-files", "prompt": "如果要修改登录逻辑，三端分别要改哪些源文件？",
+     "must": ["LoginViewModel\\.kt", "LoginViewModel\\.swift", "LoginPage\\.ets"]},
+    {"id": "q07-harmony-products", "prompt": "HarmonyOS 端加载商品列表的函数叫什么？它调用哪个接口？",
+     "must": ["fetchProducts", "GET.{0,60}/api/products\\b"], "must_not": ["Api\\.loadProducts\\b"]},
+    {"id": "q08-profile", "prompt": "profile 页面在三端分别由哪个文件实现？它的 deeplink 是什么？",
+     "must": ["ProfileScreen\\.kt", "ProfileView\\.swift", "ProfilePage\\.ets", "minishop://profile"]},
+    {"id": "q09-test-params", "prompt": "测试时可以通过 deeplink 的哪些查询参数直接注入状态（跳过登录、预置购物车）？三端各在哪里处理？",
+     "must": ["token", "cart=|cart 参数|`cart`|\\bcart\\b", "applyTestParams|AppRouter|EntryAbility|MainActivity"]},
+    {"id": "q10-parity", "prompt": "三端之间目前有哪些不一致（功能、testID 或常量取值）？",
+     "must": ["max_?cart_?items|maxCartItems|购物车上限|cart limit", "\\b99\\b", "\\b50\\b"]}
+  ]
+}

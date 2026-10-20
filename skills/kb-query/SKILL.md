@@ -1,6 +1,6 @@
 ---
 name: kb-query
-description: Answer questions about the app from the code-anchored codewiki LLM Wiki instead of grepping - features, routes, deep links, testIDs, HTTP APIs, constants/limits and how they differ across Android, iOS and HarmonyOS (e.g. "购物车上限三端分别是多少", "X 在三端怎么实现", "引用出处") - via `kb search`, `kb get`, `kb context <file>`, `kb parity` and facts/*.json, citing symbol ids. Use for any question about app behaviour or cross-platform values, before modifying a source file, or when another agent (e.g. an e2e test generator) needs routes/testids/apis.
+description: Answer questions about the app from the code-anchored codewiki LLM Wiki instead of grepping - features, routes, deep links, testIDs, HTTP APIs, constants/limits and how they differ across Android, iOS and HarmonyOS (e.g. "购物车上限三端分别是多少", "X 在三端怎么实现", "引用出处"), and which docs/specs are outdated or contradict the code (read `wiki/pages/_conflicts.md` / facts/requirements.json first - every claim is already checked) - via `kb search`, `kb get`, `kb context <file>`, `kb parity` and facts/*.json, citing symbol ids. Use for any question about app behaviour or cross-platform values, before modifying a source file, or when another agent (e.g. an e2e test generator) needs routes/testids/apis.
 ---
 
 # kb-query

@@ -25,7 +25,11 @@
 失败原因如下，都属于语法本身的限制，不是抽取器 bug：
 
 - **ArkTS（修补前 4 个文件）**：ArkUI 属性方法调用的参数里带尾逗号，例如 `.tabBar(this.TabBarBuilder(...),)`，或者 `),\n )`。上游语法不支持这种写法。我们给 vendored 的 `grammar.js` 打了补丁（`arkui_arguments` 允许尾逗号），并用 tree-sitter-cli 0.24.4（ABI 14）重新生成 `parser.c`。补丁之后 3858 个 ArkTS 文件**全部无错解析**。补丁内容见 `internal/grammars/arkts/VENDORED.md`，回归测试见 `TestTrailingCommaInArkUIArguments`。
-- **Swift（2 个文件）**：一处是 `unsafeBitCast(..., to: (@Sendable (X) -> Void).self)`，带属性的函数类型字面量；另一处是 `if let marker {`（Swift 5.7 的简写）出现在 `Task {}` 里。
+- **Swift（2 个文件）**：用最小样例逐一复现后确认是两种写法：
+  1. `NotificationService.swift`：`unsafeBitCast(x, to: (@Sendable (T) -> Void).self)`，带属性的函数类型作为元类型表达式；
+  2. `TimelineViewModel.swift`：`} else if await datasource.isEmpty {`。`if await x.y {` 中条件后面的 `{` 被当成 `y` 的 trailing closure（`if await x {`、`if (await x.y) {` 都能解析）。之前把原因记成了 `if let marker {`，这是误判：单独测试时这种写法能正常解析。
+
+  **上游复查（第 5 轮，限时 25 分钟）**：本仓库固定的是 `with-generated-files` 分支的最新提交 `82bb3a5`（0.7.4）。上游 `main` 已到 `9e3b87f`（2026-10-13），0.7.4 之后有 7 个提交，内容是 switch case 里后续语句的属性、修饰符、`open` 标识符，以及编译指令越界读取。我们用 tree-sitter-cli 0.24.4 从 `main` 重新生成 parser，两个真实文件和上面两个最小样例**仍然失败**。所以不升级，等上游修复。这两个文件仍会抽取符号，只是抽取结果可能不完整。
 
 ArkTS 语法的上游 README 给出的真实工程无错解析率约为 94%。在这次 3858 个 HarmonyOS NEXT / OpenHarmony 文件上，实测为 99.9%；打上尾逗号补丁后为 100%。
 

@@ -263,8 +263,8 @@ func (k *Checker) Check(c *Claim) {
 	}
 	// 2. deeplinks
 	for _, m := range reDeeplink.FindAllStringSubmatch(text, -1) {
-		if m[1] == "http" || m[1] == "https" {
-			continue
+		if m[1] == "http" || m[1] == "https" || !k.appScheme(m[1]) {
+			continue // web URLs and schemes the app does not declare (devtools://, ws://…)
 		}
 		pat := strings.SplitN(m[2], "?", 2)[0]
 		if strings.ContainsAny(pat, "<>") {
@@ -540,4 +540,22 @@ func sortedKeys(m map[string]bool) []string {
 	}
 	sort.Strings(out)
 	return out
+}
+
+// appScheme reports whether scheme is a deep-link scheme the app declares
+// (route deeplinks or manifest / Info.plist / module.json5 schemes).
+func (k *Checker) appScheme(scheme string) bool {
+	for _, r := range k.F.Routes {
+		if strings.HasPrefix(r.Deeplink, scheme+"://") {
+			return true
+		}
+	}
+	for _, ss := range k.F.Schemes {
+		for _, s := range ss {
+			if s == scheme {
+				return true
+			}
+		}
+	}
+	return false
 }
