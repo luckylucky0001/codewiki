@@ -146,6 +146,12 @@ type Checker struct {
 	tokIdx   map[string][]int    // identifier token -> indexes into G.Symbols whose text contains it
 	buildCfg map[string][]cfgValue
 	parts    map[string]bool
+	// lazily built lookup indexes (ingest on NextE: 83 s -> see docs/validation.md)
+	nameIdx   map[string][]int           // Name / Qual / every dot-suffix of Qual -> symbol indexes
+	fileSyms  map[string][]*model.Symbol // file -> symbols
+	fileNorms map[string]string          // file -> normLit(whole file)
+	fileList  []string
+	routeRes  map[string]*regexp.Regexp
 }
 
 func normAPIPath(p string) string {
@@ -227,24 +233,92 @@ func (k *Checker) findFile(name string) string {
 	return found
 }
 
+func (k *Checker) symsInFile(file string) []*model.Symbol {
+	if k.fileSyms == nil {
+		k.fileSyms = map[string][]*model.Symbol{}
+		for _, s := range k.G.Symbols {
+			k.fileSyms[s.File] = append(k.fileSyms[s.File], s)
+		}
+	}
+	return k.fileSyms[file]
+}
+
+// symFiles lists the files that declare symbols.
+func (k *Checker) symFiles() []string {
+	if k.fileList == nil {
+		seen := map[string]bool{}
+		for _, s := range k.G.Symbols {
+			if !seen[s.File] {
+				seen[s.File] = true
+				k.fileList = append(k.fileList, s.File)
+			}
+		}
+	}
+	return k.fileList
+}
+
+// fileNorm is normLit of a whole source file. normLit only drops bytes, so a
+// literal found in a symbol's normalized text is always found in its file's:
+// files without the literal are skipped before any per-symbol search.
+func (k *Checker) fileNorm(file string) string {
+	if k.fileNorms == nil {
+		k.fileNorms = map[string]string{}
+	}
+	v, ok := k.fileNorms[file]
+	if !ok {
+		if b, err := os.ReadFile(filepath.Join(k.Dir, filepath.FromSlash(file))); err == nil {
+			v = normLit(string(b))
+		}
+		k.fileNorms[file] = v
+	}
+	return v
+}
+
+func (k *Checker) routeRe(rid string) *regexp.Regexp {
+	if k.routeRes == nil {
+		k.routeRes = map[string]*regexp.Regexp{}
+	}
+	re, ok := k.routeRes[rid]
+	if !ok {
+		re = regexp.MustCompile(`\b` + regexp.QuoteMeta(rid) + `\b`)
+		k.routeRes[rid] = re
+	}
+	return re
+}
+
 func (k *Checker) symAtLine(file string, line int) string {
 	best := ""
 	span := 1 << 30
-	for _, s := range k.G.Symbols {
-		if s.File == file && s.StartLine <= line && line <= s.EndLine && s.EndLine-s.StartLine < span {
+	for _, s := range k.symsInFile(file) {
+		if s.StartLine <= line && line <= s.EndLine && s.EndLine-s.StartLine < span {
 			best, span = s.ID, s.EndLine-s.StartLine
 		}
 	}
 	return best
 }
 
+// findSymbols returns, in graph order, the symbols whose Name or Qual is
+// name or whose Qual ends with "."+name.
 func (k *Checker) findSymbols(name string) []*model.Symbol {
 	name = strings.TrimSuffix(name, "()")
-	var out []*model.Symbol
-	for _, s := range k.G.Symbols {
-		if s.Name == name || s.Qual == name || strings.HasSuffix(s.Qual, "."+name) {
-			out = append(out, s)
+	if k.nameIdx == nil {
+		k.nameIdx = map[string][]int{}
+		for i, s := range k.G.Symbols {
+			keys := map[string]bool{s.Name: true, s.Qual: true}
+			for j := 0; j < len(s.Qual); j++ {
+				if s.Qual[j] == '.' {
+					keys[s.Qual[j+1:]] = true
+				}
+			}
+			for key := range keys {
+				k.nameIdx[key] = append(k.nameIdx[key], i)
+			}
 		}
+	}
+	idx := k.nameIdx[name]
+	out := make([]*model.Symbol, 0, len(idx))
+	for _, i := range idx {
+		out = append(out, k.G.Symbols[i])
 	}
 	return out
 }
@@ -420,12 +494,14 @@ func (k *Checker) Check(c *Claim) {
 			continue
 		}
 		var hits []string
-		for _, s := range k.G.Symbols {
-			if containerKinds[s.Kind] {
+		for _, file := range k.symFiles() {
+			if !strings.Contains(k.fileNorm(file), lit) {
 				continue
 			}
-			if strings.Contains(k.symbolText(s), lit) {
-				hits = append(hits, s.ID)
+			for _, s := range k.symsInFile(file) {
+				if !containerKinds[s.Kind] && strings.Contains(k.symbolText(s), lit) {
+					hits = append(hits, s.ID)
+				}
 			}
 		}
 		sort.Strings(hits)
@@ -442,7 +518,7 @@ func (k *Checker) Check(c *Claim) {
 		}
 	}
 	for _, r := range k.F.Routes {
-		if len(r.RouteID) > 3 && regexp.MustCompile(`\b`+regexp.QuoteMeta(r.RouteID)+`\b`).MatchString(text) {
+		if len(r.RouteID) > 3 && strings.Contains(text, r.RouteID) && k.routeRe(r.RouteID).MatchString(text) {
 			routes[r.RouteID] = true
 		}
 	}

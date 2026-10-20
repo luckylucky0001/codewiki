@@ -29,11 +29,14 @@ type ctx struct {
 	consts map[string]map[string]string // platform -> name/Parent.Name -> value
 	byName map[string][]*model.Symbol   // platform\x00name
 	f      *model.Facts
+	// main_pages route id -> module, to disambiguate pages/Index across modules
+	mainPageIDs map[string]string
+	topByFile   map[string][]*model.Symbol // lazily built: file -> top-level symbols
 }
 
 // Extract computes all facts for a scan result.
 func Extract(cfg *config.Config, res *scan.Result) *model.Facts {
-	c := &ctx{cfg: cfg, res: res, g: res.Graph, consts: map[string]map[string]string{}, byName: map[string][]*model.Symbol{},
+	c := &ctx{cfg: cfg, res: res, g: res.Graph, mainPageIDs: map[string]string{}, consts: map[string]map[string]string{}, byName: map[string][]*model.Symbol{},
 		f: &model.Facts{Routes: []model.Route{}, TestIDs: []model.TestID{}, APIs: []model.API{}, Schemes: map[string][]string{}}}
 	for _, s := range c.g.Symbols {
 		c.byName[s.Platform+"\x00"+s.Name] = append(c.byName[s.Platform+"\x00"+s.Name], s)
@@ -261,13 +264,30 @@ func (c *ctx) routes() {
 				continue
 			}
 			a := call.Args[0]
+			for _, x := range call.Args {
+				if x.Label == "route" {
+					a = x
+				}
+			}
+			ref := ""
+			if len(a.Parts) == 1 && a.Parts[0].Ref != "" {
+				ref = a.Parts[0].Ref
+			}
+			if ref != "" && !constLikeRef(ref) {
+				continue // e.g. a wrapper's own `route` parameter
+			}
 			v, ok := c.eval(fi.Platform, a.Parts)
-			if !ok || v.dynamic {
+			if (!ok || v.dynamic) && ref == "" {
 				continue
 			}
+			if !ok || v.dynamic {
+				// composable(Screen.Discover.route) / HomeSections.FEED.route:
+				// the value is computed at runtime, the destination is still known
+				v = strVal{s: refRouteID(ref)}
+			}
 			rid := slugPattern(v.s)
-			if len(a.Parts) == 1 && a.Parts[0].Ref != "" {
-				rid = Snake(lastSeg(a.Parts[0].Ref))
+			if ref != "" {
+				rid = refRouteID(ref)
 			}
 			sym, sfile := call.Enclosing, file
 			for _, in := range call.Inner {
@@ -327,7 +347,45 @@ func (c *ctx) routes() {
 		}
 		add(model.Route{Platform: s.Platform, RouteID: rid, Pattern: s.Value, Deeplink: c.deeplink(s.Platform, s.Value), File: file, Symbol: sym})
 	}
-	// HarmonyOS router_map entries were collected in resources(); sorted later.
+	// HarmonyOS router_map entries were collected in resources(); Navigation
+	// apps without a router_map resolve names in a navDestination builder, so
+	// names pushed with NavPathStack.pushPathByName('X') are routes too.
+	known := map[string]bool{}
+	for _, r := range c.f.Routes {
+		known[r.Platform+"|"+r.RouteID] = true
+	}
+	for _, file := range c.sortedFiles() {
+		fi := c.g.Files[file]
+		if fi.Lang != "arkts" && fi.Lang != "typescript" {
+			continue
+		}
+		for _, call := range c.res.Calls[file] {
+			if (call.Callee != "pushPathByName" && call.Callee != "replacePathByName" && call.Callee != "pushDestinationByName") || len(call.Args) == 0 {
+				continue
+			}
+			parts := call.Args[0].Parts
+			if len(parts) == 1 && parts[0].Ref != "" && !constLikeRef(parts[0].Ref) {
+				continue // pushPathByName(name): a variable, not a route name
+			}
+			v, ok := c.eval(fi.Platform, parts)
+			if !ok || v.dynamic || v.s == "" || strings.ContainsAny(v.s, "\"' /") || known[fi.Platform+"|"+v.s] {
+				continue
+			}
+			known[fi.Platform+"|"+v.s] = true
+			r := model.Route{Platform: fi.Platform, RouteID: v.s, Pattern: v.s}
+			for _, cand := range []string{v.s, v.s + "Page", v.s + "View", Pascal(v.s), Pascal(v.s) + "Page"} {
+				if sym := c.findSym(fi.Platform, cand, "component", "struct", "class"); sym != nil {
+					r.Symbol, r.File = sym.ID, sym.File
+					break
+				}
+			}
+			if r.Symbol == "" {
+				// destination not resolvable statically; keep the name, point at the push site
+				r.File = file
+			}
+			add(r)
+		}
+	}
 }
 
 var (
@@ -338,7 +396,7 @@ var (
 // typedRoute builds a route from a type-safe destination: route_id from the
 // key type name, pattern from the key's constructor properties.
 func (c *ctx) typedRoute(platform, file string, call extract.Call) (model.Route, bool) {
-	t := call.TypeArgs[0]
+	t := lastSeg(call.TypeArgs[0]) // composable<Route.Inbox>
 	base := t
 	for _, suf := range []string{"NavKey", "Route", "Destination", "Screen", "Key"} {
 		if strings.HasSuffix(base, suf) && len(base) > len(suf) {
@@ -363,6 +421,34 @@ func (c *ctx) typedRoute(platform, file string, call extract.Call) (model.Route,
 		}
 	}
 	return model.Route{Platform: platform, RouteID: rid, Pattern: pattern, File: sfile, Symbol: sym}, true
+}
+
+// constLikeRef reports whether a bare reference names a constant / static
+// member (Routes.HOME, HOME_ROUTE, Screen.Home.route) rather than a local
+// variable or parameter, which must not be resolved against same-named
+// constants elsewhere in the project.
+func constLikeRef(ref string) bool {
+	if ref == "" {
+		return false
+	}
+	if strings.Contains(ref, ".") {
+		return true
+	}
+	return strings.ToUpper(ref) == ref || unicode.IsUpper([]rune(ref)[0])
+}
+
+// refRouteID names a route from a reference: Screen.Discover.route and
+// HomeSections.FEED.route -> discover / feed; HOME_ROUTE -> home_route.
+func refRouteID(ref string) string {
+	segs := strings.Split(ref, ".")
+	last := segs[len(segs)-1]
+	switch strings.ToLower(last) {
+	case "route", "navroute", "path", "routename", "name", "destination":
+		if len(segs) > 1 {
+			last = segs[len(segs)-2]
+		}
+	}
+	return Snake(last)
 }
 
 // caseParams turns "case accountDetail(id: String)" into "/{id}".
@@ -449,6 +535,9 @@ func (c *ctx) resources(p config.Platform) {
 		}
 		rel, _ := filepath.Rel(c.res.Dir, path)
 		rel = filepath.ToSlash(rel)
+		if c.cfg.Shadowed(p, rel) {
+			return nil
+		}
 		switch d.Name() {
 		case "AndroidManifest.xml":
 			c.manifest(p.Name, path, rel)
@@ -458,6 +547,10 @@ func (c *ctx) resources(p config.Platform) {
 			c.moduleJSON5(p.Name, path, rel)
 		case "router_map.json":
 			c.routerMap(p, path)
+		default:
+			if strings.HasSuffix(d.Name(), ".xml") && strings.HasSuffix(filepath.ToSlash(filepath.Dir(path)), "/res/navigation") {
+				c.navGraph(p.Name, path, rel)
+			}
 		case "main_pages.json":
 			c.mainPages(p.Name, path, rel)
 		}
@@ -505,7 +598,11 @@ func (c *ctx) manifest(platform, path, rel string) {
 		}
 		switch se.Name.Local {
 		case "data":
-			if s := attr("scheme"); s != "" && s != "http" && s != "https" {
+			s := attr("scheme")
+			if strings.HasPrefix(s, "@string/") {
+				s = androidString(path, strings.TrimPrefix(s, "@string/"))
+			}
+			if s != "" && !strings.HasPrefix(s, "@") && !strings.HasPrefix(s, "$") {
 				c.addScheme(platform, s)
 			}
 		case "activity":
@@ -583,6 +680,7 @@ func (c *ctx) moduleJSON5(platform, path, rel string) {
 	var m struct {
 		Module struct {
 			Name      string `json:"name"`
+			RouterMap string `json:"routerMap"`
 			Abilities []struct {
 				Name   string `json:"name"`
 				Skills []struct {
@@ -596,6 +694,19 @@ func (c *ctx) moduleJSON5(platform, path, rel string) {
 	if err := json.Unmarshal(JSON5(b), &m); err != nil {
 		c.f.Warnings = append(c.f.Warnings, rel+": "+err.Error())
 		return
+	}
+	// "routerMap": "$profile:route_map" — the file name is free; router_map.json
+	// files are also picked up by name in resources().
+	if prof, ok := strings.CutPrefix(m.Module.RouterMap, "$profile:"); ok && prof != "router_map" {
+		rm := filepath.Join(filepath.Dir(path), "resources", "base", "profile", prof+".json")
+		if _, err := os.Stat(rm); err == nil {
+			for _, p := range c.cfg.Platforms {
+				if p.Name == platform {
+					c.routerMap(p, rm)
+					break
+				}
+			}
+		}
 	}
 	for _, a := range m.Module.Abilities {
 		c.f.Entries = append(c.f.Entries, model.Entry{Platform: platform, Kind: "ability", Name: a.Name, File: rel})
@@ -668,8 +779,171 @@ func (c *ctx) mainPages(platform, path, rel string) {
 		Src []string `json:"src"`
 	}
 	if json.Unmarshal(JSON5(b), &m) == nil {
+		// <module>/src/main/resources/base/profile/main_pages.json -> <module>/src/main/ets/<page>.ets
+		srcMain := filepath.ToSlash(filepath.Dir(filepath.Dir(filepath.Dir(filepath.Dir(rel)))))
+		mod := filepath.ToSlash(moduleDir(rel))
 		for _, s := range m.Src {
 			c.f.Entries = append(c.f.Entries, model.Entry{Platform: platform, Kind: "main_page", Name: s, File: rel})
+			// router.pushUrl({url: 'pages/Detail'}) targets: one route per page,
+			// anchored on the page's @Entry struct
+			file := strings.TrimPrefix(srcMain+"/ets/"+s+".ets", "./")
+			var segs []string
+			for _, seg := range strings.Split(path2id(s), "/") {
+				segs = append(segs, Snake(seg))
+			}
+			rid := strings.Join(segs, "_")
+			if c.mainPageIDs[rid] != "" && c.mainPageIDs[rid] != mod {
+				var ms []string
+				for _, seg := range strings.Split(mod, "/") {
+					ms = append(ms, Snake(strings.NewReplacer("-", "_", ".", "_").Replace(seg)))
+				}
+				rid = strings.Join(ms, "_") + "_" + rid
+			}
+			c.mainPageIDs[rid] = mod
+			sym := ""
+			if c.topByFile == nil {
+				c.topByFile = map[string][]*model.Symbol{}
+				for _, x := range c.g.Symbols {
+					if x.Parent == "" {
+						c.topByFile[x.File] = append(c.topByFile[x.File], x)
+					}
+				}
+			}
+			for _, x := range c.topByFile[file] {
+				if x.Kind == "component" || x.Kind == "struct" {
+					sym = x.ID
+					if strings.Contains(x.Signature, "@Entry") {
+						break
+					}
+				}
+			}
+			if sym == "" || c.hostsNavigation(file) {
+				continue // a Navigation() host is a container; its NavDestinations are the routes
+			}
+			c.f.Routes = append(c.f.Routes, model.Route{Platform: platform, RouteID: rid, Pattern: s, File: file, Symbol: sym})
+		}
+	}
+}
+
+func (c *ctx) hostsNavigation(file string) bool {
+	for _, call := range c.res.Calls[file] {
+		if call.Callee == "Navigation" {
+			return true
+		}
+	}
+	return false
+}
+
+// path2id drops the conventional "pages/" prefix: pages/Index -> Index,
+// pages/user/Profile -> user/Profile.
+func path2id(s string) string {
+	return strings.TrimPrefix(s, "pages/")
+}
+
+// androidString resolves @string/name for a manifest from the module's
+// res/values/strings.xml; "" when not found.
+func androidString(manifest, name string) string {
+	b, err := os.ReadFile(filepath.Join(filepath.Dir(manifest), "res", "values", "strings.xml"))
+	if err != nil {
+		return ""
+	}
+	dec := xml.NewDecoder(strings.NewReader(string(b)))
+	for {
+		tok, err := dec.Token()
+		if err != nil {
+			return ""
+		}
+		if se, ok := tok.(xml.StartElement); ok && se.Name.Local == "string" {
+			for _, a := range se.Attr {
+				if a.Name.Local == "name" && a.Value == name {
+					var v string
+					if dec.DecodeElement(&v, &se) == nil {
+						return strings.TrimSpace(v)
+					}
+					return ""
+				}
+			}
+		}
+	}
+}
+
+// navGraph reads a Jetpack Navigation XML graph (res/navigation/*.xml): every
+// <fragment>/<dialog>/<activity>/<composable> destination with an android:id
+// is a route (arguments become pattern params, <deepLink app:uri> its deep
+// link), anchored on the destination class.
+func (c *ctx) navGraph(platform, path, rel string) {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return
+	}
+	type dest struct {
+		r    model.Route
+		args []string
+	}
+	var stack []*dest
+	dec := xml.NewDecoder(strings.NewReader(string(b)))
+	for {
+		tok, err := dec.Token()
+		if err != nil {
+			break
+		}
+		switch t := tok.(type) {
+		case xml.StartElement:
+			attr := func(name string) string {
+				for _, a := range t.Attr {
+					if a.Name.Local == name {
+						return a.Value
+					}
+				}
+				return ""
+			}
+			switch t.Name.Local {
+			case "fragment", "dialog", "activity", "composable":
+				id := attr("id")
+				id = id[strings.LastIndex(id, "/")+1:]
+				if id == "" {
+					stack = append(stack, nil)
+					continue
+				}
+				rid := Snake(id)
+				d := &dest{r: model.Route{Platform: platform, RouteID: rid, File: rel}}
+				if cls := attr("name"); cls != "" {
+					if s := c.findSym(platform, lastSeg(cls), "class", "object", "function", "composable"); s != nil {
+						d.r.Symbol, d.r.File = s.ID, s.File
+					}
+				}
+				stack = append(stack, d)
+			case "argument":
+				if len(stack) > 0 && stack[len(stack)-1] != nil {
+					stack[len(stack)-1].args = append(stack[len(stack)-1].args, attr("name"))
+				}
+			case "deepLink":
+				if len(stack) > 0 && stack[len(stack)-1] != nil {
+					if u := attr("uri"); u != "" {
+						stack[len(stack)-1].r.Deeplink = u
+						if i := strings.Index(u, "://"); i > 0 {
+							c.addScheme(platform, u[:i])
+						}
+					}
+				}
+			}
+		case xml.EndElement:
+			switch t.Name.Local {
+			case "fragment", "dialog", "activity", "composable":
+				if len(stack) == 0 {
+					continue
+				}
+				d := stack[len(stack)-1]
+				stack = stack[:len(stack)-1]
+				if d == nil {
+					continue
+				}
+				d.r.Pattern = d.r.RouteID
+				for _, a := range d.args {
+					d.r.Pattern += "/{" + a + "}"
+				}
+				c.f.Routes = append(c.f.Routes, d.r)
+			}
 		}
 	}
 }

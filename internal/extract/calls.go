@@ -21,7 +21,7 @@ func (c *fileCtx) collectCalls(n *sitter.Node, out *[]Call) {
 		// `entry<Key> { … }` without parentheses parses as (entry < Key) > { … }
 		if l := n.NamedChild(0); l != nil && l.Kind() == "binary_expression" && n.NamedChildCount() == 2 && n.NamedChild(1).Kind() == "lambda_literal" {
 			f, ty := l.NamedChild(0), l.NamedChild(1)
-			if f != nil && ty != nil && f.Kind() == "identifier" && (ty.Kind() == "identifier" || ty.Kind() == "user_type") && strings.Contains(c.text(l), "<") {
+			if f != nil && ty != nil && f.Kind() == "identifier" && (ty.Kind() == "identifier" || ty.Kind() == "user_type" || ty.Kind() == "navigation_expression") && strings.Contains(c.text(l), "<") {
 				call := Call{Callee: c.text(f), CalleeText: c.text(f), Line: int(f.StartPosition().Row) + 1, Enclosing: c.enclosing(n), TypeArgs: []string{lastIdent(ty, c.src)}}
 				if ty.Kind() == "identifier" {
 					call.TypeArgs = []string{c.text(ty)}

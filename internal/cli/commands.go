@@ -1525,12 +1525,29 @@ func upsertMarkedBlock(path, block string, dry bool) (bool, error) {
 // under the TreeStamp of the working tree: when nothing under the platform
 // roots changed (path, size, mtime), read-only query commands skip the scan
 // (reference resolution dominates warm scans on large repos).
+// binaryStamp identifies the running kb build (path, size, mtime).
+func binaryStamp() string {
+	exe, err := os.Executable()
+	if err != nil {
+		return "unknown"
+	}
+	st, err := os.Stat(exe)
+	if err != nil {
+		return exe
+	}
+	return fmt.Sprintf("%s:%d:%d", exe, st.Size(), st.ModTime().UnixNano())
+}
+
 func stampCached[T any](cfg *config.Config, name string, compute func() (T, error)) (T, error) {
 	var zero T
 	stamp, err := scan.TreeStamp(cfg)
 	if err != nil {
 		return zero, err
 	}
+	// The tree stamp covers the extractor (CacheVersion) but not the fact
+	// extractors / engine; key on the kb binary too so an upgraded kb never
+	// serves facts computed by the previous build.
+	stamp += "|" + binaryStamp()
 	p := filepath.Join(cfg.WikiPath(), ".kb", "cache", name+".json.gz")
 	type snap struct {
 		Stamp string `json:"stamp"`

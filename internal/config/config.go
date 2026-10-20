@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -103,20 +104,62 @@ func (c *Config) WikiPath() string {
 }
 
 // Detect guesses platforms from the directory layout of root.
+//
+// Conventional platform dirs (android/, ios/, harmony/ …) win. Otherwise the
+// repo root itself is a platform root when it carries that platform's build
+// marker: settings.gradle(.kts) for a multi-module Gradle build (android "."
+// rather than just app/), an Xcode project/workspace or Package.swift (ios
+// "."), build-profile.json5 / AppScope/ / oh-package.json5 (harmony "."). A
+// KMP repo thus gets android "." plus ios "iosApp" — overlapping roots are
+// fine, each file belongs to the most specific one (see Shadowed).
 func Detect(root string) []Platform {
 	var out []Platform
-	try := func(name string, dirs ...string) {
-		for _, d := range dirs {
-			if st, err := os.Stat(filepath.Join(root, d)); err == nil && st.IsDir() {
+	isDir := func(d string) bool {
+		st, err := os.Stat(filepath.Join(root, d))
+		return err == nil && st.IsDir()
+	}
+	exists := func(f string) bool {
+		_, err := os.Stat(filepath.Join(root, f))
+		return err == nil
+	}
+	glob := func(pat string) bool {
+		m, _ := filepath.Glob(filepath.Join(root, pat))
+		return len(m) > 0
+	}
+	dirs := func(name string, ds ...string) bool {
+		for _, d := range ds {
+			if isDir(d) {
 				out = append(out, Platform{Name: name, Root: d})
-				return
+				return true
 			}
 		}
+		return false
 	}
-	try("android", "android", "Android", "app")
-	try("ios", "ios", "iOS", "iosApp")
-	try("harmony", "harmony", "harmonyos", "ohos", "HarmonyOS")
-	try("web", "web", "src", "lib")
+	atRoot := map[string]bool{}
+	if !dirs("android", "android", "Android") {
+		switch {
+		case exists("settings.gradle") || exists("settings.gradle.kts"):
+			out = append(out, Platform{Name: "android", Root: "."})
+			atRoot["android"] = true
+		default:
+			dirs("android", "app")
+		}
+	}
+	if !dirs("ios", "ios", "iOS", "iosApp", "app/iosApp") {
+		if glob("*.xcodeproj") || glob("*.xcworkspace") || exists("Package.swift") {
+			out = append(out, Platform{Name: "ios", Root: "."})
+			atRoot["ios"] = true
+		}
+	}
+	if !dirs("harmony", "harmony", "harmonyos", "ohos", "HarmonyOS") {
+		if exists("build-profile.json5") || exists("oh-package.json5") || isDir("AppScope") {
+			out = append(out, Platform{Name: "harmony", Root: "."})
+			atRoot["harmony"] = true
+		}
+	}
+	if len(atRoot) == 0 || isDir("web") {
+		dirs("web", "web", "src", "lib")
+	}
 	return out
 }
 
@@ -128,4 +171,36 @@ func (c *Config) Render() ([]byte, error) {
 	}
 	head := "# codewiki configuration. See README.md (\"配置\").\n"
 	return append([]byte(head), b...), nil
+}
+
+func cleanRoot(root string) string {
+	r := strings.Trim(filepath.ToSlash(filepath.Clean(filepath.FromSlash(root))), "/")
+	if r == "." {
+		return ""
+	}
+	return r
+}
+
+func rootContains(r, rel string) bool {
+	return r == "" || rel == r || strings.HasPrefix(rel, r+"/")
+}
+
+// Shadowed reports whether rel (slash-separated, relative to Root) lies under
+// p's root but also under a strictly deeper root of another platform. When
+// roots overlap — e.g. a KMP repo configured as android "." plus ios
+// "iosApp" — each file then belongs to exactly one platform: the most
+// specific root. Platforms sharing the same root (split by include globs) are
+// not affected.
+func (c *Config) Shadowed(p Platform, rel string) bool {
+	pr := cleanRoot(p.Root)
+	for _, q := range c.Platforms {
+		if q.Name == p.Name {
+			continue
+		}
+		qr := cleanRoot(q.Root)
+		if len(qr) > len(pr) && rootContains(qr, rel) && rootContains(pr, qr) {
+			return true
+		}
+	}
+	return false
 }
