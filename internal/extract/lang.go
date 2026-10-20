@@ -8,9 +8,9 @@ import (
 	"unsafe"
 
 	swift "github.com/alex-pinkus/tree-sitter-swift/bindings/go"
+	arkts "github.com/luckylucky0001/codewiki/internal/grammars/arkts"
 	kotlin "github.com/tree-sitter-grammars/tree-sitter-kotlin/bindings/go"
 	sitter "github.com/tree-sitter/go-tree-sitter"
-	arkts "github.com/luckylucky0001/codewiki/internal/grammars/arkts"
 	java "github.com/tree-sitter/tree-sitter-java/bindings/go"
 	javascript "github.com/tree-sitter/tree-sitter-javascript/bindings/go"
 	typescript "github.com/tree-sitter/tree-sitter-typescript/bindings/go"
