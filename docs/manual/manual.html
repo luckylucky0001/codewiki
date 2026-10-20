@@ -97,10 +97,10 @@
 </table>
 <h3>交付物一览</h3>
 <div class="kpi">
-  <div><b>21</b><span>kb 子命令（全部支持 --json）</span></div>
+  <div><b>22</b><span>kb 子命令（全部支持 --json）</span></div>
   <div><b>7</b><span>tree-sitter 语言：Kotlin/Java/Swift/ArkTS/JS/TS/TSX</span></div>
   <div><b>4</b><span>Agent Skills：compound / ingest / query / lint</span></div>
-  <div><b>76</b><span>Go 测试（单元 + 集成 + 评测 + 安全），vet / gofmt 干净</span></div>
+  <div><b>77</b><span>Go 测试（单元 + 集成 + 评测 + 安全），vet / gofmt 干净</span></div>
 </div>
 </section>
 
@@ -187,7 +187,7 @@
   <tr><td><code>kb ingest</code></td><td>把文档复制到 <code>raw/docs</code>，抽取断言（EARS、MUST/SHALL、FR-001、Kiro 编号），逐条判为 verified / conflict / unverifiable</td></tr>
   <tr><td><code>kb search / get / context</code></td><td>检索 wiki；按 id 取页面；查询某个文件对应的页面、符号、路由、testID、接口，以及锚定在该文件中的文档需求（供测试生成使用）</td></tr>
   <tr><td><code>kb conflicts</code></td><td><b>哪些文档过时</b>：与代码矛盾的断言，附 <code>文件:行号</code>、代码证据和修改建议（MCP：<code>kb_conflicts</code>）</td></tr>
-  <tr><td><code>kb lint-tid / parity</code></td><td>testID 覆盖矩阵；功能 × 平台一致性矩阵和跨平台常量差异（生成 <code>pages/parity.md</code>）</td></tr>
+  <tr><td><code>kb routes / lint-tid / parity</code></td><td>按模块汇总路由并列出 dangling buildFunction；testID 覆盖矩阵（<code>--pages</code>：哪些页面设置了 testID）；功能 × 平台一致性和跨平台常量差异</td></tr>
   <tr><td><code>kb bench / eval</code></td><td>冷 / 热扫描基准；用人工标注的 golden set 评测断言核对与 plan 影响面（precision / recall）</td></tr>
   <tr><td><code>kb mcp / anchor / install-skills</code></td><td>stdio MCP server（7 个工具）；打印符号当前 hash；安装 4 个 skill，并在 AGENTS.md / CLAUDE.md 中写入幂等的 codewiki 指引块</td></tr>
   <tr><td><code>kb hook install</code></td><td>安装 git 钩子：<code>post-receive</code>（服务端 push 到 master 时 compound；有锁串行，能追平进度）/ <code>post-merge</code>（客户端）。配合全局参数 <code>--wiki-dir</code></td></tr>
@@ -303,7 +303,7 @@ status: current            # current | stale | outdated-doc
   <tr><td>A：wiki + skills</td><td>30/30</td><td><b>9.0</b></td><td><b>4.5k</b></td><td><b>$0.25</b></td><td><b>30 s</b></td></tr>
   <tr><td>B：只有源码</td><td>30/30</td><td>12.7</td><td>6.6k</td><td>$0.29</td><td>39 s</td></tr>
 </table>
-<p>结果如实写：minishop（49 个文件）上两组<b>准确率相同</b>，A 的 turns 少 29%。“三端不一致”这题 A 用 11 turns，B 用 39 turns。“哪些文档过时”这题，只改 skill 描述没有效果；新增 <code>kb conflicts</code> 后从 25 turns 降到 <b>4.7 turns</b>。在 HarmonyOS Cases 上，查找题两组持平；5 道汇总题（标准答案从源码算出）A 10/10、17.6 turns，B 9/10、14.0 turns，且 A 从未调用 kb。由 <code>kb install-skills</code> 写入 AGENTS.md / CLAUDE.md 指引块后，涉及 wiki 的运行从 2/10 增加到 8/10，调用 kb 的运行从 0/10 增加到 2/10，A 的 turns 降到 13.8，但仍没有超过 B。所以关键是要有能直接回答问题的命令。打分修正已披露，全部基准约花费 $1.35。</p>
+<p>结果如实写：minishop（49 个文件）上两组<b>准确率相同</b>。“三端不一致”这题 A 用 11 turns，B 用 39 turns；“过时文档”这题新增 <code>kb conflicts</code> 后从 25 turns 降到 4.7 turns。HarmonyOS Cases 上，查找题两组持平。5 道汇总题（标准答案从源码算出）的结果是：没有指引块时，A 从未调用 kb（A 17.6 turns，B 14.0 turns）；加上 AGENTS.md / CLAUDE.md 指引块后，A 降到 13.8 turns；再加上 <code>kb routes</code>、<code>kb lint-tid --pages</code> 并写明具体动作后，8/10 的运行调用了 kb。在 G1–G4 上，A 用 <b>8.1 turns、$0.067</b>，B 用 14.8 turns、$0.095，<b>A 第一次胜出</b>。但没有对应命令的 G5 上，A 手动计数花了 $0.32。所以 wiki 的价值取决于问题能否被一条命令覆盖。打分修正已披露，全部基准约 $1.73。</p>
 </section>
 
 <!-- ============ 6 ============ -->

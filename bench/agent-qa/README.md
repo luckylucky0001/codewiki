@@ -120,3 +120,21 @@ AGENT_QUESTIONS=bench/agent-qa/questions-cases-agg.json AGENT_REPS=2 AGENT_MAX_T
 - 但和 B 组相比，**准确率、turns、费用和耗时都没有明显优势**。
 - 一个具体原因：agent 想用 `ls`、`head`、`python` 读取 `wiki/facts/*.json`，但基准只允许 `Bash(kb:*)`，这些调用被拒绝，agent 只能退回到 Read 和 Grep（G1 和 G2 的每次运行都有 1–2 次被拒）。
 - 下一步：一是指引块里直接写出“用 Read 打开 `wiki/facts/routes.json`”这类可执行动作；二是让 `kb` 直接回答汇总问题，例如 `kb lint-tid --pages`、`kb routes --dangling`。这一轮没有做。
+
+## 再加上汇总命令和具体工具动作（第 9 轮，只重跑 A 组）
+
+新增 `kb routes [--dangling]` 和 `kb lint-tid --pages`，有测试覆盖（`TestRoutesAndLintTidPages`）。指引块改为写明具体的工具动作，例如“Bash: `kb routes`”“Read `wiki/facts/routes.json`”“Grep `wiki/facts/testids.json`”。块的全文见 `with-commands/agents-block.md`。
+
+| A 组配置 | 通过 | 平均 turns（全部 / G1–G4） | 费用（全部 / G1–G4） | 平均耗时 | 调用 kb 的运行 |
+|---|---|---|---|---|---|
+| 第 7 轮：无指引块 | 10/10 | 17.6 / 17.0 | $0.149 / $0.115 | 51 s | 0/10 |
+| 第 8 轮：+ 指引块 | 10/10 | 13.8 / 13.1 | $0.142 / $0.114 | 52 s | 2/10 |
+| 第 9 轮：+ 命令 + 具体动作 | 10/10 | **9.6 / 8.1** | $0.384 / **$0.067** | 57 s | **8/10** |
+| B 组（第 7 轮） | 9/10 | 14.0 / 14.8 | $0.126 / $0.095 | 46 s | — |
+
+**结论如实写：**
+
+- 有专门命令的题目（G1–G3）上，A 组每次都调用了对应命令。G1–G4 的 turns 比 B 组少 45%，费用低 30%。
+- 没有专门命令的 G5 上，两次运行花了 $0.317（大段 Grep 输出加上大量 thinking），总费用是 B 组的 3 倍。
+- kb 命令每次都要加载扫描结果，因此单次耗时偏长。
+- 这一轮花费 $0.38，超出了约 $0.15 的预算，原因就是 G5。所有基准累计约 $1.73。

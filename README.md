@@ -123,6 +123,8 @@ docs:
 | `kb anchor <symbol-id...>` | 打印符号当前 hash（LLM 写 frontmatter 时用） |
 | `kb lint-tid [--strict]` | testID 覆盖矩阵：路由 × tid × 平台 |
 | `kb parity [--strict]` | 功能 × 平台一致性矩阵：路由 / testID / 可达接口是否齐全，以及同名常量的跨平台取值差异；同时生成 `pages/parity.md` |
+| `kb routes [--dangling]` | 所有路由按模块汇总（router_map / NavHost / Route 枚举），给出总数；`--dangling` 列出 buildFunction 找不到实现的条目 |
+| `kb lint-tid --pages` | 哪些路由页面在源文件里设置了 testID（`--json` 给出完整清单） |
 | `kb install-skills <repo> [--no-agents-md]` | 把 skills 安装到 `<repo>/.claude/skills/`。同时在 `AGENTS.md` 和 `CLAUDE.md` 中写入或更新一段 `<!-- codewiki:begin -->…<!-- codewiki:end -->` 指引块，把各类问题映射到对应命令：路由/深链 → facts、testID → `kb lint-tid`、三端差异 → `kb parity`、过时文档 → `kb conflicts`、改文件前 → `kb context`。重复运行结果不变，块外内容保持原样 |
 | `kb bench [--synthetic N]` | 冷/热扫描基准（合成仓库或 `--root` 指定的真实仓库） |
 | `kb eval [--llm …]` | 用人工标注的 golden set 评测断言核对与 plan 影响面（precision/recall） |
@@ -474,6 +476,19 @@ kb eval --doc my-old-spec.md --golden my-labels.yaml                    # 任意
 - 但结果上的收益有限：turns 比之前的 A 组少 22%，与 B 组持平；费用和耗时都没有优于 B。
 - 原因之一是，agent 想用 `ls`、`head`、`python` 读取 `wiki/facts/*.json`，但基准只允许 `Bash(kb:*)`，这些调用被拒绝了，agent 只能退回到 Read 和 Grep。
 - 结论：指引块能让 agent 注意到 wiki，这一点得到了验证。但要把注意力转化成更少的步骤，还需要两点：一是指引块直接写出“用 Read 打开 `wiki/facts/routes.json`”这类可执行的动作；二是让 `kb` 命令直接回答汇总问题（例如 `kb lint-tid --pages`）。原始数据见 `demo/sample-output/agent-bench-cases-agg/with-agents-block/`。
+
+**再加上汇总命令，并让指引块写明具体用哪个工具（第 9 轮，只重跑 A 组，5 题 × 2 次）**：新增了 `kb routes [--dangling]` 和 `kb lint-tid --pages`。指引块里改成写明“Bash: `kb routes`”“Read `wiki/facts/routes.json`”这样的具体动作，不再写 shell 管道。
+
+| A 组配置 | 通过 | 平均 turns（全部 / G1–G4） | 费用（全部 / G1–G4） | 平均耗时 | 调用 kb 的运行 |
+|---|---|---|---|---|---|
+| 第 7 轮：无指引块 | 10/10 | 17.6 / 17.0 | $0.149 / $0.115 | 51 s | 0/10 |
+| 第 8 轮：+ 指引块 | 10/10 | 13.8 / 13.1 | $0.142 / $0.114 | 52 s | 2/10 |
+| **第 9 轮：+ 汇总命令 + 具体动作** | **10/10** | **9.6 / 8.1** | $0.384 / **$0.067** | 57 s | **8/10** |
+| B 组（第 7 轮，只有源码） | 9/10 | 14.0 / 14.8 | $0.126 / $0.095 | 46 s | — |
+
+- **有专门命令的题目上，wiki 第一次明显胜出。** G1–G3 的每次运行都调用了 `kb routes`、`kb routes --dangling` 或 `kb lint-tid --pages`。G1–G4 平均 8.1 turns，B 组是 14.8，少了 45%；费用 $0.067，B 组是 $0.095。其中 G3 从 28 turns（第 7 轮 A）降到 6 turns。
+- **没有专门命令的题目上，费用反而失控。** G5（使用次数最多的 testID）没有对应的命令，agent 只能手动计数：大段的 Grep 输出，加上每次 1.2 万到 2 万个 thinking token，两次运行共花了 **$0.317**，把总费用推到 $0.384，是 B 组的 3 倍。耗时也没有改善：kb 命令每次都要加载扫描结果，所以 G1 平均 43 s，B 组是 31 s。
+- 结论：wiki 的价值取决于“问题 → 命令”的覆盖。命令覆盖到的汇总问题，步数大约减半；覆盖不到的问题，A 组不比 B 组好，甚至更贵。下一步是补上 `kb lint-tid --top`、`kb apis --by-file` 这类命令，以及常驻进程或缓存来减少每次加载的开销。原始数据见 `demo/sample-output/agent-bench-cases-agg/with-commands/`。
 
 详见 bench/agent-qa/README.md。
 
