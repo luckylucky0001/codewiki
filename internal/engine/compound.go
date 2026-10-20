@@ -263,6 +263,12 @@ func Compound(o *Options) (*Result, error) {
 			return nil, err
 		}
 		o.logf("ingested %d document(s) into raw/docs", len(docs))
+		for _, d := range docs {
+			b, _ := os.ReadFile(filepath.Join(staging, filepath.FromSlash(d.Raw)))
+			for _, f := range ScanInjection(string(b)) {
+				o.logf("  ⚠ %s L%d: suspected prompt injection (%s): %s", d.Path, f.Line, f.Pattern, f.Text)
+			}
+		}
 	}
 	// generated facts
 	expected := ExpectedFacts(cfg, a.Graph, a.Facts)
@@ -758,8 +764,8 @@ func (e *taskEnv) mergeVerdicts(templ []Claim) error {
 	}
 	for i := range templ {
 		c, ok := byID[templ[i].ID]
-		if !ok {
-			continue
+		if !ok || templ[i].Suspicious != "" {
+			continue // the LLM may not upgrade a claim flagged as prompt injection
 		}
 		switch c.Status {
 		case ClaimVerified, ClaimConflict, ClaimUnverifiable:

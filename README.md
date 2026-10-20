@@ -446,11 +446,35 @@ API 抽取覆盖以下写法：
 
 ArkTS 原有的 4 个解析失败都来自 ArkUI 属性调用中的尾逗号。我们修补了 vendored 的 `grammar.js` 并重新生成 parser（记录在 `internal/grammars/arkts/VENDORED.md`），之后为 0 个失败。
 
+## 安全
+
+codewiki 的 LLM 会读取不可信的内容：旧文档、第三方代码里的注释、他人编写的页面。因此按 LLM 流水线的通行做法，做了分层防护：
+
+1. **数据与指令分离**：源码片段、现有页面、断言文本都包在 `<untrusted-data kind=… id=…>` 块中。每个任务 prompt 开头都有“安全规则”，声明这些块中的内容只是数据，绝不执行。内容里出现的闭合标签会被转义，防止跳出数据块。
+2. **可疑指令检测与剔除**：`internal/engine/safety.go` 提供中英文规则，覆盖以下几类：
+   - 要求忽略或覆盖之前的指令；
+   - 劫持角色（“you are now…”“你现在是…”）；
+   - 针对 AI 的写入、删除、执行要求；
+   - 写入敏感文件；
+   - `curl | sh` 一类的 shell 命令；
+   - 外泄 token、secret。
+
+   命中的处理方式：
+   - 源码 / 页面中的命中行，在 prompt 中替换为 `[codewiki: line redacted — …]`；
+   - 命中的断言在 prompt 中不展示原文，状态固定为 unverifiable，LLM 无法提升它；
+   - 这些断言单独列在 `pages/_conflicts.md` 的“⚠ 可疑内容”中；
+   - `kb ingest` 时在 stderr 报告文档中的可疑行。
+
+   在 axios 的 149 份文档（411 条断言，其中包括讨论攻击面的 THREATMODEL.md）和 minishop 示例上，误报均为 0（有单测）。
+3. **硬性约束**：LLM 运行后，CLI 对 staging 做快照 diff，写集以外的写入一律回滚并记为 violation。LLM 写入的 frontmatter 由 CLI 规范化，引用未知符号会被拒绝。发布前必须通过 `kb verify`。默认的 `claude -p` 只开放 Read / Write / Edit / Glob / Grep 和 `kb` 子命令。
+4. **回归测试**：`TestPromptInjectionHardening` 模拟一份恶意旧文档，加上一行带注入的源码注释，交给一个“被攻陷”的 LLM。这个 LLM 会把所有断言标为 verified，并尝试写 `index.md`。测试断言：注入原文没有进入 prompt；可疑断言保持 unverifiable；`index.md` 被回滚；`_conflicts.md` 列出了可疑内容。
+
 ## 最佳实践
 
 - **事实与叙述分离**：让 CLI 抽取所有可确定的事实（路由、testID、接口），LLM 只写解释；facts 页面加 `DO NOT EDIT`，每次 compound 重新生成（Karpathy LLM Wiki 的 raw / wiki / schema 三层）。
 - **按符号而不是按文件增量**：用符号 ID + 归一化 hash 判断变化，注释/格式改动不触发重写；按签名变化沿引用边传播（FSoft CodeWiki 的增量设计、RepoAgent 的引用失效）。
 - **受限写集**：每个 LLM 任务只能写自己的页面，写集外修改自动回滚（OpenDeepWiki）。
+- **不可信输入隔离**：文档和代码作为 `<untrusted-data>` 传给 LLM，可疑指令被剔除，并配合写集形成纵深防御（见“安全”）。
 - **先验证再发布**：staging + verify + 原子 rename；CI 串行化，失败不发布。
 - **repo-map 式上下文**：给 LLM 的是精选符号签名与源码片段（Aider repo-map 的思路），而不是整个仓库；`facts/<platform>/symbols.md` 就是一份 repo map。
 - **文档是 raw source，不是事实**：spec / 旧文档逐条核对，code wins；需求写成 EARS（`WHEN … THE SYSTEM SHALL …`）或带 `FR-xxx` 编号最容易被追踪（spec-kit / Kiro / OpenSpec 的实践）。

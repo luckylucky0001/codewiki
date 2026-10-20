@@ -34,6 +34,9 @@ type Claim struct {
 	Anchors  []string `json:"anchors,omitempty"`
 	RouteIDs []string `json:"route_ids,omitempty"`
 	Evidence []string `json:"evidence,omitempty"`
+	// Suspicious names the prompt-injection pattern the claim text matched;
+	// such claims are never promoted (always unverifiable).
+	Suspicious string `json:"suspicious,omitempty"`
 }
 
 var (
@@ -123,6 +126,9 @@ func ExtractClaims(source, raw string, content []byte) []Claim {
 		}
 		seen[c.ID] = true
 		c.Source, c.Raw, c.Line = source, raw, i+1
+		if f := ScanInjection(c.Text); len(f) > 0 {
+			c.Suspicious = f[0].Pattern
+		}
 		out = append(out, c)
 	}
 	return out
@@ -218,6 +224,12 @@ func (k *Checker) findSymbols(name string) []*model.Symbol {
 
 // Check fills Status/Anchors/Evidence/RouteIDs of c.
 func (k *Checker) Check(c *Claim) {
+	if c.Suspicious != "" {
+		c.Status = ClaimUnverifiable
+		c.Anchors, c.RouteIDs = nil, nil
+		c.Evidence = []string{"疑似 prompt injection（" + c.Suspicious + "），不核对、不提升为知识"}
+		return
+	}
 	anchors := map[string]bool{}
 	routes := map[string]bool{}
 	var evidence []string

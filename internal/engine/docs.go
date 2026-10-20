@@ -285,6 +285,17 @@ func RenderConflicts(claims []Claim, g *model.Graph, commit string) (*wiki.Page,
 		}
 		b.WriteString(strings.Join(rows, "\n") + "\n")
 	}
+	var sus []string
+	for _, s := range srcs {
+		for _, c := range bySrc[s] {
+			if c.Suspicious != "" {
+				sus = append(sus, fmt.Sprintf("- **%s** （[%s](../%s) L%d）匹配 `%s` —— 内容未展示，未提升", c.ID, s, c.Raw, c.Line, c.Suspicious))
+			}
+		}
+	}
+	if len(sus) > 0 {
+		fmt.Fprintf(&b, "\n## ⚠ 可疑内容（疑似 prompt injection）\n\n以下断言包含针对 AI 的指令性文字，已从 LLM 输入中隐去，且不会被核对或提升为知识。请人工检查原文。\n\n%s\n", strings.Join(sus, "\n"))
+	}
 	section("冲突 conflicts（文档已过时，以代码为准）", ClaimConflict)
 	section("已验证 verified", ClaimVerified)
 	section("无法验证 unverifiable", ClaimUnverifiable)
