@@ -143,3 +143,47 @@ struct Index {
 		}
 	}
 }
+
+// apple/sample-food-truck, nalexn/clean-architecture-swiftui: SwiftUI
+// NavigationStack with value-type destinations, NavigationLink(value: Enum.case)
+// sidebars and NavigationLink(destination:).
+func TestSwiftUINavigationStackVariants(t *testing.T) {
+	dir := writeTree(t, map[string]string{
+		"Panel.swift": "enum Panel: Hashable {\n  case truck\n  case salesHistory\n}\n",
+		"Views.swift": `import SwiftUI
+struct TruckView: View { var body: some View { Text("t") } }
+struct SalesHistoryView: View { var body: some View { Text("s") } }
+struct OrderDetailView: View { var id: String; var body: some View { Text("o") } }
+struct CountryDetailsView: View { var body: some View { Text("c") } }
+struct Sidebar: View {
+  var body: some View {
+    List {
+      NavigationLink(value: Panel.truck) { Label("Truck", systemImage: "box.truck") }
+      NavigationLink(value: Panel.salesHistory) { Label("Sales", systemImage: "chart") }
+      NavigationLink(destination: CountryDetailsView()) { Text("c") }
+    }
+  }
+}
+struct OrdersView: View {
+  var body: some View {
+    NavigationStack {
+      List { Text("x") }
+        .navigationDestination(for: Order.ID.self) { id in
+          OrderDetailView(id: id)
+        }
+    }
+  }
+}
+`,
+	})
+	rm := routeMap(extractTree(t, dir, config.Platform{Name: "ios", Root: "."}))
+	want := map[string]string{"truck": "#TruckView", "sales_history": "#SalesHistoryView", "order": "#OrderDetailView", "country_details": "#CountryDetailsView"}
+	for rid, sym := range want {
+		if r, ok := rm[rid]; !ok || !strings.HasSuffix(r.Symbol, sym) {
+			t.Errorf("%s: %+v (all %v)", rid, r, rm)
+		}
+	}
+	if rm["order"].Pattern != "order/{order}" {
+		t.Errorf("order pattern: %+v", rm["order"])
+	}
+}

@@ -304,17 +304,71 @@ func (c *ctx) routes() {
 	// iOS: enums used as navigationDestination(for: X.self) and String-raw-value
 	// enums named *Route* (case productDetail = "product/{id}")
 	destEnums := map[string]bool{}
+	isEnum := func(platform, name string) bool { return c.findSym(platform, name, "enum") != nil }
 	for _, file := range c.sortedFiles() {
-		if c.g.Files[file].Lang != "swift" {
+		fi := c.g.Files[file]
+		if fi.Lang != "swift" {
 			continue
 		}
 		for _, call := range c.res.Calls[file] {
-			if call.Callee != "navigationDestination" {
-				continue
-			}
-			for _, a := range call.Args {
-				if a.Label == "for" && strings.HasSuffix(a.Text, ".self") {
-					destEnums[lastSeg(strings.TrimSuffix(a.Text, ".self"))] = true
+			switch call.Callee {
+			case "navigationDestination":
+				for _, a := range call.Args {
+					if a.Label != "for" || !strings.HasSuffix(a.Text, ".self") {
+						continue
+					}
+					t := strings.TrimSuffix(a.Text, ".self")
+					if isEnum(fi.Platform, lastSeg(t)) {
+						destEnums[lastSeg(t)] = true
+						continue
+					}
+					// navigationDestination(for: Order.ID.self) { id in OrderDetailView(id: id) }:
+					// a value type, not a route enum — one route named after the type,
+					// anchored on the view the closure builds
+					segs := strings.Split(t, ".")
+					base := segs[len(segs)-1]
+					if (base == "ID" || base == "Id") && len(segs) > 1 {
+						base = segs[len(segs)-2]
+					}
+					switch base {
+					case "", "String", "Int", "UUID", "AnyHashable", "Destination", "Route", "Routes", "Path", "Screen", "Page":
+						continue // a router's own wrapper type, not a screen
+					}
+					// only a closure that builds exactly one view is a single destination
+					// (a switch over a wrapper type builds many)
+					v := c.swiftView(fi.Platform, call.Inner)
+					if v == nil {
+						continue
+					}
+					add(model.Route{Platform: fi.Platform, RouteID: Snake(base), Pattern: Snake(base) + "/{" + lowerFirst(base) + "}", File: v.File, Symbol: v.ID})
+				}
+			case "NavigationLink":
+				for _, a := range call.Args {
+					switch a.Label {
+					case "value":
+						// NavigationLink(value: Panel.truck): Panel is a destination enum
+						if segs := strings.Split(strings.TrimPrefix(a.Text, "."), "."); len(segs) == 2 && isEnum(fi.Platform, segs[0]) {
+							destEnums[segs[0]] = true
+						}
+					case "destination":
+						// NavigationLink(destination: CountryDetailsView(country: c))
+						name, _, ok := strings.Cut(a.Text, "(")
+						if !ok || name == "" || !unicode.IsUpper([]rune(name)[0]) || strings.ContainsAny(name, ". ") {
+							continue
+						}
+						v := c.findSym(fi.Platform, name, "struct", "class")
+						if v == nil {
+							continue
+						}
+						rid := name
+						for _, suf := range []string{"View", "Screen", "ViewController"} {
+							if strings.HasSuffix(rid, suf) && len(rid) > len(suf) {
+								rid = strings.TrimSuffix(rid, suf)
+								break
+							}
+						}
+						add(model.Route{Platform: fi.Platform, RouteID: Snake(rid), Pattern: Snake(rid), File: v.File, Symbol: v.ID})
+					}
 				}
 			}
 		}
@@ -449,6 +503,35 @@ func refRouteID(ref string) string {
 		}
 	}
 	return Snake(last)
+}
+
+// swiftView returns the single project view a navigationDestination closure
+// builds, or nil when it builds none or several.
+func (c *ctx) swiftView(platform string, inner []string) *model.Symbol {
+	var found *model.Symbol
+	for _, in := range inner {
+		if in == "" || !unicode.IsUpper([]rune(in)[0]) {
+			continue
+		}
+		v := c.findSym(platform, in, "struct", "class")
+		if v == nil || !(strings.HasSuffix(in, "View") || strings.HasSuffix(in, "Screen") || strings.HasSuffix(in, "Details") || strings.HasSuffix(in, "Detail")) {
+			continue
+		}
+		if found != nil && found.ID != v.ID {
+			return nil
+		}
+		found = v
+	}
+	return found
+}
+
+func lowerFirst(s string) string {
+	if s == "" {
+		return s
+	}
+	r := []rune(s)
+	r[0] = unicode.ToLower(r[0])
+	return string(r)
 }
 
 // caseParams turns "case accountDetail(id: String)" into "/{id}".
