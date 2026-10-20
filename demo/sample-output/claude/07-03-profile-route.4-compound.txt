@@ -1,0 +1,30 @@
+compound 20261020T163810-f484520: base 95f7b7c → head f484520, mode incremental, llm cmd
+mode incremental — anchors changed ∪ signature changes propagated along reference edges
+stats: symbols=224 changes=map[added:10 body:4 unchanged:210] module_ratio=0.22 structural_ratio=0.04 hops=1 propagated=0
+  t01-features-profile create  pages/features/profile.md      write_set=[pages/features/profile.md] reasons=[route_added]
+  t02-overview update  pages/overview.md              write_set=[pages/overview.md] reasons=[route_set_changed]
+  task t01-features-profile         ok       cmd 
+  task t02-overview                 ok       cmd 
+changed files: 20
+  .kb/graph.json
+  .kb/plan.json
+  .kb/state.json
+  .kb/update_record.json
+  facts/android/routes.md
+  facts/android/symbols.md
+  facts/android/testids.md
+  facts/harmony/routes.md
+  facts/harmony/symbols.md
+  facts/harmony/testids.md
+  facts/ios/routes.md
+  facts/ios/symbols.md
+  facts/ios/testids.md
+  facts/routes.json
+  facts/testids.json
+  index.md
+  llms.txt
+  log.md
+  pages/features/profile.md
+  pages/overview.md
+verify PASS: 21 pages, 277 anchors, 0 errors, 0 warnings
+published 20 changed file(s) to demo/output/<run>/repo/wiki

@@ -1,0 +1,137 @@
+{
+  "version": 1,
+  "base": "71a86be23dc308124c4c4ae81ea2e8ab8b046146",
+  "head": "95f7b7c2f5fb472da2f827e321679805c9be8e7d",
+  "mode": "incremental",
+  "reason": "anchors changed ∪ signature changes propagated along reference edges",
+  "stats": {
+    "symbols": 214,
+    "changes": {
+      "body": 4,
+      "renamed": 1,
+      "signature": 1,
+      "unchanged": 208
+    },
+    "module_ratio": 0.1,
+    "structural_ratio": 0.01,
+    "hops": 1,
+    "propagated_symbols": 2
+  },
+  "tasks": [
+    {
+      "id": "t01-_conflicts",
+      "op": "recheck",
+      "kind": "conflicts",
+      "page": "pages/_conflicts.md",
+      "title": "文档核对",
+      "write_set": [
+        ".kb/ingest/verdicts.json"
+      ],
+      "reasons": [
+        {
+          "code": "anchor_body_changed",
+          "sym": "harmony://entry/src/main/ets/common/CartStore.ets#CartStore"
+        }
+      ],
+      "context": []
+    },
+    {
+      "id": "t02-features-product_detail",
+      "op": "update",
+      "kind": "feature",
+      "page": "pages/features/product_detail.md",
+      "title": "product_detail",
+      "route_id": "product_detail",
+      "write_set": [
+        "pages/features/product_detail.md"
+      ],
+      "reasons": [
+        {
+          "code": "anchor_signature_changed",
+          "sym": "harmony://entry/src/main/ets/common/CartStore.ets#CartStore.addItem"
+        },
+        {
+          "code": "anchor_body_changed",
+          "sym": "harmony://entry/src/main/ets/pages/ProductDetailPage.ets#ProductDetailPage.build"
+        }
+      ],
+      "context": [
+        "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.MAX_CART_ITEMS",
+        "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.addItem",
+        "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.items",
+        "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.pending",
+        "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.preload",
+        "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.total",
+        "android://app/src/main/java/com/minishop/ui/components/MiniShopTopBar.kt#MiniShopTopBar",
+        "android://app/src/main/java/com/minishop/ui/products/ProductDetailScreen.kt#ProductDetailScreen",
+        "android://app/src/main/java/com/minishop/ui/products/ProductsViewModel.kt#ProductsViewModel.loadProduct",
+        "android://app/src/main/java/com/minishop/ui/products/ProductsViewModel.kt#ProductsViewModel.loadProducts",
+        "harmony://entry/src/main/ets/common/Api.ets#Api.loadProduct",
+        "harmony://entry/src/main/ets/common/CartStore.ets#CartStore.addItem",
+        "harmony://entry/src/main/ets/pages/ProductDetailPage.ets#ProductDetailBuilder",
+        "harmony://entry/src/main/ets/pages/ProductDetailPage.ets#ProductDetailPage.aboutToAppear",
+        "harmony://entry/src/main/ets/pages/ProductDetailPage.ets#ProductDetailPage.build",
+        "harmony://entry/src/main/ets/pages/ProductDetailPage.ets#ProductDetailPage.pathStack",
+        "harmony://entry/src/main/ets/pages/ProductDetailPage.ets#ProductDetailPage.product",
+        "ios://MiniShop/Features/Products/ProductDetailView.swift#ProductDetailView",
+        "ios://MiniShop/Features/Products/ProductDetailView.swift#ProductDetailView.body",
+        "ios://MiniShop/Features/Products/ProductDetailView.swift#ProductDetailView.cart",
+        "ios://MiniShop/Features/Products/ProductDetailView.swift#ProductDetailView.id",
+        "ios://MiniShop/Features/Products/ProductDetailView.swift#ProductDetailView.product",
+        "ios://MiniShop/Features/Products/ProductDetailView.swift#ProductDetailView.vm",
+        "ios://MiniShop/Navigation/Route.swift#Route.cart",
+        "ios://MiniShop/Networking/APIClient.swift#Product.id",
+        "ios://MiniShop/Networking/APIClient.swift#Product.price",
+        "ios://MiniShop/Networking/APIClient.swift#Product.title"
+      ]
+    },
+    {
+      "id": "t03-features-products",
+      "op": "update",
+      "kind": "feature",
+      "page": "pages/features/products.md",
+      "title": "products",
+      "route_id": "products",
+      "write_set": [
+        "pages/features/products.md"
+      ],
+      "reasons": [
+        {
+          "code": "anchor_renamed",
+          "sym": "harmony://entry/src/main/ets/common/Api.ets#Api.loadProducts",
+          "detail": "renamed to harmony://entry/src/main/ets/common/Api.ets#Api.fetchProducts (similarity 1.00)"
+        },
+        {
+          "code": "anchor_body_changed",
+          "sym": "harmony://entry/src/main/ets/pages/ProductsPage.ets#ProductsPage.aboutToAppear"
+        }
+      ],
+      "context": [
+        "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiClient.service",
+        "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.getProduct",
+        "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.listProducts",
+        "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.items",
+        "android://app/src/main/java/com/minishop/ui/products/ProductsScreen.kt#ProductsScreen",
+        "android://app/src/main/java/com/minishop/ui/products/ProductsViewModel.kt#ProductsViewModel.loadProduct",
+        "android://app/src/main/java/com/minishop/ui/products/ProductsViewModel.kt#ProductsViewModel.loadProducts",
+        "android://app/src/main/java/com/minishop/ui/products/ProductsViewModel.kt#ProductsViewModel.products",
+        "harmony://entry/src/main/ets/common/Api.ets#Api.fetchProducts",
+        "harmony://entry/src/main/ets/pages/ProductsPage.ets#ProductsBuilder",
+        "harmony://entry/src/main/ets/pages/ProductsPage.ets#ProductsPage.aboutToAppear",
+        "harmony://entry/src/main/ets/pages/ProductsPage.ets#ProductsPage.build",
+        "harmony://entry/src/main/ets/pages/ProductsPage.ets#ProductsPage.pathStack",
+        "harmony://entry/src/main/ets/pages/ProductsPage.ets#ProductsPage.products",
+        "ios://MiniShop/Features/Products/ProductsView.swift#ProductsView",
+        "ios://MiniShop/Features/Products/ProductsView.swift#ProductsView.body",
+        "ios://MiniShop/Features/Products/ProductsView.swift#ProductsView.router",
+        "ios://MiniShop/Features/Products/ProductsView.swift#ProductsView.vm",
+        "ios://MiniShop/Features/Products/ProductsViewModel.swift#ProductsViewModel.loadProducts",
+        "ios://MiniShop/Navigation/AppRouter.swift#AppRouter.handle",
+        "ios://MiniShop/Navigation/AppRouter.swift#AppRouter.match",
+        "ios://MiniShop/Navigation/AppRouter.swift#AppRouter.path",
+        "ios://MiniShop/Navigation/Route.swift#Destination.params",
+        "ios://MiniShop/Navigation/Route.swift#Destination.route"
+      ]
+    }
+  ]
+}

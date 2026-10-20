@@ -1,0 +1,4 @@
+kb compound: head=95f7b7c base=71a86be mode=incremental tasks=3 (anchors changed ∪ signature changes propagated along reference edges)
+  [ok] recheck  pages/_conflicts.md                cmd 
+  [ok] update   pages/features/product_detail.md   cmd 
+  [ok] update   pages/features/products.md         template 

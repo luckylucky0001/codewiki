@@ -1,0 +1,39 @@
+compound 20261020T163411-e214322: base  → head e214322, mode full, llm template
+mode full — no compatible baseline graph (first compound or graph version change)
+stats: symbols=214 changes=map[added:214] module_ratio=1.00 structural_ratio=1.00 hops=1 propagated=0
+  t01-_conflicts recheck pages/_conflicts.md            write_set=[.kb/ingest/verdicts.json] reasons=[full_rebuild]
+  t02-features-cart create  pages/features/cart.md         write_set=[pages/features/cart.md] reasons=[full_rebuild]
+  t03-features-checkout create  pages/features/checkout.md     write_set=[pages/features/checkout.md] reasons=[full_rebuild]
+  t04-features-login create  pages/features/login.md        write_set=[pages/features/login.md] reasons=[full_rebuild]
+  t05-features-order_detail create  pages/features/order_detail.md write_set=[pages/features/order_detail.md] reasons=[full_rebuild]
+  t06-features-product_detail create  pages/features/product_detail.md write_set=[pages/features/product_detail.md] reasons=[full_rebuild]
+  t07-features-products create  pages/features/products.md     write_set=[pages/features/products.md] reasons=[full_rebuild]
+  t08-overview create  pages/overview.md              write_set=[pages/overview.md] reasons=[full_rebuild]
+  task t01-_conflicts               ok       template 
+  task t02-features-cart            ok       template 
+  task t03-features-checkout        ok       template 
+  task t04-features-login           ok       template 
+  task t05-features-order_detail    ok       template 
+  task t06-features-product_detail  ok       template 
+  task t07-features-products        ok       template 
+  task t08-overview                 ok       template 
+changed files: 17
+  .kb/graph.json
+  .kb/ingest/verdicts.json
+  .kb/plan.json
+  .kb/state.json
+  .kb/update_record.json
+  facts/requirements.json
+  index.md
+  llms.txt
+  log.md
+  pages/_conflicts.md
+  pages/features/cart.md
+  pages/features/checkout.md
+  pages/features/login.md
+  pages/features/order_detail.md
+  pages/features/product_detail.md
+  pages/features/products.md
+  pages/overview.md
+verify PASS: 20 pages, 288 anchors, 0 errors, 0 warnings
+published 17 changed file(s) to demo/output/<run>/repo/wiki

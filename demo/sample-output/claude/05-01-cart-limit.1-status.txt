@@ -1,0 +1,5 @@
+head 71a86be, last compound e214322e3d20991b7f435ce10baebf6609e9006c
+stale facts/requirements.json (5 anchors: CartViewModel.MAX_CART_ITEMS, MAX_CART_ITEMS, CartViewModel.maxCartItems, …+2)
+stale pages/_conflicts.md (3 anchors: CartViewModel.MAX_CART_ITEMS, MAX_CART_ITEMS, CartViewModel.maxCartItems)
+stale pages/features/cart.md (1 anchors: CartViewModel.MAX_CART_ITEMS)
+stale pages/features/product_detail.md (1 anchors: CartViewModel.MAX_CART_ITEMS)

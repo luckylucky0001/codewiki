@@ -1,0 +1,21 @@
+# codewiki
+
+> Code-anchored knowledge base. Every page lists `sources` (symbol id + hash) verified against HEAD by `kb verify`.
+
+## Docs
+
+- [index.md](index.md): layered table of contents
+- [AGENTS.md](AGENTS.md): writing schema
+- [facts/routes.json](facts/routes.json), [facts/testids.json](facts/testids.json), [facts/apis.json](facts/apis.json), [facts/requirements.json](facts/requirements.json): machine-readable facts
+
+## Pages
+
+- [文档核对（冲突与已验证断言）](pages/_conflicts.md)
+- [购物车（cart）](pages/features/cart.md)
+- [结算（checkout）](pages/features/checkout.md)
+- [登录（login）](pages/features/login.md)
+- [订单详情（order_detail）](pages/features/order_detail.md)
+- [商品详情（product_detail）](pages/features/product_detail.md)
+- [商品列表（products）](pages/features/products.md)
+- [个人中心（profile）](pages/features/profile.md)
+- [总览](pages/overview.md)

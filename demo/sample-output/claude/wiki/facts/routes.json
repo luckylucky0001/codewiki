@@ -1,0 +1,173 @@
+{
+  "version": 1,
+  "routes": [
+    {
+      "platform": "android",
+      "route_id": "cart",
+      "pattern": "cart",
+      "deeplink": "minishop://cart",
+      "file": "android/app/src/main/java/com/minishop/ui/cart/CartScreen.kt",
+      "symbol": "android://app/src/main/java/com/minishop/ui/cart/CartScreen.kt#CartScreen"
+    },
+    {
+      "platform": "android",
+      "route_id": "checkout",
+      "pattern": "checkout",
+      "deeplink": "minishop://checkout",
+      "file": "android/app/src/main/java/com/minishop/ui/checkout/CheckoutScreen.kt",
+      "symbol": "android://app/src/main/java/com/minishop/ui/checkout/CheckoutScreen.kt#CheckoutScreen"
+    },
+    {
+      "platform": "android",
+      "route_id": "login",
+      "pattern": "login",
+      "deeplink": "minishop://login",
+      "file": "android/app/src/main/java/com/minishop/ui/login/LoginScreen.kt",
+      "symbol": "android://app/src/main/java/com/minishop/ui/login/LoginScreen.kt#LoginScreen"
+    },
+    {
+      "platform": "android",
+      "route_id": "order_detail",
+      "pattern": "order/{id}",
+      "deeplink": "minishop://order/{id}",
+      "file": "android/app/src/main/java/com/minishop/ui/order/OrderDetailScreen.kt",
+      "symbol": "android://app/src/main/java/com/minishop/ui/order/OrderDetailScreen.kt#OrderDetailScreen"
+    },
+    {
+      "platform": "android",
+      "route_id": "product_detail",
+      "pattern": "product/{id}",
+      "deeplink": "minishop://product/{id}",
+      "file": "android/app/src/main/java/com/minishop/ui/products/ProductDetailScreen.kt",
+      "symbol": "android://app/src/main/java/com/minishop/ui/products/ProductDetailScreen.kt#ProductDetailScreen"
+    },
+    {
+      "platform": "android",
+      "route_id": "products",
+      "pattern": "products",
+      "deeplink": "minishop://products",
+      "file": "android/app/src/main/java/com/minishop/ui/products/ProductsScreen.kt",
+      "symbol": "android://app/src/main/java/com/minishop/ui/products/ProductsScreen.kt#ProductsScreen"
+    },
+    {
+      "platform": "android",
+      "route_id": "profile",
+      "pattern": "profile",
+      "deeplink": "minishop://profile",
+      "file": "android/app/src/main/java/com/minishop/ui/profile/ProfileScreen.kt",
+      "symbol": "android://app/src/main/java/com/minishop/ui/profile/ProfileScreen.kt#ProfileScreen"
+    },
+    {
+      "platform": "harmony",
+      "route_id": "cart",
+      "pattern": "cart",
+      "deeplink": "minishop://cart",
+      "file": "harmony/entry/src/main/ets/pages/CartPage.ets",
+      "symbol": "harmony://entry/src/main/ets/pages/CartPage.ets#CartBuilder"
+    },
+    {
+      "platform": "harmony",
+      "route_id": "checkout",
+      "pattern": "checkout",
+      "deeplink": "minishop://checkout",
+      "file": "harmony/entry/src/main/ets/pages/CheckoutPage.ets",
+      "symbol": "harmony://entry/src/main/ets/pages/CheckoutPage.ets#CheckoutBuilder"
+    },
+    {
+      "platform": "harmony",
+      "route_id": "login",
+      "pattern": "login",
+      "deeplink": "minishop://login",
+      "file": "harmony/entry/src/main/ets/pages/LoginPage.ets",
+      "symbol": "harmony://entry/src/main/ets/pages/LoginPage.ets#LoginBuilder"
+    },
+    {
+      "platform": "harmony",
+      "route_id": "order_detail",
+      "pattern": "order/{id}",
+      "deeplink": "minishop://order/{id}",
+      "file": "harmony/entry/src/main/ets/pages/OrderDetailPage.ets",
+      "symbol": "harmony://entry/src/main/ets/pages/OrderDetailPage.ets#OrderDetailBuilder"
+    },
+    {
+      "platform": "harmony",
+      "route_id": "product_detail",
+      "pattern": "product/{id}",
+      "deeplink": "minishop://product/{id}",
+      "file": "harmony/entry/src/main/ets/pages/ProductDetailPage.ets",
+      "symbol": "harmony://entry/src/main/ets/pages/ProductDetailPage.ets#ProductDetailBuilder"
+    },
+    {
+      "platform": "harmony",
+      "route_id": "products",
+      "pattern": "products",
+      "deeplink": "minishop://products",
+      "file": "harmony/entry/src/main/ets/pages/ProductsPage.ets",
+      "symbol": "harmony://entry/src/main/ets/pages/ProductsPage.ets#ProductsBuilder"
+    },
+    {
+      "platform": "harmony",
+      "route_id": "profile",
+      "pattern": "profile",
+      "deeplink": "minishop://profile",
+      "file": "harmony/entry/src/main/ets/pages/ProfilePage.ets",
+      "symbol": "harmony://entry/src/main/ets/pages/ProfilePage.ets#ProfileBuilder"
+    },
+    {
+      "platform": "ios",
+      "route_id": "cart",
+      "pattern": "cart",
+      "deeplink": "minishop://cart",
+      "file": "ios/MiniShop/Features/Cart/CartView.swift",
+      "symbol": "ios://MiniShop/Features/Cart/CartView.swift#CartView"
+    },
+    {
+      "platform": "ios",
+      "route_id": "checkout",
+      "pattern": "checkout",
+      "deeplink": "minishop://checkout",
+      "file": "ios/MiniShop/Features/Checkout/CheckoutView.swift",
+      "symbol": "ios://MiniShop/Features/Checkout/CheckoutView.swift#CheckoutView"
+    },
+    {
+      "platform": "ios",
+      "route_id": "login",
+      "pattern": "login",
+      "deeplink": "minishop://login",
+      "file": "ios/MiniShop/Features/Login/LoginView.swift",
+      "symbol": "ios://MiniShop/Features/Login/LoginView.swift#LoginView"
+    },
+    {
+      "platform": "ios",
+      "route_id": "order_detail",
+      "pattern": "order/{id}",
+      "deeplink": "minishop://order/{id}",
+      "file": "ios/MiniShop/Features/Order/OrderDetailView.swift",
+      "symbol": "ios://MiniShop/Features/Order/OrderDetailView.swift#OrderDetailView"
+    },
+    {
+      "platform": "ios",
+      "route_id": "product_detail",
+      "pattern": "product/{id}",
+      "deeplink": "minishop://product/{id}",
+      "file": "ios/MiniShop/Features/Products/ProductDetailView.swift",
+      "symbol": "ios://MiniShop/Features/Products/ProductDetailView.swift#ProductDetailView"
+    },
+    {
+      "platform": "ios",
+      "route_id": "products",
+      "pattern": "products",
+      "deeplink": "minishop://products",
+      "file": "ios/MiniShop/Features/Products/ProductsView.swift",
+      "symbol": "ios://MiniShop/Features/Products/ProductsView.swift#ProductsView"
+    },
+    {
+      "platform": "ios",
+      "route_id": "profile",
+      "pattern": "profile",
+      "deeplink": "minishop://profile",
+      "file": "ios/MiniShop/Features/Profile/ProfileView.swift",
+      "symbol": "ios://MiniShop/Features/Profile/ProfileView.swift#ProfileView"
+    }
+  ]
+}

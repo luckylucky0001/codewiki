@@ -1,0 +1,15 @@
+route_id         tid                android ios harmony
+(shared)         nav_back           ✓       ✓   ✓      
+cart             cart_checkout      ✓       ✓   ✓      
+checkout         checkout_submit    ✓       ✓   ✓      
+login            login_password     ✓       ✓   ✓      
+login            login_submit       ✓       ✓   ✓      
+login            login_username     ✓       ✓   ✓      
+order_detail     order_status       ✓       ✓   ✓      
+product_detail   add_to_cart        ✓       ✓   ✓      
+products         product_item_      ✓       ✓   ✓      
+products         product_list       ✓       ✓   ✓      
+products         tab_cart           ✓       ✓   ✓      
+profile          profile_logout     ✓       ✓   ✓      
+profile          profile_name       ✓       ✓   ✓      
+gaps: 0; routes without testIDs: []

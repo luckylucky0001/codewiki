@@ -1,0 +1,10 @@
+ 13.0 page   _conflicts  文档核对（冲突与已验证断言）
+       [docs/legacy/cart.md](../raw/docs/docs/legacy/cart.md) L3）购物车最多 10 件商品（常量 `MAX_CART_ITEMS`，iOS 为 `maxCartItems`）
+ 12.0 page   features/cart  购物车（cart）
+       # 购物车（cart） ## 概述 购物车页展示当前商品数量（`Items: N
+  3.0 page   features/product_detail  商品详情（product_detail）
+       dd to cart」按钮（testID `add_to_cart`）把商品加入购物车。三端均有实现。 ## 路由与深链 | 平台 | pattern | deep
+  1.0 page   features/profile  个人中心（profile）
+       中的 `token`（写入 TokenStore）与 `cart`（预加载购物车），再用 `ios://MiniShop/Navigation/AppRouter.swift#AppRouter.match
+  1.0 page   overview  总览
+       | `cart` | `cart` | `minishop://cart` | ✓ | ✓ | ✓ | [购物车（cart）](features/cart.md) | | `checkout` | `checkout` | `minishop:/

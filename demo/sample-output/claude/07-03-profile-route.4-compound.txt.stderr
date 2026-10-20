@@ -1,0 +1,3 @@
+kb compound: head=f484520 base=95f7b7c mode=incremental tasks=2 (anchors changed ∪ signature changes propagated along reference edges)
+  [ok] create   pages/features/profile.md          cmd 
+  [ok] update   pages/overview.md                  cmd 

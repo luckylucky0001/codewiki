@@ -1,0 +1,47 @@
+{
+  "base_sha": "95f7b7c2f5fb472da2f827e321679805c9be8e7d",
+  "changed": [
+    "facts/android/routes.md",
+    "facts/android/symbols.md",
+    "facts/android/testids.md",
+    "facts/harmony/routes.md",
+    "facts/harmony/symbols.md",
+    "facts/harmony/testids.md",
+    "facts/ios/routes.md",
+    "facts/ios/symbols.md",
+    "facts/ios/testids.md",
+    "facts/routes.json",
+    "facts/testids.json",
+    "index.md",
+    "llms.txt",
+    "pages/features/profile.md",
+    "pages/overview.md"
+  ],
+  "date": "2026-10-20",
+  "head_sha": "f48452035b20203fd9e1682cb0e1fc0bcdb8ea09",
+  "kind": "compound",
+  "llm": "cmd",
+  "mode": "incremental",
+  "reason": "anchors changed ∪ signature changes propagated along reference edges",
+  "run_id": "20261020T163810-f484520",
+  "tasks": [
+    {
+      "id": "t01-features-profile",
+      "page": "pages/features/profile.md",
+      "op": "create",
+      "writer": "cmd",
+      "status": "ok",
+      "millis": 50130
+    },
+    {
+      "id": "t02-overview",
+      "page": "pages/overview.md",
+      "op": "update",
+      "writer": "cmd",
+      "status": "ok",
+      "millis": 33234
+    }
+  ],
+  "verify_errors": 0,
+  "verify_ok": true
+}

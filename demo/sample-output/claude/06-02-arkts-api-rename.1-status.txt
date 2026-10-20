@@ -1,0 +1,7 @@
+head 95f7b7c, last compound 71a86be23dc308124c4c4ae81ea2e8ab8b046146
+stale facts/apis.json (generated facts out of date)
+stale facts/harmony/apis.md (generated facts out of date)
+stale facts/requirements.json (1 anchors: CartStore)
+stale pages/_conflicts.md (1 anchors: CartStore)
+stale pages/features/product_detail.md (2 anchors: CartStore.addItem, ProductDetailPage.build)
+stale pages/features/products.md (2 anchors: Api.loadProducts, ProductsPage.aboutToAppear)

@@ -1,0 +1,110 @@
+{
+  "version": 1,
+  "apis": [
+    {
+      "platform": "android",
+      "method": "POST",
+      "path": "/api/cart",
+      "file": "android/app/src/main/java/com/minishop/data/ApiService.kt",
+      "symbol": "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.addToCart"
+    },
+    {
+      "platform": "android",
+      "method": "POST",
+      "path": "/api/login",
+      "file": "android/app/src/main/java/com/minishop/data/ApiService.kt",
+      "symbol": "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.login"
+    },
+    {
+      "platform": "android",
+      "method": "POST",
+      "path": "/api/orders",
+      "file": "android/app/src/main/java/com/minishop/data/ApiService.kt",
+      "symbol": "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.createOrder"
+    },
+    {
+      "platform": "android",
+      "method": "GET",
+      "path": "/api/products",
+      "file": "android/app/src/main/java/com/minishop/data/ApiService.kt",
+      "symbol": "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.listProducts"
+    },
+    {
+      "platform": "android",
+      "method": "GET",
+      "path": "/api/products/{id}",
+      "file": "android/app/src/main/java/com/minishop/data/ApiService.kt",
+      "symbol": "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.getProduct"
+    },
+    {
+      "platform": "harmony",
+      "method": "POST",
+      "path": "/api/cart",
+      "file": "harmony/entry/src/main/ets/common/Api.ets",
+      "symbol": "harmony://entry/src/main/ets/common/Api.ets#Api.addToCart"
+    },
+    {
+      "platform": "harmony",
+      "method": "POST",
+      "path": "/api/login",
+      "file": "harmony/entry/src/main/ets/common/Api.ets",
+      "symbol": "harmony://entry/src/main/ets/common/Api.ets#Api.login"
+    },
+    {
+      "platform": "harmony",
+      "method": "POST",
+      "path": "/api/orders",
+      "file": "harmony/entry/src/main/ets/common/Api.ets",
+      "symbol": "harmony://entry/src/main/ets/common/Api.ets#Api.createOrder"
+    },
+    {
+      "platform": "harmony",
+      "method": "GET",
+      "path": "/api/products",
+      "file": "harmony/entry/src/main/ets/common/Api.ets",
+      "symbol": "harmony://entry/src/main/ets/common/Api.ets#Api.fetchProducts"
+    },
+    {
+      "platform": "harmony",
+      "method": "GET",
+      "path": "/api/products/{id}",
+      "file": "harmony/entry/src/main/ets/common/Api.ets",
+      "symbol": "harmony://entry/src/main/ets/common/Api.ets#Api.loadProduct"
+    },
+    {
+      "platform": "ios",
+      "method": "POST",
+      "path": "/api/cart",
+      "file": "ios/MiniShop/Features/Cart/CartViewModel.swift",
+      "symbol": "ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.addItem"
+    },
+    {
+      "platform": "ios",
+      "method": "POST",
+      "path": "/api/login",
+      "file": "ios/MiniShop/Features/Login/LoginViewModel.swift",
+      "symbol": "ios://MiniShop/Features/Login/LoginViewModel.swift#LoginViewModel.login"
+    },
+    {
+      "platform": "ios",
+      "method": "POST",
+      "path": "/api/orders",
+      "file": "ios/MiniShop/Features/Checkout/CheckoutView.swift",
+      "symbol": "ios://MiniShop/Features/Checkout/CheckoutView.swift#CheckoutView.placeOrder"
+    },
+    {
+      "platform": "ios",
+      "method": "GET",
+      "path": "/api/products",
+      "file": "ios/MiniShop/Features/Products/ProductsViewModel.swift",
+      "symbol": "ios://MiniShop/Features/Products/ProductsViewModel.swift#ProductsViewModel.loadProducts"
+    },
+    {
+      "platform": "ios",
+      "method": "GET",
+      "path": "/api/products/{id}",
+      "file": "ios/MiniShop/Features/Products/ProductsViewModel.swift",
+      "symbol": "ios://MiniShop/Features/Products/ProductsViewModel.swift#ProductsViewModel.loadProduct"
+    }
+  ]
+}

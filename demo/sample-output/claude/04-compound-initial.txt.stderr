@@ -1,0 +1,9 @@
+kb compound: head=e214322 base= mode=full tasks=8 (no compatible baseline graph (first compound or graph version change))
+  [ok] recheck  pages/_conflicts.md                template 
+  [ok] create   pages/features/cart.md             template 
+  [ok] create   pages/features/checkout.md         template 
+  [ok] create   pages/features/login.md            template 
+  [ok] create   pages/features/order_detail.md     template 
+  [ok] create   pages/features/product_detail.md   template 
+  [ok] create   pages/features/products.md         template 
+  [ok] create   pages/overview.md                  template 
