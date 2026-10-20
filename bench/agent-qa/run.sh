@@ -17,6 +17,7 @@
 #   AGENT_ONLY="q01 q05" run a subset (prefix match on question id)
 #   AGENT_VARIANTS="A"  run only some variants (default "A B")
 #   AGENT_QUESTIONS=f   question file (default questions.json; questions-cases.json = large repo)
+#   AGENT_MAX_TURNS=n   cap agent turns per run (both arms; default: no cap)
 #   AGENT_RESCORE=1     only re-score existing transcripts in [outdir] (no claude runs)
 set -euo pipefail
 SRC="$(cd "${1:?usage: run.sh <demo-repo> [outdir]}" && pwd)"
@@ -59,10 +60,10 @@ run_one() { # variant qid rep
   prompt="$(jq -r --arg id "$id" '.questions[] | select(.id==$id) | .prompt' "$Q") $suffix"
   if [ "$v" = A ]; then dir="$OUT/A"; tools="Skill,Read,Glob,Grep,Bash(kb:*)"; else dir="$OUT/B"; tools="Read,Glob,Grep"; fi
   ( cd "$dir" && claude -p "$prompt" --model "$MODEL" --output-format stream-json --verbose \
-      --allowedTools "$tools" </dev/null >"$OUT/transcripts/$v-$id-r$r.jsonl" 2>"$OUT/transcripts/$v-$id-r$r.stderr" ) || true
+      --allowedTools "$tools" ${AGENT_MAX_TURNS:+--max-turns "$AGENT_MAX_TURNS"} </dev/null >"$OUT/transcripts/$v-$id-r$r.jsonl" 2>"$OUT/transcripts/$v-$id-r$r.stderr" ) || true
 }
 export -f run_one
-export OUT MODEL Q suffix
+export OUT MODEL Q suffix AGENT_MAX_TURNS
 
 for r in $(seq 1 "$REPS"); do for i in $ids; do for v in ${AGENT_VARIANTS:-A B}; do echo "$v $i $r"; done; done; done | xargs -P "$PAR" -n 3 bash -c 'run_one "$0" "$1" "$2"'
 fi

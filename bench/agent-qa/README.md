@@ -60,3 +60,44 @@ AGENT_QUESTIONS=bench/agent-qa/questions-cases.json AGENT_REPS=2 bench/agent-qa/
 **结论如实写：没有差别，推测不成立（至少对这类问题如此）。** 这 5 个问题都能用一个唯一的字符串（路由名、URL、文件名）直接 grep 到答案。grep 在 726 MB 的仓库上也只要几秒，所以 B 组并不吃亏。A 组 10 次运行里只有 4 次读了 wiki 文件，没有一次调用 `kb` 或 skill。按单题看，“模块注册了哪些路由”这题 A 略好（6.5 vs 10 turns），“某个路由的 buildFunction”这题 B 略好（3 vs 6 turns）。
 
 wiki 真正有优势的，是 minishop 上那类需要**汇总**的问题：三端差异、哪些文档过时（配合 `kb conflicts`）。这类问题在 grep 下需要很多轮。要在大仓库上证明这一点，需要设计汇总类问题，并让 agent 稳定地调用 skill。这一轮没有做到。结果和 transcript 在 `demo/sample-output/agent-bench-cases/`，本节花费 $0.13。
+
+## 大仓库 + 汇总类问题：HarmonyOS Cases（第 7 轮）
+
+第 6 轮的问题都是能 grep 到的查找题，这一轮专门测**汇总 / 跨文件**问题：
+
+- G1：router_map 一共几个、注册了多少页面、最多的两个模块各有多少；
+- G2：哪些 buildFunction 在源文件里找不到实现；
+- G3：哪些路由页面的源文件设置了 testID；
+- G4：哪些文件通过 `.request(` 发网络请求；
+- G5：使用次数最多的 testID 字面量。
+
+标准答案由 `cases-groundtruth.py` **直接从源码**算出，不依赖 kb 的抽取结果，见 `demo/sample-output/agent-bench-cases-agg/groundtruth.txt`。设置：haiku，每题每组 2 次，`AGENT_MAX_TURNS=40`（两组相同），总花费 $0.28。
+
+```bash
+AGENT_QUESTIONS=bench/agent-qa/questions-cases-agg.json AGENT_REPS=2 AGENT_MAX_TURNS=40 bench/agent-qa/run.sh <Cases 的副本，含 wiki>
+```
+
+| | 通过 | 检查点 | 平均 turns | 总费用 | 平均耗时 |
+|---|---|---|---|---|---|
+| A：wiki + skills | 10/10 | 34/34 | 17.6 | $0.149 | 51 s |
+| B：只有源码 | 9/10 | 32/34 | 14.0 | $0.126 | 46 s |
+
+**结论如实写：汇总类问题上 wiki 也没有带来可证明的优势。**
+
+- A 多对了 1 次，是 G5（B 有一次因为没有 Bash 而无法计数）。但 A 用的 turns 更多，费用和耗时也略高。每组只有 10 次运行，1 次的差距在噪声范围内。
+- **关键事实：A 组 10 次运行中，没有一次调用 `kb` 或 skill。** 只有 1 次直接读了 wiki 文件。A 能接触到 wiki，只是因为它在仓库根目录 grep 时顺带搜到了 `wiki/` 下的 facts JSON 和页面（G3、G4、G5 的部分运行）。也就是说，这一组实际测的是“仓库里多一个可被 grep 的 wiki 目录”，而不是“agent 使用 kb”。
+
+**为什么和 minishop 的结果不同？** minishop 上的收益全部来自 agent **真正调用了对应命令**的题目：“三端不一致”用了 `kb parity`，“过时文档”用了 `kb conflicts`，turns 分别降到原来的约 1/3 和 1/5。在 Cases 上，这 5 个问题虽然有对应的现成命令，agent 却一个都没用上：
+
+- G3 对应 `kb lint-tid`；
+- G1 和 G2 对应 `facts/routes.json` 和 router_map 的 dangling 警告；
+- G5 对应 `facts/testids.json`。
+
+原因是这些问题读起来像“搜代码”，而 skill 的描述是围绕“三端功能、路由、过时文档”写的，haiku 没有把它们联系起来。所以**瓶颈在 skill 的触发和命名，而不在 wiki 的内容**。这和 q05 的经验一致：只改描述没有用，要有一个名字直接对应问题的命令（`kb conflicts`）。
+
+**打分修正的披露**：
+
+- G3 的 `must_not` 正则匹配到了“没有”里的“有”，把 B 的一个正确回答判成了错；
+- G5 题面写的是“整个仓库”，B 的一个回答把 docs/*.md 里的 1 个示例也算进去，得到 14。这个解读合理，现在 13 和 14 都接受。
+
+两项修正对 A、B 同样适用。修正前的结果（A 10/10，B 7/10）保留在 `results.before-scoring-fix.md`。

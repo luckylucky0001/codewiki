@@ -1,0 +1,24 @@
+G1 router_map files: 6 entries: 88
+    49 test/performance/ApplicationPerformanceOptimization/entry/src/main/resources/base/profile/router_map.json
+    34 test/performance/performance-optimization-practical-guidance/entry/src/main/resources/base/profile/router_map.json
+    2 CommonAppDevelopment/feature/perfermance/operaterdbintaskpool/src/main/resources/base/profile/router_map.json
+    1 CommonAppDevelopment/feature/transitionanimation/src/main/resources/base/profile/router_map.json
+    1 test/performance/web_import/WebImportRender/entry/src/main/resources/base/profile/router_map.json
+    1 test/performance/image_white_block_solution/entry/src/main/resources/base/profile/router_map.json
+G2 dangling buildFunction: [('pageOne', 'PageOneBuilder', 'test/performance/web_import/WebImportRender/entry/src/main/ets/pages/Second.ets')]
+G3 pages whose source sets a literal testID: ['AddressBookDetail', 'AddressBookEdit']
+G4 files calling .request(: 13
+    CommonAppDevelopment/feature/h5cache/src/main/ets/pages/SubWeb.ets
+    CommonAppDevelopment/feature/photopickandsave/src/main/ets/components/SaveNetWorkPictures.ets
+    CommonAppDevelopment/feature/skeletondiagram/src/main/ets/view/SkeletonDiagram.ets
+    CommonAppDevelopment/product/entry/src/main/ets/entryformability/EntryFormAbility.ets
+    test/performance/ApplicationPerformanceOptimization/entry/src/main/ets/pages/PageFiveCounter.ets
+    test/performance/ApplicationPerformanceOptimization/entry/src/main/ets/pages/PageFivePositive.ets
+    test/performance/ApplicationPerformanceOptimization/entry/src/main/ets/pages/PageSixCounter.ets
+    test/performance/ApplicationPerformanceOptimization/entry/src/main/ets/pages/PageSixPositive.ets
+    test/performance/app_cold_start/HttpRequest/entry/src/main/ets/utils/NetRequest.ets
+    test/performance/app_cold_start/PreHttpRequest/entry/src/main/ets/utils/NetRequest.ets
+    test/performance/delay_related_performance/entry/src/main/ets/pages/FriendMoment.ets
+    test/performance/image_white_block_solution/entry/src/main/ets/utils/NetRequest.ets
+    test/performance/reasonable_using_cache_improve_performance/LocalCacheHttpData/entry/src/main/ets/pages/Index.ets
+G5 most used literal testIDs: [('title', 13), ('currentTime', 11), ('close_button', 10)]

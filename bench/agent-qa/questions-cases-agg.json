@@ -1,0 +1,56 @@
+{
+ "version": 1,
+ "note": "Aggregation / cross-cutting questions on HarmonyOS Cases. Ground truth computed from the raw source with bench/agent-qa/cases-groundtruth.py (router_map.json files, pageSourceFile contents, .id('…') literals, .request( call sites) — independent of kb's extractors.",
+ "suffix": "只读，不要修改任何文件。请简洁回答，给出数字和清单，并说明依据。",
+ "questions": [
+  {
+   "id": "G1-route-totals",
+   "prompt": "这个仓库一共有几个 router_map.json？它们总共注册了多少个页面（routerMap 条目）？注册页面最多的两个模块各有多少个？",
+   "must": [
+    "\\b88\\b",
+    "\\b49\\b",
+    "\\b34\\b"
+   ]
+  },
+  {
+   "id": "G2-dangling-builders",
+   "prompt": "检查所有 router_map.json：有没有条目的 buildFunction 在它的 pageSourceFile 里找不到对应的函数实现？列出这些条目。",
+   "must": [
+    "PageOneBuilder",
+    "Second\\.ets|WebImportRender"
+   ]
+  },
+  {
+   "id": "G3-pages-with-testids",
+   "prompt": "router_map 注册的所有页面中，哪些页面的源文件（pageSourceFile）里设置了 testID（.id('...')）？列出页面名。",
+   "must": [
+    "AddressBookDetail",
+    "AddressBookEdit"
+   ]
+  },
+  {
+   "id": "G4-http-callers",
+   "prompt": "哪些源文件通过 http 模块的 .request( 发起网络请求？给出文件数量和文件清单。",
+   "must": [
+    "SkeletonDiagram",
+    "PageFiveCounter",
+    "PageSixPositive",
+    "FriendMoment",
+    "EntryFormAbility",
+    "SaveNetWorkPictures",
+    "SubWeb",
+    "NetRequest"
+   ],
+   "min": 6
+  },
+  {
+   "id": "G5-top-testid",
+   "prompt": "整个仓库里，使用次数最多的 testID 字符串（.id('...') 的字面量）是哪个？出现了多少次？",
+   "must": [
+    "['\"`]?title['\"`]?",
+    "\\b1[34]\\b"
+   ],
+   "note": "13 = .id('title') in .ets incl. ohosTest selectors; 14 also counts one docs/*.md example — both accepted"
+  }
+ ]
+}

@@ -463,7 +463,9 @@ kb eval --doc my-old-spec.md --golden my-labels.yaml                    # 任意
 
 **第 6 轮：新增 `kb conflicts` 命令，并在 skill 描述的第一句就指向它。** 只对 A 组重跑这一题 3 次，结果 3 次都调用了 `kb conflicts`（其中 1 次经由 kb-query skill）：**平均 25.3 → 4.7 turns，92 → 20 s，$0.069 → $0.018**，检查点仍然全部命中。这说明 agent 不是不愿意用 wiki，而是要有一个名字直接对应问题的命令。
 
-**大仓库变体（HarmonyOS Cases，1952 个 .ets 文件，5 题 × 2 次）**：A 10/10、平均 5.9 turns、$0.039；B 10/10、平均 5.9 turns、$0.040，**没有差别**。这些问题都能用一个唯一的字符串直接 grep 到答案，grep 在大仓库上也很快，A 组也几乎没用 wiki。所以“仓库越大 wiki 越有用”这个推测，这次**没有得到支持**。wiki 的优势在需要汇总的问题上（三端差异、过时文档），详见 bench/agent-qa/README.md。
+**大仓库变体（HarmonyOS Cases，1952 个 .ets 文件，5 题 × 2 次）**：A 10/10、平均 5.9 turns、$0.039；B 10/10、平均 5.9 turns、$0.040，**没有差别**。这些问题都能用一个唯一的字符串直接 grep 到答案，grep 在大仓库上也很快，A 组也几乎没用 wiki。所以“仓库越大 wiki 越有用”这个推测，这次**没有得到支持**。
+
+**大仓库 + 汇总类问题（第 7 轮，Cases，5 题 × 2 次）**：问题包括 router_map 总数和分布、dangling buildFunction、哪些页面设置了 testID、哪些文件发网络请求、最常用的 testID。标准答案直接从源码算出。结果：A **10/10**、17.6 turns、$0.149、51 s；B **9/10**、14.0 turns、$0.126、46 s。A 多对 1 次，但 turns 和费用更高，样本也小，**算不上可证明的优势**。关键在于，A 组 10 次运行里**没有一次调用 `kb` 或 skill**，只是 grep 时顺带搜到了 `wiki/` 下的文件。minishop 上的收益全部来自 agent 真正调用了 `kb parity` 或 `kb conflicts` 的题目。所以瓶颈在 **skill 的触发和命令的命名**：要有一个名字直接对应问题的命令，并在 skill 描述里写明。wiki 的内容本身不是问题。打分正则修正了两处（对两组同样适用），已披露。详见 bench/agent-qa/README.md。
 
 打分正则有一处修正（接口路径前带 host 时匹配失败），已在文档中披露。方法、逐题结果和原始 transcript 见 [bench/agent-qa/README.md](bench/agent-qa/README.md) 和 `demo/sample-output/agent-bench/`。基准总花费 $0.75。
 
