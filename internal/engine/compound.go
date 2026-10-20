@@ -256,7 +256,8 @@ func Compound(o *Options) (*Result, error) {
 	if err := os.MkdirAll(work, 0o755); err != nil {
 		return nil, err
 	}
-	unlock, err := lock(workRoot)
+	// one lock per wiki: several wikis may share a parent dir (and .kb-work)
+	unlock, err := lock(workRoot, "lock-"+filepath.Base(wikiDir))
 	if err != nil {
 		return nil, err
 	}
@@ -408,11 +409,11 @@ func writeJSON(p string, v any) {
 	_ = wiki.WriteFileAtomic(p, append(b, '\n'))
 }
 
-func lock(dir string) (func(), error) {
+func lock(dir, name string) (func(), error) {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return nil, err
 	}
-	p := filepath.Join(dir, "lock")
+	p := filepath.Join(dir, name)
 	for i := 0; i < 2; i++ {
 		f, err := os.OpenFile(p, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o644)
 		if err == nil {

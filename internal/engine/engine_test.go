@@ -473,3 +473,23 @@ func TestTemplateRecheckKeepsFreshLLMVerdicts(t *testing.T) {
 		t.Fatalf("stale LLM verdict must be re-checked: %+v", c)
 	}
 }
+
+// Two wikis in the same parent dir share .kb-work; their compound runs must
+// not block each other (seen running several real repos side by side), but
+// two runs on the same wiki must.
+func TestCompoundLockIsPerWiki(t *testing.T) {
+	dir := t.TempDir()
+	u1, err := lock(dir, "lock-a-wiki")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer u1()
+	u2, err := lock(dir, "lock-b-wiki")
+	if err != nil {
+		t.Fatalf("second wiki blocked: %v", err)
+	}
+	defer u2()
+	if _, err := lock(dir, "lock-a-wiki"); err == nil {
+		t.Fatal("same wiki must stay locked")
+	}
+}
