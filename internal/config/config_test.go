@@ -33,6 +33,7 @@ func TestDetectRootMarkers(t *testing.T) {
 		{"gradle multi-module", []string{"settings.gradle.kts", "app/build.gradle.kts", "features/x/a.kt"}, []Platform{{Name: "android", Root: "."}}},
 		{"app only", []string{"app/build.gradle"}, []Platform{{Name: "android", Root: "app"}}},
 		{"xcodeproj at root", []string{"Wikipedia.xcodeproj/project.pbxproj", "Wikipedia/a.swift"}, []Platform{{Name: "ios", Root: "."}}},
+		{"xcodeproj at root with iOS/ target dir", []string{"NetNewsWire.xcodeproj/project.pbxproj", "iOS/a.swift", "Shared/b.swift", "Mac/c.swift"}, []Platform{{Name: "ios", Root: "."}}},
 		{"harmony app at root", []string{"build-profile.json5", "AppScope/app.json5", "entry/src/main/ets/pages/Index.ets"}, []Platform{{Name: "harmony", Root: "."}}},
 		{"kmp", []string{"settings.gradle.kts", "shared/a.kt", "app/iosApp/a.swift"}, []Platform{{Name: "android", Root: "."}, {Name: "ios", Root: "app/iosApp"}}},
 		{"conventional dirs", []string{"android/a.kt", "ios/a.swift", "harmony/a.ets", "src/a.js"}, []Platform{{Name: "android", Root: "android"}, {Name: "ios", Root: "ios"}, {Name: "harmony", Root: "harmony"}, {Name: "web", Root: "src"}}},

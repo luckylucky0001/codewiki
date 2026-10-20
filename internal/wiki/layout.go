@@ -3,6 +3,7 @@ package wiki
 import (
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -124,8 +125,88 @@ func section(path string) int {
 	return len(sectionOrder) - 1
 }
 
+// FeatureIndexMax: with more feature pages than this, index.md lists one line
+// per module and links a sub-index index/features-<module>.md that lists the
+// pages (openharmony app_samples: 416 routes made a 97 KB, ~24k-token
+// index.md — the entry page every agent reads first).
+var FeatureIndexMax = 150
+
+// IndexMaxRoutesPerLine caps the route ids shown after one index entry.
+var IndexMaxRoutesPerLine = 8
+
+// SubIndexMaxGroups caps the module lines of a hierarchical index.md.
+var SubIndexMaxGroups = 40
+
+// SubIndexDir holds the generated per-module sub-indexes.
+const SubIndexDir = "index"
+
 // RenderIndex renders a deterministic, layered index of all pages.
-func RenderIndex(pages []*Page) []byte {
+func RenderIndex(pages []*Page) []byte { return RenderIndexFiles(pages)["index.md"] }
+
+// pageModule groups a page by the module of its first anchor: the path before
+// /src/ (Gradle / HarmonyOS modules), else its first two directories.
+func pageModule(p *Page) string {
+	if len(p.Front.Sources) == 0 {
+		return "other"
+	}
+	f := p.Front.Sources[0].Sym
+	if i := strings.Index(f, "://"); i >= 0 {
+		f = f[i+3:]
+	}
+	if i := strings.IndexByte(f, '#'); i >= 0 {
+		f = f[:i]
+	}
+	if i := strings.Index(f, "/src/"); i > 0 {
+		return f[:i]
+	}
+	d := strings.Split(path.Dir(f), "/")
+	if len(d) > 2 {
+		d = d[:2]
+	}
+	if m := strings.Join(d, "/"); m != "." && m != "" {
+		return m
+	}
+	return "root"
+}
+
+func moduleSlug(m string) string {
+	var b strings.Builder
+	for _, r := range strings.ToLower(m) {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			b.WriteRune(r)
+		} else {
+			b.WriteByte('-')
+		}
+	}
+	return strings.Trim(b.String(), "-")
+}
+
+func indexLine(p *Page, prefix string) string {
+	title := p.Front.Title
+	if title == "" {
+		title = IDFromPath(p.Path)
+	}
+	status := ""
+	if p.Front.Status != "" && p.Front.Status != StatusCurrent {
+		status = " ⚠ " + p.Front.Status
+	}
+	extra := ""
+	if rs := p.Front.Routes; len(rs) > 0 {
+		more := ""
+		if len(rs) > IndexMaxRoutesPerLine {
+			// the overview page lists every route (416 on app_samples: a 21 KB line)
+			more = fmt.Sprintf(" … +%d", len(rs)-IndexMaxRoutesPerLine)
+			rs = rs[:IndexMaxRoutesPerLine]
+		}
+		extra = " — routes: `" + strings.Join(rs, "`, `") + "`" + more
+	}
+	return fmt.Sprintf("- [%s](%s%s)%s%s\n", title, prefix, p.Path, extra, status)
+}
+
+// RenderIndexFiles renders index.md plus, for large wikis, the per-module
+// feature sub-indexes (wiki-relative path -> content).
+func RenderIndexFiles(pages []*Page) map[string][]byte {
+	out := map[string][]byte{}
 	var b strings.Builder
 	b.WriteString("# Index\n\n<!-- maintained by kb (kb verify --fix-index); do not edit by hand -->\n\n")
 	b.WriteString("入口：[AGENTS.md](AGENTS.md)（写作规范） · [log.md](log.md)（变更日志） · `facts/*.json`（机器可读事实）\n")
@@ -159,23 +240,64 @@ func RenderIndex(pages []*Page) []byte {
 			}
 			continue
 		}
+		if s.prefix == "pages/features/" && len(ps) > FeatureIndexMax {
+			// hierarchical: one line per module, pages in index/features-<module>.md
+			// group by module; with too many modules, by a coarser path prefix
+			// (app_samples: 142 modules -> code/BasicFeature, code/UI, …)
+			var mods []string
+			var byMod map[string][]*Page
+			for depth := 0; depth <= 3; depth++ {
+				mods, byMod = nil, map[string][]*Page{}
+				for _, p := range ps {
+					m := pageModule(p)
+					if depth > 0 {
+						if seg := strings.Split(m, "/"); len(seg) > 4-depth {
+							m = strings.Join(seg[:4-depth], "/")
+						}
+					}
+					if _, ok := byMod[m]; !ok {
+						mods = append(mods, m)
+					}
+					byMod[m] = append(byMod[m], p)
+				}
+				if len(mods) <= SubIndexMaxGroups {
+					break
+				}
+			}
+			sort.Strings(mods)
+			fmt.Fprintf(&b, "%d 个功能页，按模块分组（每组一个子索引）：\n\n", len(ps))
+			used := map[string]bool{}
+			for _, m := range mods {
+				slug := moduleSlug(m)
+				if slug == "" {
+					slug = "root"
+				}
+				for base, i := slug, 2; used[slug]; i++ {
+					slug = fmt.Sprintf("%s-%d", base, i)
+				}
+				used[slug] = true
+				sub := SubIndexDir + "/features-" + slug + ".md"
+				var sb strings.Builder
+				fmt.Fprintf(&sb, "# Index · 功能 · %s\n\n<!-- maintained by kb (kb verify --fix-index); do not edit by hand -->\n\n[← index.md](../index.md)\n\n", m)
+				last := ""
+				for _, p := range byMod[m] {
+					if fm := pageModule(p); fm != m && fm != last {
+						fmt.Fprintf(&sb, "\n### %s\n\n", fm)
+						last = fm
+					}
+					sb.WriteString(indexLine(p, "../"))
+				}
+				out[sub] = []byte(sb.String())
+				fmt.Fprintf(&b, "- [%s](%s) — %d\n", m, sub, len(byMod[m]))
+			}
+			continue
+		}
 		for _, p := range ps {
-			title := p.Front.Title
-			if title == "" {
-				title = IDFromPath(p.Path)
-			}
-			status := ""
-			if p.Front.Status != "" && p.Front.Status != StatusCurrent {
-				status = " ⚠ " + p.Front.Status
-			}
-			extra := ""
-			if len(p.Front.Routes) > 0 {
-				extra = " — routes: `" + strings.Join(p.Front.Routes, "`, `") + "`"
-			}
-			fmt.Fprintf(&b, "- [%s](%s)%s%s\n", title, p.Path, extra, status)
+			b.WriteString(indexLine(p, ""))
 		}
 	}
-	return []byte(b.String())
+	out["index.md"] = []byte(b.String())
+	return out
 }
 
 // RenderLLMSTxt renders llms.txt, the entry point for external agents.
