@@ -124,6 +124,7 @@ docs:
 | `kb parity [--strict]` | 功能 × 平台一致性矩阵：路由 / testID / 可达接口是否齐全，以及同名常量的跨平台取值差异；同时生成 `pages/parity.md` |
 | `kb install-skills <repo>` | 把 skills 安装到 `<repo>/.claude/skills/` |
 | `kb bench [--synthetic N]` | 冷/热扫描基准（合成仓库或 `--root` 指定的真实仓库） |
+| `kb mcp` | stdio MCP server（JSON-RPC 2.0），工具：`kb_search`、`kb_get`、`kb_context`、`kb_anchor`、`kb_status`、`kb_parity` |
 
 ## Wiki 布局
 
@@ -328,6 +329,12 @@ kb install-skills /path/to/app-repo     # 复制到 /path/to/app-repo/.claude/sk
 ```
 
 skills 只驱动 CLI，不重新实现逻辑。
+
+也可以把 wiki 作为 MCP 工具接入任意 agent：
+
+```bash
+claude mcp add codewiki -- kb mcp --root /path/to/app-repo
+```
 
 ## 真实仓库案例：axios（JavaScript）
 

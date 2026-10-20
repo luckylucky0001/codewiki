@@ -324,3 +324,51 @@ func TestDiffBaseRevision(t *testing.T) {
 		t.Fatal("plan --dry-run wrote plan.json")
 	}
 }
+
+func TestMCPServer(t *testing.T) {
+	dir := repo(t)
+	run(t, dir, "init")
+	run(t, dir, "compound")
+	in := strings.Join([]string{
+		`{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"t","version":"0"}}}`,
+		`{"jsonrpc":"2.0","method":"notifications/initialized"}`,
+		`{"jsonrpc":"2.0","id":2,"method":"tools/list"}`,
+		`{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"kb_get","arguments":{"page":"features/cart"}}}`,
+		`{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"kb_status","arguments":{}}}`,
+		`{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"kb_get","arguments":{}}}`,
+		`{"jsonrpc":"2.0","id":6,"method":"nope"}`,
+	}, "\n") + "\n"
+	var out bytes.Buffer
+	serveMCP(strings.NewReader(in), &out, dir, "")
+	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
+	if len(lines) != 6 {
+		t.Fatalf("want 6 responses, got %d:\n%s", len(lines), out.String())
+	}
+	var resps []map[string]any
+	for _, l := range lines {
+		var m map[string]any
+		if err := json.Unmarshal([]byte(l), &m); err != nil {
+			t.Fatal(err)
+		}
+		resps = append(resps, m)
+	}
+	if resps[0]["result"].(map[string]any)["serverInfo"].(map[string]any)["name"] != "codewiki" {
+		t.Fatal("initialize")
+	}
+	if n := len(resps[1]["result"].(map[string]any)["tools"].([]any)); n < 5 {
+		t.Fatalf("tools/list: %d", n)
+	}
+	text := resps[2]["result"].(map[string]any)["content"].([]any)[0].(map[string]any)["text"].(string)
+	if !strings.Contains(text, `"features/cart"`) {
+		t.Fatalf("kb_get: %s", text)
+	}
+	if !strings.Contains(resps[3]["result"].(map[string]any)["content"].([]any)[0].(map[string]any)["text"].(string), `"stale"`) {
+		t.Fatal("kb_status")
+	}
+	if resps[4]["result"].(map[string]any)["isError"] != true {
+		t.Fatal("missing argument must be a tool error")
+	}
+	if resps[5]["error"] == nil {
+		t.Fatal("unknown method must be a JSON-RPC error")
+	}
+}
