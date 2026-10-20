@@ -452,6 +452,31 @@ func (c *ctx) routes() {
 		}
 		add(model.Route{Platform: s.Platform, RouteID: rid, Pattern: s.Value, Deeplink: c.deeplink(s.Platform, s.Value), File: file, Symbol: sym})
 	}
+	// URL route tables: let allRoutes: [String: Handler] = ["/projects/:id": project, …]
+	// (kickstarter/ios-oss) or mapOf("/projects/:id" to ::project): each
+	// path key is a deep-link route anchored on its handler function.
+	for _, sym := range c.g.Symbols {
+		if (sym.Lang != "swift" && sym.Lang != "kotlin") || sym.Parent != "" || !reRouteTableName.MatchString(sym.Name) {
+			continue
+		}
+		switch sym.Kind {
+		case "property", "variable", "constant", "val", "var":
+		default:
+			continue
+		}
+		for _, m := range reRouteTableEntry.FindAllStringSubmatch(c.symbolSource(sym), -1) {
+			path, handler := strings.TrimPrefix(m[1], "/"), m[2]
+			if path == "" {
+				continue
+			}
+			pattern := reColonParam.ReplaceAllString(path, "{$1}")
+			r := model.Route{Platform: sym.Platform, RouteID: Snake(handler), Pattern: pattern, File: sym.File, Symbol: sym.ID}
+			if h := c.findSymNear(sym.Platform, handler, sym.File, "function", "method"); h != nil {
+				r.File, r.Symbol = h.File, h.ID
+			}
+			add(r)
+		}
+	}
 	// HarmonyOS router_map entries were collected in resources(); Navigation
 	// apps without a router_map resolve names in a navDestination builder, so
 	// names pushed with NavPathStack.pushPathByName('X') are routes too.
@@ -555,6 +580,12 @@ func refRouteID(ref string) string {
 	}
 	return Snake(last)
 }
+
+var (
+	reRouteTableName  = regexp.MustCompile(`(?i)routes?$|routeTable$|routeMap$`)
+	reRouteTableEntry = regexp.MustCompile(`"(/[\w\-./:{}]*)"\s*(?::|to)\s*(?:::)?([A-Za-z_]\w*)`)
+	reColonParam      = regexp.MustCompile(`:([A-Za-z_]\w*)`)
+)
 
 // swiftView returns the single project view a navigationDestination closure
 // builds, or nil when it builds none or several.

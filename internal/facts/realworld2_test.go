@@ -212,3 +212,34 @@ func TestSameRouteInTwoModules(t *testing.T) {
 		t.Fatalf("episode routes: %v (all %+v)", got, f.Routes)
 	}
 }
+
+// kickstarter/ios-oss: deep links are a [path: handler] table.
+func TestSwiftURLRouteTable(t *testing.T) {
+	dir := writeTree(t, map[string]string{
+		"Navigation.swift": `public enum Navigation {
+  case project(String)
+}
+
+private let allRoutes: [String: (RouteParams) -> Navigation?] = [
+  "/": emailClick,
+  "/projects/:creator_param/:project_param": project,
+  "/projects/:creator_param/:project_param/comments": projectComments,
+]
+
+private func emailClick(_ params: RouteParams) -> Navigation? { return nil }
+private func project(_ params: RouteParams) -> Navigation? { return nil }
+private func projectComments(_ params: RouteParams) -> Navigation? { return nil }
+`,
+	})
+	f := extractTree(t, dir, config.Platform{Name: "ios", Root: "."})
+	rm := routeMap(f)
+	if r := rm["project"]; r.Pattern != "projects/{creator_param}/{project_param}" || !strings.HasSuffix(r.Symbol, "#project") {
+		t.Errorf("project: %+v", r)
+	}
+	if r := rm["project_comments"]; !strings.HasSuffix(r.Symbol, "#projectComments") {
+		t.Errorf("project_comments: %+v (all %v)", r, rm)
+	}
+	if _, ok := rm["email_click"]; ok {
+		t.Errorf(`"/" is not a route: %v`, rm)
+	}
+}
