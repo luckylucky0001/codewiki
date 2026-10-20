@@ -1,0 +1,3 @@
+kb ingest: head=2f2b132 base=2f2b132 mode=ingest tasks=1 (check ingested documents against code)
+ingested 1 document(s) into raw/docs
+  [violation] create   pages/_conflicts.md                cmd reverted writes outside write set: pages/evil-codex.md (in 2000 / out 40 tok, cached 200, reasoning 10)

@@ -1,0 +1,2 @@
+codex: codex-cli 0.163.0
+backend command: codex exec --sandbox workspace-write -c 'approval_policy="never"' --skip-git-repo-check --ephemeral --color never --json -

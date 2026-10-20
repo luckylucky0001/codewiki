@@ -1,0 +1,8 @@
+WARNING: proceeding, even though we could not create PATH aliases: Refusing to create helper binaries under temporary dir "/tmp" (codex_home: AbsolutePathBuf("<tmp>/codex-home"))
+{"type":"thread.started","thread_id":"01a15b8a-57ee-7033-848c-e47d66344d09"}
+{"type":"item.completed","item":{"id":"item_0","type":"error","message":"Model metadata for `mock-model` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."}}
+{"type":"turn.started"}
+{"type":"item.started","item":{"id":"item_1","type":"command_execution","command":"/bin/bash -lc \"printf '%s' '---\nid: features/cart\ntitle: features/cart（codex mock）\nsources: []\n---\n# features/cart\n\n本页由真实 codex CLI 在 mock 模型驱动下写入（kb compound --agent codex）。\n\n[总览](../overview.md)\n' > 'pages/features/cart.md'; echo outside-write-set > pages/evil-codex.md\"","aggregated_output":"","exit_code":null,"status":"in_progress"}}
+{"type":"item.completed","item":{"id":"item_1","type":"command_execution","command":"/bin/bash -lc \"printf '%s' '---\nid: features/cart\ntitle: features/cart（codex mock）\nsources: []\n---\n# features/cart\n\n本页由真实 codex CLI 在 mock 模型驱动下写入（kb compound --agent codex）。\n\n[总览](../overview.md)\n' > 'pages/features/cart.md'; echo outside-write-set > pages/evil-codex.md\"","aggregated_output":"","exit_code":0,"status":"completed"}}
+{"type":"item.completed","item":{"id":"item_2","type":"agent_message","text":"done"}}
+{"type":"turn.completed","usage":{"input_tokens":2000,"cached_input_tokens":200,"cache_write_input_tokens":0,"output_tokens":40,"reasoning_output_tokens":10}}
