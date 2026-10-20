@@ -40,8 +40,11 @@ type Diff struct {
 	Changes        []Change       `json:"changes"`
 	ModulesTotal   int            `json:"modules_total"`
 	ModulesChanged []string       `json:"modules_changed"`
-	FilesChanged   []string       `json:"files_changed"`
-	Incompatible   bool           `json:"incompatible,omitempty"` // base graph missing or different version
+	FilesChanged   []string       `json:"changed_files"`
+	// ChangedRouteIDs / ChangedRoutes are filled by ComputeImpact (e2epilot contract).
+	ChangedRouteIDs []string      `json:"changed_route_ids"`
+	ChangedRoutes   []RouteChange `json:"changed_routes"`
+	Incompatible    bool          `json:"incompatible,omitempty"` // base graph missing or different version
 }
 
 // RenameThreshold is the minimum body similarity for a fuzzy rename.
@@ -49,7 +52,7 @@ const RenameThreshold = 0.80
 
 // DiffGraphs classifies every symbol of old/new by id.
 func DiffGraphs(old, cur *model.Graph) *Diff {
-	d := &Diff{Counts: map[string]int{}, Changes: []Change{}, ModulesChanged: []string{}, FilesChanged: []string{}}
+	d := &Diff{Counts: map[string]int{}, Changes: []Change{}, ModulesChanged: []string{}, FilesChanged: []string{}, ChangedRouteIDs: []string{}, ChangedRoutes: []RouteChange{}}
 	if cur.Commit != "" {
 		d.Head = cur.Commit
 	}

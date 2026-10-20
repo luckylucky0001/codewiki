@@ -121,6 +121,7 @@ docs:
 | `kb context <file>` | 描述某文件的页面、符号、路由/testID/接口（改代码前给 coding agent 用） |
 | `kb anchor <symbol-id...>` | 打印符号当前 hash（LLM 写 frontmatter 时用） |
 | `kb lint-tid [--strict]` | testID 覆盖矩阵：路由 × tid × 平台 |
+| `kb parity [--strict]` | 功能 × 平台一致性矩阵：路由 / testID / 可达接口是否齐全，以及同名常量的跨平台取值差异；同时生成 `pages/parity.md` |
 | `kb install-skills <repo>` | 把 skills 安装到 `<repo>/.claude/skills/` |
 | `kb bench [--synthetic N]` | 冷/热扫描基准（合成仓库或 `--root` 指定的真实仓库） |
 
@@ -138,7 +139,10 @@ wiki/
     android/{routes,testids,apis,symbols}.md  ios/…  harmony/…
   pages/
     overview.md        # 三端路由矩阵
+    parity.md          # 三端一致性（生成，verify 检查新鲜度）
     features/<route_id>.md
+    concepts/navigation.md         # 路由表 / 路由器 / 深链与测试参数
+    concepts/shared-components.md  # 被 ≥3 个路由使用的共享符号
     flows/ concepts/ decisions/
     _conflicts.md      # 文档 vs 代码：conflict / verified / unverifiable
   .kb/graph.json       # 符号图快照（增量基准）
@@ -206,6 +210,57 @@ status: current                   # current | stale | outdated-doc
 3. **LLM 执行**：CLI 为每个任务写 prompt（任务、write set、相关 facts、符号源码、现有页面或确定性草稿），以 staging wiki 为 cwd、prompt 走 stdin 调用 `--llm-cmd`。执行后对 staging 做快照 diff，**write set 之外的写入全部回滚**并把任务标记为 `violation`（OpenDeepWiki 式受限写集）。随后 CLI 规范化 frontmatter：强制 id/kind/routes，给 prompt 中出现过的符号重盖当前 hash，拒绝未知符号。
 4. **template writer**（`--llm template`）：离线、确定性地从 facts + 符号图生成页面（锚点正确），用于无 key 的 CI、可复现的 demo，也是 `--fallback` 的兜底。
 5. **verify → publish**：在 staging 上跑完整 verify；通过才把 `wiki/` 原子替换（rename），否则保留 staging（`--keep-work`）并 exit 1。同时写 `.kb/state.json`、`.kb/update_record.json`，追加 `log.md`。运行期间持有 `.kb-work/lock`。
+
+## 锚点精度：功能页 vs 共享组件
+
+功能页只锚定**路由所属的 screen 及其成员、它的 ViewModel / store（名称与路由同前缀，或被 screen 直接引用的页面组件）、以及 2 跳内可达的接口调用**。被 ≥3 个路由（同平台）引用的符号——返回按钮、顶栏、API client、`TokenStore`——归入 `pages/concepts/shared-components.md`；路由表、路由器、导航栈、深链与测试参数处理（名称匹配 route/router/navigation/deeplink/pathStack/testParams）归入 `pages/concepts/navigation.md`。因此修改 `BackButton` 只会让 shared-components 页失效，不会让所有功能页一起 stale（有单测覆盖）。共享容器（struct/class）只按成员签名计算 hash，所以其成员也一并锚定。
+
+## 三端一致性：`kb parity`
+
+`kb parity` 从 facts 与符号图生成功能 × 平台矩阵：
+
+- 每个 `route_id` 在各平台是否有路由；
+- testID 是否齐全（以三端并集为准）；
+- 从 screen 出发 3 跳内可达的 HTTP 接口是否齐全；
+- 同名常量（`MAX_CART_ITEMS` / `maxCartItems` 归一化为 `max_cart_items`）在各平台的取值差异。
+
+结果同时写入 `pages/parity.md`（生成页，`kb verify` 检查其新鲜度）。demo 的变更集 01 故意只改了 Android 和鸿蒙的购物车上限，parity 立即报告：
+
+| 常量 | android | ios | harmony |
+|---|---|---|---|
+| `max_cart_items` | `50` | `99` | `50` |
+
+`--strict` 在存在差异时 exit 1，可作为 CI 门禁。
+
+## 与 e2epilot 联动
+
+`kb diff --json` 与 `wiki/.kb/plan.json`（`kb plan` / `kb compound` 写入）都暴露：
+
+```json
+{
+  "changed_route_ids": ["cart", "product_detail"],
+  "changed_routes": [
+    {"route_id": "cart", "platforms": ["android", "harmony"], "reasons": ["symbol_changed"],
+     "symbols": ["android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.MAX_CART_ITEMS"]}
+  ],
+  "changed_files": ["android/app/src/main/java/com/minishop/ui/cart/CartViewModel.kt", "..."]
+}
+```
+
+- `changed_route_ids`：受影响路由（去重排序）。路由被判为受影响的条件（`reasons`）：
+  - `symbol_changed`：从 screen 出发 3 跳内可达的符号发生了 body / signature / rename / 增删，或功能页锚定的符号发生变化；新旧两张图都会检查；
+  - `route_added` / `route_removed` / `route_changed`：与上一次 `facts/routes.json` 对比，路由增删，或 pattern / deeplink / symbol 变化；
+  - `testid_changed`：该路由下的 testID 增删。
+- `changed_files`：符号图中内容 hash 变化的源文件，加上 `git diff --name-only base head` 的结果（包含 `router_map.json`、`Info.plist` 等资源文件，排除 wiki 目录）。
+- 路由 ID 与 `facts/routes.json`、`testids.json`、`requirements.json` 中的 `route_id` 一致。
+
+e2epilot 侧的典型用法：
+
+```bash
+ROUTES=$(kb diff --json | jq -r '.changed_route_ids | join(",")')
+e2e graph invalidate --changed-routes "$ROUTES"
+e2e impact --changed-routes "$ROUTES" --requirements wiki/facts/requirements.json
+```
 
 ## 增量扫描缓存与性能
 

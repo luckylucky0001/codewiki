@@ -351,6 +351,8 @@ func cmdDiff(a *app, fs *flag.FlagSet, _ []string) int {
 		for _, k := range []string{engine.ClassUnchanged, engine.ClassBody, engine.ClassSignature, engine.ClassAdded, engine.ClassDeleted, engine.ClassRenamed} {
 			fmt.Fprintf(w, "  %-10s %d\n", k, d.Counts[k])
 		}
+		fmt.Fprintf(w, "changed_route_ids: %v\n", d.ChangedRouteIDs)
+		fmt.Fprintf(w, "changed_files: %d\n", len(d.FilesChanged))
 		for _, c := range d.Changes {
 			switch c.Class {
 			case engine.ClassRenamed:
@@ -383,6 +385,7 @@ func cmdPlan(a *app, fs *flag.FlagSet, _ []string) int {
 
 func printPlan(w io.Writer, p *engine.Plan) {
 	fmt.Fprintf(w, "mode %s — %s\n", p.Mode, p.Reason)
+	fmt.Fprintf(w, "changed_route_ids: %v; changed_files: %d\n", p.ChangedRouteIDs, len(p.ChangedFiles))
 	fmt.Fprintf(w, "stats: symbols=%d changes=%v module_ratio=%.2f structural_ratio=%.2f hops=%d propagated=%d\n",
 		p.Stats.Symbols, p.Stats.Changes, p.Stats.ModuleRatio, p.Stats.StructuralRatio, p.Stats.Hops, p.Stats.Propagated)
 	for _, t := range p.Tasks {

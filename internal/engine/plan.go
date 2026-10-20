@@ -53,6 +53,10 @@ type Plan struct {
 		Propagated      int            `json:"propagated_symbols"`
 	} `json:"stats"`
 	Tasks []Task `json:"tasks"`
+	// e2epilot contract: routes and files affected by this change
+	ChangedRouteIDs []string      `json:"changed_route_ids"`
+	ChangedRoutes   []RouteChange `json:"changed_routes"`
+	ChangedFiles    []string      `json:"changed_files"`
 }
 
 // PlanInput bundles everything the planner needs.
@@ -93,7 +97,8 @@ func routeIDs(f *model.Facts) []string {
 
 // BuildPlan computes the plan.
 func BuildPlan(in PlanInput) *Plan {
-	p := &Plan{Version: 1, Base: in.Diff.Base, Head: in.Cur.Commit, Tasks: []Task{}}
+	p := &Plan{Version: 1, Base: in.Diff.Base, Head: in.Cur.Commit, Tasks: []Task{},
+		ChangedRouteIDs: in.Diff.ChangedRouteIDs, ChangedRoutes: in.Diff.ChangedRoutes, ChangedFiles: in.Diff.FilesChanged}
 	p.Stats.Symbols = len(in.Cur.Symbols)
 	p.Stats.Changes = in.Diff.Counts
 	p.Stats.ModuleRatio = round2(in.Diff.ModuleRatio())

@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -121,6 +122,17 @@ func TestTemplateFlow(t *testing.T) {
 	if d["counts"].(map[string]any)["body"].(float64) != 2 {
 		t.Fatalf("diff counts %v", d["counts"])
 	}
+	// e2epilot contract
+	rids := fmt.Sprint(d["changed_route_ids"])
+	if !strings.Contains(rids, "cart") || !strings.Contains(rids, "product_detail") || strings.Contains(rids, "login") {
+		t.Fatalf("changed_route_ids = %v", rids)
+	}
+	if files := fmt.Sprint(d["changed_files"]); !strings.Contains(files, "CartViewModel.kt") || !strings.Contains(files, "LoginViewModel.kt") {
+		t.Fatalf("changed_files = %v", files)
+	}
+	if _, p := runJSON(t, dir, "plan", "--dry-run"); fmt.Sprint(p["changed_route_ids"]) != rids || p["changed_files"] == nil {
+		t.Fatalf("plan.json must expose the same changed_route_ids: %v", p["changed_route_ids"])
+	}
 	code, v = runJSON(t, dir, "compound")
 	if code != 0 {
 		t.Fatalf("compound 01: %d %v", code, v)
@@ -152,6 +164,25 @@ func TestTemplateFlow(t *testing.T) {
 		}
 		testutil.Git(t, dir, "add", "-A")
 		testutil.Git(t, dir, "commit", "-qm", "wiki")
+	}
+	planB, _ := os.ReadFile(filepath.Join(dir, "wiki/.kb/plan.json"))
+	var pl struct {
+		ChangedRouteIDs []string `json:"changed_route_ids"`
+		ChangedRoutes   []struct {
+			RouteID string   `json:"route_id"`
+			Reasons []string `json:"reasons"`
+		} `json:"changed_routes"`
+		ChangedFiles []string `json:"changed_files"`
+	}
+	json.Unmarshal(planB, &pl)
+	added := false
+	for _, r := range pl.ChangedRoutes {
+		if r.RouteID == "profile" && strings.Contains(strings.Join(r.Reasons, ","), "route_added") {
+			added = true
+		}
+	}
+	if !added || !strings.Contains(strings.Join(pl.ChangedFiles, ","), "router_map.json") {
+		t.Fatalf("plan.json after 03: %+v", pl)
 	}
 	if _, err := os.Stat(filepath.Join(dir, "wiki/pages/features/profile.md")); err != nil {
 		t.Fatal("profile page not created")

@@ -172,6 +172,8 @@ func Analyze(o *Options) (*Analysis, error) {
 		a.Old = g
 	}
 	a.Diff = DiffGraphs(a.Old, a.Graph)
+	ComputeImpact(a.Diff, a.Old, a.Graph, LoadRoutes(cfg.WikiPath()), LoadTestIDs(cfg.WikiPath()), a.Facts)
+	a.Diff.FilesChanged = mergeGitChanges(cfg.Root, a.Diff.Base, a.Graph.Commit, cfg.WikiDir, a.Diff.FilesChanged)
 	if a.Old == nil {
 		a.Old = &model.Graph{}
 	}
@@ -782,4 +784,31 @@ func llmEvidence(llm, templ []string) string {
 		}
 	}
 	return strings.Join(out, "；")
+}
+
+// mergeGitChanges adds files changed between two commits (resources such as
+// router_map.json or Info.plist are not part of the symbol graph).
+func mergeGitChanges(root, base, head, wikiDir string, files []string) []string {
+	if base == "" || head == "" || base == head {
+		return files
+	}
+	out, err := exec.Command("git", "-C", root, "diff", "--name-only", base, head).Output()
+	if err != nil {
+		return files
+	}
+	set := map[string]bool{}
+	for _, f := range files {
+		set[f] = true
+	}
+	for _, l := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+		if l != "" && !strings.HasPrefix(l, strings.TrimSuffix(wikiDir, "/")+"/") {
+			set[l] = true
+		}
+	}
+	res := make([]string, 0, len(set))
+	for f := range set {
+		res = append(res, f)
+	}
+	sort.Strings(res)
+	return res
 }
