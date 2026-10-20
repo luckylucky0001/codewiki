@@ -201,14 +201,23 @@ func cmdInit(a *app, fs *flag.FlagSet, _ []string) int {
 		cur, _ := os.ReadFile(gi)
 		entry, _ := filepath.Rel(cfg.Root, work)
 		entry = "/" + filepath.ToSlash(entry) + "/"
-		if !strings.Contains(string(cur), entry) {
-			created = append(created, ".gitignore (+"+entry+")")
+		cacheEntry, _ := filepath.Rel(cfg.Root, filepath.Join(cfg.WikiPath(), filepath.Dir(filepath.FromSlash(scan.CacheFile))))
+		cacheEntry = "/" + filepath.ToSlash(cacheEntry) + "/"
+		var add []string
+		for _, e := range []string{entry, cacheEntry} {
+			if !strings.Contains(string(cur), e) {
+				add = append(add, e)
+			}
+		}
+		if len(add) > 0 {
+			created = append(created, ".gitignore (+"+strings.Join(add, " ")+")")
 			if !dry {
 				s := string(cur)
 				if s != "" && !strings.HasSuffix(s, "\n") {
 					s += "\n"
 				}
-				if err := wiki.WriteFileAtomic(gi, []byte(s+"# codewiki run scratch space\n"+entry+"\n")); err != nil {
+				s += "# codewiki run scratch space and scan cache\n" + strings.Join(add, "\n") + "\n"
+				if err := wiki.WriteFileAtomic(gi, []byte(s)); err != nil {
 					return a.fail(ExitInternal, err)
 				}
 			}
@@ -245,7 +254,7 @@ func cmdScan(a *app, fs *flag.FlagSet, _ []string) int {
 	if cfg == nil {
 		return code
 	}
-	res, err := scan.Scan(cfg, cfg.Root)
+	res, err := scan.ScanRepo(cfg)
 	if err != nil {
 		return a.fail(ExitInternal, err)
 	}
@@ -269,7 +278,7 @@ func cmdScan(a *app, fs *flag.FlagSet, _ []string) int {
 		files[fi.Platform]++
 	}
 	out := map[string]any{"ok": true, "commit": res.Graph.Commit, "files": files, "symbols": per, "total_symbols": len(res.Graph.Symbols),
-		"parse_failures": res.Graph.ParseFailures, "facts": map[string]int{"routes": len(f.Routes), "testids": len(f.TestIDs), "apis": len(f.APIs)}, "schemes": f.Schemes}
+		"parse_failures": res.Graph.ParseFailures, "scan_stats": res.Stats, "facts": map[string]int{"routes": len(f.Routes), "testids": len(f.TestIDs), "apis": len(f.APIs)}, "schemes": f.Schemes}
 	if boolFlag(fs, "symbols") {
 		out["symbol_list"] = res.Graph.Symbols
 	}
@@ -280,6 +289,7 @@ func cmdScan(a *app, fs *flag.FlagSet, _ []string) int {
 		}
 		fmt.Fprintf(w, "facts: %d routes, %d testids, %d apis; schemes %v\n", len(f.Routes), len(f.TestIDs), len(f.APIs), f.Schemes)
 		fmt.Fprintf(w, "parse_failures: %d\n", len(res.Graph.ParseFailures))
+		fmt.Fprintf(w, "scan: %d ms, parsed %d, cache hits %d, workers %d\n", res.Stats.DurationMs, res.Stats.Parsed, res.Stats.CacheHits, res.Stats.Workers)
 		for _, pf := range res.Graph.ParseFailures {
 			fmt.Fprintf(w, "  %s:%d %s\n", pf.File, pf.Line, pf.Error)
 		}
@@ -465,7 +475,7 @@ func (a *app) reportRun(r *engine.Result) int {
 // ---------- verify / status ----------
 
 func (a *app) verifyNow(cfg *config.Config) (*wiki.Report, *model.Graph, error) {
-	res, err := scan.Scan(cfg, cfg.Root)
+	res, err := scan.ScanRepo(cfg)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -837,7 +847,7 @@ func cmdContext(a *app, fs *flag.FlagSet, args []string) int {
 	rel = filepath.ToSlash(rel)
 	g, err := engine.LoadGraph(filepath.Join(cfg.WikiPath(), ".kb", "graph.json"))
 	if err != nil {
-		res, err := scan.Scan(cfg, cfg.Root)
+		res, err := scan.ScanRepo(cfg)
 		if err != nil {
 			return a.fail(ExitInternal, err)
 		}
@@ -953,7 +963,7 @@ func cmdAnchor(a *app, fs *flag.FlagSet, args []string) int {
 		if cfg == nil {
 			return code
 		}
-		res, err := scan.Scan(cfg, cfg.Root)
+		res, err := scan.ScanRepo(cfg)
 		if err != nil {
 			return a.fail(ExitInternal, err)
 		}
@@ -992,7 +1002,7 @@ func cmdLintTid(a *app, fs *flag.FlagSet, _ []string) int {
 	if cfg == nil {
 		return code
 	}
-	res, err := scan.Scan(cfg, cfg.Root)
+	res, err := scan.ScanRepo(cfg)
 	if err != nil {
 		return a.fail(ExitInternal, err)
 	}

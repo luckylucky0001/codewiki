@@ -1,0 +1,164 @@
+package scan
+
+import (
+	"compress/gzip"
+	"encoding/gob"
+	"os"
+	"path/filepath"
+	"sync"
+
+	"github.com/luckylucky0001/codewiki/internal/config"
+	"github.com/luckylucky0001/codewiki/internal/extract"
+	"github.com/luckylucky0001/codewiki/internal/model"
+)
+
+// CacheVersion invalidates caches written by incompatible extractors.
+const CacheVersion = "scan-cache/2"
+
+// CacheFile is the cache location relative to the wiki dir (gitignored).
+const CacheFile = ".kb/cache/scan.gob.gz"
+
+type cacheEntry struct {
+	Hash     string
+	Lang     string
+	Platform string
+	Symbols  []*model.Symbol
+	Calls    []extract.Call
+	Failure  *model.ParseFailure
+}
+
+// Cache maps repo-relative files (by content hash) to their parse results so
+// unchanged files are not re-parsed. Safe for concurrent use.
+type Cache struct {
+	mu      sync.Mutex
+	Version string
+	Graph   int
+	Entries map[string]cacheEntry
+	dirty   bool
+}
+
+// NewCache returns an empty cache.
+func NewCache() *Cache {
+	return &Cache{Version: CacheVersion, Graph: model.GraphVersion, Entries: map[string]cacheEntry{}}
+}
+
+// LoadCache reads a cache file; a missing or incompatible file yields an empty cache.
+func LoadCache(path string) *Cache {
+	f, err := os.Open(path)
+	if err != nil {
+		return NewCache()
+	}
+	defer f.Close()
+	zr, err := gzip.NewReader(f)
+	if err != nil {
+		return NewCache()
+	}
+	c := NewCache()
+	if err := gob.NewDecoder(zr).Decode(c); err != nil || c.Version != CacheVersion || c.Graph != model.GraphVersion {
+		return NewCache()
+	}
+	if c.Entries == nil {
+		c.Entries = map[string]cacheEntry{}
+	}
+	return c
+}
+
+// Save writes the cache if it changed.
+func (c *Cache) Save(path string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if !c.dirty {
+		return nil
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
+	}
+	tmp := path + ".tmp~"
+	f, err := os.Create(tmp)
+	if err != nil {
+		return err
+	}
+	zw := gzip.NewWriter(f)
+	if err := gob.NewEncoder(zw).Encode(c); err != nil {
+		f.Close()
+		return err
+	}
+	if err := zw.Close(); err != nil {
+		f.Close()
+		return err
+	}
+	if err := f.Close(); err != nil {
+		return err
+	}
+	c.dirty = false
+	return os.Rename(tmp, path)
+}
+
+// Len returns the number of cached files.
+func (c *Cache) Len() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return len(c.Entries)
+}
+
+func (c *Cache) get(rel, hash, lang, platform string) (extract.FileResult, bool) {
+	c.mu.Lock()
+	e, ok := c.Entries[rel]
+	c.mu.Unlock()
+	if !ok || e.Hash != hash || e.Lang != lang || e.Platform != platform {
+		return extract.FileResult{}, false
+	}
+	// copy symbols: callers mutate Refs during resolution
+	syms := make([]*model.Symbol, len(e.Symbols))
+	for i, s := range e.Symbols {
+		cp := *s
+		cp.Refs = nil
+		cp.RefNames = append([]string(nil), s.RefNames...)
+		syms[i] = &cp
+	}
+	return extract.FileResult{Symbols: syms, Calls: e.Calls, Failure: e.Failure}, true
+}
+
+func (c *Cache) put(rel, hash, lang, platform string, fr extract.FileResult) {
+	syms := make([]*model.Symbol, len(fr.Symbols))
+	for i, s := range fr.Symbols {
+		cp := *s
+		cp.Refs = nil
+		cp.RefNames = append([]string(nil), s.RefNames...)
+		syms[i] = &cp
+	}
+	c.mu.Lock()
+	c.Entries[rel] = cacheEntry{Hash: hash, Lang: lang, Platform: platform, Symbols: syms, Calls: fr.Calls, Failure: fr.Failure}
+	c.dirty = true
+	c.mu.Unlock()
+}
+
+func (c *Cache) prune(seen map[string]bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for k := range c.Entries {
+		if !seen[k] {
+			delete(c.Entries, k)
+			c.dirty = true
+		}
+	}
+}
+
+// ScanRepo scans cfg.Root using the wiki's scan cache unless KB_NO_CACHE is
+// set. The cache is saved only when the wiki directory exists.
+func ScanRepo(cfg *config.Config) (*Result, error) {
+	if os.Getenv("KB_NO_CACHE") != "" {
+		return Scan(cfg, cfg.Root)
+	}
+	wiki := cfg.WikiPath()
+	path := filepath.Join(wiki, filepath.FromSlash(CacheFile))
+	c := LoadCache(path)
+	res, err := ScanWith(cfg, cfg.Root, Options{Cache: c})
+	if err != nil {
+		return nil, err
+	}
+	if st, err := os.Stat(wiki); err == nil && st.IsDir() {
+		_ = c.Save(path)
+	}
+	return res, nil
+}

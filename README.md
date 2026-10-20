@@ -122,6 +122,7 @@ docs:
 | `kb anchor <symbol-id...>` | 打印符号当前 hash（LLM 写 frontmatter 时用） |
 | `kb lint-tid [--strict]` | testID 覆盖矩阵：路由 × tid × 平台 |
 | `kb install-skills <repo>` | 把 skills 安装到 `<repo>/.claude/skills/` |
+| `kb bench [--synthetic N]` | 冷/热扫描基准（合成仓库或 `--root` 指定的真实仓库） |
 
 ## Wiki 布局
 
@@ -205,6 +206,26 @@ status: current                   # current | stale | outdated-doc
 3. **LLM 执行**：CLI 为每个任务写 prompt（任务、write set、相关 facts、符号源码、现有页面或确定性草稿），以 staging wiki 为 cwd、prompt 走 stdin 调用 `--llm-cmd`。执行后对 staging 做快照 diff，**write set 之外的写入全部回滚**并把任务标记为 `violation`（OpenDeepWiki 式受限写集）。随后 CLI 规范化 frontmatter：强制 id/kind/routes，给 prompt 中出现过的符号重盖当前 hash，拒绝未知符号。
 4. **template writer**（`--llm template`）：离线、确定性地从 facts + 符号图生成页面（锚点正确），用于无 key 的 CI、可复现的 demo，也是 `--fallback` 的兜底。
 5. **verify → publish**：在 staging 上跑完整 verify；通过才把 `wiki/` 原子替换（rename），否则保留 staging（`--keep-work`）并 exit 1。同时写 `.kb/state.json`、`.kb/update_record.json`，追加 `log.md`。运行期间持有 `.kb-work/lock`。
+
+## 增量扫描缓存与性能
+
+`kb` 在 `wiki/.kb/cache/scan.gob.gz` 中按文件保存解析结果（键 = 仓库相对路径 + 内容 sha256 + 语言/平台 + 抽取器版本），未变化的文件不再调用 tree-sitter；删除的文件会被清理。解析在 `GOMAXPROCS` 个 goroutine 上并行（每个 worker 自己的 parser），引用解析为索引查找（线性）。缓存目录由 `kb init` 加入 `.gitignore`，CI 模板用 `actions/cache` 持久化；`KB_NO_CACHE=1` 可禁用。
+
+`kb bench` 测量冷/热扫描（4 核容器，Go 1.24，2026-10-20 实测）：
+
+| 仓库 | 文件 | 符号 | 冷扫描（无缓存） | 热扫描（全命中） | 1% 文件变化 |
+|---|---|---|---|---|---|
+| 合成仓库 `kb bench --synthetic 3000`（Kotlin/Swift/ArkTS 各 1000） | 3000 | 21000 | 4655 ms | 610 ms | 1145 ms |
+| axios `lib/**/*.js` + `index.js` | 70 | 323 | 376 ms | 30 ms | — |
+| axios 全仓（含 tests、`.d.ts`、examples） | 243 | 1009 | 2399 ms | 98 ms | — |
+| examples/minishop（三端） | 42 | 214 | 91 ms | 8 ms | — |
+
+```bash
+kb bench --synthetic 3000                       # 合成仓库，临时目录
+kb bench --root /path/to/repo --config cfg.yaml  # 真实仓库；缓存写到临时目录，不修改仓库
+```
+
+优化记录：第一版引用解析对常见名字（如上千个 `items`）逐一打分，合成仓库上冷/热都要约 20 s（热扫描瓶颈不在解析）；改为按文件 / 父类型 / 全局三级索引后，热扫描降到 0.6 s。
 
 ## 文档发现与断言核对（spec → 知识）
 

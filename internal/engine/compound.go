@@ -155,7 +155,7 @@ type Analysis struct {
 // Analyze scans HEAD, loads the baseline and computes diff and plan.
 func Analyze(o *Options) (*Analysis, error) {
 	cfg := o.Cfg
-	res, err := scan.Scan(cfg, cfg.Root)
+	res, err := scan.ScanRepo(cfg)
 	if err != nil {
 		return nil, err
 	}

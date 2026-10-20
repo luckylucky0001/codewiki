@@ -5,12 +5,16 @@ package scan
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/luckylucky0001/codewiki/internal/config"
 	"github.com/luckylucky0001/codewiki/internal/extract"
@@ -22,19 +26,53 @@ type Result struct {
 	Graph *model.Graph
 	Calls map[string][]extract.Call // repo-relative file -> call sites
 	Dir   string                    // scanned directory (absolute)
+	Stats Stats
 }
 
-// Scan parses the source tree at dir according to cfg.
+// Stats reports scan performance counters.
+type Stats struct {
+	Files      int   `json:"files"`
+	Parsed     int   `json:"parsed"`
+	CacheHits  int   `json:"cache_hits"`
+	Workers    int   `json:"workers"`
+	DurationMs int64 `json:"duration_ms"`
+}
+
+// Options tunes a scan.
+type Options struct {
+	Cache   *Cache // optional per-file parse cache (content-hash keyed)
+	Workers int    // 0 = GOMAXPROCS
+}
+
+type job struct {
+	platform, lang, rel, prel, path string
+}
+
+type jobResult struct {
+	job
+	src  []byte
+	hash string
+	fr   extract.FileResult
+	err  error
+	hit  bool
+}
+
+// Scan parses the source tree at dir according to cfg (no cache).
 func Scan(cfg *config.Config, dir string) (*Result, error) {
+	return ScanWith(cfg, dir, Options{})
+}
+
+// ScanWith parses the source tree at dir with options.
+func ScanWith(cfg *config.Config, dir string, opt Options) (*Result, error) {
+	start := time.Now()
 	abs, err := filepath.Abs(dir)
 	if err != nil {
 		return nil, err
 	}
 	g := &model.Graph{Version: model.GraphVersion, Files: map[string]model.FileInfo{}, ParseFailures: []model.ParseFailure{}, Symbols: []*model.Symbol{}}
 	res := &Result{Graph: g, Calls: map[string][]extract.Call{}, Dir: abs}
-	ps := extract.NewParsers()
-	defer ps.Close()
 	excl := compileGlobs(append(append([]string{}, cfg.Exclude...), cfg.WikiDir+"/**"))
+	var jobs []job
 	for _, p := range cfg.Platforms {
 		proot := filepath.Join(abs, filepath.FromSlash(p.Root))
 		incl := compileGlobs(p.Include)
@@ -62,110 +100,173 @@ func Scan(cfg *config.Config, dir string) (*Result, error) {
 			if len(incl) > 0 && !matchAny(incl, prel) {
 				return nil
 			}
-			src, err := os.ReadFile(path)
-			if err != nil {
-				g.ParseFailures = append(g.ParseFailures, model.ParseFailure{File: rel, Error: err.Error()})
-				return nil
-			}
-			if len(src) > 2<<20 {
-				g.ParseFailures = append(g.ParseFailures, model.ParseFailure{File: rel, Error: "file too large (>2MiB), skipped"})
-				return nil
-			}
-			fr := extract.ParseFile(ps, lang, p.Name, prel, rel, src)
-			if fr.Failure != nil {
-				g.ParseFailures = append(g.ParseFailures, *fr.Failure)
-			}
-			g.Symbols = append(g.Symbols, fr.Symbols...)
-			res.Calls[rel] = fr.Calls
-			h := sha256.Sum256(src)
-			g.Files[rel] = model.FileInfo{Platform: p.Name, Lang: lang, Hash: hex.EncodeToString(h[:]), Symbols: len(fr.Symbols)}
+			jobs = append(jobs, job{platform: p.Name, lang: lang, rel: rel, prel: prel, path: path})
 			return nil
 		})
 		if err != nil {
 			return nil, err
 		}
 	}
+	workers := opt.Workers
+	if workers <= 0 {
+		workers = runtime.GOMAXPROCS(0)
+	}
+	if workers > len(jobs) {
+		workers = max(1, len(jobs))
+	}
+	results := make([]jobResult, len(jobs))
+	idx := make(chan int)
+	var wg sync.WaitGroup
+	for w := 0; w < workers; w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			ps := extract.NewParsers()
+			defer ps.Close()
+			for i := range idx {
+				results[i] = runJob(ps, jobs[i], opt.Cache)
+			}
+		}()
+	}
+	for i := range jobs {
+		idx <- i
+	}
+	close(idx)
+	wg.Wait()
+	seen := map[string]bool{}
+	for _, r := range results {
+		if r.err != nil {
+			g.ParseFailures = append(g.ParseFailures, model.ParseFailure{File: r.rel, Error: r.err.Error()})
+			continue
+		}
+		if r.fr.Failure != nil {
+			g.ParseFailures = append(g.ParseFailures, *r.fr.Failure)
+		}
+		g.Symbols = append(g.Symbols, r.fr.Symbols...)
+		res.Calls[r.rel] = r.fr.Calls
+		g.Files[r.rel] = model.FileInfo{Platform: r.platform, Lang: r.lang, Hash: r.hash, Symbols: len(r.fr.Symbols)}
+		res.Stats.Files++
+		if r.hit {
+			res.Stats.CacheHits++
+		} else {
+			res.Stats.Parsed++
+		}
+		seen[r.rel] = true
+		if opt.Cache != nil && !r.hit {
+			opt.Cache.put(r.rel, r.hash, r.lang, r.platform, r.fr)
+		}
+	}
+	if opt.Cache != nil {
+		opt.Cache.prune(seen)
+	}
 	sort.Slice(g.Symbols, func(i, j int) bool { return g.Symbols[i].ID < g.Symbols[j].ID })
 	sort.Slice(g.ParseFailures, func(i, j int) bool { return g.ParseFailures[i].File < g.ParseFailures[j].File })
 	g.Index()
 	ResolveRefs(g)
+	res.Stats.Workers = workers
+	res.Stats.DurationMs = time.Since(start).Milliseconds()
 	return res, nil
 }
 
+func runJob(ps *extract.Parsers, j job, c *Cache) jobResult {
+	r := jobResult{job: j}
+	src, err := os.ReadFile(j.path)
+	if err != nil {
+		r.err = err
+		return r
+	}
+	h := sha256.Sum256(src)
+	r.hash = hex.EncodeToString(h[:])
+	if len(src) > 2<<20 {
+		r.err = errTooLarge
+		return r
+	}
+	if c != nil {
+		if fr, ok := c.get(j.rel, r.hash, j.lang, j.platform); ok {
+			r.fr, r.hit = fr, true
+			return r
+		}
+	}
+	r.fr = extract.ParseFile(ps, j.lang, j.platform, j.prel, j.rel, src)
+	return r
+}
+
+var errTooLarge = errors.New("file too large (>2MiB), skipped")
+
 // ResolveRefs turns identifier names into symbol ids using simple name
-// resolution: same platform, prefer same file, then candidates whose parent
-// name also appears among the referenced names.
+// resolution on the same platform: same-file declarations win, then members
+// whose parent type is also referenced, then a unique (≤3) global match.
+// Ambiguous names are dropped. Index-based, so it is linear in practice.
 func ResolveRefs(g *model.Graph) {
-	byName := map[string][]*model.Symbol{}
+	type key struct{ a, b, c string }
+	byName := map[key][]*model.Symbol{}   // platform, name
+	byFile := map[key][]*model.Symbol{}   // file, name
+	byParent := map[key][]*model.Symbol{} // platform, parent name, name
 	for _, s := range g.Symbols {
-		byName[s.Platform+"\x00"+s.Name] = append(byName[s.Platform+"\x00"+s.Name], s)
+		byName[key{s.Platform, s.Name, ""}] = append(byName[key{s.Platform, s.Name, ""}], s)
+		byFile[key{s.File, s.Name, ""}] = append(byFile[key{s.File, s.Name, ""}], s)
+		if s.Parent != "" {
+			if p := g.Get(s.Parent); p != nil {
+				k := key{s.Platform, p.Name, s.Name}
+				byParent[k] = append(byParent[k], s)
+			}
+		}
 	}
 	for _, s := range g.Symbols {
-		names := map[string]bool{}
-		for _, n := range s.RefNames {
-			names[n] = true
+		self := func(c *model.Symbol) bool {
+			return c.ID == s.ID || c.ID == s.Parent || c.Parent == s.ID || strings.HasPrefix(s.ID, c.ID+".")
 		}
 		refs := map[string]bool{}
 		for _, n := range s.RefNames {
-			cands := byName[s.Platform+"\x00"+n]
-			if len(cands) == 0 {
+			var pick []*model.Symbol
+			for _, c := range byFile[key{s.File, n, ""}] {
+				if !self(c) {
+					pick = append(pick, c)
+				}
+			}
+			if len(pick) == 0 {
+				for _, pn := range s.RefNames {
+					for _, c := range byParent[key{s.Platform, pn, n}] {
+						if !self(c) {
+							pick = append(pick, c)
+						}
+					}
+				}
+			}
+			if len(pick) == 0 {
+				all := byName[key{s.Platform, n, ""}]
+				if len(all) <= 3 {
+					var top []*model.Symbol
+					for _, c := range all {
+						if !self(c) && c.Parent == "" {
+							top = append(top, c)
+						}
+					}
+					if len(top) == 0 {
+						for _, c := range all {
+							if !self(c) {
+								top = append(top, c)
+							}
+						}
+						if len(top) > 1 {
+							top = nil // several members with this name: ambiguous
+						}
+					}
+					pick = top
+				}
+			}
+			if len(pick) > 3 {
 				continue
 			}
-			best, bestScore, ties := []*model.Symbol{}, -1, 0
-			for _, c := range cands {
-				if c.ID == s.ID || c.ID == s.Parent || c.Parent == s.ID || strings.HasPrefix(s.ID, c.ID+".") {
-					continue
-				}
-				score := 0
-				if c.File == s.File {
-					score += 3
-				}
-				if c.Parent != "" {
-					if p := g.Get(c.Parent); p != nil && names[p.Name] {
-						score += 2
-					}
-					if c.Parent == s.Parent {
-						score += 2
-					}
-				} else {
-					score++
-				}
-				switch {
-				case score > bestScore:
-					best, bestScore, ties = []*model.Symbol{c}, score, 1
-				case score == bestScore:
-					best = append(best, c)
-					ties++
-				}
-			}
-			if ties > 3 {
-				continue // too ambiguous (e.g. common method names)
-			}
-			if ties > 1 {
-				// several equally good candidates: keep same-file ones, or member
-				// candidates whose parent type is referenced; otherwise drop.
-				var keep []*model.Symbol
-				for _, b := range best {
-					if b.File == s.File {
-						keep = append(keep, b)
-					} else if p := g.Get(b.Parent); p != nil && names[p.Name] {
-						keep = append(keep, b)
-					}
-				}
-				best = keep
-			}
-			for _, b := range best {
-				refs[b.ID] = true
+			for _, c := range pick {
+				refs[c.ID] = true
 			}
 		}
-		s.Refs = s.Refs[:0]
+		s.Refs = nil
 		for r := range refs {
 			s.Refs = append(s.Refs, r)
 		}
 		sort.Strings(s.Refs)
-		if len(s.Refs) == 0 {
-			s.Refs = nil
-		}
 	}
 }
 
