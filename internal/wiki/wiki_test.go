@@ -1,6 +1,7 @@
 package wiki
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -144,5 +145,38 @@ func TestInitIdempotentAndLog(t *testing.T) {
 	b, _ := os.ReadFile(filepath.Join(dir, "log.md"))
 	if !strings.Contains(string(b), "## [2026-10-20] compound | abc") {
 		t.Fatalf("log format: %s", b)
+	}
+}
+
+// Large wikis get a hierarchical index: index.md lists modules, sub-indexes
+// list the pages, and verify still sees every page as indexed and reachable.
+func TestHierarchicalFeatureIndex(t *testing.T) {
+	old := FeatureIndexMax
+	FeatureIndexMax = 3
+	defer func() { FeatureIndexMax = old }()
+	dir := setup(t)
+	for i := 0; i < 4; i++ {
+		write(t, dir, fmt.Sprintf("pages/features/r%d.md", i), fmt.Sprintf("---\nid: features/r%d\ntitle: R%d\n---\nx\n", i, i))
+	}
+	if err := FixIndex(dir); err != nil {
+		t.Fatal(err)
+	}
+	idx, _ := os.ReadFile(filepath.Join(dir, "index.md"))
+	if strings.Contains(string(idx), "features/r0.md") || !strings.Contains(string(idx), "index/features-") {
+		t.Fatalf("index.md should link sub-indexes only:\n%s", idx)
+	}
+	if r := Verify(dir, graph(), VerifyOptions{}); !r.OK {
+		t.Fatalf("hierarchical index must verify: %s", codes(r))
+	}
+	// back under the threshold: sub-indexes are removed again
+	FeatureIndexMax = 100
+	if err := FixIndex(dir); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, SubIndexDir)); !os.IsNotExist(err) {
+		t.Fatal("stale sub-indexes must be removed")
+	}
+	if r := Verify(dir, graph(), VerifyOptions{}); !r.OK {
+		t.Fatalf("flat index must verify: %s", codes(r))
 	}
 }

@@ -119,6 +119,25 @@ func Verify(wikiDir string, g *model.Graph, opt VerifyOptions) *Report {
 			r.Errors = append(r.Errors, Issue{Code: "E_DEAD_LINK", Page: "index.md", Detail: "link target not found: " + t, Fixable: true})
 		}
 	}
+	// sub-indexes (index/*.md) linked from index.md count as part of the index
+	for _, t := range append([]string{}, idxLinks...) {
+		if !strings.HasPrefix(t, SubIndexDir+"/") {
+			continue
+		}
+		sb, err := os.ReadFile(filepath.Join(wikiDir, filepath.FromSlash(t)))
+		if err != nil {
+			continue
+		}
+		for _, st := range linkTargets(t, string(sb)) {
+			if st == "index.md" {
+				continue
+			}
+			if _, err := os.Stat(filepath.Join(wikiDir, filepath.FromSlash(st))); err != nil {
+				r.Errors = append(r.Errors, Issue{Code: "E_DEAD_LINK", Page: t, Detail: "link target not found: " + st, Fixable: true})
+			}
+			idxLinks = append(idxLinks, st)
+		}
+	}
 	inIndex := map[string]bool{}
 	for _, t := range idxLinks {
 		inIndex[t] = true
@@ -195,13 +214,45 @@ func linkTargets(from, body string) []string {
 	return out
 }
 
-// FixIndex regenerates index.md and llms.txt.
+// FixIndex regenerates index.md (plus feature sub-indexes) and llms.txt.
 func FixIndex(wikiDir string) error {
 	pages, _ := LoadPages(wikiDir)
-	if err := WriteFileAtomic(filepath.Join(wikiDir, "index.md"), RenderIndex(pages)); err != nil {
-		return err
+	files := RenderIndexFiles(pages)
+	for rel, b := range files {
+		if err := WriteFileAtomic(filepath.Join(wikiDir, filepath.FromSlash(rel)), b); err != nil {
+			return err
+		}
+	}
+	old, _ := filepath.Glob(filepath.Join(wikiDir, SubIndexDir, "*.md"))
+	for _, f := range old {
+		rel, _ := filepath.Rel(wikiDir, f)
+		if _, keep := files[filepath.ToSlash(rel)]; !keep {
+			_ = os.Remove(f)
+		}
+	}
+	if len(files) == 1 {
+		_ = os.Remove(filepath.Join(wikiDir, SubIndexDir))
 	}
 	return WriteFileAtomic(filepath.Join(wikiDir, "llms.txt"), RenderLLMSTxt(pages))
+}
+
+// SubIndexesCurrent reports whether index/*.md match RenderIndexFiles.
+func SubIndexesCurrent(wikiDir string, pages []*Page) bool {
+	files := RenderIndexFiles(pages)
+	old, _ := filepath.Glob(filepath.Join(wikiDir, SubIndexDir, "*.md"))
+	if len(old) != len(files)-1 {
+		return false
+	}
+	for rel, b := range files {
+		if rel == "index.md" {
+			continue
+		}
+		cur, err := os.ReadFile(filepath.Join(wikiDir, filepath.FromSlash(rel)))
+		if err != nil || string(cur) != string(b) {
+			return false
+		}
+	}
+	return true
 }
 
 func isWebURL(s string) bool {

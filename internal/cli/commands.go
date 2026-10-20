@@ -660,11 +660,11 @@ func cmdVerify(a *app, fs *flag.FlagSet, _ []string) int {
 		if boolFlag(fs, "dry-run") {
 			pages, _ := wiki.LoadPages(cfg.WikiPath())
 			cur, _ := os.ReadFile(filepath.Join(cfg.WikiPath(), "index.md"))
-			a.logf("fix-index (dry-run): index would %s", map[bool]string{true: "stay unchanged", false: "change"}[string(cur) == string(wiki.RenderIndex(pages))])
+			a.logf("fix-index (dry-run): index would %s", map[bool]string{true: "stay unchanged", false: "change"}[string(cur) == string(wiki.RenderIndex(pages)) && wiki.SubIndexesCurrent(cfg.WikiPath(), pages)])
 		} else {
 			pages, _ := wiki.LoadPages(cfg.WikiPath())
 			cur, _ := os.ReadFile(filepath.Join(cfg.WikiPath(), "index.md"))
-			if string(cur) != string(wiki.RenderIndex(pages)) {
+			if string(cur) != string(wiki.RenderIndex(pages)) || !wiki.SubIndexesCurrent(cfg.WikiPath(), pages) {
 				if err := wiki.FixIndex(cfg.WikiPath()); err != nil {
 					return a.fail(ExitInternal, err)
 				}
