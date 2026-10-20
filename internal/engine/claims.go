@@ -229,6 +229,10 @@ func historicalDoc(src string) bool {
 
 // reExample: a span introduced as an example ("e.g. `DefaultRepository`",
 // "例如 `X`") names a pattern, not a symbol that must exist.
+// rePlaceholderPath: path templates such as changelog/vX.Y.Z.md or
+// docs/<name>.md name no concrete file (NextE).
+var rePlaceholderPath = regexp.MustCompile(`[<{]|\bv?X\.Y\.Z\b|\bYYYY|\bxxx\b`)
+
 // reCreate: "Create `X`" / "新建 `X`" asks the reader to create a file, which
 // is therefore absent from the repo by design.
 var reCreate = regexp.MustCompile("(?i)(\\bcreate( a| an| the)?( new)?( file)?|新建|创建)\\s*$")
@@ -485,6 +489,8 @@ func (k *Checker) Check(c *Claim) {
 			if f := k.findFile(span); f != "" {
 				verified = true
 				evidence = append(evidence, fmt.Sprintf("文件 `%s` 存在（%s）", span, f))
+			} else if rePlaceholderPath.MatchString(span) {
+				evidence = append(evidence, fmt.Sprintf("`%s` 是带占位符的路径模板，不核对", span))
 			} else if reCreate.MatchString(strings.TrimRight(text[:mi[0]], " ")) {
 				evidence = append(evidence, fmt.Sprintf("文件 `%s` 由读者新建（文档要求创建），不算冲突", span))
 			} else if k.gitignored(span) {

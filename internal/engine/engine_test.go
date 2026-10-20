@@ -559,6 +559,7 @@ func TestFalseConflictFilters(t *testing.T) {
 		{"docs/plans/archive/x.md", "Add `entry/src/main/ets/pages/NewPage.ets` for the new flow"},                 // plan doc (NextE)
 		{"README.md", "Execute the script with `./setup.sh` and complete the answers."},                            // ./ prefix (NetNewsWire)
 		{"CLAUDE.md", "Manual setup: Create `SharedXcodeSettings/DeveloperSettings.xcconfig` in parent directory"}, // file to create
+		{"docs/release.md", "关于页的备用版本文字，以及 `changelog/vX.Y.Z.md`"},                                                 // placeholder path (NextE)
 		{"docs/research/compare.md", "EhViewer has pattern unlock in `SecurityScene.kt`"},                          // research note about another app (NextE)
 	}
 	for _, c := range cases {
