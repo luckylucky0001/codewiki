@@ -26,7 +26,10 @@ var InjectionPatterns = []InjectionPattern{
 	{"agent-directive", regexp.MustCompile(`(?i)\b(ai|llm|assistant|agent|claude|gpt|model)\b.{0,30}\b(must|should|shall|please)\b.{0,30}\b(write|delete|remove|modify|run|execute|commit|push|curl|mark)\b`)},
 	{"file-write", regexp.MustCompile(`(?i)\b(write|overwrite|append|delete|remove)\b.{0,30}\b(to|into|the)?\s*(index\.md|log\.md|AGENTS\.md|\.kb/|\.git/|facts/|~/|/etc/|\.ssh|\.env)`)},
 	{"shell", regexp.MustCompile(`(?i)(rm\s+-rf|curl\s+[^|]*\|\s*(ba)?sh|wget\s+[^|]*\|\s*(ba)?sh|chmod\s+\+x|base64\s+-d)`)},
-	{"exfiltration", regexp.MustCompile(`(?i)\b(send|upload|post|exfiltrate)\b.{0,40}\b(token|secret|api[_ -]?key|password|credentials?)\b`)},
+	// exfiltration needs a destination: API docs routinely say "POST /api/login
+	// with username and password" or "send Authorization: Bearer <token>".
+	{"exfiltration", regexp.MustCompile(`(?i)\b(send|upload|post|exfiltrate|leak|forward|email)\b.{0,40}\b(token|secret|api[_ -]?key|password|credentials?)\b.{0,30}\b(to|into)\s+(https?://|\S+@\S+\.\w+|(an?\s+|the\s+|my\s+|our\s+)?(external|remote|attacker|webhook|pastebin))`)},
+	{"zh-exfiltration", regexp.MustCompile(`((发送|上传|转发|泄露|发给).{0,20}(token|密钥|密码|凭证|口令).{0,20}(到|至|给)|(token|密钥|密码|凭证|口令).{0,20}(发送|上传|转发|泄露|发)(到|至|给)).{0,10}(https?://|\S+@\S+|外部|第三方)`)},
 	{"zh-override", regexp.MustCompile(`(忽略|无视|忘记|覆盖).{0,10}(之前|以上|上面|先前|所有|系统).{0,6}(的)?(指令|指示|说明|规则|提示)`)},
 	{"zh-agent-directive", regexp.MustCompile(`(你现在是|扮演|AI|大模型|智能体|助手).{0,20}(必须|应该|请).{0,20}(写入|删除|修改|执行|运行|提交|标记)`)},
 	{"zh-file-write", regexp.MustCompile(`(写入|覆盖|删除).{0,20}(index\.md|log\.md|AGENTS\.md|\.kb|facts/|_conflicts)`)},

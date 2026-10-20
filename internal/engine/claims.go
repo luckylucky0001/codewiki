@@ -142,6 +142,10 @@ type Checker struct {
 	norms map[string]string
 	// codeHits caches behaviour-concept lookups (see valuecheck.go).
 	codeHits map[string]bool
+	files    map[string][]string // file -> lines (one read per file, not per symbol)
+	tokIdx   map[string][]int    // identifier token -> indexes into G.Symbols whose text contains it
+	buildCfg map[string][]cfgValue
+	parts    map[string]bool
 }
 
 func normAPIPath(p string) string {
@@ -150,9 +154,22 @@ func normAPIPath(p string) string {
 	return strings.TrimSuffix(p, "/")
 }
 
+// normLit drops all whitespace and turns double quotes into single quotes,
+// so literals compare independent of formatting. Byte loop: this runs over
+// every symbol body of large repos.
 func normLit(s string) string {
-	s = strings.ReplaceAll(s, `"`, "'")
-	return strings.Join(strings.Fields(s), "")
+	var b strings.Builder
+	b.Grow(len(s))
+	for i := 0; i < len(s); i++ {
+		switch c := s[i]; c {
+		case ' ', '\t', '\n', '\r', '\v', '\f':
+		case '"':
+			b.WriteByte('\'')
+		default:
+			b.WriteByte(c)
+		}
+	}
+	return b.String()
 }
 
 func (k *Checker) symbolText(s *model.Symbol) string {
@@ -162,12 +179,20 @@ func (k *Checker) symbolText(s *model.Symbol) string {
 	if v, ok := k.norms[s.ID]; ok {
 		return v
 	}
-	b, err := os.ReadFile(filepath.Join(k.Dir, filepath.FromSlash(s.File)))
-	if err != nil {
+	if k.files == nil {
+		k.files = map[string][]string{}
+	}
+	lines, ok := k.files[s.File]
+	if !ok {
+		if b, err := os.ReadFile(filepath.Join(k.Dir, filepath.FromSlash(s.File))); err == nil {
+			lines = strings.Split(string(b), "\n")
+		}
+		k.files[s.File] = lines
+	}
+	if lines == nil {
 		k.norms[s.ID] = ""
 		return ""
 	}
-	lines := strings.Split(string(b), "\n")
 	lo, hi := s.StartLine-1, s.EndLine
 	if lo < 0 {
 		lo = 0
@@ -356,6 +381,9 @@ func (k *Checker) Check(c *Claim) {
 				if first := strings.SplitN(name, ".", 2)[0]; strings.Contains(name, ".") && isPascal(first) && !builtinTypes[first] && k.tokenSearch(first) == "" && len(k.findSymbols(first)) == 0 {
 					conflict = true
 					evidence = append(evidence, fmt.Sprintf("符号 `%s` 在代码中不存在（类型 `%s` 也不存在）", span, first))
+				} else if k.missingProjectType(text, span) {
+					conflict = true
+					evidence = append(evidence, fmt.Sprintf("`%s` 在代码中不存在（项目里同类命名的类型/函数都找得到，这个找不到）", span))
 				} else if k.missingTestID(text, span) {
 					conflict = true
 					evidence = append(evidence, fmt.Sprintf("文档称 `%s` 是 testID，但三端代码中都没有它", span))
@@ -487,21 +515,101 @@ func isPascal(s string) bool {
 	return len(s) > 1 && s[0] >= 'A' && s[0] <= 'Z' && strings.ToUpper(s) != s
 }
 
+var reIdentTok = regexp.MustCompile(`[A-Za-z0-9_$]+`)
+
+// tokenIndex maps every identifier-like token to the symbols whose
+// (normalised) text contains it. Built once per Checker: claim checking used
+// to run one regex per code span over every symbol body, which was
+// O(spans x symbols) and took >13 min on a 51k-symbol HarmonyOS repo.
+func (k *Checker) tokenIndex() map[string][]int {
+	if k.tokIdx != nil {
+		return k.tokIdx
+	}
+	k.tokIdx = map[string][]int{}
+	// Tokenise every file once. Each line maps to the smallest symbol that
+	// covers it; a token's candidates are those symbols, which is exactly where
+	// "smallest symbol containing the token" can be found.
+	byFile := map[string][]int{}
+	for i, s := range k.G.Symbols {
+		byFile[s.File] = append(byFile[s.File], i)
+	}
+	files := make([]string, 0, len(byFile))
+	for f := range byFile {
+		files = append(files, f)
+	}
+	sort.Strings(files)
+	for _, f := range files {
+		idx := byFile[f]
+		k.symbolText(k.G.Symbols[idx[0]]) // loads k.files[f]
+		lines := k.files[f]
+		owner := make([]int, len(lines)+1)
+		span := make([]int, len(lines)+1)
+		for l := range owner {
+			owner[l], span[l] = -1, 1<<30
+		}
+		for _, i := range idx {
+			s := k.G.Symbols[i]
+			sp := s.EndLine - s.StartLine
+			for l := max(s.StartLine, 1); l <= s.EndLine && l <= len(lines); l++ {
+				if sp < span[l] {
+					owner[l], span[l] = i, sp
+				}
+			}
+		}
+		for l := 1; l <= len(lines); l++ {
+			i := owner[l]
+			if i < 0 {
+				continue
+			}
+			text := lines[l-1]
+			for p := 0; p < len(text); {
+				if !isTokByte(text[p]) {
+					p++
+					continue
+				}
+				q := p
+				for q < len(text) && isTokByte(text[q]) {
+					q++
+				}
+				t := text[p:q]
+				if lst := k.tokIdx[t]; len(lst) == 0 || lst[len(lst)-1] != i {
+					k.tokIdx[t] = append(lst, i)
+				}
+				p = q
+			}
+		}
+	}
+	return k.tokIdx
+}
+
+func isTokByte(c byte) bool {
+	return c == '_' || c == '$' || c >= '0' && c <= '9' || c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z'
+}
+
 // tokenSearch returns the smallest symbol whose source contains name as a whole token.
 func (k *Checker) tokenSearch(name string) string {
 	if len(name) < 3 {
 		return ""
 	}
-	re, err := regexp.Compile(`(^|[^A-Za-z0-9_$])` + regexp.QuoteMeta(name) + `([^A-Za-z0-9_$]|$)`)
-	if err != nil {
+	first := reIdentTok.FindString(name)
+	if first == "" {
 		return ""
 	}
+	cands := k.tokenIndex()[first]
+	var re *regexp.Regexp
+	if first != name { // dotted / punctuated name: confirm on the candidates only
+		var err error
+		if re, err = regexp.Compile(`(^|[^A-Za-z0-9_$])` + regexp.QuoteMeta(name) + `([^A-Za-z0-9_$]|$)`); err != nil {
+			return ""
+		}
+	}
 	best, span := "", 1<<30
-	for _, s := range k.G.Symbols {
+	for _, i := range cands {
+		s := k.G.Symbols[i]
 		if s.EndLine-s.StartLine >= span {
 			continue
 		}
-		if re.MatchString(k.symbolText(s)) {
+		if re == nil || re.MatchString(k.symbolText(s)) {
 			best, span = s.ID, s.EndLine-s.StartLine
 		}
 	}

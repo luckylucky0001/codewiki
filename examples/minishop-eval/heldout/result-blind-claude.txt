@@ -1,0 +1,15 @@
+# command: kb eval --golden examples/minishop-eval/heldout/golden-heldout.yaml --llm claude
+# blind: code = round-5 HEAD df15734 + uncommitted profiling hook (no rule changes); run before any round-6 fix
+claim verification (cmd, 31 labelled): accuracy 0.74
+  verified      precision 1.00 recall 0.46 f1 0.63 (tp 6 fp 0 fn 7)
+  conflict      precision 1.00 recall 0.92 f1 0.96 (tp 11 fp 0 fn 1)
+  unverifiable  precision 0.43 recall 1.00 f1 0.60 (tp 6 fp 8 fn 0)
+  ✗ HELDOUT-LEGACY-0dd5ea  expected verified     got unverifiable BASE_URL in ApiService.kt ApiClient, APIClient.swift baseURL, Api.ets BASE_URL are all https://api.minishop.example
+  ✗ HELDOUT-LEGACY-6fb04d  expected verified     got unverifiable ApiService.login @POST(/api/login) LoginRequest(username,password); iOS send(.post,/api/login,LoginRequest); Api.login extraData {username,password}
+  ✗ HELDOUT-LEGACY-ff089a  expected verified     got unverifiable CartRequest(sku, 1) / quantity: 1 / Api.addToCart(sku, 1)
+  ✗ HELDOUT-LEGACY-a3fd81  expected verified     got unverifiable OrderRequest(paymentMethod = "card"), OrderRequest(paymentMethod: "card"), Api.createOrder('card')
+  ✗ HELDOUT-LEGACY-bc846e  expected verified     got unverifiable APIClient.send sets Authorization: Bearer <token> when TokenStore.shared.token != nil
+  ✗ HELDOUT-LEGACY-6cde1d  expected verified     got unverifiable Index.openDeepLink: non-minishop:// uri -> pushPathByName(TokenStore.isLoggedIn() ? 'products' : 'login')
+  ✗ HELDOUT-LEGACY-f2cd5b  expected verified     got unverifiable android/app/build.gradle.kts minSdk = 26
+  ✗ HELDOUT-LEGACY-ff7b2c  expected conflict     got unverifiable android/app/build.gradle.kts compileSdk = 35
+plan impact: micro precision 0.00 recall 0.00 f1 0.00

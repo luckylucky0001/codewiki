@@ -1,4 +1,4 @@
-head 78223e2, last compound 9e741c84980ddd2c56694384834555ceeaf5fa75
+head 4049c1e, last compound 296c86560007f9ee8db3eb2b67ecfd23c682bf64
 stale facts/requirements.json (6 anchors: CartViewModel.MAX_CART_ITEMS, MAX_CART_ITEMS, CartViewModel.MAX_CART_ITEMS, …+3)
 stale pages/_conflicts.md (2 anchors: CartViewModel.MAX_CART_ITEMS, MAX_CART_ITEMS)
 stale pages/features/cart.md (1 anchors: CartViewModel.MAX_CART_ITEMS)

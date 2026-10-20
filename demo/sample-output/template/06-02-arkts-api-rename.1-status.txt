@@ -1,4 +1,4 @@
-head 92c67bc, last compound 78223e22ed61d36749ed28e9fd027ee05a24c7b4
+head 08d60b5, last compound 4049c1e442063d347a17982e50fd92d44e042886
 stale facts/apis.json (generated facts out of date)
 stale facts/harmony/apis.md (generated facts out of date)
 stale facts/requirements.json (5 anchors: ProductDetailPage.build, Api.loadProducts, CartStore, …+2)

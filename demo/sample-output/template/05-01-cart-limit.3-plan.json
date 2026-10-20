@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "base": "9e741c84980ddd2c56694384834555ceeaf5fa75",
-  "head": "78223e22ed61d36749ed28e9fd027ee05a24c7b4",
+  "base": "296c86560007f9ee8db3eb2b67ecfd23c682bf64",
+  "head": "4049c1e442063d347a17982e50fd92d44e042886",
   "mode": "incremental",
   "reason": "anchors changed ∪ signature changes propagated along reference edges",
   "stats": {

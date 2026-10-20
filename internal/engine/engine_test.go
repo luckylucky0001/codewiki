@@ -425,6 +425,28 @@ func TestEvalTemplateGoldenSet(t *testing.T) {
 	}
 }
 
+// The held-out set (written blind, see examples/minishop-eval/heldout) is
+// evaluated through the `docs:` field: only its document is ingested. The
+// floor is the post-fix number; the blind template score was 0.58.
+func TestEvalHeldoutSetWithDocs(t *testing.T) {
+	rep, err := RunEval(EvalOptions{GoldenPath: filepath.Join(testutil.RepoRoot(), "examples", "minishop-eval", "heldout", "golden-heldout.yaml"), LLM: "template"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rep.ClaimsLabels != 31 || len(rep.Missing) > 0 {
+		t.Fatalf("held-out set: %d labels, missing %v", rep.ClaimsLabels, rep.Missing)
+	}
+	if rep.Accuracy < 0.8 || rep.PerClass[ClaimConflict].Precision < 1 {
+		t.Fatalf("held-out metrics regressed:\n%s", FormatEval(rep))
+	}
+	// only the held-out document was ingested
+	for _, c := range rep.Claims {
+		if !strings.HasPrefix(c.ID, "HELDOUT-LEGACY-") {
+			t.Fatalf("unexpected claim %s", c.ID)
+		}
+	}
+}
+
 func TestTemplateRecheckKeepsFreshLLMVerdicts(t *testing.T) {
 	cfg, dir := withChange(t)
 	g, f := scanDir(t, cfg, dir)

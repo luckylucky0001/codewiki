@@ -250,7 +250,7 @@ func RenderConflicts(claims []Claim, g *model.Graph, commit string) (*wiki.Page,
 		}
 		bySrc[c.Source] = append(bySrc[c.Source], c)
 		counts[c.Status]++
-		r := model.Requirement{ID: c.ID, Source: c.Source, Text: c.Text, Status: c.Status, Anchors: []model.Anchor{}, RouteIDs: c.RouteIDs, Evidence: c.Evidence}
+		r := model.Requirement{ID: c.ID, Source: c.Source, Line: c.Line, Text: c.Text, Status: c.Status, Anchors: []model.Anchor{}, RouteIDs: c.RouteIDs, Evidence: c.Evidence}
 		if r.RouteIDs == nil {
 			r.RouteIDs = []string{}
 		}

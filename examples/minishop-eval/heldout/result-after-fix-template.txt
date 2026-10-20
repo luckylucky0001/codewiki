@@ -1,0 +1,13 @@
+# command: kb eval --golden examples/minishop-eval/heldout/golden-heldout.yaml
+# NOT blind: after the round-6 generic fixes (exfiltration destination, quantity gap + size units, missing project-style types, build config)
+claim verification (template, 31 labelled): accuracy 0.81
+  verified      precision 0.80 recall 0.92 f1 0.86 (tp 12 fp 3 fn 1)
+  conflict      precision 1.00 recall 0.58 f1 0.73 (tp 7 fp 0 fn 5)
+  unverifiable  precision 0.67 recall 1.00 f1 0.80 (tp 6 fp 3 fn 0)
+  ✗ HELDOUT-LEGACY-0dd5ea  expected verified     got unverifiable BASE_URL in ApiService.kt ApiClient, APIClient.swift baseURL, Api.ets BASE_URL are all https://api.minishop.example
+  ✗ HELDOUT-LEGACY-d3aafd  expected conflict     got unverifiable Android Retrofit has no auth header at all; ArkTS only sets Authorization in addToCart (not login/products/orders)
+  ✗ HELDOUT-LEGACY-887bc3  expected conflict     got unverifiable token is in-memory only on all platforms (Java field / Swift var / ArkTS static); no Keychain or SharedPreferences
+  ✗ HELDOUT-LEGACY-cc9151  expected conflict     got verified     no Toast; Android/iOS only set error=invalid_credentials, ArkTS just returns; password field is not cleared
+  ✗ HELDOUT-LEGACY-d56876  expected conflict     got verified     only Android ProductDetailScreen renders price; iOS ProductDetailView and ArkTS ProductDetailPage show title only
+  ✗ HELDOUT-LEGACY-e8adb6  expected conflict     got verified     no payment-method selection UI; paymentMethod hard-coded to card
+plan impact: micro precision 0.00 recall 0.00 f1 0.00

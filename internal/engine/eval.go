@@ -22,7 +22,14 @@ type Golden struct {
 	Version int    `yaml:"version"`
 	Project string `yaml:"project"`
 	Changes string `yaml:"changes"`
-	Claims  []struct {
+	// Docs are extra documents (paths relative to the golden file) copied into
+	// the project at To before ingest. When present, only these documents are
+	// ingested, so a held-out doc can be evaluated against an existing project.
+	Docs []struct {
+		From string `yaml:"from"`
+		To   string `yaml:"to"`
+	} `yaml:"docs"`
+	Claims []struct {
 		ID       string `yaml:"id"`
 		Expected string `yaml:"expected"`
 		Note     string `yaml:"note"`
@@ -94,6 +101,9 @@ type EvalOptions struct {
 	LLMCmd     string
 	KBPath     string
 	Log        io.Writer
+	// ExtraDocs (kb eval --doc) are copied to docs/eval/<name> in the project
+	// copy; like Golden.Docs they restrict ingest to the given documents.
+	ExtraDocs []string
 }
 
 func gitRun(dir string, args ...string) error {
@@ -127,6 +137,37 @@ func RunEval(o EvalOptions) (*EvalReport, error) {
 	if err := copyDir(proj, tmp); err != nil {
 		return nil, err
 	}
+	only := map[string]bool{}
+	place := func(from, to string) error {
+		b, err := os.ReadFile(from)
+		if err != nil {
+			return err
+		}
+		to = filepath.ToSlash(filepath.Clean(to))
+		if strings.HasPrefix(to, "../") || filepath.IsAbs(to) {
+			return fmt.Errorf("eval doc target %q must stay inside the project", to)
+		}
+		dst := filepath.Join(tmp, filepath.FromSlash(to))
+		if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
+			return err
+		}
+		only[to] = true
+		return os.WriteFile(dst, b, 0o644)
+	}
+	for _, d := range gs.Docs {
+		to := d.To
+		if to == "" {
+			to = "docs/eval/" + filepath.Base(d.From)
+		}
+		if err := place(filepath.Join(base, d.From), to); err != nil {
+			return nil, err
+		}
+	}
+	for _, d := range o.ExtraDocs {
+		if err := place(d, "docs/eval/"+filepath.Base(d)); err != nil {
+			return nil, err
+		}
+	}
 	if err := gitRun(tmp, "init", "-q", "-b", "master"); err != nil {
 		return nil, err
 	}
@@ -146,9 +187,18 @@ func RunEval(o EvalOptions) (*EvalReport, error) {
 	}
 	var docs []DocEntry
 	for _, d := range man.Docs {
+		if len(only) > 0 {
+			if only[d.Path] {
+				docs = append(docs, d)
+			}
+			continue
+		}
 		if d.Kind != "readme" {
 			docs = append(docs, d)
 		}
+	}
+	if len(only) > 0 && len(docs) != len(only) {
+		return nil, fmt.Errorf("eval docs not discovered: want %v, discovered %d", sortedKeys(only), len(docs))
 	}
 	logw := o.Log
 	if logw == nil {

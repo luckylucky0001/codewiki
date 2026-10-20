@@ -59,7 +59,7 @@ sources:
     hash: d31dd686a0bb1c46c11e0ebcd19b599d5aa898cb82b6ce956b5f579cba6d3e17
   - sym: ios://MiniShop/Networking/APIClient.swift#TokenStore.token
     hash: cc9a2bad373da05b2c10efdd69bf76de940bebff0e4ee5477b4b4cd213b4dc72
-source_commit: 9e741c8
+source_commit: 296c865
 status: current
 ---
 # 登录（login）

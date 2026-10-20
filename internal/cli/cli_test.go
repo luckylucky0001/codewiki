@@ -553,3 +553,43 @@ func TestContextIncludesRequirements(t *testing.T) {
 		t.Fatalf("text output lacks requirements:\n%s", out)
 	}
 }
+
+func TestConflictsCommand(t *testing.T) {
+	dir := repo(t)
+	// before ingest: a usage error that says what to run
+	run(t, dir, "init")
+	if code, _, errOut := run(t, dir, "conflicts"); code != ExitUsage || !strings.Contains(errOut, "kb ingest") {
+		t.Fatalf("conflicts before ingest: %d %q", code, errOut)
+	}
+	_, man := runJSON(t, dir, "discover-docs")
+	mp := filepath.Join(t.TempDir(), "docs.json")
+	b, _ := json.Marshal(man)
+	os.WriteFile(mp, b, 0o644)
+	if code, v := runJSON(t, dir, "ingest", "--manifest", mp); code != 0 {
+		t.Fatalf("ingest: %d %v", code, v)
+	}
+	code, v := runJSON(t, dir, "conflicts")
+	if code != 0 {
+		t.Fatalf("conflicts: %d %v", code, v)
+	}
+	cs := v["conflicts"].([]any)
+	byID := map[string]map[string]any{}
+	for _, c := range cs {
+		m := c.(map[string]any)
+		if m["status"] != "conflict" || m["suggested_fix"] == "" || len(m["evidence"].([]any)) == 0 {
+			t.Fatalf("incomplete entry %v", m)
+		}
+		byID[m["id"].(string)] = m
+	}
+	c := byID["CART-43567f"]
+	if c == nil || c["source"] != "docs/legacy/cart.md" || c["line"].(float64) != 3 || !strings.Contains(c["suggested_fix"].(string), "99") {
+		t.Fatalf("cart limit conflict: %v", c)
+	}
+	if byID["FR-002"] != nil {
+		t.Fatal("verified claims must not be listed")
+	}
+	_, out, _ := run(t, dir, "conflicts", "--all")
+	if !strings.Contains(out, "docs/legacy/cart.md:3") || !strings.Contains(out, "fix:") || !strings.Contains(out, "[unverifiable]") {
+		t.Fatalf("text output:\n%s", out)
+	}
+}

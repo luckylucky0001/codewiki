@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "note": "Large-repo variant: HarmonyOS Cases (gitee harmonyos-cases/cases, 1952 .ets files + 978 TS). Ground truth checked by hand in the source tree (router_map.json, the http calls).",
+  "suffix": "只读，不要修改任何文件。请简洁回答，并给出依据（文件或符号）。",
+  "questions": [
+    {"id": "L1-route-builder", "prompt": "router_map 中名为 AddressBookDetail 的页面，buildFunction 是什么？在哪个文件里实现？",
+     "must": ["AddressBookDetailBuilder", "AddressBookDetail\\.ets"]},
+    {"id": "L2-json-callers", "prompt": "哪些函数会去请求远程的 skeletondiagram.json？列出所有调用方（类/组件名和函数名）。",
+     "must": ["SkeletonDiagram", "PageFiveCounter", "PageFivePositive", "PageSixCounter", "PageSixPositive"], "min": 4},
+    {"id": "L3-api-caller", "prompt": "仓库里请求 /photos/5 这个接口的是哪个函数、哪个文件？",
+     "must": ["getPicFromApi", "FriendMoment\\.ets"]},
+    {"id": "L4-module-routes", "prompt": "operaterdbintaskpool（在任务池中操作数据库）这个模块在 router_map 里注册了哪些页面？",
+     "must": ["AddressBookDetail", "AddressBookEdit"], "must_not": ["SubDetailPage"]},
+    {"id": "L5-form-url", "prompt": "卡片 EntryFormAbility 的 getData 请求的是哪个 URL？",
+     "must": ["raw/master/README\\.md"]}
+  ]
+}

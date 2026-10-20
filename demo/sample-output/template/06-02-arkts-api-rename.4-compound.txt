@@ -1,4 +1,4 @@
-compound 20261020T184307-92c67bc: base 78223e2 → head 92c67bc, mode incremental, llm template
+compound 20261020T192842-08d60b5: base 4049c1e → head 08d60b5, mode incremental, llm template
 mode incremental — anchors changed ∪ signature changes propagated along reference edges
 changed_route_ids: [product_detail products]; changed_files: 4
 stats: symbols=214 changes=map[body:4 renamed:1 signature:1 unchanged:208] module_ratio=0.10 structural_ratio=0.01 hops=1 propagated=2

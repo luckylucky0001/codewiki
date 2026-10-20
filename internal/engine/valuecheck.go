@@ -2,6 +2,9 @@ package engine
 
 import (
 	"fmt"
+	"os"
+	"path"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
@@ -46,8 +49,8 @@ type quantityRule struct {
 }
 
 var quantityRules = []quantityRule{
-	{"limit", regexp.MustCompile(`(?i)(?:最多|至多|上限(?:为|是)?|不超过|不能超过|at most|up to|no more than|maximum of|max(?:imum)?(?: is| of)?)\s*(?P<n>\d+)`), regexp.MustCompile(`(?i)max|limit|cap(?:acity)?\b`)},
-	{"min", regexp.MustCompile(`(?i)(?:至少|最少|不少于|不能少于|少于|短于|at least|minimum of|min(?:imum)?(?: is| of)?|shorter than|fewer than|less than)\s*(?P<n>\d+)`), regexp.MustCompile(`(?i)min`)},
+	{"limit", regexp.MustCompile(`(?i)(?:最多|至多|上限(?:为|是)?|不超过|不能超过|at most|up to|no more than|maximum of|max(?:imum)?(?: is| of)?)[^0-9，。,.;；:：\n]{0,6}?(?P<n>\d+)`), regexp.MustCompile(`(?i)max|limit|cap(?:acity)?\b`)},
+	{"min", regexp.MustCompile(`(?i)(?:至少|最少|不少于|不能少于|少于|短于|at least|minimum of|min(?:imum)?(?: is| of)?|shorter than|fewer than|less than)[^0-9，。,.;；:：\n]{0,6}?(?P<n>\d+)`), regexp.MustCompile(`(?i)min`)},
 	{"timeout", regexp.MustCompile(`(?i)(?:超时(?:时间)?|time ?out)\D{0,8}?(?P<n>\d+)\s*(?P<unit>ms|毫秒|秒|s\b|sec(?:ond)?s?|分钟|min(?:ute)?s?)`), regexp.MustCompile(`(?i)time_?out`)},
 	{"retry", regexp.MustCompile(`(?i)(?:重试|retry|retries)\D{0,6}?(?P<n>\d+)`), regexp.MustCompile(`(?i)retr(y|ies)`)},
 }
@@ -113,6 +116,8 @@ func constMatches(kind string, s *model.Symbol, n int, unit string) bool {
 	return v == want || v*1000 == want || strings.Contains(strings.ToLower(s.Name), "sec") && v*1000 == want
 }
 
+var reSizeUnit = regexp.MustCompile(`^\s*(?i:[kmgt]i?b\b|bytes?\b|b\b|ms\b|s\b|sec|秒|毫秒|分钟|小时|天|px|dp|pt\b|%|x\d|×)`)
+
 var reCompare = regexp.MustCompile(`(?:length|count|size|count\(\)|length\(\))(<=|>=|<|>|===|==)(\d+)`)
 
 // quantityRules checks "最多 10 件 / 超时 30 秒 / shorter than 6" style claims
@@ -120,7 +125,17 @@ var reCompare = regexp.MustCompile(`(?:length|count|size|count\(\)|length\(\))(<
 func (k *Checker) quantityRules(text string, out *ruleOut) {
 	words := domainWords(text)
 	for _, q := range quantityRules {
-		for _, m := range q.re.FindAllStringSubmatch(text, -1) {
+		for _, loc := range q.re.FindAllStringSubmatchIndex(text, -1) {
+			m := make([]string, len(loc)/2)
+			for g := range m {
+				if loc[2*g] >= 0 {
+					m[g] = text[loc[2*g]:loc[2*g+1]]
+				}
+			}
+			// counts and lengths only: "不超过 200KB", "800x800", "30%" are sizes / ratios
+			if (q.kind == "limit" || q.kind == "min") && reSizeUnit.MatchString(text[loc[1]:]) {
+				continue
+			}
 			n, _ := strconv.Atoi(m[q.re.SubexpIndex("n")])
 			unit := ""
 			if i := q.re.SubexpIndex("unit"); i > 0 {
@@ -436,9 +451,145 @@ func (k *Checker) valueRules(c *Claim, numericChecked bool) ruleOut {
 		k.quantityRules(text, &out)
 	}
 	k.apiParamRules(text, &out)
+	k.buildConfigRules(text, &out)
 	k.sharedConstRules(text, &out)
 	if c.Style != "statement" && len(k.F.Routes)+len(k.F.TestIDs) > 0 {
 		k.behaviourRules(text, &out)
 	}
 	return out
+}
+
+// ---------------------------------------------------------------- build config
+
+var (
+	reBuildCfgLine = regexp.MustCompile(`^\s*"?([A-Za-z_][A-Za-z0-9_.]*)"?\s*(?:=|:)?\s*["']?(\d+)["']?\s*,?\s*(?://.*)?$`)
+	buildCfgFile   = regexp.MustCompile(`(^|/)(build\.gradle(\.kts)?|[A-Za-z0-9_-]+\.json5|[A-Za-z0-9_-]+\.xcconfig)$`)
+)
+
+type cfgValue struct{ File, Value string }
+
+// buildConfig collects `key = 123` / `"key": 123` lines from Gradle, json5
+// and xcconfig files (compileSdk, minSdk, targetSdk, compatibleSdkVersion …):
+// build settings are not symbols, so documents about them were unverifiable.
+func (k *Checker) buildConfig() map[string][]cfgValue {
+	if k.buildCfg != nil {
+		return k.buildCfg
+	}
+	k.buildCfg = map[string][]cfgValue{}
+	_ = filepath.WalkDir(k.Dir, func(p string, d os.DirEntry, err error) error {
+		if err != nil {
+			return nil
+		}
+		if d.IsDir() {
+			switch d.Name() {
+			case ".git", "node_modules", "oh_modules", "build", "wiki", ".kb-work", "Pods":
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		rel, _ := filepath.Rel(k.Dir, p)
+		rel = filepath.ToSlash(rel)
+		if !buildCfgFile.MatchString(rel) {
+			return nil
+		}
+		b, err := os.ReadFile(p)
+		if err != nil || len(b) > 1<<20 {
+			return nil
+		}
+		// one-liners such as `defaultConfig { applicationId = "x"; minSdk = 26 }`
+		for _, line := range strings.FieldsFunc(string(b), func(r rune) bool { return r == '\n' || r == ';' || r == '{' || r == '}' }) {
+			if m := reBuildCfgLine.FindStringSubmatch(line); m != nil {
+				k.buildCfg[m[1]] = append(k.buildCfg[m[1]], cfgValue{rel, m[2]})
+			}
+		}
+		return nil
+	})
+	return k.buildCfg
+}
+
+// buildConfigRules: "`compileSdk` 为 34" is compared with the build files.
+func (k *Checker) buildConfigRules(text string, out *ruleOut) {
+	nums := reNumber.FindAllString(reCode.ReplaceAllString(text, " "), -1)
+	if len(nums) == 0 {
+		return
+	}
+	for _, m := range reCode.FindAllStringSubmatch(text, -1) {
+		key := strings.TrimSpace(m[1])
+		if !reIdentLike.MatchString(key) || len(k.findSymbols(key)) > 0 {
+			continue
+		}
+		vals := k.buildConfig()[key]
+		if len(vals) == 0 {
+			continue
+		}
+		var same, desc []string
+		for _, v := range vals {
+			desc = append(desc, fmt.Sprintf("%s=%s（%s）", key, v.Value, v.File))
+			if containsStr(nums, v.Value) {
+				same = append(same, v.File)
+			}
+		}
+		if len(same) > 0 {
+			out.verifiedf("构建配置与文档一致：%s", strings.Join(desc, ", "))
+		} else {
+			out.conflictf("文档写 `%s` 为 %s，构建配置为 %s", key, strings.Join(nums, "/"), strings.Join(desc, ", "))
+		}
+	}
+}
+
+// ---------------------------------------------------------------- missing types
+
+var reTypeSuffix = regexp.MustCompile(`(Builder|ViewModel|View|Screen|Page|Store|Manager|Service|Repository|Activity|Fragment|Controller|Ability|Client|Adapter|Presenter|Router|Provider|Handler|Helper)$`)
+
+// missingProjectType: a backticked PascalCase name such as
+// `ProductDetailPageBuilder` that appears nowhere in the code, while the
+// project names its own types with the same suffix (ProductDetailBuilder).
+// Framework names without a project-style suffix (SharedPreferences) and
+// built-ins are left alone.
+func (k *Checker) missingProjectType(text, span string) bool {
+	if strings.Contains(text, "/"+span+")") || strings.Contains(text, "/"+span+"/") || strings.Contains(text, "("+span+")") {
+		return false // the name is a link target (README index of samples / modules), not a code claim
+	}
+	if strings.ContainsAny(span, ".()") || !isPascal(span) || builtinTypes[span] {
+		return false
+	}
+	humps := 0
+	for _, r := range span {
+		if r >= 'A' && r <= 'Z' {
+			humps++
+		}
+	}
+	suf := reTypeSuffix.FindString(span)
+	if humps < 2 || suf == "" || suf == span {
+		return false
+	}
+	if k.pathParts()[span] {
+		return false // a module / sample / directory name (README indexes link to them)
+	}
+	for _, s := range k.G.Symbols {
+		if s.Name != span && strings.HasSuffix(s.Name, suf) && isPascal(s.Name) {
+			return k.tokenSearch(span) == "" && len(k.findSymbols(span)) == 0
+		}
+	}
+	return false
+}
+
+// pathParts is the set of directory and file-stem names of scanned files.
+func (k *Checker) pathParts() map[string]bool {
+	if k.parts != nil {
+		return k.parts
+	}
+	k.parts = map[string]bool{}
+	add := func(f string) {
+		for _, p := range strings.Split(f, "/") {
+			k.parts[strings.TrimSuffix(p, path.Ext(p))] = true
+		}
+	}
+	for f := range k.G.Files {
+		add(f)
+	}
+	for _, s := range k.G.Symbols {
+		add(s.File)
+	}
+	return k.parts
 }

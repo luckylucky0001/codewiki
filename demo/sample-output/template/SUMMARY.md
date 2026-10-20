@@ -1,7 +1,7 @@
 # codewiki demo summary
 
 - mode: `template` (bootstrap writer: `template`)
-- date (UTC): 20261020T184301Z
+- date (UTC): 20261020T192836Z
 - repo: `demo/output/<run>/repo` (temp git repo, branch master)
 - kb: `kb 0.1.0`
 
@@ -46,7 +46,7 @@ Conflicts (code wins):
 ### 05-01-cart-limit
 
 ```
-diff: base 9e741c8 → head 78223e2
+diff: base 296c865 → head 4049c1e
 diff:   unchanged  212
 diff:   body       2
 diff:   signature  0
@@ -69,7 +69,7 @@ verify PASS: 23 pages, 358 anchors, 0 errors, 0 warnings
 ### 06-02-arkts-api-rename
 
 ```
-diff: base 78223e2 → head 92c67bc
+diff: base 4049c1e → head 08d60b5
 diff:   unchanged  208
 diff:   body       4
 diff:   signature  1
@@ -96,7 +96,7 @@ verify PASS: 23 pages, 358 anchors, 0 errors, 0 warnings
 ### 07-03-profile-route
 
 ```
-diff: base 92c67bc → head 8527147
+diff: base 08d60b5 → head 9d6e21c
 diff:   unchanged  210
 diff:   body       4
 diff:   signature  0

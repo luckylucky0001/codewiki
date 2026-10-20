@@ -1,0 +1,50 @@
+# Held-out golden set for `kb eval` (claim verification only).
+# Claims come from heldout-legacy.md (copied to project/docs/legacy/), written
+# blind to the claim checker's implementation and labelled by reading the
+# android/ ios/ harmony/ sources of examples/minishop (base state). No change
+# sets: this set measures claim-status accuracy only.
+# 31 claims: 13 verified, 12 conflict, 6 unverifiable.
+version: 1
+# Committed layout: the minishop sources (identical to the blind run's
+# project/ copy) plus the held-out doc; only that doc is ingested.
+project: ../../minishop
+docs:
+  - {from: heldout-legacy.md, to: docs/legacy/heldout-legacy.md}
+claims:
+  # --- 2. 接口约定 ---
+  - {id: HELDOUT-LEGACY-0dd5ea, expected: verified, note: "BASE_URL in ApiService.kt ApiClient, APIClient.swift baseURL, Api.ets BASE_URL are all https://api.minishop.example"}
+  - {id: HELDOUT-LEGACY-6fb04d, expected: verified, note: "ApiService.login @POST(/api/login) LoginRequest(username,password); iOS send(.post,/api/login,LoginRequest); Api.login extraData {username,password}"}
+  - {id: HELDOUT-LEGACY-5e028c, expected: verified, note: "getProduct @GET(/api/products/{id}) via LaunchedEffect; iOS .task loadProduct /api/products/\\(id); ArkTS aboutToAppear Api.loadProduct"}
+  - {id: HELDOUT-LEGACY-410741, expected: conflict, note: "order API is POST /api/orders on all platforms; /api/order/create does not exist"}
+  - {id: HELDOUT-LEGACY-ff089a, expected: verified, note: "CartRequest(sku, 1) / quantity: 1 / Api.addToCart(sku, 1)"}
+  - {id: HELDOUT-LEGACY-3fa0f2, expected: conflict, note: "listProducts()/loadProducts take no parameters; no category anywhere"}
+  - {id: HELDOUT-LEGACY-a3fd81, expected: verified, note: "OrderRequest(paymentMethod = \"card\"), OrderRequest(paymentMethod: \"card\"), Api.createOrder('card')"}
+  - {id: HELDOUT-LEGACY-bc846e, expected: verified, note: "APIClient.send sets Authorization: Bearer <token> when TokenStore.shared.token != nil"}
+  - {id: HELDOUT-LEGACY-d3aafd, expected: conflict, note: "Android Retrofit has no auth header at all; ArkTS only sets Authorization in addToCart (not login/products/orders)"}
+  # --- 3. 登录与会话 ---
+  - {id: HELDOUT-LEGACY-f0a5ae, expected: verified, note: "android data/TokenStore.java, synchronized getInstance() singleton"}
+  - {id: HELDOUT-LEGACY-68503d, expected: verified, note: "LoginPage.onSubmit -> pathStack.replacePathByName('products'); Android/iOS navigate to products after login"}
+  - {id: HELDOUT-LEGACY-887bc3, expected: conflict, note: "token is in-memory only on all platforms (Java field / Swift var / ArkTS static); no Keychain or SharedPreferences"}
+  - {id: HELDOUT-LEGACY-cc9151, expected: conflict, note: "no Toast; Android/iOS only set error=invalid_credentials, ArkTS just returns; password field is not cleared"}
+  - {id: HELDOUT-LEGACY-6cde1d, expected: verified, note: "Index.openDeepLink: non-minishop:// uri -> pushPathByName(TokenStore.isLoggedIn() ? 'products' : 'login')"}
+  - {id: HELDOUT-LEGACY-90d333, expected: unverifiable, note: "server-side account lockout; client code cannot confirm or refute"}
+  # --- 4. 商品与购物车 ---
+  - {id: HELDOUT-LEGACY-9fd7cc, expected: verified, note: "tab_cart on Products screen on all platforms navigates to cart"}
+  - {id: HELDOUT-LEGACY-5f4905, expected: conflict, note: "testID is add_to_cart; add_cart_button does not exist"}
+  - {id: HELDOUT-LEGACY-d56876, expected: conflict, note: "only Android ProductDetailScreen renders price; iOS ProductDetailView and ArkTS ProductDetailPage show title only"}
+  - {id: HELDOUT-LEGACY-178389, expected: conflict, note: "MAX_CART_ITEMS / maxCartItems = 99 on all platforms; add_to_cart is never disabled (addItem just returns false)"}
+  - {id: HELDOUT-LEGACY-eea7bb, expected: unverifiable, note: "CMS / operations image spec; nothing in client code"}
+  # --- 5. 结算与订单 ---
+  - {id: HELDOUT-LEGACY-7151e9, expected: verified, note: "checkout_submit -> createOrder POST /api/orders -> navigate order/{id} (Android order/$orderId, iOS .orderDetail id, ArkTS order_detail {id})"}
+  - {id: HELDOUT-LEGACY-e8adb6, expected: conflict, note: "no payment-method selection UI; paymentMethod hard-coded to card"}
+  - {id: HELDOUT-LEGACY-1d13fd, expected: unverifiable, note: "server-side order timeout policy"}
+  - {id: HELDOUT-LEGACY-b21cd7, expected: unverifiable, note: "customer-service SLA (business process)"}
+  # --- 6. 路由与深链 ---
+  - {id: HELDOUT-LEGACY-4bd596, expected: verified, note: "router_map.json: name order_detail, buildFunction OrderDetailBuilder"}
+  - {id: HELDOUT-LEGACY-8376b0, expected: conflict, note: "buildFunction is ProductDetailBuilder; ProductDetailPageBuilder does not exist"}
+  - {id: HELDOUT-LEGACY-8f20c7, expected: conflict, note: "order detail pattern is order/{id} on all platforms (deeplink minishop://order/{id}), not orders/{id}"}
+  # --- 7. 构建与发布 ---
+  - {id: HELDOUT-LEGACY-f2cd5b, expected: verified, note: "android/app/build.gradle.kts minSdk = 26"}
+  - {id: HELDOUT-LEGACY-ff7b2c, expected: conflict, note: "android/app/build.gradle.kts compileSdk = 35"}
+  - {id: HELDOUT-LEGACY-ebe3bc, expected: unverifiable, note: "release process"}
+  - {id: HELDOUT-LEGACY-41e58b, expected: unverifiable, note: "backend SLO, owned by SRE"}

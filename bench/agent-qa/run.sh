@@ -16,6 +16,7 @@
 #   AGENT_REPS=1        repetitions per question and variant (default 1)
 #   AGENT_ONLY="q01 q05" run a subset (prefix match on question id)
 #   AGENT_VARIANTS="A"  run only some variants (default "A B")
+#   AGENT_QUESTIONS=f   question file (default questions.json; questions-cases.json = large repo)
 #   AGENT_RESCORE=1     only re-score existing transcripts in [outdir] (no claude runs)
 set -euo pipefail
 SRC="$(cd "${1:?usage: run.sh <demo-repo> [outdir]}" && pwd)"
@@ -26,7 +27,7 @@ OUT="$(cd "$OUT" && pwd)"
 MODEL="${AGENT_MODEL:-haiku}"
 PAR="${AGENT_PAR:-4}"
 REPS="${AGENT_REPS:-1}"
-Q="$HERE/questions.json"
+Q="${AGENT_QUESTIONS:-$HERE/questions.json}"
 command -v claude >/dev/null || { echo "claude CLI not found" >&2; exit 2; }
 command -v jq >/dev/null || { echo "jq not found" >&2; exit 2; }
 

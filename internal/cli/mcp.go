@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	register(&command{name: "mcp", usage: "[--root repo]", summary: "stdio MCP server exposing search/get/context/anchor/status/parity as tools",
+	register(&command{name: "mcp", usage: "[--root repo]", summary: "stdio MCP server exposing search/get/context/anchor/status/parity/conflicts as tools",
 		help: `Speaks JSON-RPC 2.0 (MCP, newline-delimited) on stdin/stdout. Register in Claude Code:
   claude mcp add codewiki -- kb mcp --root /path/to/repo
 Each tool runs the corresponding kb command with --json and returns its output.`,
@@ -102,6 +102,8 @@ var mcpTools = []mcpTool{
 		InputSchema: obj(map[string]any{}), args: func(map[string]any) ([]string, error) { return []string{"status"}, nil }},
 	{Name: "kb_parity", Description: "Feature × platform parity matrix (routes, testIDs, APIs, constants differing across Android/iOS/HarmonyOS).",
 		InputSchema: obj(map[string]any{}), args: func(map[string]any) ([]string, error) { return []string{"parity"}, nil }},
+	{Name: "kb_conflicts", Description: "Which docs/specs are outdated: claims that contradict the code, with source:line, code evidence and a suggested fix (code wins).",
+		InputSchema: obj(map[string]any{}), args: func(map[string]any) ([]string, error) { return []string{"conflicts"}, nil }},
 }
 
 func cmdMCP(a *app, fs *flag.FlagSet, _ []string) int {

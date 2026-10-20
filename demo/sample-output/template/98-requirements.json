@@ -4,6 +4,7 @@
     {
       "id": "LOGIN-R1.1",
       "source": ".kiro/specs/login/requirements.md",
+      "line": 15,
       "text": "WHEN the user submits valid credentials THEN the system SHALL call `POST /api/login` and navigate to `products`.",
       "status": "verified",
       "anchors": [
@@ -44,6 +45,7 @@
     {
       "id": "LOGIN-R1.2",
       "source": ".kiro/specs/login/requirements.md",
+      "line": 16,
       "text": "WHEN the password is shorter than 6 characters THEN the system SHALL reject the login without calling the backend.",
       "status": "verified",
       "anchors": [
@@ -72,6 +74,7 @@
     {
       "id": "LOGIN-R1.3",
       "source": ".kiro/specs/login/requirements.md",
+      "line": 17,
       "text": "WHEN login succeeds THEN the system SHALL persist the token via `TokenStore.save`.",
       "status": "verified",
       "anchors": [
@@ -98,6 +101,7 @@
     {
       "id": "LOGIN-R2.1",
       "source": ".kiro/specs/login/requirements.md",
+      "line": 25,
       "text": "WHEN the app is opened with `minishop://login?token=\u003ct\u003e` THEN the system SHALL store the token before rendering.",
       "status": "verified",
       "anchors": [
@@ -124,6 +128,7 @@
     {
       "id": "LOGIN-R2.2",
       "source": ".kiro/specs/login/requirements.md",
+      "line": 26,
       "text": "WHEN the user taps `login_submit` with an empty username THEN the system SHALL show an SMS verification dialog.",
       "status": "conflict",
       "anchors": [
@@ -151,6 +156,7 @@
     {
       "id": "PRODUCT-4d19f5",
       "source": ".kiro/steering/product.md",
+      "line": 4,
       "text": "All platforms MUST expose identical testIDs such as `nav_back` and `product_list`.",
       "status": "verified",
       "anchors": [
@@ -190,6 +196,7 @@
     {
       "id": "0001-NAVIGATION-5c8d9b",
       "source": "docs/adr/0001-navigation.md",
+      "line": 7,
       "text": "三端使用同一套 route pattern：`login`、`products`、`product/{id}`、`cart`、`checkout`、`order/{id}`。",
       "status": "verified",
       "anchors": [
@@ -286,6 +293,7 @@
     {
       "id": "0001-NAVIGATION-7bb06a",
       "source": "docs/adr/0001-navigation.md",
+      "line": 8,
       "text": "HarmonyOS 使用 Navigation 系统路由表 `router_map.json`（buildFunction 形如 `ProductDetailBuilder`），不再使用 `main_pages.json` 承载业务页面。",
       "status": "verified",
       "anchors": [
@@ -306,6 +314,7 @@
     {
       "id": "0001-NAVIGATION-ad00b5",
       "source": "docs/adr/0001-navigation.md",
+      "line": 9,
       "text": "所有页面 MUST 支持 `minishop://\u003cpattern\u003e` 深链，并支持测试参数 `?token=\u003ct\u003e\u0026cart=\u003csku,sku\u003e` 注入状态。",
       "status": "unverifiable",
       "anchors": [],
@@ -319,6 +328,7 @@
     {
       "id": "CART-43567f",
       "source": "docs/legacy/cart.md",
+      "line": 3,
       "text": "购物车最多 10 件商品（常量 `MAX_CART_ITEMS`，iOS 为 `maxCartItems`）。",
       "status": "conflict",
       "anchors": [
@@ -345,6 +355,7 @@
     {
       "id": "CART-cbf050",
       "source": "docs/legacy/cart.md",
+      "line": 4,
       "text": "加入购物车调用 `POST /api/cart`，按钮 testID 为 `add_to_cart`。",
       "status": "verified",
       "anchors": [
@@ -385,6 +396,7 @@
     {
       "id": "CART-9b9a98",
       "source": "docs/legacy/cart.md",
+      "line": 5,
       "text": "购物车页路由为 `cart`，结算按钮 testID 为 `cart_checkout`。",
       "status": "verified",
       "anchors": [
@@ -420,6 +432,7 @@
     {
       "id": "CART-7d3eb7",
       "source": "docs/legacy/cart.md",
+      "line": 6,
       "text": "下单接口为 `POST /api/order/create`，成功后进入订单详情 `minishop://order/{id}`。",
       "status": "conflict",
       "anchors": [
@@ -447,6 +460,7 @@
     {
       "id": "CART-9509ed",
       "source": "docs/legacy/cart.md",
+      "line": 7,
       "text": "商品详情接口为 `GET /api/products/{id}`。",
       "status": "verified",
       "anchors": [
@@ -473,6 +487,7 @@
     {
       "id": "LOGIN-4dbfba",
       "source": "docs/legacy/login.md",
+      "line": 3,
       "text": "登录使用手机号 + 短信验证码：先调用 `POST /api/sms/send` 发送验证码，再调用 `POST /api/login` 校验。",
       "status": "conflict",
       "anchors": [
@@ -500,6 +515,7 @@
     {
       "id": "LOGIN-514629",
       "source": "docs/legacy/login.md",
+      "line": 4,
       "text": "登录页的输入框 testID 为 `login_username`、`login_password`，提交按钮为 `login_submit`。",
       "status": "verified",
       "anchors": [
@@ -528,6 +544,7 @@
     {
       "id": "LOGIN-974e57",
       "source": "docs/legacy/login.md",
+      "line": 5,
       "text": "登录成功后跳转到商品列表 `minishop://products`。",
       "status": "verified",
       "anchors": [
@@ -554,6 +571,7 @@
     {
       "id": "LOGIN-120849",
       "source": "docs/legacy/login.md",
+      "line": 6,
       "text": "登录逻辑集中在 `LoginViewModel.login` 中。",
       "status": "verified",
       "anchors": [
@@ -576,6 +594,7 @@
     {
       "id": "LOGIN-e5f114",
       "source": "docs/legacy/login.md",
+      "line": 7,
       "text": "会话 token 由 `SessionManager.saveToken()` 持久化。",
       "status": "conflict",
       "anchors": [],
@@ -587,6 +606,7 @@
     {
       "id": "PRODUCTS-9035af",
       "source": "docs/legacy/products.md",
+      "line": 3,
       "text": "商品列表 testID 为 `product_list`，单个商品为 `product_item_\u003cid\u003e`。",
       "status": "verified",
       "anchors": [
@@ -614,6 +634,7 @@
     {
       "id": "PRODUCTS-f83d5a",
       "source": "docs/legacy/products.md",
+      "line": 4,
       "text": "商品列表接口为 `GET /api/products`，支持 `page` 与 `size` 分页参数。",
       "status": "conflict",
       "anchors": [
@@ -642,6 +663,7 @@
     {
       "id": "PRODUCTS-d3d40e",
       "source": "docs/legacy/products.md",
+      "line": 5,
       "text": "商品详情页右上角有分享按钮（testID `share_button`）。",
       "status": "conflict",
       "anchors": [],
@@ -653,6 +675,7 @@
     {
       "id": "PRODUCTS-c697e6",
       "source": "docs/legacy/products.md",
+      "line": 6,
       "text": "下单成功后，订单状态展示在 `order_status` 上。",
       "status": "verified",
       "anchors": [
@@ -679,6 +702,7 @@
     {
       "id": "PRODUCTS-dfb70a",
       "source": "docs/legacy/products.md",
+      "line": 7,
       "text": "下单接口返回 `orderId` 与 `status` 字段。",
       "status": "verified",
       "anchors": [
@@ -700,6 +724,7 @@
     {
       "id": "PLAN-404208",
       "source": "specs/001-cart/plan.md",
+      "line": 3,
       "text": "Android: `CartViewModel` (Compose + ViewModel)；iOS: `CartViewModel` (ObservableObject)；HarmonyOS: `CartStore`。",
       "status": "verified",
       "anchors": [
@@ -726,6 +751,7 @@
     {
       "id": "PLAN-3e24ef",
       "source": "specs/001-cart/plan.md",
+      "line": 4,
       "text": "三端共享上限常量，接口 `POST /api/cart`。",
       "status": "conflict",
       "anchors": [
@@ -765,6 +791,7 @@
     {
       "id": "001-CART-SPEC-503548",
       "source": "specs/001-cart/spec.md",
+      "line": 14,
       "text": "WHEN the user taps `add_to_cart` on product detail THE SYSTEM SHALL call `POST /api/cart`.",
       "status": "verified",
       "anchors": [
@@ -805,6 +832,7 @@
     {
       "id": "001-CART-SPEC-4d53d3",
       "source": "specs/001-cart/spec.md",
+      "line": 15,
       "text": "WHEN the cart is empty THE SYSTEM SHALL disable `cart_checkout`.",
       "status": "verified",
       "anchors": [
@@ -831,6 +859,7 @@
     {
       "id": "FR-001",
       "source": "specs/001-cart/spec.md",
+      "line": 21,
       "text": "System MUST let users add a product to the cart from the product detail page (`add_to_cart`, `POST /api/cart`).",
       "status": "verified",
       "anchors": [
@@ -871,6 +900,7 @@
     {
       "id": "FR-002",
       "source": "specs/001-cart/spec.md",
+      "line": 22,
       "text": "The cart MUST hold at most 99 items (`MAX_CART_ITEMS`).",
       "status": "conflict",
       "anchors": [
@@ -894,6 +924,7 @@
     {
       "id": "FR-003",
       "source": "specs/001-cart/spec.md",
+      "line": 23,
       "text": "Checkout MUST create an order via `POST /api/orders` and then show `order_status`.",
       "status": "verified",
       "anchors": [
@@ -933,6 +964,7 @@
     {
       "id": "FR-004",
       "source": "specs/001-cart/spec.md",
+      "line": 24,
       "text": "Users MUST be able to apply a coupon code at checkout (`POST /api/coupons/apply`).",
       "status": "conflict",
       "anchors": [],
@@ -947,6 +979,7 @@
     {
       "id": "FR-005",
       "source": "specs/001-cart/spec.md",
+      "line": 25,
       "text": "The cart page MUST be reachable via deep link `minishop://cart`.",
       "status": "verified",
       "anchors": [

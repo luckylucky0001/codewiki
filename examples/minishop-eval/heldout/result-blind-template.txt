@@ -1,0 +1,38 @@
+# command: cd /tmp/claude-0/-home-user-axios/f608cc50-0c09-5f4c-8195-0e8da779e294/scratchpad/heldout && ./kb eval --golden golden-heldout.yaml
+# exit code: 0
+# ---- stdout ----
+claim verification (template, 31 labelled): accuracy 0.58
+  verified      precision 0.64 recall 0.69 f1 0.66 (tp 9 fp 5 fn 4)
+  conflict      precision 0.80 recall 0.33 f1 0.47 (tp 4 fp 1 fn 8)
+  unverifiable  precision 0.42 recall 0.83 f1 0.56 (tp 5 fp 7 fn 1)
+  ✗ HELDOUT-LEGACY-0dd5ea  expected verified     got unverifiable BASE_URL in ApiService.kt ApiClient, APIClient.swift baseURL, Api.ets BASE_URL are all https://api.minishop.example
+  ✗ HELDOUT-LEGACY-6fb04d  expected verified     got unverifiable ApiService.login @POST(/api/login) LoginRequest(username,password); iOS send(.post,/api/login,LoginRequest); Api.login extraData {username,password}
+  ✗ HELDOUT-LEGACY-bc846e  expected verified     got unverifiable APIClient.send sets Authorization: Bearer <token> when TokenStore.shared.token != nil
+  ✗ HELDOUT-LEGACY-d3aafd  expected conflict     got unverifiable Android Retrofit has no auth header at all; ArkTS only sets Authorization in addToCart (not login/products/orders)
+  ✗ HELDOUT-LEGACY-887bc3  expected conflict     got unverifiable token is in-memory only on all platforms (Java field / Swift var / ArkTS static); no Keychain or SharedPreferences
+  ✗ HELDOUT-LEGACY-cc9151  expected conflict     got verified     no Toast; Android/iOS only set error=invalid_credentials, ArkTS just returns; password field is not cleared
+  ✗ HELDOUT-LEGACY-d56876  expected conflict     got verified     only Android ProductDetailScreen renders price; iOS ProductDetailView and ArkTS ProductDetailPage show title only
+  ✗ HELDOUT-LEGACY-178389  expected conflict     got verified     MAX_CART_ITEMS / maxCartItems = 99 on all platforms; add_to_cart is never disabled (addItem just returns false)
+  ✗ HELDOUT-LEGACY-eea7bb  expected unverifiable got conflict     CMS / operations image spec; nothing in client code
+  ✗ HELDOUT-LEGACY-e8adb6  expected conflict     got verified     no payment-method selection UI; paymentMethod hard-coded to card
+  ✗ HELDOUT-LEGACY-8376b0  expected conflict     got verified     buildFunction is ProductDetailBuilder; ProductDetailPageBuilder does not exist
+  ✗ HELDOUT-LEGACY-f2cd5b  expected verified     got unverifiable android/app/build.gradle.kts minSdk = 26
+  ✗ HELDOUT-LEGACY-ff7b2c  expected conflict     got unverifiable android/app/build.gradle.kts compileSdk = 35
+plan impact: micro precision 0.00 recall 0.00 f1 0.00
+# ---- stderr ----
+kb ingest: head=6bb6c6d base= mode=ingest tasks=1 (check ingested documents against code)
+ingested 1 document(s) into raw/docs
+  ⚠ docs/legacy/heldout-legacy.md L16: suspected prompt injection (exfiltration): | 账号登录 | 客户端 MUST 通过 `POST /api/login` 登录，请求体字段为 `username` 和 `password` |
+  ⚠ docs/legacy/heldout-legacy.md L25: suspected prompt injection (exfiltration): - iOS 端 `APIClient.send` 在已有 token 时会为请求附加 `Authorization: Bearer <token>` 请求头。
+  [ok] create   pages/_conflicts.md                template 
+kb compound: head=6bb6c6d base= mode=full tasks=10 (no compatible baseline graph (first compound or graph version change))
+  [ok] recheck  pages/_conflicts.md                template 
+  [ok] create   pages/concepts/navigation.md       template 
+  [ok] create   pages/concepts/shared-components.md template 
+  [ok] create   pages/features/cart.md             template 
+  [ok] create   pages/features/checkout.md         template 
+  [ok] create   pages/features/login.md            template 
+  [ok] create   pages/features/order_detail.md     template 
+  [ok] create   pages/features/product_detail.md   template 
+  [ok] create   pages/features/products.md         template 
+  [ok] create   pages/overview.md                  template 

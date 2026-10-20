@@ -131,6 +131,7 @@ type Entry struct {
 type Requirement struct {
 	ID       string   `json:"id"`
 	Source   string   `json:"source"`
+	Line     int      `json:"line,omitempty"`
 	Text     string   `json:"text"`
 	Status   string   `json:"status"` // verified | conflict | unverifiable
 	Anchors  []Anchor `json:"anchors"`

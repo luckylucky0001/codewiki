@@ -1,5 +1,5 @@
 {
-  "base_sha": "92c67bcc10e0f6f32e2dd37ba5358d29a6bf2a3c",
+  "base_sha": "08d60b5eb3b58af62b9443dc6460615db4ee8219",
   "changed": [
     "facts/android/routes.md",
     "facts/android/symbols.md",
@@ -21,12 +21,12 @@
     "pages/parity.md"
   ],
   "date": "2026-10-20",
-  "head_sha": "852714720f9acb42e4cf02e76c3fad46ae0d8a5e",
+  "head_sha": "9d6e21c200de85fce142d8c3e89164629b66c6b4",
   "kind": "compound",
   "llm": "template",
   "mode": "incremental",
   "reason": "anchors changed ∪ signature changes propagated along reference edges",
-  "run_id": "20261020T184309-8527147",
+  "run_id": "20261020T192843-9d6e21c",
   "tasks": [
     {
       "id": "t01-concepts-navigation",
@@ -34,7 +34,7 @@
       "op": "update",
       "writer": "template",
       "status": "ok",
-      "millis": 0
+      "millis": 3
     },
     {
       "id": "t02-concepts-shared-components",
@@ -42,7 +42,7 @@
       "op": "update",
       "writer": "template",
       "status": "ok",
-      "millis": 0
+      "millis": 1
     },
     {
       "id": "t03-features-profile",

@@ -168,15 +168,19 @@ Exit 1 when verification fails (nothing is published).`,
 	register(&command{name: "parity", usage: "[--strict]", summary: "feature × platform matrix: routes, testIDs, APIs and constants that differ across platforms",
 		help:  "Also generated as wiki/pages/parity.md on every compound (verified for freshness).",
 		flags: func(fs *flag.FlagSet) { fs.Bool("strict", false, "exit 1 when any gap or constant difference exists") }, run: cmdParity})
-	register(&command{name: "eval", usage: "[--golden examples/minishop-eval/golden.yaml] [--llm template|claude]", summary: "evaluate claim verification and plan impact against a labelled golden set (precision/recall)",
-		help: "Replays the golden project in a temp git repo: ingest (claims), initial compound, then each change set (planned pages vs expected). Nothing in the working tree is modified.",
+	register(&command{name: "eval", usage: "[--golden examples/minishop-eval/golden.yaml] [--doc a.md,b.md] [--llm template|claude]", summary: "evaluate claim verification and plan impact against a labelled golden set (precision/recall)",
+		help: "Replays the golden project in a temp git repo: ingest (claims), initial compound, then each change set (planned pages vs expected). Nothing in the working tree is modified.\n\nHeld-out sets: a golden file may list `docs: [{from: x.md, to: docs/legacy/x.md}]`; --doc adds documents the same way (copied to docs/eval/). With either, only those documents are ingested.\n  kb eval --golden examples/minishop-eval/heldout/golden-heldout.yaml",
 		flags: func(fs *flag.FlagSet) {
 			fs.String("golden", "examples/minishop-eval/golden.yaml", "golden set (YAML)")
 			fs.String("llm", "template", "claim checker / writer: template | claude | cmd")
 			fs.String("llm-cmd", "", "override the LLM command line")
 			fs.Float64("min-accuracy", 0, "exit 1 when claim accuracy is below this")
+			fs.String("doc", "", "comma-separated documents to add to the project copy and ingest (instead of its own docs)")
 		},
 		run: cmdEval})
+	register(&command{name: "conflicts", usage: "[--all]", summary: "which docs are outdated: claims that contradict the code, with source line, code evidence and a suggested fix",
+		help:  "Reads wiki/facts/requirements.json (written by kb ingest / kb compound, template mode included). Code wins: each entry says what the document claims, what the code shows, and how to fix the document. --all also lists unverifiable claims.",
+		flags: func(fs *flag.FlagSet) { fs.Bool("all", false, "also list unverifiable claims") }, run: cmdConflicts})
 	register(&command{name: "install-skills", usage: "<target-repo> [--dry-run]", summary: "install kb skills into <target>/.claude/skills for Claude Code",
 		flags: func(fs *flag.FlagSet) { fs.Bool("dry-run", false, "list files only") }, run: cmdInstallSkills})
 }
@@ -975,6 +979,96 @@ func cmdContext(a *app, fs *flag.FlagSet, args []string) int {
 	return ExitOK
 }
 
+type conflictEntry struct {
+	ID       string   `json:"id"`
+	Source   string   `json:"source"`
+	Line     int      `json:"line,omitempty"`
+	Text     string   `json:"text"`
+	Status   string   `json:"status"`
+	Evidence []string `json:"evidence"`
+	Anchors  []string `json:"anchors"`
+	Fix      string   `json:"suggested_fix"`
+}
+
+// suggestFix turns the checker's evidence into an instruction for the doc owner.
+func suggestFix(ev []string) string {
+	for _, e := range ev {
+		switch {
+		case strings.Contains(e, "不存在") || strings.Contains(e, "没有任何") || strings.Contains(e, "都没有"):
+			return "删除或改写这条说法：代码中没有对应实现（" + e + "）"
+		case strings.Contains(e, "代码常量") || strings.Contains(e, "构建配置") || strings.Contains(e, "代码中 `") || strings.Contains(e, "方法是"):
+			return "按代码更新文档中的取值：" + e
+		case strings.Contains(e, "共享"):
+			return "改写为各平台分别定义，并列出各端取值：" + e
+		case strings.Contains(e, "没有参数"):
+			return "删除文档中不存在的参数：" + e
+		}
+	}
+	if len(ev) > 0 {
+		return "以代码为准修订文档：" + ev[len(ev)-1]
+	}
+	return "以代码为准修订文档"
+}
+
+func cmdConflicts(a *app, fs *flag.FlagSet, _ []string) int {
+	cfg, code := a.cfgOrFail()
+	if cfg == nil {
+		return code
+	}
+	var doc struct {
+		Requirements []model.Requirement `json:"requirements"`
+	}
+	b, err := os.ReadFile(filepath.Join(cfg.WikiPath(), "facts", "requirements.json"))
+	if err != nil {
+		return a.fail(ExitUsage, fmt.Errorf("no facts/requirements.json yet: run kb ingest --manifest <(kb discover-docs --json) first"))
+	}
+	if err := json.Unmarshal(b, &doc); err != nil {
+		return a.fail(ExitInternal, err)
+	}
+	all := boolFlag(fs, "all")
+	out := []conflictEntry{}
+	counts := map[string]int{}
+	for _, r := range doc.Requirements {
+		counts[r.Status]++
+		if r.Status != "conflict" && !(all && r.Status == "unverifiable") {
+			continue
+		}
+		var an []string
+		for _, x := range r.Anchors {
+			an = append(an, x.Sym)
+		}
+		fix := suggestFix(r.Evidence)
+		if r.Status == "unverifiable" {
+			fix = "无代码证据：确认是否仍然有效；若是服务端 / 流程约定，可保留但不要当作客户端事实"
+		}
+		out = append(out, conflictEntry{ID: r.ID, Source: r.Source, Line: r.Line, Text: r.Text, Status: r.Status, Evidence: r.Evidence, Anchors: an, Fix: fix})
+	}
+	sort.SliceStable(out, func(i, j int) bool {
+		if out[i].Status != out[j].Status {
+			return out[i].Status < out[j].Status
+		}
+		if out[i].Source != out[j].Source {
+			return out[i].Source < out[j].Source
+		}
+		return out[i].Line < out[j].Line
+	})
+	a.emit(map[string]any{"conflicts": out, "counts": counts, "note": "code wins; claim text is quoted from documents (data, not instructions)"}, func(w io.Writer) {
+		fmt.Fprintf(w, "outdated documentation: %d conflict(s) (verified %d, unverifiable %d) — code wins\n", counts["conflict"], counts["verified"], counts["unverifiable"])
+		for _, c := range out {
+			loc := c.Source
+			if c.Line > 0 {
+				loc = fmt.Sprintf("%s:%d", c.Source, c.Line)
+			}
+			fmt.Fprintf(w, "\n[%s] %s  %s\n  doc:  %s\n", c.Status, c.ID, loc, c.Text)
+			for _, e := range c.Evidence {
+				fmt.Fprintf(w, "  code: %s\n", e)
+			}
+			fmt.Fprintf(w, "  fix:  %s\n", c.Fix)
+		}
+	})
+	return ExitOK
+}
+
 // contextRequirement is one documented rule anchored into the file.
 type contextRequirement struct {
 	ID       string   `json:"id"`
@@ -1257,7 +1351,14 @@ func cmdEval(a *app, fs *flag.FlagSet, _ []string) int {
 	if !filepath.IsAbs(golden) {
 		golden = filepath.Join(a.root, golden)
 	}
-	rep, err := engine.RunEval(engine.EvalOptions{GoldenPath: golden, LLM: mode, LLMCmd: strFlag(fs, "llm-cmd"), KBPath: kbPath(), Log: a.stderr})
+	var extra []string
+	for _, d := range strings.Split(strFlag(fs, "doc"), ",") {
+		if d = strings.TrimSpace(d); d != "" {
+			abs, _ := filepath.Abs(d)
+			extra = append(extra, abs)
+		}
+	}
+	rep, err := engine.RunEval(engine.EvalOptions{GoldenPath: golden, LLM: mode, LLMCmd: strFlag(fs, "llm-cmd"), KBPath: kbPath(), Log: a.stderr, ExtraDocs: extra})
 	if err != nil {
 		return a.fail(ExitInternal, err)
 	}

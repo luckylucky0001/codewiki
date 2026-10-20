@@ -1,4 +1,4 @@
-ingest 20261020T184304-6231381: base  → head 6231381, mode ingest, llm template
+ingest 20261020T192839-b701919: base  → head b701919, mode ingest, llm template
 mode ingest — check ingested documents against code
 changed_route_ids: [cart checkout login order_detail product_detail products]; changed_files: 42
 stats: symbols=214 changes=map[added:214] module_ratio=1.00 structural_ratio=1.00 hops=1 propagated=0

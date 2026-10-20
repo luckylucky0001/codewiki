@@ -1,4 +1,4 @@
-kb compound: head=9e741c8 base= mode=full tasks=10 (no compatible baseline graph (first compound or graph version change))
+kb compound: head=296c865 base= mode=full tasks=10 (no compatible baseline graph (first compound or graph version change))
   [ok] recheck  pages/_conflicts.md                template 
   [ok] create   pages/concepts/navigation.md       template 
   [ok] create   pages/concepts/shared-components.md template 

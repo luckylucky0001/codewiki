@@ -1,6 +1,6 @@
 ---
 name: kb-query
-description: Answer questions about the app from the code-anchored codewiki LLM Wiki instead of grepping - features, routes, deep links, testIDs, HTTP APIs, constants/limits and how they differ across Android, iOS and HarmonyOS (e.g. "购物车上限三端分别是多少", "X 在三端怎么实现", "引用出处"), and which docs/specs are outdated or contradict the code (read `wiki/pages/_conflicts.md` / facts/requirements.json first - every claim is already checked) - via `kb search`, `kb get`, `kb context <file>`, `kb parity` and facts/*.json, citing symbol ids. Use for any question about app behaviour or cross-platform values, before modifying a source file, or when another agent (e.g. an e2e test generator) needs routes/testids/apis.
+description: Answer questions about the app from the code-anchored codewiki LLM Wiki instead of grepping. Which docs, specs or requirements are outdated / wrong / contradict the code ("哪些文档过时", "旧文档哪些说法不对", "需求和代码不一致") - run `kb conflicts` FIRST (every doc claim is already checked against code, with file:line, code evidence and a fix); do not re-read the docs by hand. Also features, routes, deep links, testIDs, HTTP APIs, constants/limits and how they differ across Android, iOS and HarmonyOS (e.g. "购物车上限三端分别是多少", "X 在三端怎么实现", "引用出处") - via `kb search`, `kb get`, `kb context <file>`, `kb parity` and facts/*.json, citing symbol ids. Use for any question about app behaviour or cross-platform values, before modifying a source file, or when another agent (e.g. an e2e test generator) needs routes/testids/apis.
 ---
 
 # kb-query
@@ -9,6 +9,11 @@ The wiki is cheaper and more reliable than re-reading the whole repo: every page
 to symbol hashes that CI verifies against HEAD.
 
 ## Recipes
+
+```bash
+kb conflicts            # which docs are outdated: doc claim vs code evidence, file:line, suggested fix
+kb conflicts --json     # same, machine-readable (add --all for unverifiable claims)
+```
 
 ```bash
 kb status --json                 # first: are pages current? (exit 1 = some are stale)
