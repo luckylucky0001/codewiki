@@ -73,7 +73,7 @@
 | HarmonyOS-Cases | ArkTS 1,952 + TS 314 | 2,267 | 100% | 20,141 | 191 | 抽查 15/15 | 1,437 | 7 | 6.3 / 0.9 s | 7.0 s | 377 MB | 193 / 1.3 KB（分层） | PASS | 180 / 0 |
 | app_samples（sparse） | ArkTS 1,828 + TS/JS 784 | 2,612 | 100% | 51,342 | 416 | 抽查 12/12 | 2,674 | 1 | 18.3 / 3.2 s | 20.1 s | 886 MB | 421 / 4.1 KB（分层） | PASS | 67 / 0 |
 | agc 模板（sparse） | ArkTS 2,286 + TS 149 | 2,437 | 99.5% | 18,460 | 252 | router_map 143/143 | 34 | 8 | 7.0 / 1.0 s | 7.7 s | 353 MB | 166 / 3.3 KB（分层） | PASS | 2 / 0 |
-| NextE | ArkTS 624 + JS/TS 100 | 725 | 99.7% | 19,921 | 66 | 页面 51/51 | 630 | 0 | 8.1 / 1.0 s | 8.3 s | 386 MB | 71 / 7.0 KB | PASS | 3,351 / 4（3） |
+| NextE | ArkTS 624 + JS/TS 100 | 725 | 99.7% | 19,921 | 58 | 页面 51/51 | 630 | 0 | 8.1 / 1.0 s | 8.3 s | 386 MB | 71 / 7.0 KB（66 条路由时） | PASS | 3,351 / 4（3） |
 | SweetVideo | ArkTS 268 + TS 15 | 283 | 90.8% | 5,084 | 26 | 页面 24/24 | 25 | 0 | 3.0 / 0.29 s | 3.1 s | 142 MB | 31 / 3.0 KB | PASS | 35 / 0 |
 | fishpi-harmony | ArkTS | 80 | 100% | 1,004 | 11 | 11/11 | 0 | 52 | 0.4 / 0.04 s | 0.5 s | 32 MB | 16 / 1.6 KB | PASS | 0 / 0 |
 | Wechat_HarmonyOS | ArkTS | 38 | 97.4% | 257 | 4 | 4/4 | 3 | 0 | 0.14 / 0.01 s | 0.2 s | 22 MB | 9 / 1.2 KB | PASS | 0 / 0 |
@@ -119,7 +119,7 @@
 | clean-architecture-swiftui | 国家详情、邻国详情 | 1 | `NavigationLink(destination: self.neighbourDetailsView(...))` 是方法调用 |
 | kickstarter/ios-oss | `allRoutes` 路由表中的 39 条 URL（不含 `/`） | 39，另有 7 个 SwiftUI 筛选页 | UIKit `ViewController` 跳转不支持 |
 | NetNewsWire / wikipedia-ios | UIKit / AppKit 协调器、storyboard | 0 | 不支持 |
-| NextE | 51 个 `NavDestination` / `HdsNavDestination` 页面组件 | 51（共 66 条路由，其中 15 条是只在 pushPathByName 中出现的名称） | — |
+| NextE | 51 个 `NavDestination` / `HdsNavDestination` 页面组件 | 51 个页面文件都有路由锚定（共 58 条路由；其中 `LayoutSettingsPage` 锚在它承载的 `ColumnDensity` 目的地上） | — |
 | SweetVideo | 24 个 `NavDestination` 页面 | 24 | — |
 | fishpi-harmony | `$profile:route_map` 中 10 条，加 1 个 NavDestination 页 | 11 | — |
 | Wechat_HarmonyOS | main_pages 中 5 页（`pages/Index` 是 Navigation 宿主，不算路由） | 4 | — |
@@ -235,6 +235,7 @@
 - 问题：`pushPathByName(item.route)` 这类写法压栈的页面不可见。
 - 修复：`build()` 返回 `NavDestination()` / `HdsNavDestination()` 的组件本身就识别为路由。
 - 效果：NextE 35 → **51/51** 页；Cases 176 → 191。
+- 后续修正：`pushPathByName('CommentTranslationSettings')` 原先先匹配到同名的设置模型类，导致页面又以 NavDestination 路由的形式重复出现一次。改为先匹配 ArkUI 组件、再匹配类之后，NextE 66 → 58 条，8 条锚错的重复路由消失。
 
 **9. KMP 的 parity 假缺口**（kotlinconf-app）
 

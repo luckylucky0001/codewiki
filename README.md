@@ -588,7 +588,7 @@ kb eval --doc my-old-spec.md --golden my-labels.yaml                    # 任意
 | kickstarter/ios-oss | 37,731 | 48（URL 路由表 39/39） | 13.9 / 2.2 s | 524 MB |
 | HarmonyOS-Cases | 20,141 | 191 | 6.3 / 0.9 s | 377 MB |
 | app_samples | 51,342 | 416 | 18.3 / 3.2 s | 886 MB |
-| NextE | 19,921 | 66（页面 51/51） | 8.1 / 1.0 s | 386 MB |
+| NextE | 19,921 | 58（页面 51/51） | 8.1 / 1.0 s | 386 MB |
 
 第 7 轮验证中修复了 22 个问题，每个都配了最小片段回归测试，主要包括：
 
