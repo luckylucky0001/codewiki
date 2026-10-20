@@ -16,7 +16,13 @@ kb search "购物车 上限" --json     # pages + symbols ranked
 kb get features/cart             # full page (frontmatter + body)
 kb context android/app/src/main/java/com/minishop/ui/cart/CartViewModel.kt --json
 kb anchor '<symbol-id>'          # current hash of a symbol
+kb parity --json                 # cross-platform differences: missing routes/testIDs/APIs and
+                                 # constants whose values differ (constant_diffs: android/ios/harmony values + symbol ids)
 ```
+
+For "what is X on each platform" questions (limits, timeouts, flags) start with
+`kb parity --json` (constant_diffs) and `kb context <file>`; feature pages only anchor the
+symbols the screen itself reaches, so a value used elsewhere may live on another page.
 
 Machine-readable facts (schema v1, shared with e2epilot):
 

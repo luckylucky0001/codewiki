@@ -124,6 +124,7 @@ docs:
 | `kb parity [--strict]` | 功能 × 平台一致性矩阵：路由 / testID / 可达接口是否齐全，以及同名常量的跨平台取值差异；同时生成 `pages/parity.md` |
 | `kb install-skills <repo>` | 把 skills 安装到 `<repo>/.claude/skills/` |
 | `kb bench [--synthetic N]` | 冷/热扫描基准（合成仓库或 `--root` 指定的真实仓库） |
+| `kb eval [--llm …]` | 用人工标注的 golden set 评测断言核对与 plan 影响面（precision/recall） |
 | `kb mcp` | stdio MCP server（JSON-RPC 2.0），工具：`kb_search`、`kb_get`、`kb_context`、`kb_anchor`、`kb_status`、`kb_parity` |
 
 ## Wiki 布局
@@ -343,6 +344,41 @@ claude mcp add codewiki -- kb mcp --root /path/to/app-repo
 - 70 个 JS 文件、323 个符号，0 parse failure；发现 149 篇文档（spec-kit/Kiro 风格之外，主要是 `docs/**` 与 3 份 agent 指南）。
 - `AGENTS.md` 中 “default adapter preference is `['xhr', 'http', 'fetch']`” 被 **verified**，锚点 `web://lib/defaults/index.js#defaults`（代码字面量检索）+ 文件 `lib/adapters/adapters.js` 存在。
 - claude 模式对 `AGENTS.md` 的 48 条断言做了语义核对（结论与证据见案例目录）。
+
+## 评测：`kb eval`
+
+LLM 流水线需要评测。`examples/minishop-eval/golden.yaml` 是一份人工标注的 golden set：
+
+- 33 条断言，每条都有期望结论（verified / conflict / unverifiable），按 base 状态下三端代码人工判断；
+- 每个变更集，人工判断应当被重新检查的页面。
+
+`kb eval` 在临时 git 仓库中按 ingest → 首次 compound → 依次合并变更集的顺序回放，然后报告 precision 和 recall。整个过程不修改工作区。
+
+```bash
+kb eval                       # template（确定性，也作为单测回归门槛）
+kb eval --llm claude          # 仅断言核对使用 LLM（1 次调用）；页面写作仍用 template
+```
+
+| 指标 | template | claude（sonnet） |
+|---|---|---|
+| 断言准确率（33 条） | 0.82 | **0.88** |
+| conflict precision / recall | 1.00 / 0.56 | 1.00 / **0.78** |
+| verified precision / recall | 0.88 / 0.92 | **0.96** / 0.92 |
+| plan 影响页面 precision / recall（micro，3 个变更集） | 0.82 / 1.00 | 同左（plan 是确定性的） |
+
+template 模式出错的地方都是语义类断言：
+
+- 把“空用户名弹出短信对话框”判为 verified，依据只是 testID 存在；
+- 把“支持 page/size 分页”判为 verified，依据只是 API 存在；
+- 把 `share_button` 判为 unverifiable，没有识别出它不存在；
+- 把“密码少于 6 位直接拒绝”判为 unverifiable。
+
+这些正是 claude 模式要补的部分：claude 正确识别了“短信对话框”“分页参数”两条冲突，以及“密码少于 6 位直接拒绝”这条成立。它仍然漏掉的是 `share_button`（判为 unverifiable），以及“三端共享上限常量”（标注者认为三端各自定义、并不共享）。另外，claude 对“测试参数注入”类断言更保守，判为 unverifiable。plan 的 recall 为 1.0，即没有漏掉应该更新的页面。多出来的两页：
+
+- `_conflicts.md`：断言锚点所在的类发生了变化；
+- `shared-components.md`：profile 页引入了新的共享符号。
+
+两者都属于保守的重检。
 
 ## 真实开源项目验证
 

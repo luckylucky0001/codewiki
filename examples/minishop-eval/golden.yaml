@@ -1,0 +1,48 @@
+# Human-labelled golden set for `kb eval` (codewiki pipeline evaluation).
+# Claims are labelled against the BASE state of examples/minishop (before any
+# change set) by reading the code on all three platforms — not by running kb.
+# Impact lists the pages a careful human would re-check for each change set.
+version: 1
+project: ../minishop
+changes: ../minishop-changes
+claims:
+  - {id: LOGIN-R1.1, expected: verified, note: "POST /api/login on all platforms, then products"}
+  - {id: LOGIN-R1.2, expected: verified, note: "password < 6 rejected before the API call (Kotlin length<6, Swift count>=6 guard, ArkTS length<6)"}
+  - {id: LOGIN-R1.3, expected: verified, note: "TokenStore.save on all platforms"}
+  - {id: LOGIN-R2.1, expected: verified, note: "token query param handled by MainActivity.applyTestParams / AppRouter.handle / EntryAbility.applyTestParams"}
+  - {id: LOGIN-R2.2, expected: conflict, note: "no SMS dialog anywhere; empty username just fails validation"}
+  - {id: PRODUCT-4d19f5, expected: verified, note: "nav_back and product_list exist on all platforms"}
+  - {id: 0001-NAVIGATION-5c8d9b, expected: verified}
+  - {id: 0001-NAVIGATION-7bb06a, expected: verified, note: "router_map.json with *Builder functions; main_pages only has pages/Index"}
+  - {id: 0001-NAVIGATION-ad00b5, expected: verified, note: "all platforms accept minishop://<pattern>?token&cart"}
+  - {id: CART-43567f, expected: conflict, note: "limit is 99, not 10"}
+  - {id: CART-cbf050, expected: verified}
+  - {id: CART-9b9a98, expected: verified}
+  - {id: CART-7d3eb7, expected: conflict, note: "order API is POST /api/orders"}
+  - {id: CART-9509ed, expected: verified}
+  - {id: LOGIN-4dbfba, expected: conflict, note: "username/password login, no SMS API"}
+  - {id: LOGIN-514629, expected: verified}
+  - {id: LOGIN-974e57, expected: verified}
+  - {id: LOGIN-120849, expected: verified}
+  - {id: LOGIN-e5f114, expected: conflict, note: "no SessionManager"}
+  - {id: PLAN-404208, expected: verified}
+  - {id: PLAN-3e24ef, expected: conflict, note: "each platform defines its own limit constant; nothing is shared"}
+  - {id: 001-CART-SPEC-503548, expected: verified}
+  - {id: 001-CART-SPEC-4d53d3, expected: verified, note: "checkout button disabled when total()==0 on all platforms"}
+  - {id: FR-001, expected: verified}
+  - {id: FR-002, expected: verified, note: "99 at base state"}
+  - {id: FR-003, expected: verified}
+  - {id: FR-004, expected: conflict, note: "no coupon API"}
+  - {id: FR-005, expected: verified}
+  - {id: PRODUCTS-9035af, expected: verified}
+  - {id: PRODUCTS-f83d5a, expected: conflict, note: "GET /api/products takes no page/size parameters"}
+  - {id: PRODUCTS-d3d40e, expected: conflict, note: "no share button / share_button testID"}
+  - {id: PRODUCTS-c697e6, expected: verified}
+  - {id: PRODUCTS-dfb70a, expected: verified, note: "OrderResponse(orderId, status)"}
+impact:
+  - change: 01-cart-limit
+    pages: [pages/features/cart.md, pages/features/product_detail.md, pages/_conflicts.md]
+  - change: 02-arkts-api-rename
+    pages: [pages/features/products.md, pages/features/product_detail.md, pages/concepts/shared-components.md]
+  - change: 03-profile-route
+    pages: [pages/features/profile.md, pages/overview.md, pages/concepts/navigation.md]

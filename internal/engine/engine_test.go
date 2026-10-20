@@ -406,3 +406,20 @@ func TestRankForLLM(t *testing.T) {
 		}
 	}
 }
+
+func TestEvalTemplateGoldenSet(t *testing.T) {
+	rep, err := RunEval(EvalOptions{GoldenPath: filepath.Join(testutil.RepoRoot(), "examples", "minishop-eval", "golden.yaml"), LLM: "template"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rep.ClaimsLabels < 30 || len(rep.Missing) > 0 {
+		t.Fatalf("golden set: %d labels, missing %v", rep.ClaimsLabels, rep.Missing)
+	}
+	// regression floor for the deterministic checker
+	if rep.Accuracy < 0.8 || rep.PerClass[ClaimConflict].Precision < 1 || rep.PerClass[ClaimVerified].Recall < 0.9 {
+		t.Fatalf("claim metrics regressed:\n%s", FormatEval(rep))
+	}
+	if rep.ImpactMicro.Recall < 1 || rep.ImpactMicro.Precision < 0.8 {
+		t.Fatalf("impact metrics regressed:\n%s", FormatEval(rep))
+	}
+}

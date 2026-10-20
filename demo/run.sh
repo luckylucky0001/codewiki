@@ -102,6 +102,7 @@ kbsave 92-get-cart.md get features/cart
 kbsave 93-get-conflicts.md get _conflicts
 kbsave 94-lint-tid.txt lint-tid
 kbsave 94-parity.json parity --json
+( cd "$ROOT" && "$KB" eval --quiet ) >"$OUT/95-eval.txt" 2>&1 || true
 kbsave 95-status.txt status
 kbsave 96-verify.json verify --json
 cp "$REPO/wiki/log.md" "$OUT/97-log.md"
@@ -156,6 +157,13 @@ log "SUMMARY.md"
   echo "Gaps after the last merge: $(jq '.gaps' "$OUT/94-parity.json"); constants that differ across platforms:"
   echo
   jq -r '.constant_diffs[] | "- `\(.name)`: " + ([.values | to_entries[] | "\(.key)=\(.value.value)"] | join(", "))' "$OUT/94-parity.json"
+  echo
+  echo "## Eval（golden set，template）"
+  echo
+  echo '```'
+  head -4 "$OUT/95-eval.txt"
+  grep -E '^plan impact' "$OUT/95-eval.txt" || true
+  echo '```'
   echo
   echo "## Queries"
   echo

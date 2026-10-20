@@ -1,6 +1,6 @@
 ---
 name: kb-lint
-description: Lint and gate the codewiki LLM Wiki and cross-platform consistency - run `kb verify` (anchors match HEAD, no unknown symbols, no dead links or orphan pages, index complete, generated facts fresh), `kb verify --fix-index`, and `kb lint-tid` (testID coverage per route and platform across Android, iOS and HarmonyOS). Use in CI, before merging, after manual wiki edits, or when asked whether testIDs/pages are consistent across platforms.
+description: Lint and gate the codewiki LLM Wiki and cross-platform consistency - run `kb verify` (anchors match HEAD, no unknown symbols, no dead links or orphan pages, index complete, generated facts fresh), `kb verify --fix-index`, `kb lint-tid` (testID coverage per route and platform across Android, iOS and HarmonyOS) and `kb parity` (missing routes/APIs, constants that differ across platforms). Use in CI, before merging, after manual wiki edits, or when asked whether testIDs/pages are consistent across platforms.
 ---
 
 # kb-lint
@@ -12,7 +12,12 @@ kb verify --json            # CI gate; exit 1 on any error
 kb verify --fix-index       # regenerate index.md/llms.txt (only deterministic fix)
 kb lint-tid                 # matrix route × tid × platform; --strict exits 1 on gaps
 kb status                   # stale pages only
+kb parity --json            # feature × platform gaps + constants that differ across platforms
 ```
+
+`kb verify` exits 1 on failure — run it once and read the JSON `errors` array instead of
+re-running it. A passing verify does not mean the docs agree with the code: read
+`pages/_conflicts.md` (document claims vs code) and `kb parity` (platform drift) as well.
 
 ## Error codes (`kb verify`)
 

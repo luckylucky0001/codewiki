@@ -156,6 +156,15 @@ Exit 1 when verification fails (nothing is published).`,
 	register(&command{name: "parity", usage: "[--strict]", summary: "feature × platform matrix: routes, testIDs, APIs and constants that differ across platforms",
 		help:  "Also generated as wiki/pages/parity.md on every compound (verified for freshness).",
 		flags: func(fs *flag.FlagSet) { fs.Bool("strict", false, "exit 1 when any gap or constant difference exists") }, run: cmdParity})
+	register(&command{name: "eval", usage: "[--golden examples/minishop-eval/golden.yaml] [--llm template|claude]", summary: "evaluate claim verification and plan impact against a labelled golden set (precision/recall)",
+		help: "Replays the golden project in a temp git repo: ingest (claims), initial compound, then each change set (planned pages vs expected). Nothing in the working tree is modified.",
+		flags: func(fs *flag.FlagSet) {
+			fs.String("golden", "examples/minishop-eval/golden.yaml", "golden set (YAML)")
+			fs.String("llm", "template", "claim checker / writer: template | claude | cmd")
+			fs.String("llm-cmd", "", "override the LLM command line")
+			fs.Float64("min-accuracy", 0, "exit 1 when claim accuracy is below this")
+		},
+		run: cmdEval})
 	register(&command{name: "install-skills", usage: "<target-repo> [--dry-run]", summary: "install kb skills into <target>/.claude/skills for Claude Code",
 		flags: func(fs *flag.FlagSet) { fs.Bool("dry-run", false, "list files only") }, run: cmdInstallSkills})
 }
@@ -1152,6 +1161,28 @@ func cmdParity(a *app, fs *flag.FlagSet, _ []string) int {
 		fmt.Fprint(w, md)
 	})
 	if p.Gaps > 0 && boolFlag(fs, "strict") {
+		return ExitStale
+	}
+	return ExitOK
+}
+
+// ---------- eval ----------
+
+func cmdEval(a *app, fs *flag.FlagSet, _ []string) int {
+	mode, err := llmMode(strFlag(fs, "llm"))
+	if err != nil {
+		return a.fail(ExitUsage, err)
+	}
+	golden := strFlag(fs, "golden")
+	if !filepath.IsAbs(golden) {
+		golden = filepath.Join(a.root, golden)
+	}
+	rep, err := engine.RunEval(engine.EvalOptions{GoldenPath: golden, LLM: mode, LLMCmd: strFlag(fs, "llm-cmd"), KBPath: kbPath(), Log: a.stderr})
+	if err != nil {
+		return a.fail(ExitInternal, err)
+	}
+	a.emit(rep, func(w io.Writer) { fmt.Fprint(w, engine.FormatEval(rep)) })
+	if min := fs.Lookup("min-accuracy").Value.(flag.Getter).Get().(float64); rep.Accuracy < min {
 		return ExitStale
 	}
 	return ExitOK
