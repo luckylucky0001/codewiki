@@ -7,6 +7,7 @@ package facts
 import (
 	"encoding/json"
 	"encoding/xml"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -179,17 +180,36 @@ func slugPattern(p string) string {
 }
 
 func (c *ctx) findSym(platform, name string, kinds ...string) *model.Symbol {
+	var best *model.Symbol
+	bestScore := -1
 	for _, s := range c.byName[platform+"\x00"+name] {
-		if len(kinds) == 0 {
-			return s
-		}
+		ok := len(kinds) == 0
 		for _, k := range kinds {
 			if s.Kind == k {
-				return s
+				ok = true
 			}
 		}
+		if !ok {
+			continue
+		}
+		// prefer production code and top-level declarations
+		score := 0
+		if !isTestPath(s.File) {
+			score += 2
+		}
+		if s.Parent == "" {
+			score++
+		}
+		if score > bestScore {
+			best, bestScore = s, score
+		}
 	}
-	return nil
+	return best
+}
+
+func isTestPath(p string) bool {
+	l := strings.ToLower(p)
+	return strings.Contains(l, "/test/") || strings.Contains(l, "/androidtest/") || strings.Contains(l, "tests/") || strings.Contains(l, "/ohostest/") || strings.HasSuffix(l, "test.kt") || strings.HasSuffix(l, "tests.swift")
 }
 
 func (c *ctx) platformOf(file string) string {
@@ -230,6 +250,13 @@ func (c *ctx) routes() {
 	for _, file := range c.sortedFiles() {
 		fi := c.g.Files[file]
 		for _, call := range c.res.Calls[file] {
+			if fi.Lang == "kotlin" && len(call.TypeArgs) == 1 && (call.Callee == "composable" || call.Callee == "entry" || call.Callee == "dialog") {
+				// type-safe navigation (Navigation 2.8 composable<T>, Navigation 3 entry<T>)
+				if r, ok := c.typedRoute(fi.Platform, file, call); ok {
+					add(r)
+				}
+				continue
+			}
 			if fi.Lang != "kotlin" || call.Callee != "composable" || len(call.Args) == 0 {
 				continue
 			}
@@ -254,13 +281,43 @@ func (c *ctx) routes() {
 			add(model.Route{Platform: fi.Platform, RouteID: rid, Pattern: v.s, Deeplink: c.deeplink(fi.Platform, v.s), File: sfile, Symbol: sym})
 		}
 	}
-	// iOS: String-raw-value enums named *Route* (case productDetail = "product/{id}")
+	// iOS: enums used as navigationDestination(for: X.self) and String-raw-value
+	// enums named *Route* (case productDetail = "product/{id}")
+	destEnums := map[string]bool{}
+	for _, file := range c.sortedFiles() {
+		if c.g.Files[file].Lang != "swift" {
+			continue
+		}
+		for _, call := range c.res.Calls[file] {
+			if call.Callee != "navigationDestination" {
+				continue
+			}
+			for _, a := range call.Args {
+				if a.Label == "for" && strings.HasSuffix(a.Text, ".self") {
+					destEnums[lastSeg(strings.TrimSuffix(a.Text, ".self"))] = true
+				}
+			}
+		}
+	}
 	for _, s := range c.g.Symbols {
-		if s.Lang != "swift" || s.Kind != "case" || s.Value == "" || s.Parent == "" {
+		if s.Lang != "swift" || s.Kind != "case" || s.Parent == "" {
 			continue
 		}
 		p := c.g.Get(s.Parent)
-		if p == nil || p.Kind != "enum" || !strings.Contains(strings.ToLower(p.Name), "route") {
+		if p == nil || p.Kind != "enum" {
+			continue
+		}
+		isRouteEnum := s.Value != "" && strings.Contains(strings.ToLower(p.Name), "route")
+		if !isRouteEnum && !destEnums[p.Name] {
+			continue
+		}
+		if s.Value == "" {
+			rid := Snake(s.Name)
+			sym, file := s.ID, s.File
+			if v := c.findSym(s.Platform, Pascal(rid)+"View", "struct", "class"); v != nil {
+				sym, file = v.ID, v.File
+			}
+			add(model.Route{Platform: s.Platform, RouteID: rid, Pattern: rid + caseParams(s.Signature), File: file, Symbol: sym})
 			continue
 		}
 		rid := Snake(s.Name)
@@ -271,6 +328,54 @@ func (c *ctx) routes() {
 		add(model.Route{Platform: s.Platform, RouteID: rid, Pattern: s.Value, Deeplink: c.deeplink(s.Platform, s.Value), File: file, Symbol: sym})
 	}
 	// HarmonyOS router_map entries were collected in resources(); sorted later.
+}
+
+var (
+	reValParam  = regexp.MustCompile(`\b(?:val|var)\s+([A-Za-z_]\w*)\s*:`)
+	reCaseParam = regexp.MustCompile(`([A-Za-z_]\w*)\s*:`)
+)
+
+// typedRoute builds a route from a type-safe destination: route_id from the
+// key type name, pattern from the key's constructor properties.
+func (c *ctx) typedRoute(platform, file string, call extract.Call) (model.Route, bool) {
+	t := call.TypeArgs[0]
+	base := t
+	for _, suf := range []string{"NavKey", "Route", "Destination", "Screen", "Key"} {
+		if strings.HasSuffix(base, suf) && len(base) > len(suf) {
+			base = strings.TrimSuffix(base, suf)
+			break
+		}
+	}
+	rid := Snake(base)
+	pattern := rid
+	if ks := c.findSym(platform, t, "class", "object"); ks != nil {
+		for _, m := range reValParam.FindAllStringSubmatch(ks.Signature, -1) {
+			pattern += "/{" + m[1] + "}"
+		}
+	}
+	sym, sfile := call.Enclosing, file
+	for _, in := range call.Inner {
+		if strings.HasSuffix(in, "Screen") || strings.HasSuffix(in, "Route") {
+			if s := c.findSym(platform, in, "composable", "function"); s != nil {
+				sym, sfile = s.ID, s.File
+				break
+			}
+		}
+	}
+	return model.Route{Platform: platform, RouteID: rid, Pattern: pattern, File: sfile, Symbol: sym}, true
+}
+
+// caseParams turns "case accountDetail(id: String)" into "/{id}".
+func caseParams(sig string) string {
+	i := strings.Index(sig, "(")
+	if i < 0 {
+		return ""
+	}
+	out := ""
+	for _, m := range reCaseParam.FindAllStringSubmatch(sig[i:], -1) {
+		out += "/{" + m[1] + "}"
+	}
+	return out
 }
 
 // ---------- testIDs ----------
@@ -448,7 +553,13 @@ func (c *ctx) resources(p config.Platform) {
 	})
 }
 
+// nonAppSchemes are URI schemes that are not app deep links.
+var nonAppSchemes = map[string]bool{"http": true, "https": true, "file": true, "content": true, "mailto": true, "tel": true, "data": true, "geo": true, "sms": true}
+
 func (c *ctx) addScheme(platform, s string) {
+	if nonAppSchemes[strings.ToLower(s)] {
+		return
+	}
 	for _, x := range c.f.Schemes[platform] {
 		if x == s {
 			return
@@ -627,6 +738,10 @@ func (c *ctx) routerMap(p config.Platform, path string) {
 		}
 		file := strings.TrimPrefix(p.Root+"/"+pfile, "./")
 		sym := p.Name + "://" + pfile + "#" + r.BuildFunction
+		if c.g.Get(sym) == nil {
+			c.f.Warnings = append(c.f.Warnings, fmt.Sprintf("%s: route %q buildFunction %s not found in %s", strings.TrimPrefix(filepath.ToSlash(path), c.res.Dir+"/"), r.Name, r.BuildFunction, file))
+			sym = ""
+		}
 		c.f.Routes = append(c.f.Routes, model.Route{Platform: p.Name, RouteID: r.Name, Pattern: pattern, Deeplink: "", File: file, Symbol: sym})
 	}
 	// deeplinks are filled after schemes are known (sortAll)

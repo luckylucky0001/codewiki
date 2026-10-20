@@ -35,9 +35,10 @@ type Call struct {
 	CalleeText string   `json:"callee_text"` // full callee expression text (whitespace-compacted)
 	Args       []Arg    `json:"args"`
 	Line       int      `json:"line"`
-	Enclosing  string   `json:"enclosing"`          // symbol id of the innermost enclosing symbol
-	Inner      []string `json:"inner,omitempty"`    // callee names of calls nested in this call
-	Receiver   string   `json:"receiver,omitempty"` // text of the receiver of a chained call
+	Enclosing  string   `json:"enclosing"`           // symbol id of the innermost enclosing symbol
+	Inner      []string `json:"inner,omitempty"`     // callee names of calls nested in this call
+	Receiver   string   `json:"receiver,omitempty"`  // text of the receiver of a chained call
+	TypeArgs   []string `json:"type_args,omitempty"` // generic type arguments (Kotlin entry<T>, composable<T>)
 }
 
 // FileResult is the outcome of parsing one file.

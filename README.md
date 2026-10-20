@@ -344,6 +344,34 @@ claude mcp add codewiki -- kb mcp --root /path/to/app-repo
 - `AGENTS.md` 中 “default adapter preference is `['xhr', 'http', 'fetch']`” 被 **verified**，锚点 `web://lib/defaults/index.js#defaults`（代码字面量检索）+ 文件 `lib/adapters/adapters.js` 存在。
 - claude 模式对 `AGENTS.md` 的 48 条断言做了语义核对（结论与证据见案例目录）。
 
+## 真实开源项目验证
+
+在 5 个公开项目上只读运行 scan / facts / bench / compound，详情见 [docs/validation.md](docs/validation.md)：
+
+| 语言 | 文件 | 无错解析率 | 项目 |
+|---|---|---|---|
+| Kotlin | 311 | 100% | android/nowinandroid |
+| Swift | 431 | 99.5% | Dimillian/IceCubesApp |
+| ArkTS | 3858 | **99.9%** | HarmonyOS-Cases/Cases、openharmony/applications_app_samples（sparse）、arkTS_universal_starter |
+| TS / JS | 1102 | 100% | 同上 |
+
+| 项目 | 符号 | 路由 | testID | 冷 / 热扫描 |
+|---|---|---|---|---|
+| nowinandroid | 1,748 | 5（Navigation 3 `entry<T>`） | 14 | 690 / 97 ms |
+| IceCubesApp | 6,058 | 28（`navigationDestination(for:)` 枚举） | 0 | 2,245 / 274 ms |
+| HarmonyOS-Cases | 20,141 | 88（router_map.json） | 1,437 | 9,105 / 853 ms |
+| app_samples | 51,342 | 10 | 2,674 | 32,043 / 3,935 ms |
+
+验证中修复了 5 个问题，每个都配了最小片段回归测试：
+
+- Kotlin 类型安全导航，包括 tree-sitter 把 `entry<K> {}` 解析成比较表达式的歧义；
+- SwiftUI 带关联值的路由枚举；
+- 上游 router_map 中悬空的 buildFunction（这是 HarmonyOS-Cases 仓库自身的 bug，现改为报告 warning，不再阻断发布）；
+- `file://` 等非应用 scheme 被误当作深链；
+- 符号解析误选测试代码。
+
+ArkTS 的 4 个解析失败都源于 ArkUI 属性调用中的尾逗号。
+
 ## 最佳实践
 
 - **事实与叙述分离**：让 CLI 抽取所有可确定的事实（路由、testID、接口），LLM 只写解释；facts 页面加 `DO NOT EDIT`，每次 compound 重新生成（Karpathy LLM Wiki 的 raw / wiki / schema 三层）。
@@ -365,7 +393,7 @@ claude mcp add codewiki -- kb mcp --root /path/to/app-repo
 ## 局限
 
 - **cgo**：tree-sitter 语法是 C 代码，需要 C 编译器；交叉编译需相应工具链。
-- **ArkTS 语法**：使用 `harmony-contrib/tree-sitter-arkts`（vendored 于 `internal/grammars/arkts`，MIT），上游报告约 94% 的真实工程文件可无错解析；出错文件记录在 `parse_failures`（仍尽量抽取符号），不会中断扫描。
+- **ArkTS 语法**：使用 `harmony-contrib/tree-sitter-arkts`（vendored 于 `internal/grammars/arkts`，MIT）。上游报告约 94% 的真实工程文件可无错解析，我们在 3858 个真实 .ets 文件上实测为 99.9%，失败均来自 ArkUI 调用参数中的尾逗号；出错文件记录在 `parse_failures`（仍尽量抽取符号），不会中断扫描。
 - Swift 语法来自 `alex-pinkus/tree-sitter-swift`（使用带生成文件的 tag 版本）；Kotlin 为 `tree-sitter-grammars/tree-sitter-kotlin` v1.1.0；Java/JS/TS 为官方语法。
 - 引用边为名称级解析，没有类型推断；跨平台不建立边。
 - template writer 产出的页面偏“结构化索引”，叙述质量需 claude 模式。

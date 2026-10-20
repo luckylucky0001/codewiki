@@ -16,6 +16,32 @@ func (c *fileCtx) collectCalls(n *sitter.Node, out *[]Call) {
 			*out = append(*out, call)
 		}
 	}
+	if c.spec.name == "kotlin" && n.Kind() == "binary_expression" {
+		// `entry<Key> { … }` without parentheses parses as (entry < Key) > { … }
+		if l := n.NamedChild(0); l != nil && l.Kind() == "binary_expression" && n.NamedChildCount() == 2 && n.NamedChild(1).Kind() == "lambda_literal" {
+			f, ty := l.NamedChild(0), l.NamedChild(1)
+			if f != nil && ty != nil && f.Kind() == "identifier" && (ty.Kind() == "identifier" || ty.Kind() == "user_type") && strings.Contains(c.text(l), "<") {
+				call := Call{Callee: c.text(f), CalleeText: c.text(f), Line: int(f.StartPosition().Row) + 1, Enclosing: c.enclosing(n), TypeArgs: []string{lastIdent(ty, c.src)}}
+				if ty.Kind() == "identifier" {
+					call.TypeArgs = []string{c.text(ty)}
+				}
+				var inner func(x *sitter.Node)
+				inner = func(x *sitter.Node) {
+					for i := uint(0); i < x.NamedChildCount(); i++ {
+						ch := x.NamedChild(i)
+						if ch.Kind() == "call_expression" {
+							if name := lastIdent(ch.NamedChild(0), c.src); name != "" {
+								call.Inner = append(call.Inner, name)
+							}
+						}
+						inner(ch)
+					}
+				}
+				inner(n.NamedChild(1))
+				*out = append(*out, call)
+			}
+		}
+	}
 	if n.Kind() == "arkui_component_expression" {
 		// ArkUI attribute chains are flattened: ... property: id, arguments: (...)
 		for i := uint(0); i+1 < n.ChildCount(); i++ {
@@ -81,10 +107,19 @@ func (c *fileCtx) buildCall(n *sitter.Node) (Call, bool) {
 		} else {
 			calleeNode = n.NamedChild(0)
 			argsNode = childOfKind(n, "value_arguments")
+			typeArgs := childOfKind(n, "type_arguments")
 			if calleeNode != nil && calleeNode.Kind() == "call_expression" && childOfKind(n, "annotated_lambda") != nil {
 				// trailing-lambda form: call_expression(call_expression(f, args), lambda)
 				argsNode = childOfKind(calleeNode, "value_arguments")
+				typeArgs = childOfKind(calleeNode, "type_arguments")
 				calleeNode = calleeNode.NamedChild(0)
+			}
+			if typeArgs != nil {
+				for i := uint(0); i < typeArgs.NamedChildCount(); i++ {
+					if t := lastIdent(typeArgs.NamedChild(i), c.src); t != "" {
+						call.TypeArgs = append(call.TypeArgs, t)
+					}
+				}
 			}
 		}
 	case "swift":

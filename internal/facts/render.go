@@ -79,6 +79,13 @@ func Render(f *model.Facts, g *model.Graph, platforms []string) map[string][]byt
 				fmt.Fprintf(&b, "| `%s` | `%s` | `%s` | `%s` |\n", r.RouteID, esc(r.Pattern), esc(r.Deeplink), r.Symbol)
 			}
 		}
+		var warns []string
+		for _, w := range f.Warnings {
+			warns = append(warns, "- ⚠ "+w)
+		}
+		if len(warns) > 0 {
+			b.WriteString("\n## Extractor warnings\n\n" + strings.Join(warns, "\n") + "\n")
+		}
 		var entries []string
 		for _, e := range f.Entries {
 			if e.Platform == p {
