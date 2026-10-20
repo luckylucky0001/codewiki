@@ -322,7 +322,7 @@ func TestInstallSkillsAgentsBlockIdempotent(t *testing.T) {
 		if strings.Count(s, "<!-- codewiki:begin") != 1 || strings.Count(s, "<!-- codewiki:end -->") != 1 {
 			t.Fatalf("%s: want exactly one block:\n%s", name, s)
 		}
-		for _, cmd := range []string{"kb lint-tid", "kb parity", "kb conflicts", "kb context <file>", "wiki/facts/routes.json"} {
+		for _, cmd := range []string{"kb lint-tid --pages", "kb routes --dangling", "kb parity", "kb conflicts", "kb context <file>", "Read `wiki/facts/routes.json`"} {
 			if !strings.Contains(s, cmd) {
 				t.Fatalf("%s: block lacks %q", name, cmd)
 			}
@@ -643,5 +643,53 @@ func TestConflictsCommand(t *testing.T) {
 	_, out, _ := run(t, dir, "conflicts", "--all")
 	if !strings.Contains(out, "docs/legacy/cart.md:3") || !strings.Contains(out, "fix:") || !strings.Contains(out, "[unverifiable]") {
 		t.Fatalf("text output:\n%s", out)
+	}
+}
+
+func TestRoutesAndLintTidPages(t *testing.T) {
+	dir := repo(t)
+	run(t, dir, "init")
+	code, v := runJSON(t, dir, "routes")
+	if code != 0 {
+		t.Fatalf("routes: %d %v", code, v)
+	}
+	// 6 routes x 3 platforms at the base state, one module per platform app
+	if v["total"].(float64) != 18 || len(v["dangling"].([]any)) != 0 {
+		t.Fatalf("routes: total %v dangling %v", v["total"], v["dangling"])
+	}
+	mods := v["modules"].([]any)
+	sum := 0.0
+	for _, m := range mods {
+		sum += m.(map[string]any)["count"].(float64)
+	}
+	if sum != 18 || len(mods) < 3 {
+		t.Fatalf("modules %v", mods)
+	}
+	// a router_map entry whose buildFunction does not exist is reported
+	rm := filepath.Join(dir, "harmony/entry/src/main/resources/base/profile/router_map.json")
+	b, _ := os.ReadFile(rm)
+	os.WriteFile(rm, []byte(strings.Replace(string(b), `"buildFunction": "CartBuilder"`, `"buildFunction": "CartPageBuilder"`, 1)), 0o644)
+	_, v = runJSON(t, dir, "routes", "--dangling")
+	d := fmt.Sprint(v["dangling"])
+	if !strings.Contains(d, "CartPageBuilder") || v["total"] != nil {
+		t.Fatalf("dangling: %v", v)
+	}
+	_, out, _ := run(t, dir, "routes")
+	if !strings.Contains(out, "routes in") || !strings.Contains(out, "⚠") {
+		t.Fatalf("text output:\n%s", out)
+	}
+	code, v = runJSON(t, dir, "lint-tid", "--pages")
+	if code != 0 || v["routed_pages"].(float64) != 18 {
+		t.Fatalf("lint-tid --pages: %d %v", code, v["routed_pages"])
+	}
+	found := false
+	for _, p := range v["pages"].([]any) {
+		m := p.(map[string]any)
+		if m["route_id"] == "login" && m["platform"] == "android" {
+			found = strings.Contains(fmt.Sprint(m["testids"]), "login_submit")
+		}
+	}
+	if !found {
+		t.Fatalf("login page testIDs missing: %v", v["pages"])
 	}
 }
