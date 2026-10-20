@@ -556,6 +556,7 @@ func TestFalseConflictFilters(t *testing.T) {
 		{"README.md", "runs each checked-in `UITests.xctestplan` configuration"},                      // file, not a type (wikipedia-ios)
 		{"CLAUDE.md", "Interface implementations: Prefix with `Default` (e.g., `DefaultRepository`)"}, // example name (DroidconKotlin)
 		{"docs/plans/archive/x.md", "Add `entry/src/main/ets/pages/NewPage.ets` for the new flow"},    // plan doc (NextE)
+		{"docs/research/compare.md", "EhViewer has pattern unlock in `SecurityScene.kt`"},             // research note about another app (NextE)
 	}
 	for _, c := range cases {
 		cl := &Claim{ID: "x", Source: c.src, Text: c.text}
