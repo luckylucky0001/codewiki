@@ -152,6 +152,7 @@ type Checker struct {
 	fileNorms map[string]string          // file -> normLit(whole file)
 	fileList  []string
 	routeRes  map[string]*regexp.Regexp
+	ignore    []string // root .gitignore patterns
 }
 
 func normAPIPath(p string) string {
@@ -211,7 +212,53 @@ func (k *Checker) symbolText(s *model.Symbol) string {
 	return v
 }
 
-var reFileName = regexp.MustCompile(`^[\w./-]+\.(json5?|ets|kt|kts|java|swift|xml|plist|md|ya?ml|js|ts|gradle)$`)
+var reFileName = regexp.MustCompile(`^[\w./-]+\.(json5?|ets|kt|kts|java|swift|xml|plist|md|ya?ml|js|ts|gradle|m|mm|h|xctestplan|xcconfig|storyboard|xib|entitlements|strings|sh|rb|py|toml|properties)$`)
+
+// historicalDoc: plans / proposals describe a future state and archived /
+// completed docs a past one; neither can be "outdated" against today's code
+// (NextE: 171 of 183 conflicts came from docs/plans/**).
+func historicalDoc(src string) bool {
+	for _, seg := range strings.Split(strings.ToLower(src), "/") {
+		switch seg {
+		case "plans", "plan", "proposals", "rfcs", "archive", "archived", "completed", "deprecated", "history":
+			return true
+		}
+	}
+	return false
+}
+
+// reExample: a span introduced as an example ("e.g. `DefaultRepository`",
+// "例如 `X`") names a pattern, not a symbol that must exist.
+var reExample = regexp.MustCompile("(?i)(e\\.g\\.?,?|for example,?|such as|例如|比如)\\s*\\(?$")
+
+// gitignored reports whether a missing path is ignored by the repo's root
+// .gitignore (secrets, generated files): absent by design, not outdated.
+func (k *Checker) gitignored(p string) bool {
+	if k.ignore == nil {
+		k.ignore = []string{}
+		if b, err := os.ReadFile(filepath.Join(k.Dir, ".gitignore")); err == nil {
+			for _, l := range strings.Split(string(b), "\n") {
+				l = strings.TrimSpace(l)
+				if l != "" && !strings.HasPrefix(l, "#") && !strings.HasPrefix(l, "!") {
+					k.ignore = append(k.ignore, strings.Trim(l, "/"))
+				}
+			}
+		}
+	}
+	p = strings.TrimPrefix(p, "./")
+	for _, pat := range k.ignore {
+		if pat == p || strings.HasPrefix(p, pat+"/") || path.Base(p) == pat {
+			return true
+		}
+		if m, _ := path.Match(pat, path.Base(p)); m {
+			return true
+		}
+		if strings.HasSuffix(pat, "/"+path.Base(p)) && path.Base(pat) == path.Base(p) {
+			return true // bin/x/Secrets.swift ignored by name
+		}
+	}
+	return false
+}
 
 func (k *Checker) findFile(name string) string {
 	found := ""
@@ -387,8 +434,10 @@ func (k *Checker) Check(c *Claim) {
 	}
 	// 3. code spans
 	nums := reNumber.FindAllString(reCode.ReplaceAllString(text, ""), -1)
-	for _, m := range reCode.FindAllStringSubmatch(text, -1) {
+	for _, mi := range reCode.FindAllStringSubmatchIndex(text, -1) {
+		m := []string{text[mi[0]:mi[1]], text[mi[2]:mi[3]]}
 		span := strings.TrimSpace(m[1])
+		example := reExample.MatchString(strings.TrimRight(text[:mi[0]], " "))
 		if span == "" || reAPIPath.MatchString(span) || strings.Contains(span, "://") || apiSeen[normAPIPath(span)] {
 			continue
 		}
@@ -431,6 +480,8 @@ func (k *Checker) Check(c *Claim) {
 			if f := k.findFile(span); f != "" {
 				verified = true
 				evidence = append(evidence, fmt.Sprintf("文件 `%s` 存在（%s）", span, f))
+			} else if k.gitignored(span) {
+				evidence = append(evidence, fmt.Sprintf("文件 `%s` 不在仓库中，但被 .gitignore 忽略（密钥/生成文件），不算冲突", span))
 			} else {
 				conflict = true
 				evidence = append(evidence, fmt.Sprintf("文件 `%s` 在仓库中不存在", span))
@@ -450,6 +501,10 @@ func (k *Checker) Check(c *Claim) {
 					anchors[hit] = true
 					addRouteForSym(hit)
 					evidence = append(evidence, fmt.Sprintf("`%s` 出现在代码中（%s）", span, hit))
+					continue
+				}
+				if example {
+					evidence = append(evidence, fmt.Sprintf("`%s` 是文档举的示例名，不要求存在", span))
 					continue
 				}
 				if first := strings.SplitN(name, ".", 2)[0]; strings.Contains(name, ".") && isPascal(first) && !builtinTypes[first] && k.tokenSearch(first) == "" && len(k.findSymbols(first)) == 0 {
@@ -529,6 +584,10 @@ func (k *Checker) Check(c *Claim) {
 		for _, a := range r.anchors {
 			anchors[a] = true
 		}
+	}
+	if conflict && historicalDoc(c.Source) {
+		conflict = false
+		evidence = append(evidence, "计划/归档文档描述的是将来或过去的状态，不判为冲突")
 	}
 	switch {
 	case conflict:

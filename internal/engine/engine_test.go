@@ -542,3 +542,31 @@ func TestParityKMPCommonMainIsShared(t *testing.T) {
 		}
 	}
 }
+
+// False conflicts found on real repos (docs/validation.md round 2).
+func TestFalseConflictFilters(t *testing.T) {
+	dir := t.TempDir()
+	os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("# Secrets\nFrameworks/native-secrets\nKsApi/Sources/KsApi/Secrets.swift\n"), 0o644)
+	os.MkdirAll(filepath.Join(dir, "Test Plans"), 0o755)
+	os.WriteFile(filepath.Join(dir, "Test Plans", "UITests.xctestplan"), []byte("{}"), 0o644)
+	g := &model.Graph{Symbols: []*model.Symbol{{ID: "android://a.kt#DefaultSessionRepository", Name: "DefaultSessionRepository", Qual: "DefaultSessionRepository", Kind: "class", File: "a.kt"}}}
+	k := &Checker{G: g, F: &model.Facts{}, Dir: dir}
+	cases := []struct{ src, text string }{
+		{"README.md", "copy `Frameworks/native-secrets/ios/Secrets.swift` into the package"},          // gitignored (kickstarter)
+		{"README.md", "runs each checked-in `UITests.xctestplan` configuration"},                      // file, not a type (wikipedia-ios)
+		{"CLAUDE.md", "Interface implementations: Prefix with `Default` (e.g., `DefaultRepository`)"}, // example name (DroidconKotlin)
+		{"docs/plans/archive/x.md", "Add `entry/src/main/ets/pages/NewPage.ets` for the new flow"},    // plan doc (NextE)
+	}
+	for _, c := range cases {
+		cl := &Claim{ID: "x", Source: c.src, Text: c.text}
+		k.Check(cl)
+		if cl.Status == ClaimConflict {
+			t.Errorf("%s: false conflict: %v", c.text, cl.Evidence)
+		}
+	}
+	real := &Claim{ID: "y", Source: "README.md", Text: "In the `AccountManager.swift` file, replace the domain"}
+	k.Check(real)
+	if real.Status != ClaimConflict {
+		t.Errorf("a missing, non-ignored file in a current doc is a real conflict: %+v", real)
+	}
+}
