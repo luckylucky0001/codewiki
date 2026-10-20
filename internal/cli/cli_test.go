@@ -270,3 +270,26 @@ func TestInstallSkills(t *testing.T) {
 		}
 	}
 }
+
+func TestDiffBaseRevision(t *testing.T) {
+	dir := repo(t)
+	run(t, dir, "init")
+	testutil.Git(t, dir, "add", "-A")
+	testutil.Git(t, dir, "commit", "-qm", "init wiki")
+	commitChange(t, dir, "02-arkts-api-rename")
+	// no compound has run: --base rescans the previous revision via git archive
+	code, d := runJSON(t, dir, "diff", "--base", "HEAD~1")
+	if code != 0 || d["incompatible"] == true {
+		t.Fatalf("diff --base: %d %v", code, d)
+	}
+	c := d["counts"].(map[string]any)
+	if c["renamed"].(float64) != 1 || c["signature"].(float64) != 1 {
+		t.Fatalf("counts %v", c)
+	}
+	if code, p := runJSON(t, dir, "plan", "--base", "HEAD~1", "--dry-run"); code != 0 || p["mode"] == "" {
+		t.Fatalf("plan --base: %d %v", code, p)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "wiki/.kb/plan.json")); err == nil {
+		t.Fatal("plan --dry-run wrote plan.json")
+	}
+}

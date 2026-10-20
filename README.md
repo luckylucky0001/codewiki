@@ -47,10 +47,11 @@ flowchart LR
 需要 Go 1.24 与 C 编译器（tree-sitter 语法通过 cgo 编译）。
 
 ```bash
-go install github.com/luckylucky0001/codewiki/cmd/kb@latest
-# 或在仓库内
-go build -o kb ./cmd/kb
+git clone https://github.com/luckylucky0001/codewiki && cd codewiki
+go build -o kb ./cmd/kb          # 或 go install ./cmd/kb
 ```
+
+注意：`go.mod` 通过 `replace` 指向 vendored 的 ArkTS 语法（`third_party/tree-sitter-arkts`），因此不支持远程 `go install …/cmd/kb@latest`，请从 checkout 构建。
 
 提示：Swift 语法的 C 代码在编译时会打印 `TOKEN_COUNT redefined` 警告，无害；可用 `CGO_CFLAGS="-O2 -w"` 静默。
 

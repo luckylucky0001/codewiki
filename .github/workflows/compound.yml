@@ -24,34 +24,44 @@ permissions:
   contents: write
 
 env:
-  KB_VERSION: latest                 # or a tag, e.g. v0.1.0
+  KB_VERSION: main                   # branch or tag of luckylucky0001/codewiki
   KB_MAX_LLM_TASKS: "12"             # cost guard: remaining tasks use the template writer
   CGO_CFLAGS: "-O2 -w"
 
 jobs:
   test-kb:
-    # only meaningful inside the codewiki repo itself
-    if: hashFiles('cmd/kb/main.go') != ''
+    # only meaningful inside the codewiki repo itself (steps are skipped elsewhere)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
+        if: hashFiles('cmd/kb/main.go') != ''
         with: { go-version: "1.24", cache: true }
-      - run: go vet ./... && test -z "$(gofmt -l cmd internal skills)" && go test ./...
+      - if: hashFiles('cmd/kb/main.go') != ''
+        run: go vet ./... && test -z "$(gofmt -l cmd internal skills)" && go test ./...
 
   compound:
-    if: hashFiles('codewiki.yaml') != ''
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}   # optional; absent → template writer
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0              # kb diff --base / git archive need history
 
+      - name: Check for codewiki.yaml
+        id: cfg
+        run: |
+          if [ -f codewiki.yaml ]; then echo "present=true" >> "$GITHUB_OUTPUT"
+          else echo "::notice::no codewiki.yaml at repo root; skipping compound"; fi
+
       - uses: actions/setup-go@v5
+        if: steps.cfg.outputs.present == 'true'
         with: { go-version: "1.24", cache: true }
 
       - name: Cache kb binary
+        if: steps.cfg.outputs.present == 'true'
         id: kbcache
         uses: actions/cache@v4
         with:
@@ -59,19 +69,21 @@ jobs:
           key: kb-${{ runner.os }}-${{ env.KB_VERSION }}
 
       - name: Install kb
-        if: steps.kbcache.outputs.cache-hit != 'true'
-        run: go install github.com/luckylucky0001/codewiki/cmd/kb@${KB_VERSION}
+        if: steps.cfg.outputs.present == 'true' && steps.kbcache.outputs.cache-hit != 'true'
+        # go.mod uses a `replace` for the vendored ArkTS grammar, so `go install …@version`
+        # is not supported; build from a checkout instead.
+        run: |
+          if [ -f cmd/kb/main.go ]; then go build -o ~/go/bin/kb ./cmd/kb; exit 0; fi
+          git clone --depth 1 --branch "${KB_VERSION}" https://github.com/luckylucky0001/codewiki /tmp/codewiki
+          (cd /tmp/codewiki && go build -o ~/go/bin/kb ./cmd/kb)
 
       - name: Install Claude Code (only when an API key is configured)
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        if: env.ANTHROPIC_API_KEY != ''
+        if: steps.cfg.outputs.present == 'true' && env.ANTHROPIC_API_KEY != ''
         run: npm install -g @anthropic-ai/claude-code
 
       - name: kb compound
+        if: steps.cfg.outputs.present == 'true'
         id: compound
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           set -o pipefail
           LLM=template
@@ -82,9 +94,11 @@ jobs:
           jq -r '.result.message' compound.json
 
       - name: kb verify (gate)
+        if: steps.cfg.outputs.present == 'true'
         run: kb verify
 
       - name: Publish wiki commit
+        if: steps.cfg.outputs.present == 'true'
         run: |
           git config user.name "codewiki-bot"
           git config user.email "codewiki-bot@users.noreply.github.com"
@@ -94,7 +108,7 @@ jobs:
           git push origin HEAD:${GITHUB_REF_NAME}
 
       - name: Upload run record
-        if: always()
+        if: always() && steps.cfg.outputs.present == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: codewiki-run-${{ github.sha }}
