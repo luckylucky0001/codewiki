@@ -154,6 +154,7 @@ steps:
 - Codex 后端：审批策略是 `never`，headless 运行不会卡住；沙箱是 workspace-write，默认禁止网络（Codex 文档，本地未验证）。
 - Gemini 后端：headless 模式加 auto_edit 时不提供 shell 工具（实测）；会提供 web_fetch 和 google_web_search，但它们不是编辑类工具，需要确认，headless 下不会执行（仅文档）。
 - Claude 后端：`--allowedTools` 只放行文件工具和 `kb anchor` / `kb get` / `kb search`。
+- Codex 后端：在沙箱内执行的命令能读到 `KB_ROOT`、`KB_GRAPH`、`KB_TASK`，`kb anchor` 可用（实测）。Gemini 后端在 headless 模式下没有 shell，prompt 里已经给出所有 hash，不需要运行 kb 命令。
 - MCP 工具全部只读，所以给 Gemini 设置 `trust: true` 是安全的。
 
 ## 局限
