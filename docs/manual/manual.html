@@ -14,7 +14,7 @@
   :root { --ink: #1f2937; --muted: #6b7280; --line: #e5e7eb; --accent: #2563eb; --accent-soft: #eff6ff; --code: #f6f8fa; --warn: #b45309; --ok: #047857; }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: #fff; }
-  body { font-family: "WenQuanYi Zen Hei", "Noto Sans CJK SC", sans-serif; color: var(--ink); font-size: 9.6pt; line-height: 1.62; }
+  body { font-family: "WenQuanYi Zen Hei", "Noto Sans CJK SC", sans-serif; color: var(--ink); font-size: 9.5pt; line-height: 1.55; }
   h1, h2, h3 { line-height: 1.3; margin: 0; }
   section.chapter { break-before: page; }
   h2 { font-size: 17pt; margin: 0 0 4mm; padding-bottom: 2mm; border-bottom: 1.2pt solid var(--accent); }
@@ -61,12 +61,12 @@
   <div class="top">
     <h1>codewiki 使用手册</h1>
     <div class="sub">把三端代码与旧文档 compound 成可被验证的 LLM Wiki</div>
-    <p class="lead">codewiki 由 Go CLI <code>kb</code> 和一组 Claude Code skills 组成。它把移动端 monorepo（Android Kotlin/Java、iOS Swift、HarmonyOS ArkTS，另支持 JS/TS）和遗留文档整理成适合 agent 使用的知识库。每次 merge 到 master 都会做一次增量更新。每个页面都通过“符号 ID + 内容 hash”锚定到代码，CI 中的 <code>kb verify</code> 负责证明这些知识与当前代码一致。</p>
+    <p class="lead">codewiki 由 Go CLI <code>kb</code> 和一组 Agent Skills 组成，Claude Code、Codex、Gemini CLI 等 agent 都能直接使用。它把移动端 monorepo（Android Kotlin/Java、iOS Swift、HarmonyOS ArkTS，另支持 JS/TS）和遗留文档整理成适合 agent 使用的知识库。每次 merge 到 master 都会做一次增量更新。每个页面都通过“符号 ID + 内容 hash”锚定到代码，CI 中的 <code>kb verify</code> 负责证明这些知识与当前代码一致。</p>
     <ol class="toc">
       <li>项目目标</li>
       <li>架构设计：三层结构与 compound 流程</li>
       <li>核心能力：命令一览</li>
-      <li>使用方法：安装、配置、CI、skills</li>
+      <li>使用方法：安装、配置、CI、skills、多 Agent 支持</li>
       <li>Demo 操作流程与评测（含真实 agent 使用 skills）</li>
       <li>真实项目验证与性能（5 个开源项目 + axios）</li>
       <li>最佳实践与引用</li>
@@ -247,18 +247,34 @@ source_commit: 516a1c3
 status: current            # current | stale | outdated-doc
 ---</code></pre>
 <h3>4.4 CI、Skills、MCP 与 e2epilot</h3>
-<table>
+<table style="break-inside:auto">
   <tr><th style="width:18%">接入点</th><th>做法</th></tr>
-  <tr><td>CI</td><td><code>.github/workflows/compound.yml</code>：push 到 master/main 时触发，<code>concurrency</code> 串行且不取消；<code>actions/cache</code> 缓存 kb 和 <code>wiki/.kb/cache</code>；有 <code>ANTHROPIC_API_KEY</code> 时用 claude，否则用 template。<code>--max-llm-tasks</code> 按价值排序分配预算（feature &gt; flow &gt; concept，同类再按变化锚点数排序）。verify 失败则 job 失败；成功时以 <code>[skip ci]</code> 提交 wiki</td></tr>
-  <tr><td>Skills</td><td><code>kb install-skills &lt;repo&gt;</code> 安装 <code>kb-compound / kb-ingest / kb-query / kb-lint</code>。skill 只负责调用 CLI，不重新实现逻辑（实测见 5.4）</td></tr>
+  <tr><td>CI</td><td><code>.github/workflows/compound.yml</code>：push 到 master/main 时触发，<code>concurrency</code> 串行且不取消；<code>actions/cache</code> 缓存 kb 和 <code>wiki/.kb/cache</code>；有 <code>ANTHROPIC_API_KEY</code> 时用 <code>--agent claude</code>，否则有 <code>OPENAI_API_KEY</code> 时用 <code>--agent codex</code>，都没有时用 template。<code>--max-llm-tasks</code> 按价值排序分配预算（feature &gt; flow &gt; concept，同类再按变化锚点数排序）。verify 失败则 job 失败；成功时以 <code>[skip ci]</code> 提交 wiki</td></tr>
+  <tr><td>Skills</td><td><code>kb install --agent …</code> 安装 <code>kb-compound / kb-ingest / kb-query / kb-lint</code>：Claude 装到 <code>.claude/skills</code>，Codex 和 Gemini 装到 <code>.agents/skills</code>。skill 只负责调用 CLI，不重新实现逻辑（实测见 5.4 和 4.5）</td></tr>
   <tr><td>自建 git</td><td><code>kb hook install --mode post-receive --repo app.git</code>。适用于 GitLab server hooks、Gerrit 和自建 git：push 到 master 后 compound，wiki 放在服务端，不回写 master（实测见 5.6）</td></tr>
-  <tr><td>MCP</td><td><code>claude mcp add codewiki -- kb mcp --root &lt;repo&gt;</code>，提供 6 个工具：<code>kb_search / get / context / anchor / status / parity</code></td></tr>
+  <tr><td>MCP</td><td><code>kb install --agent … --mcp</code> 会写入 <code>.mcp.json</code>、<code>.codex/config.toml</code>、<code>.gemini/settings.json</code>、<code>.cursor/mcp.json</code>，命令为 <code>kb mcp --root &lt;repo&gt;</code>。提供 7 个只读工具：<code>kb_search / get / context / anchor / status / parity / conflicts</code>。Claude、Codex 和 Gemini 的真实 CLI 都已完成握手</td></tr>
   <tr><td>e2epilot</td><td><code>kb diff --json</code> 和 <code>plan.json</code> 输出 <code>changed_route_ids</code>、<code>changed_routes</code>（附原因）和 <code>changed_files</code>（含 git 资源文件），供 <code>e2e graph invalidate --changed-routes</code> 和 <code>e2e impact</code> 使用</td></tr>
 </table>
+<h3>4.5 多 Agent 支持（<code>kb install --agent</code> / <code>kb compound --agent</code>，详见 docs/agents.md）</h3>
+<table>
+  <tr><th style="width:13%">Agent</th><th style="width:37%">后端：<code>--agent</code> 实际执行的命令（prompt 从 stdin 读入，cwd 为 staging）</th><th>消费者：<code>kb install</code> 写入的文件</th><th style="width:17%">验证程度</th></tr>
+  <tr><td>Claude Code</td><td><code>claude -p --permission-mode acceptEdits --allowedTools … --output-format json</code></td><td><code>CLAUDE.md</code> 块、<code>.claude/skills</code>、<code>.mcp.json</code></td><td><span class="ok">实跑</span></td></tr>
+  <tr><td>Codex CLI</td><td><code>codex exec --sandbox workspace-write -c approval_policy="never" --skip-git-repo-check --ephemeral --json -</code></td><td><code>AGENTS.md</code> 块、<code>.agents/skills</code>、<code>.codex/config.toml</code>（项目需被信任）</td><td>真实二进制 + mock 模型；CLI 核对</td></tr>
+  <tr><td>Gemini CLI</td><td><code>gemini --skip-trust --approval-mode auto_edit -o json -p …</code></td><td><code>GEMINI.md</code> 块、<code>.agents/skills</code>、<code>.gemini/settings.json</code>（<code>trust:true</code>）</td><td>真实二进制 + mock 模型</td></tr>
+  <tr><td>Cursor / Copilot</td><td>无适配器，用 <code>--llm-cmd</code></td><td><code>.cursor/rules/codewiki.mdc</code>、<code>.cursor/mcp.json</code> / <code>.github/copilot-instructions.md</code></td><td>仅文档</td></tr>
+</table>
+<p><b>守卫与 agent 无关</b>：写集合回滚和 <code>&lt;untrusted-data&gt;</code> 包裹由 kb 执行，agent 沙箱只是外层防线。Codex 的 workspace-write 实测仍可写 <code>/tmp</code> 和整个 staging；Gemini 的 auto_edit 可写工作区内任意文件。</p>
+<p><b>验证</b>：</p>
+<ul>
+  <li>Codex 0.163.0 和 Gemini 0.65.0 的真实二进制通过本地 mock 模型 API 跑通了 <code>kb compound</code>：页面写入成功，越界文件被回滚，用量从各自的 JSON 事件中解析。</li>
+  <li><code>codex debug prompt-input</code> 确认模型能看到 AGENTS.md 块和 4 个 skill。</li>
+  <li><code>kb install</code> 会提示 Codex 的两个坑：<code>AGENTS.override.md</code> 会取代 AGENTS.md，超过 32 KiB 的部分会被截断。</li>
+  <li>真实 Claude（haiku）：<code>kb compound --agent claude</code> 完成 2 个任务，$0.032，verify 通过。安装后的 3 个问答都首选 kb：<code>kb parity</code>、<code>kb routes</code> 加 <code>lint-tid --pages</code>，以及只开放 MCP 时的 <code>kb_search</code> 加 <code>kb_get</code>。</li>
+</ul>
 </section>
 
 <!-- ============ 5 ============ -->
-<section class="chapter">
+<section class="chapter" style="break-before:auto; margin-top:6mm">
 <h2><span class="num">5</span>Demo 操作流程与评测</h2>
 <p><code>demo/run.sh</code> 用 <code>examples/minishop</code> 建一个临时 git 仓库。这是同一个电商 App 的三端实现，包含 6 条路由、11 类 testID、5 个接口。脚本依次执行 init → discover-docs → ingest → 首次 compound，然后把 3 个变更集以 <code>--no-ff</code> 合并到 master，每次合并后运行 status / diff / plan / compound / verify / parity，最后运行 <code>kb eval</code>。<code>DEMO_LLM=template</code> 约 1 分钟，结果可复现；<code>DEMO_LLM=claude</code> 使用真实的 <code>claude -p</code>。</p>
 <h3>5.1 文档发现与断言核对</h3>
@@ -308,7 +324,7 @@ status: current            # current | stale | outdated-doc
 </section>
 
 <!-- ============ 6 ============ -->
-<section class="chapter">
+<section class="chapter" style="break-before:auto; margin-top:6mm">
 <h2><span class="num">6</span>真实项目验证与性能</h2>
 <h3>6.1 公开开源项目（只读浅克隆，详见 docs/validation.md）</h3>
 <table>
@@ -347,9 +363,9 @@ status: current            # current | stale | outdated-doc
 </section>
 
 <!-- ============ 7 ============ -->
-<section class="chapter">
+<section class="chapter" style="break-before:auto; margin-top:6mm">
 <h2><span class="num">7</span>最佳实践与引用</h2>
-<table>
+<table style="break-inside:auto">
   <tr><th style="width:24%">实践</th><th>做法</th><th style="width:23%">参考</th></tr>
   <tr><td>事实与叙述分离</td><td>CLI 抽取所有能确定的事实，并标记 DO NOT EDIT；LLM 只写解释；采用 raw / wiki / schema 三层，index 加 append-only log</td><td>Karpathy《LLM Wiki》</td></tr>
   <tr><td>按符号增量</td><td>以符号 ID 和归一化 hash 判断变化，注释与格式改动属于 no-op</td><td>FSoft CodeWiki</td></tr>
@@ -374,7 +390,7 @@ status: current            # current | stale | outdated-doc
 </section>
 
 <!-- ============ 8 ============ -->
-<section class="chapter">
+<section class="chapter" style="break-before:auto; margin-top:6mm">
 <h2><span class="num">8</span>局限与路线图</h2>
 <h3>当前局限</h3>
 <ul>
@@ -382,6 +398,7 @@ status: current            # current | stale | outdated-doc
   <li><b>语法覆盖</b>：ArkUI 尾逗号已通过语法补丁修复；Swift 有 2 个文件仍解析失败，写法是 <code>(@Sendable (T) -&gt; Void).self</code> 和 <code>if await x.y {</code>。第 5 轮复查过，上游 main <code>9e3b87f</code> 也没有修复，所以不升级。失败会记入 <code>parse_failures</code>，不会中断扫描。修改 vendored 语法后需要同时更新 <code>GrammarHash</code>，有测试强制检查。</li>
   <li><b>引用解析</b>：基于名称、作用域和 import，没有完整的类型推断，也不建立跨平台的边。</li>
   <li><b>facts 启发式</b>：API 抽取依赖适配器，目前覆盖 Retrofit / Ktor / OkHttp / Alamofire / Moya / Endpoint 枚举 / http / @ohos/axios / RCP / axios。完全自研、动态拼接 URL 的网络层仍识别不到；注入检测是基于规则的，属于纵深防御的一层，不能保证全部拦截。</li>
+  <li><b>多 Agent</b>：Codex 和 Gemini 在本环境只能连 mock 模型，所以它们写页面的质量没有实测；Cursor 和 Copilot 只依据文档。</li>
   <li><b>断言核对</b>：template 在盲测集上的 conflict recall 只有 0.33，修复后为 0.58，所以它只能作为初筛。平台范围、功能是否存在这类语义判断需要 claude 模式（盲测 recall 0.92），单个任务约 30–60 s。</li>
 </ul>
 <h3>路线图</h3>
