@@ -1,4 +1,4 @@
-compound 20261020T163257-1c63b25: base 3db62a4 → head 1c63b25, mode incremental, llm template
+compound 20261020T163841-0391c27: base 37c8400 → head 0391c27, mode incremental, llm template
 mode incremental — anchors changed ∪ signature changes propagated along reference edges
 stats: symbols=214 changes=map[body:4 renamed:1 signature:1 unchanged:208] module_ratio=0.10 structural_ratio=0.01 hops=1 propagated=2
   t01-_conflicts recheck pages/_conflicts.md            write_set=[.kb/ingest/verdicts.json] reasons=[anchor_body_changed:CartStore, anchor_body_changed:ProductDetailPage.build]
@@ -19,5 +19,5 @@ changed files: 11
   pages/_conflicts.md
   pages/features/product_detail.md
   pages/features/products.md
-verify PASS: 20 pages, 288 anchors, 0 errors, 0 warnings
-published 11 changed file(s) to demo/output/<ts>-template/repo/wiki
+verify PASS: 20 pages, 286 anchors, 0 errors, 0 warnings
+published 11 changed file(s) to demo/output/<run>/repo/wiki

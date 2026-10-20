@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "root": "demo/output/<ts>-template/repo",
+  "root": "demo/output/<run>/repo",
   "docs": [
     {
       "path": ".kiro/specs/login/requirements.md",

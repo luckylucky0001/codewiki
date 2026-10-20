@@ -59,7 +59,7 @@ sources:
     hash: 8e630fea62710ade5354d04e1e353ff6e1c5b0ac38acbcbed1796eabc8660b98
   - sym: ios://MiniShop/Networking/APIClient.swift#LoginRequest.password
     hash: d7f1a48269ceb254c79b3dd357d976c890bab9ceb0c6470c1db72796a38d59b3
-source_commit: 8c0f41c
+source_commit: ad44c25
 status: current
 ---
 # 登录（login）

@@ -25,8 +25,6 @@ sources:
     hash: d348143e464db81a86e98f370526c7e901585a646f2c2da22b03cd196207ad88
   - sym: harmony://entry/src/main/ets/pages/CheckoutPage.ets#CheckoutPage.placeOrder
     hash: 8aea985a316bf1252fd9a3580d1ba302b1a7f4a53aaa70207716ff2fad85c4be
-  - sym: ios://MiniShop/Components/BackButton.swift#BackButton.body
-    hash: a98e27bdf2b7598556a38db6c2a3124dfd935858218baa2ae19751dd87c4cb19
   - sym: ios://MiniShop/Features/Checkout/CheckoutView.swift#CheckoutView
     hash: b33e63205cc465f2fd5986cf24b6edac9b938d724a644f7907cb2a0bf3b16a72
   - sym: ios://MiniShop/Features/Checkout/CheckoutView.swift#CheckoutView.body
@@ -41,11 +39,13 @@ sources:
     hash: 4277008b895b029f4caf0522de87de218a6dd86ddea121b01be670c4d227e484
   - sym: ios://MiniShop/Navigation/AppRouter.swift#AppRouter.path
     hash: 8e630fea62710ade5354d04e1e353ff6e1c5b0ac38acbcbed1796eabc8660b98
+  - sym: ios://MiniShop/Navigation/Route.swift#Destination.params
+    hash: 2e469b4ecc4f45b1ff796f72e2fecd121208cc549ec25238f0092b7e5832e8ea
   - sym: ios://MiniShop/Networking/APIClient.swift#OrderResponse.orderId
     hash: ead55dc30df1719756ce3396b0c48010bbe572c178892e9d115a3436087714e2
   - sym: ios://MiniShop/Networking/APIClient.swift#OrderResponse.status
     hash: 19364be6e63ee5d8f917f567b981834d91e24c5d6a119d578912f788e44f0cb6
-source_commit: 8c0f41c
+source_commit: ad44c25
 status: current
 ---
 # 结算（checkout）
@@ -81,6 +81,7 @@ status: current
 ## 关键常量
 
 - `AppRouter.path` = `[]`（ios）
+- `Destination.params` = `[:]`（ios）
 
 ## 相关代码
 
@@ -102,7 +103,6 @@ status: current
 
 **ios**
 
-- `ios://MiniShop/Components/BackButton.swift#BackButton.body` — property `var body: some View`
 - `ios://MiniShop/Features/Checkout/CheckoutView.swift#CheckoutView` — struct `struct CheckoutView: View`
 - `ios://MiniShop/Features/Checkout/CheckoutView.swift#CheckoutView.body` — property `var body: some View`
 - `ios://MiniShop/Features/Checkout/CheckoutView.swift#CheckoutView.placeOrder` — function `func placeOrder() async -> OrderResponse?`
@@ -110,6 +110,7 @@ status: current
 - `ios://MiniShop/Navigation/AppRouter.swift#AppRouter.handle` — function `func handle(url: URL)`
 - `ios://MiniShop/Navigation/AppRouter.swift#AppRouter.match` — function `func match(host: String, segments: [String]) -> Destination?`
 - `ios://MiniShop/Navigation/AppRouter.swift#AppRouter.path` — property `@Published var path: [Destination]`
+- `ios://MiniShop/Navigation/Route.swift#Destination.params` — property `var params: [String: String]`
 - `ios://MiniShop/Networking/APIClient.swift#OrderResponse.orderId` — property `let orderId: String`
 - `ios://MiniShop/Networking/APIClient.swift#OrderResponse.status` — property `let status: String`
 

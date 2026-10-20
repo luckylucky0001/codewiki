@@ -1,4 +1,4 @@
-ingest 20261020T163254-1130a7e: base  → head 1130a7e, mode ingest, llm template
+ingest 20261020T163838-75ea9a6: base  → head 75ea9a6, mode ingest, llm template
 mode ingest — check ingested documents against code
 stats: symbols=214 changes=map[added:214] module_ratio=1.00 structural_ratio=1.00 hops=1 propagated=0
   t01-_conflicts create  pages/_conflicts.md            write_set=[.kb/ingest/verdicts.json] reasons=[full_rebuild]
@@ -36,4 +36,4 @@ changed files: 31
   raw/docs/specs/001-cart/plan.md
   raw/docs/specs/001-cart/spec.md
 verify PASS: 13 pages, 156 anchors, 0 errors, 0 warnings
-published 31 changed file(s) to demo/output/<ts>-template/repo/wiki
+published 31 changed file(s) to demo/output/<run>/repo/wiki

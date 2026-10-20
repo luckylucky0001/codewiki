@@ -31,10 +31,6 @@ sources:
     hash: d51b95fefb201bb36242a2c23f52dfa9ed8e3c70024aa092f86a322bb86d4dd6
   - sym: harmony://entry/src/main/ets/pages/ProfilePage.ets#ProfilePage.pathStack
     hash: d348143e464db81a86e98f370526c7e901585a646f2c2da22b03cd196207ad88
-  - sym: ios://MiniShop/Components/BackButton.swift#BackButton.body
-    hash: a98e27bdf2b7598556a38db6c2a3124dfd935858218baa2ae19751dd87c4cb19
-  - sym: ios://MiniShop/Components/BackButton.swift#BackButton.dismiss
-    hash: d2952ecb413ac8da3f7adf0834b85bb8b8cd61e0c9a337992105bf4394da93c6
   - sym: ios://MiniShop/Features/Profile/ProfileView.swift#ProfileView
     hash: c1a22c94f601b720d5f949add4283f8b052dd0d2c237e6419319da4059dd7c04
   - sym: ios://MiniShop/Features/Profile/ProfileView.swift#ProfileView.body
@@ -47,11 +43,15 @@ sources:
     hash: 4277008b895b029f4caf0522de87de218a6dd86ddea121b01be670c4d227e484
   - sym: ios://MiniShop/Navigation/AppRouter.swift#AppRouter.path
     hash: 8e630fea62710ade5354d04e1e353ff6e1c5b0ac38acbcbed1796eabc8660b98
-  - sym: ios://MiniShop/Navigation/Route.swift#Destination.params
-    hash: 2e469b4ecc4f45b1ff796f72e2fecd121208cc549ec25238f0092b7e5832e8ea
   - sym: ios://MiniShop/Navigation/Route.swift#Destination.route
     hash: 12d58fa4f87a306c398635b92e2d024d469918b3e33abd03bd572f833d9d2c82
-source_commit: b1df120
+  - sym: ios://MiniShop/Networking/APIClient.swift#TokenStore.save
+    hash: f0e91ef8b002ef95a2de1eb4665dd1fd8d0906cb506a4adebb688455f571984a
+  - sym: ios://MiniShop/Networking/APIClient.swift#TokenStore.shared
+    hash: 160dd603b73cd275a6b0089cbe4b95d633ac45773c271403286088aa378bff21
+  - sym: ios://MiniShop/Networking/APIClient.swift#TokenStore.token
+    hash: cc9a2bad373da05b2c10efdd69bf76de940bebff0e4ee5477b4b4cd213b4dc72
+source_commit: 4d0fb00
 status: current
 ---
 # 个人中心（profile）
@@ -86,7 +86,6 @@ status: current
 ## 关键常量
 
 - `AppRouter.path` = `[]`（ios）
-- `Destination.params` = `[:]`（ios）
 
 ## 相关代码
 
@@ -111,16 +110,16 @@ status: current
 
 **ios**
 
-- `ios://MiniShop/Components/BackButton.swift#BackButton.body` — property `var body: some View`
-- `ios://MiniShop/Components/BackButton.swift#BackButton.dismiss` — property `@Environment(\.dismiss) private var dismiss`
 - `ios://MiniShop/Features/Profile/ProfileView.swift#ProfileView` — struct `struct ProfileView: View`
 - `ios://MiniShop/Features/Profile/ProfileView.swift#ProfileView.body` — property `var body: some View`
 - `ios://MiniShop/Features/Profile/ProfileView.swift#ProfileView.router` — property `@EnvironmentObject var router: AppRouter`
 - `ios://MiniShop/Navigation/AppRouter.swift#AppRouter.handle` — function `func handle(url: URL)`
 - `ios://MiniShop/Navigation/AppRouter.swift#AppRouter.match` — function `func match(host: String, segments: [String]) -> Destination?`
 - `ios://MiniShop/Navigation/AppRouter.swift#AppRouter.path` — property `@Published var path: [Destination]`
-- `ios://MiniShop/Navigation/Route.swift#Destination.params` — property `var params: [String: String]`
 - `ios://MiniShop/Navigation/Route.swift#Destination.route` — property `let route: Route`
+- `ios://MiniShop/Networking/APIClient.swift#TokenStore.save` — function `func save(_ token: String)`
+- `ios://MiniShop/Networking/APIClient.swift#TokenStore.shared` — property `static let shared`
+- `ios://MiniShop/Networking/APIClient.swift#TokenStore.token` — property `private(set) var token: String?`
 
 ## 相关页面
 

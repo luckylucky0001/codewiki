@@ -33,10 +33,6 @@ sources:
     hash: 21d9a3829e98fea009f4723757981bcdb85ad8569734a2938ced0b316a126125
   - sym: harmony://entry/src/main/ets/pages/CartPage.ets#CartPage.pathStack
     hash: d348143e464db81a86e98f370526c7e901585a646f2c2da22b03cd196207ad88
-  - sym: ios://MiniShop/Components/BackButton.swift#BackButton.body
-    hash: a98e27bdf2b7598556a38db6c2a3124dfd935858218baa2ae19751dd87c4cb19
-  - sym: ios://MiniShop/Components/BackButton.swift#BackButton.dismiss
-    hash: d2952ecb413ac8da3f7adf0834b85bb8b8cd61e0c9a337992105bf4394da93c6
   - sym: ios://MiniShop/Features/Cart/CartView.swift#CartView
     hash: d47d57d059273a31af207e5d5bb372ec0c897bd5da8005b3f15971f95ef12cbf
   - sym: ios://MiniShop/Features/Cart/CartView.swift#CartView.body
@@ -53,7 +49,11 @@ sources:
     hash: 4277008b895b029f4caf0522de87de218a6dd86ddea121b01be670c4d227e484
   - sym: ios://MiniShop/Navigation/AppRouter.swift#AppRouter.path
     hash: 8e630fea62710ade5354d04e1e353ff6e1c5b0ac38acbcbed1796eabc8660b98
-source_commit: 3db62a4
+  - sym: ios://MiniShop/Navigation/Route.swift#Destination.route
+    hash: 12d58fa4f87a306c398635b92e2d024d469918b3e33abd03bd572f833d9d2c82
+  - sym: ios://MiniShop/Navigation/Route.swift#Route.checkout
+    hash: 53fa77d0285a9f0bd2a6a45d14e1e93936d65d95fb78dd3b0b3f7548ad791768
+source_commit: 37c8400
 status: current
 ---
 # 购物车（cart）
@@ -113,8 +113,6 @@ status: current
 
 **ios**
 
-- `ios://MiniShop/Components/BackButton.swift#BackButton.body` — property `var body: some View`
-- `ios://MiniShop/Components/BackButton.swift#BackButton.dismiss` — property `@Environment(\.dismiss) private var dismiss`
 - `ios://MiniShop/Features/Cart/CartView.swift#CartView` — struct `struct CartView: View`
 - `ios://MiniShop/Features/Cart/CartView.swift#CartView.body` — property `var body: some View`
 - `ios://MiniShop/Features/Cart/CartView.swift#CartView.router` — property `@EnvironmentObject var router: AppRouter`
@@ -123,6 +121,8 @@ status: current
 - `ios://MiniShop/Navigation/AppRouter.swift#AppRouter.handle` — function `func handle(url: URL)`
 - `ios://MiniShop/Navigation/AppRouter.swift#AppRouter.match` — function `func match(host: String, segments: [String]) -> Destination?`
 - `ios://MiniShop/Navigation/AppRouter.swift#AppRouter.path` — property `@Published var path: [Destination]`
+- `ios://MiniShop/Navigation/Route.swift#Destination.route` — property `let route: Route`
+- `ios://MiniShop/Navigation/Route.swift#Route.checkout` — case `case checkout`
 
 ## 相关页面
 

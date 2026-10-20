@@ -1,8 +1,8 @@
 # codewiki demo summary
 
 - mode: `template` (bootstrap writer: `template`)
-- date (UTC): 20261020T163252Z
-- repo: `demo/output/<ts>-template/repo` (temp git repo, branch master)
+- date (UTC): 20261020T163836Z
+- repo: `demo/output/<run>/repo` (temp git repo, branch master)
 - kb: `kb 0.1.0`
 
 ## Ingest
@@ -38,7 +38,7 @@ Conflicts (code wins):
 ### 05-01-cart-limit
 
 ```
-diff: base 8c0f41c → head 3db62a4
+diff: base ad44c25 → head 37c8400
 diff:   unchanged  211
 diff:   body       3
 diff:   signature  0
@@ -54,13 +54,13 @@ status(before): stale pages/features/product_detail.md (1 anchors: CartViewModel
   task t01-_conflicts               ok       template 
   task t02-features-cart            ok       template 
   task t03-features-product_detail  ok       template 
-verify PASS: 20 pages, 288 anchors, 0 errors, 0 warnings
+verify PASS: 20 pages, 286 anchors, 0 errors, 0 warnings
 ```
 
 ### 06-02-arkts-api-rename
 
 ```
-diff: base 3db62a4 → head 1c63b25
+diff: base 37c8400 → head 0391c27
 diff:   unchanged  208
 diff:   body       4
 diff:   signature  1
@@ -78,13 +78,13 @@ status(before): stale pages/features/products.md (2 anchors: Api.loadProducts, P
   task t01-_conflicts               ok       template 
   task t02-features-product_detail  ok       template 
   task t03-features-products        ok       template 
-verify PASS: 20 pages, 288 anchors, 0 errors, 0 warnings
+verify PASS: 20 pages, 286 anchors, 0 errors, 0 warnings
 ```
 
 ### 07-03-profile-route
 
 ```
-diff: base 1c63b25 → head b1df120
+diff: base 0391c27 → head 4d0fb00
 diff:   unchanged  210
 diff:   body       4
 diff:   signature  0
@@ -105,7 +105,7 @@ status(before): stale facts/testids.json (generated facts out of date)
   t02-overview update  pages/overview.md              write_set=[pages/overview.md] reasons=[route_set_changed]
   task t01-features-profile         ok       template 
   task t02-overview                 ok       template 
-verify PASS: 21 pages, 311 anchors, 0 errors, 0 warnings
+verify PASS: 21 pages, 309 anchors, 0 errors, 0 warnings
 ```
 
 ## Queries
@@ -134,6 +134,6 @@ symbols (7):
   L24   property   android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.pending
 ```
 
-Final verify: PASS — 21 pages, 311 anchors.
+Final verify: PASS — 21 pages, 309 anchors.
 
-Files: see `20261020T163252Z-template/` (numbered by step); the final wiki is in `repo/wiki/`.
+Files: see `20261020T163836Z-template/` (numbered by step); the final wiki is in `repo/wiki/`.

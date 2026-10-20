@@ -1,4 +1,4 @@
-compound 20261020T163254-8c0f41c: base  → head 8c0f41c, mode full, llm template
+compound 20261020T163838-ad44c25: base  → head ad44c25, mode full, llm template
 mode full — no compatible baseline graph (first compound or graph version change)
 stats: symbols=214 changes=map[added:214] module_ratio=1.00 structural_ratio=1.00 hops=1 propagated=0
   t01-_conflicts recheck pages/_conflicts.md            write_set=[.kb/ingest/verdicts.json] reasons=[full_rebuild]
@@ -33,5 +33,5 @@ changed files: 15
   pages/features/product_detail.md
   pages/features/products.md
   pages/overview.md
-verify PASS: 20 pages, 288 anchors, 0 errors, 0 warnings
-published 15 changed file(s) to demo/output/<ts>-template/repo/wiki
+verify PASS: 20 pages, 286 anchors, 0 errors, 0 warnings
+published 15 changed file(s) to demo/output/<run>/repo/wiki

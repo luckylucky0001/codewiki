@@ -109,7 +109,7 @@ sources:
     hash: 745aa82c439b155cd921a3ff09c785faed15a4b24560c9f29a8953cf85972c04
   - sym: ios://MiniShop/Networking/APIClient.swift#TokenStore.save
     hash: f0e91ef8b002ef95a2de1eb4665dd1fd8d0906cb506a4adebb688455f571984a
-source_commit: 1c63b25
+source_commit: 0391c27
 status: current
 ---
 # 文档核对：冲突与已验证断言

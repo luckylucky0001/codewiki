@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "base": "1c63b2588c722f19b1af2385675e0cbabb288cf4",
-  "head": "b1df1208f6df622d9b7b94c88294728105521734",
+  "base": "0391c27defb5fd393a50222fd36c499c19d546bb",
+  "head": "4d0fb00a9168e36d012e47e791af60af0d79d1de",
   "mode": "incremental",
   "reason": "anchors changed ∪ signature changes propagated along reference edges",
   "stats": {
@@ -47,16 +47,16 @@
         "harmony://entry/src/main/ets/pages/ProfilePage.ets#ProfileBuilder",
         "harmony://entry/src/main/ets/pages/ProfilePage.ets#ProfilePage.build",
         "harmony://entry/src/main/ets/pages/ProfilePage.ets#ProfilePage.pathStack",
-        "ios://MiniShop/Components/BackButton.swift#BackButton.body",
-        "ios://MiniShop/Components/BackButton.swift#BackButton.dismiss",
         "ios://MiniShop/Features/Profile/ProfileView.swift#ProfileView",
         "ios://MiniShop/Features/Profile/ProfileView.swift#ProfileView.body",
         "ios://MiniShop/Features/Profile/ProfileView.swift#ProfileView.router",
         "ios://MiniShop/Navigation/AppRouter.swift#AppRouter.handle",
         "ios://MiniShop/Navigation/AppRouter.swift#AppRouter.match",
         "ios://MiniShop/Navigation/AppRouter.swift#AppRouter.path",
-        "ios://MiniShop/Navigation/Route.swift#Destination.params",
-        "ios://MiniShop/Navigation/Route.swift#Destination.route"
+        "ios://MiniShop/Navigation/Route.swift#Destination.route",
+        "ios://MiniShop/Networking/APIClient.swift#TokenStore.save",
+        "ios://MiniShop/Networking/APIClient.swift#TokenStore.shared",
+        "ios://MiniShop/Networking/APIClient.swift#TokenStore.token"
       ]
     },
     {

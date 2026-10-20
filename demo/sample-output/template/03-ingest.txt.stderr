@@ -1,3 +1,3 @@
-kb ingest: head=1130a7e base= mode=ingest tasks=1 (check ingested documents against code)
+kb ingest: head=75ea9a6 base= mode=ingest tasks=1 (check ingested documents against code)
 ingested 7 document(s) into raw/docs
   [ok] create   pages/_conflicts.md                template 

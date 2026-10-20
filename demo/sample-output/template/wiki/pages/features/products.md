@@ -53,7 +53,7 @@ sources:
     hash: 2e469b4ecc4f45b1ff796f72e2fecd121208cc549ec25238f0092b7e5832e8ea
   - sym: ios://MiniShop/Navigation/Route.swift#Destination.route
     hash: 12d58fa4f87a306c398635b92e2d024d469918b3e33abd03bd572f833d9d2c82
-source_commit: 1c63b25
+source_commit: 0391c27
 status: current
 ---
 # 商品列表（products）

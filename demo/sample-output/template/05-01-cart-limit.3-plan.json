@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "base": "8c0f41c22fb36c9f37705069110342cc2f2d5d08",
-  "head": "3db62a4ede6c587e0abff185f87d10fa9945acf2",
+  "base": "ad44c25ecc63c823a4cc1c827b1cdd4c3157b168",
+  "head": "37c84000dadf99d003ae2f2b585f092669b62a5f",
   "mode": "incremental",
   "reason": "anchors changed ∪ signature changes propagated along reference edges",
   "stats": {
@@ -72,8 +72,6 @@
         "harmony://entry/src/main/ets/pages/CartPage.ets#CartBuilder",
         "harmony://entry/src/main/ets/pages/CartPage.ets#CartPage.build",
         "harmony://entry/src/main/ets/pages/CartPage.ets#CartPage.pathStack",
-        "ios://MiniShop/Components/BackButton.swift#BackButton.body",
-        "ios://MiniShop/Components/BackButton.swift#BackButton.dismiss",
         "ios://MiniShop/Features/Cart/CartView.swift#CartView",
         "ios://MiniShop/Features/Cart/CartView.swift#CartView.body",
         "ios://MiniShop/Features/Cart/CartView.swift#CartView.router",
@@ -81,7 +79,9 @@
         "ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.total",
         "ios://MiniShop/Navigation/AppRouter.swift#AppRouter.handle",
         "ios://MiniShop/Navigation/AppRouter.swift#AppRouter.match",
-        "ios://MiniShop/Navigation/AppRouter.swift#AppRouter.path"
+        "ios://MiniShop/Navigation/AppRouter.swift#AppRouter.path",
+        "ios://MiniShop/Navigation/Route.swift#Destination.route",
+        "ios://MiniShop/Navigation/Route.swift#Route.checkout"
       ]
     },
     {
