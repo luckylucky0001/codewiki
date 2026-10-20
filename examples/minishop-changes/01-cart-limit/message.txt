@@ -1,0 +1,1 @@
+feat(cart): lower cart limit to 50 items on all platforms; docs-only comment tweaks in login

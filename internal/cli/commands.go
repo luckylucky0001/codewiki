@@ -363,6 +363,18 @@ func printPlan(w io.Writer, p *engine.Plan) {
 	}
 }
 
+func lastParts(ids []string) []string {
+	var out []string
+	for i, id := range ids {
+		if i == 3 {
+			out = append(out, fmt.Sprintf("…+%d", len(ids)-3))
+			break
+		}
+		out = append(out, lastPart(id))
+	}
+	return out
+}
+
 func lastPart(id string) string {
 	if i := strings.LastIndex(id, "#"); i >= 0 {
 		return id[i+1:]
@@ -500,17 +512,24 @@ func cmdStatus(a *app, fs *flag.FlagSet, _ []string) int {
 	}
 	type stalePage struct {
 		Page    string   `json:"page"`
+		Reason  string   `json:"reason"`
 		Symbols []string `json:"symbols"`
 	}
 	m := map[string][]string{}
+	reason := map[string]string{}
 	for _, e := range rep.Errors {
 		if strings.HasPrefix(e.Code, "E_ANCHOR") || e.Code == "E_REQ_ANCHOR_STALE" || e.Code == "E_STATUS_STALE" || e.Code == "E_FACTS_STALE" {
-			m[e.Page] = append(m[e.Page], e.Sym)
+			if e.Sym != "" {
+				m[e.Page] = append(m[e.Page], e.Sym)
+			} else if _, ok := m[e.Page]; !ok {
+				m[e.Page] = []string{}
+			}
+			reason[e.Page] = e.Code
 		}
 	}
 	var out []stalePage
 	for _, p := range sortedMapKeys(m) {
-		out = append(out, stalePage{p, m[p]})
+		out = append(out, stalePage{p, reason[p], m[p]})
 	}
 	if out == nil {
 		out = []stalePage{}
@@ -526,7 +545,11 @@ func cmdStatus(a *app, fs *flag.FlagSet, _ []string) int {
 			fmt.Fprintln(w, "all pages current")
 		}
 		for _, s := range out {
-			fmt.Fprintf(w, "stale %s (%d anchors)\n", s.Page, len(s.Symbols))
+			if s.Reason == "E_FACTS_STALE" {
+				fmt.Fprintf(w, "stale %s (generated facts out of date)\n", s.Page)
+			} else {
+				fmt.Fprintf(w, "stale %s (%d anchors: %s)\n", s.Page, len(s.Symbols), strings.Join(lastParts(s.Symbols), ", "))
+			}
 		}
 	})
 	if len(out) > 0 {

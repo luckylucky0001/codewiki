@@ -1,0 +1,1 @@
+refactor(harmony): rename Api.loadProducts -> fetchProducts; CartStore.addItem takes quantity
