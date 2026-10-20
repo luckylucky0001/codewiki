@@ -60,6 +60,22 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		a.mainUsage()
 		return ExitUsage
 	}
+	// allow global flags before the command name: kb --root x verify
+	var pre []string
+	for len(args) > 0 && strings.HasPrefix(args[0], "-") && args[0] != "-h" && args[0] != "--help" && args[0] != "--version" {
+		f := strings.TrimLeft(args[0], "-")
+		pre = append(pre, args[0])
+		args = args[1:]
+		if (f == "root" || f == "config") && len(args) > 0 {
+			pre = append(pre, args[0])
+			args = args[1:]
+		}
+	}
+	if len(args) == 0 {
+		a.mainUsage()
+		return ExitUsage
+	}
+	args = append(append([]string{args[0]}, pre...), args[1:]...)
 	name := args[0]
 	if name == "-h" || name == "--help" || name == "help" {
 		if len(args) > 1 {

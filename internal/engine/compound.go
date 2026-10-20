@@ -300,6 +300,7 @@ func Compound(o *Options) (*Result, error) {
 	if len(r.Changed) == 0 && o.Kind == "compound" && a.Plan.Mode == "noop" {
 		r.Message = "noop: wiki already up to date"
 		r.Verify = wiki.Verify(wikiDir, a.Graph, wiki.VerifyOptions{ExpectedFacts: expected})
+		VerifyRequirements(wikiDir, a.Graph, r.Verify)
 		if !o.Keep {
 			os.RemoveAll(work)
 		}
@@ -733,8 +734,8 @@ func (e *taskEnv) mergeVerdicts(templ []Claim) error {
 		if len(anchors) > 0 {
 			templ[i].Anchors = anchors
 		}
-		if len(c.Evidence) > 0 {
-			templ[i].Evidence = append([]string{"[llm] " + strings.Join(c.Evidence, "；")}, templ[i].Evidence...)
+		if ev := llmEvidence(c.Evidence, templ[i].Evidence); ev != "" {
+			templ[i].Evidence = append([]string{"[llm] " + ev}, templ[i].Evidence...)
 		}
 		if len(c.RouteIDs) > 0 {
 			templ[i].RouteIDs = c.RouteIDs
@@ -743,4 +744,29 @@ func (e *taskEnv) mergeVerdicts(templ []Claim) error {
 	e.claims, e.claimsSet = templ, true
 	writeJSON(filepath.Join(e.staging, filepath.FromSlash(VerdictsFile)), Verdicts{Version: 1, Claims: templ})
 	return nil
+}
+
+// llmEvidence joins the LLM's evidence, dropping "[llm]" prefixes copied from
+// earlier runs and sentences that merely repeat the deterministic pre-check.
+func llmEvidence(llm, templ []string) string {
+	known := map[string]bool{}
+	for _, t := range templ {
+		known[strings.TrimSpace(t)] = true
+	}
+	seen := map[string]bool{}
+	var out []string
+	for _, e := range llm {
+		for _, part := range strings.FieldsFunc(e, func(r rune) bool { return r == '；' || r == ';' }) {
+			part = strings.TrimSpace(part)
+			for strings.HasPrefix(part, "[llm]") {
+				part = strings.TrimSpace(strings.TrimPrefix(part, "[llm]"))
+			}
+			if part == "" || known[part] || seen[part] {
+				continue
+			}
+			seen[part] = true
+			out = append(out, part)
+		}
+	}
+	return strings.Join(out, "；")
 }

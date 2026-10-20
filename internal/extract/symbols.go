@@ -213,8 +213,13 @@ func hasToken(n *sitter.Node, tok string) bool {
 }
 
 func (c *fileCtx) newSymbol(n *sitter.Node, kind string, parent *symNode) *symNode {
+	if n.Kind() == "variable_declarator" {
+		if f := n.ChildByFieldName("name"); f == nil || f.Kind() != "identifier" {
+			return nil // destructuring patterns are not declarations of their own
+		}
+	}
 	name := c.declName(n)
-	if name == "" {
+	if name == "" || strings.ContainsAny(name, "{}[] ") {
 		return nil
 	}
 	kind = c.refineKind(n, kind)

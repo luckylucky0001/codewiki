@@ -41,6 +41,8 @@ type VerifyOptions struct {
 
 var (
 	symMention = regexp.MustCompile("`((?:android|ios|harmony|web|[a-z][a-z0-9_-]{1,15})://[^`#\\s]+#[^`\\s]+)`")
+	fenced     = regexp.MustCompile("(?s)```.*?```")
+	inlineCode = regexp.MustCompile("`[^`\n]*`")
 	mdLink     = regexp.MustCompile(`\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)`)
 )
 
@@ -163,6 +165,8 @@ func Verify(wikiDir string, g *model.Graph, opt VerifyOptions) *Report {
 func linkTargets(from, body string) []string {
 	var out []string
 	seen := map[string]bool{}
+	body = fenced.ReplaceAllString(body, "")
+	body = inlineCode.ReplaceAllString(body, "")
 	for _, m := range mdLink.FindAllStringSubmatch(body, -1) {
 		t := m[1]
 		if strings.Contains(t, "://") || strings.HasPrefix(t, "#") || strings.HasPrefix(t, "mailto:") {

@@ -1,0 +1,104 @@
+# codewiki: incremental compound on every merge to master/main.
+#
+# Copy this file into your app monorepo (next to codewiki.yaml). Runs are
+# serialized per branch; a run that starts behind HEAD catches up from
+# wiki/.kb/state.json last_sha to HEAD in one go (graph diff, not per commit).
+name: codewiki compound
+
+on:
+  push:
+    branches: [master, main]
+    paths-ignore: ["wiki/**"]        # the wiki commit itself must not retrigger
+  workflow_dispatch:
+    inputs:
+      full:
+        description: "force a full rebuild"
+        type: boolean
+        default: false
+
+concurrency:
+  group: codewiki-compound-${{ github.ref }}
+  cancel-in-progress: false          # never drop a merge; queue it
+
+permissions:
+  contents: write
+
+env:
+  KB_VERSION: latest                 # or a tag, e.g. v0.1.0
+  KB_MAX_LLM_TASKS: "12"             # cost guard: remaining tasks use the template writer
+  CGO_CFLAGS: "-O2 -w"
+
+jobs:
+  test-kb:
+    # only meaningful inside the codewiki repo itself
+    if: hashFiles('cmd/kb/main.go') != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: "1.24", cache: true }
+      - run: go vet ./... && test -z "$(gofmt -l cmd internal skills)" && go test ./...
+
+  compound:
+    if: hashFiles('codewiki.yaml') != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0              # kb diff --base / git archive need history
+
+      - uses: actions/setup-go@v5
+        with: { go-version: "1.24", cache: true }
+
+      - name: Cache kb binary
+        id: kbcache
+        uses: actions/cache@v4
+        with:
+          path: ~/go/bin/kb
+          key: kb-${{ runner.os }}-${{ env.KB_VERSION }}
+
+      - name: Install kb
+        if: steps.kbcache.outputs.cache-hit != 'true'
+        run: go install github.com/luckylucky0001/codewiki/cmd/kb@${KB_VERSION}
+
+      - name: Install Claude Code (only when an API key is configured)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        if: env.ANTHROPIC_API_KEY != ''
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: kb compound
+        id: compound
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          set -o pipefail
+          LLM=template
+          if [ -n "${ANTHROPIC_API_KEY}" ]; then LLM=claude; fi
+          FULL=""
+          if [ "${{ inputs.full }}" = "true" ]; then FULL="--full"; fi
+          kb compound --llm "$LLM" --fallback --max-llm-tasks "$KB_MAX_LLM_TASKS" $FULL --keep-work --json > compound.json
+          jq -r '.result.message' compound.json
+
+      - name: kb verify (gate)
+        run: kb verify
+
+      - name: Publish wiki commit
+        run: |
+          git config user.name "codewiki-bot"
+          git config user.email "codewiki-bot@users.noreply.github.com"
+          git add wiki
+          if git diff --cached --quiet; then echo "wiki unchanged"; exit 0; fi
+          git commit -m "docs(wiki): compound ${GITHUB_SHA::7} [skip ci]"
+          git push origin HEAD:${GITHUB_REF_NAME}
+
+      - name: Upload run record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codewiki-run-${{ github.sha }}
+          path: |
+            compound.json
+            .kb-work/
+          if-no-files-found: ignore

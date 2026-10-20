@@ -131,7 +131,6 @@ log "SUMMARY.md"
   echo "| step | mode | tasks | stale before | verify |"
   echo "|---|---|---|---|---|"
   echo "| initial | $(grep -m1 '^mode ' "$OUT/04-compound-initial.txt" | awk '{print $2}') | $(grep -c '^  task ' "$OUT/04-compound-initial.txt" || true) | - | $(head -1 "$OUT/04-compound-initial.verify.txt" | awk '{print $2}' | tr -d :) |"
-  for f in "$OUT"/*-[0-9][0-9]-*.4-compound.txt; do :; done
   for f in "$OUT"/[0-9][0-9]-*.4-compound.txt; do
     base="${f%.4-compound.txt}"; n="$(basename "$base" | cut -d- -f2-)"
     stale="$(grep -c '^stale ' "$base.1-status.txt" || true)"

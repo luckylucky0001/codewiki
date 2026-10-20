@@ -140,7 +140,7 @@ func (e *taskEnv) conflictsPrompt(b *strings.Builder, claims []Claim) {
 	b.WriteString("## 任务说明：逐条核对文档断言\n\n")
 	b.WriteString("下面是从 `raw/docs/` 文档中抽取的断言（含确定性预检结果）。请阅读 raw/docs 原文与下列证据/代码，判断每条断言：\n")
 	b.WriteString("- `verified`：代码支持该断言（必须给出 anchors：符号 ID 列表）\n- `conflict`：代码与之矛盾（以代码为准，evidence 写明代码实际行为）\n- `unverifiable`：找不到证据（不会提升为知识）\n\n")
-	fmt.Fprintf(b, "把结果写入 `%s`，格式：\n\n```json\n{\"version\":1,\"claims\":[{\"id\":\"FR-001\",\"status\":\"verified\",\"anchors\":[\"android://...#Sym\"],\"route_ids\":[\"cart\"],\"evidence\":[\"一句话证据\"]}]}\n```\n\n只能使用下文出现过的符号 ID。`pages/_conflicts.md` 与 `facts/requirements.json` 会由 CLI 根据该文件渲染，不要直接写它们。\n\n", VerdictsFile)
+	fmt.Fprintf(b, "把结果写入 `%s`，格式：\n\n```json\n{\"version\":1,\"claims\":[{\"id\":\"FR-001\",\"status\":\"verified\",\"anchors\":[\"android://...#Sym\"],\"route_ids\":[\"cart\"],\"evidence\":[\"一句话证据\"]}]}\n```\n\n只能使用下文出现过的符号 ID。evidence 用一句话说明代码的实际行为，不要复制“预检”文字。`pages/_conflicts.md` 与 `facts/requirements.json` 会由 CLI 根据该文件渲染，不要直接写它们。\n\n", VerdictsFile)
 	b.WriteString("## 断言与预检\n\n")
 	syms := map[string]bool{}
 	for _, c := range claims {

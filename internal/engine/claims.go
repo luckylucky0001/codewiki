@@ -326,9 +326,20 @@ func (k *Checker) Check(c *Claim) {
 		if reIdentLike.MatchString(span) {
 			syms := k.findSymbols(span)
 			if len(syms) == 0 {
-				if looksLikeCodeIdent(span) {
+				name := strings.TrimSuffix(span, "()")
+				if hit := k.tokenSearch(name); hit != "" {
+					// not a declared symbol (config key, error code, property…) but used in code
+					verified = true
+					anchors[hit] = true
+					addRouteForSym(hit)
+					evidence = append(evidence, fmt.Sprintf("`%s` 出现在代码中（%s）", span, hit))
+					continue
+				}
+				if first := strings.SplitN(name, ".", 2)[0]; strings.Contains(name, ".") && isPascal(first) && !builtinTypes[first] && k.tokenSearch(first) == "" && len(k.findSymbols(first)) == 0 {
 					conflict = true
-					evidence = append(evidence, fmt.Sprintf("符号 `%s` 在代码中不存在", span))
+					evidence = append(evidence, fmt.Sprintf("符号 `%s` 在代码中不存在（类型 `%s` 也不存在）", span, first))
+				} else if looksLikeCodeIdent(span) {
+					evidence = append(evidence, fmt.Sprintf("`%s` 在代码中找不到（无法确定性判断）", span))
 				}
 				continue
 			}
@@ -402,6 +413,10 @@ func (k *Checker) Check(c *Claim) {
 
 func (k *Checker) checkAPI(method, p string, anchors map[string]bool, evidence *[]string, conflict, verified *bool) {
 	np := normAPIPath(p)
+	if len(k.F.APIs) == 0 || regexp.MustCompile(`\.(html?|md|json|js|png|svg)$`).MatchString(np) {
+		*evidence = append(*evidence, fmt.Sprintf("`%s` 无法与接口事实比对（未抽取到 HTTP 接口或不是接口路径）", strings.TrimSpace(method+" "+p)))
+		return
+	}
 	var same, other []model.API
 	for _, a := range k.F.APIs {
 		if normAPIPath(a.Path) == np {
@@ -429,6 +444,39 @@ func (k *Checker) checkAPI(method, p string, anchors map[string]bool, evidence *
 		*conflict = true
 		*evidence = append(*evidence, fmt.Sprintf("接口 `%s` 在代码中不存在", label))
 	}
+}
+
+var builtinTypes = map[string]bool{}
+
+func init() {
+	for _, t := range strings.Fields("Object Function Array Promise JSON Math String Number Boolean Error Symbol Map Set WeakMap URL URLSearchParams ClientRequest IncomingMessage Buffer Date RegExp Reflect Proxy AbortController AbortSignal XMLHttpRequest FormData Blob Headers Request Response ReadableStream TextEncoder TextDecoder Intl Kotlin Swift Foundation UIKit SwiftUI NSObject Bundle Context Intent Activity") {
+		builtinTypes[t] = true
+	}
+}
+
+func isPascal(s string) bool {
+	return len(s) > 1 && s[0] >= 'A' && s[0] <= 'Z' && strings.ToUpper(s) != s
+}
+
+// tokenSearch returns the smallest symbol whose source contains name as a whole token.
+func (k *Checker) tokenSearch(name string) string {
+	if len(name) < 3 {
+		return ""
+	}
+	re, err := regexp.Compile(`(^|[^A-Za-z0-9_$])` + regexp.QuoteMeta(name) + `([^A-Za-z0-9_$]|$)`)
+	if err != nil {
+		return ""
+	}
+	best, span := "", 1<<30
+	for _, s := range k.G.Symbols {
+		if s.EndLine-s.StartLine >= span {
+			continue
+		}
+		if re.MatchString(k.symbolText(s)) {
+			best, span = s.ID, s.EndLine-s.StartLine
+		}
+	}
+	return best
 }
 
 func looksLikeCodeIdent(s string) bool {

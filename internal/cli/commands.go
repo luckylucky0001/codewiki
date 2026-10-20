@@ -170,7 +170,13 @@ func cmdInit(a *app, fs *flag.FlagSet, _ []string) int {
 	dry := boolFlag(fs, "dry-run")
 	created := []string{}
 	cfgPath := filepath.Join(root, config.FileName)
-	cfg, err := config.Load(root)
+	var cfg *config.Config
+	var err error
+	if a.config != "" {
+		cfg, err = a.loadConfig()
+	} else {
+		cfg, err = config.Load(root)
+	}
 	if errors.Is(err, config.ErrNotFound) {
 		cfg = config.Default()
 		cfg.Root = root
