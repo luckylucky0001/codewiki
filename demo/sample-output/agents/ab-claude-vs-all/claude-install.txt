@@ -1,0 +1,9 @@
+created   instructions claude   CLAUDE.md
+created   skill        claude   .claude/skills/kb-compound/SKILL.md
+created   skill        claude   .claude/skills/kb-compound/references/page-contract.md
+created   skill        claude   .claude/skills/kb-ingest/SKILL.md
+created   skill        claude   .claude/skills/kb-ingest/references/conventions.md
+created   skill        claude   .claude/skills/kb-lint/SKILL.md
+created   skill        claude   .claude/skills/kb-query/SKILL.md
+created   mcp          claude   .mcp.json
+note: claude: project-scoped; Claude Code asks once before using servers from .mcp.json

@@ -81,6 +81,19 @@ kb install-skills ../app                      # 旧命令，保留为别名：.c
 | Codex：`codex mcp list`（项目已信任） | 列出 `codewiki  kb  mcp --root <repo>  enabled` |
 | Gemini：真实 CLI 加 mock API | 模型输入里有 GEMINI.md 块和 kb skills，tools 里有 `mcp_codewiki_kb_*`（由真实的 `kb mcp` 握手提供） |
 
+**A/B：多装了别的 agent 的文件，会不会干扰 Claude？**（`demo/agents-ab.sh`，haiku，3 个问题，每组 3 次，共 18 次真实运行）
+
+对比两组：只执行 `kb install --agent claude --mcp`，与执行 `--agent all --mcp`（后者多出 AGENTS.md、GEMINI.md、`.cursor/`、`.github/`、`.agents/`、`.codex/`、`.gemini/`）。
+
+| 指标 | 只装 claude | 装 all |
+|---|---|---|
+| 读取其他 agent 文件的次数 | 0 | 0 |
+| 首个动作 | q1 首个动作是 `kb search`；q2 是 `kb routes`（加 `lint-tid --pages`）；q3 先 Glob 定位文件，随后在 6/6 次里都调用了 `kb context`（另有 1 次首个动作是 `find`） | 同左，但没有出现 `find` |
+| 平均轮数 q1 / q2 / q3 | 5.7 / 2.7 / 7.3 | 5.3 / 2.3 / 8.3 |
+| 9 次总花费 | $0.0497 | $0.0484 |
+
+结论：差异都在随机波动范围内，额外的文件没有让 Claude 分心。明细见 [ab-claude-vs-all/summary.md](../demo/sample-output/agents/ab-claude-vs-all/summary.md)。
+
 Codex 和 Gemini 的这几项由 `TestRealCodexConsumesInstall` 和 `TestRealGeminiConsumesInstall` 覆盖。本机装了对应 CLI，或者设置了 `KB_CODEX_BIN` / `KB_GEMINI_BIN` 时才会运行，否则跳过。
 
 ## 作为后端：`--agent`

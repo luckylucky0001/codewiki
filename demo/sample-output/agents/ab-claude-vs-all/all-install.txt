@@ -1,0 +1,26 @@
+created   instructions claude   CLAUDE.md
+created   skill        claude   .claude/skills/kb-compound/SKILL.md
+created   skill        claude   .claude/skills/kb-compound/references/page-contract.md
+created   skill        claude   .claude/skills/kb-ingest/SKILL.md
+created   skill        claude   .claude/skills/kb-ingest/references/conventions.md
+created   skill        claude   .claude/skills/kb-lint/SKILL.md
+created   skill        claude   .claude/skills/kb-query/SKILL.md
+created   mcp          claude   .mcp.json
+created   instructions codex    AGENTS.md
+created   skill        codex    .agents/skills/kb-compound/SKILL.md
+created   skill        codex    .agents/skills/kb-compound/references/page-contract.md
+created   skill        codex    .agents/skills/kb-ingest/SKILL.md
+created   skill        codex    .agents/skills/kb-ingest/references/conventions.md
+created   skill        codex    .agents/skills/kb-lint/SKILL.md
+created   skill        codex    .agents/skills/kb-query/SKILL.md
+created   mcp          codex    .codex/config.toml
+created   instructions gemini   GEMINI.md
+created   mcp          gemini   .gemini/settings.json
+created   instructions cursor   .cursor/rules/codewiki.mdc
+created   mcp          cursor   .cursor/mcp.json
+created   instructions copilot  .github/copilot-instructions.md
+note: claude: project-scoped; Claude Code asks once before using servers from .mcp.json
+note: codex: Codex loads project .codex/config.toml only for trusted projects; or register globally: codex mcp add codewiki -- kb mcp --root <tmp>/all
+note: gemini: Gemini enables project MCP servers only in trusted folders (/permissions or ~/.gemini/trustedFolders.json); "trust": true skips confirmations for kb's read-only tools
+note: copilot: register the MCP server by hand: VS Code: add the server to .vscode/mcp.json ("servers": {"codewiki": {"command": "kb", "args": ["mcp", "--root", "<tmp>/all"]}}); coding agent: repository settings → Copilot → MCP
+note: generic: register the MCP server by hand: register a stdio MCP server: command `kb`, args `mcp --root <tmp>/all`
