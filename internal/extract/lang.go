@@ -10,7 +10,7 @@ import (
 	swift "github.com/alex-pinkus/tree-sitter-swift/bindings/go"
 	kotlin "github.com/tree-sitter-grammars/tree-sitter-kotlin/bindings/go"
 	sitter "github.com/tree-sitter/go-tree-sitter"
-	arkts "github.com/tree-sitter/tree-sitter-arkts/bindings/go"
+	arkts "github.com/luckylucky0001/codewiki/internal/grammars/arkts"
 	java "github.com/tree-sitter/tree-sitter-java/bindings/go"
 	javascript "github.com/tree-sitter/tree-sitter-javascript/bindings/go"
 	typescript "github.com/tree-sitter/tree-sitter-typescript/bindings/go"

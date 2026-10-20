@@ -47,11 +47,12 @@ flowchart LR
 需要 Go 1.24 与 C 编译器（tree-sitter 语法通过 cgo 编译）。
 
 ```bash
-git clone https://github.com/luckylucky0001/codewiki && cd codewiki
-go build -o kb ./cmd/kb          # 或 go install ./cmd/kb
+go install github.com/luckylucky0001/codewiki/cmd/kb@latest
+# 或从 checkout 构建
+git clone https://github.com/luckylucky0001/codewiki && cd codewiki && go build -o kb ./cmd/kb
 ```
 
-注意：`go.mod` 通过 `replace` 指向 vendored 的 ArkTS 语法（`third_party/tree-sitter-arkts`），因此不支持远程 `go install …/cmd/kb@latest`，请从 checkout 构建。
+ArkTS 语法以源码形式 vendored 在模块内部（`internal/grammars/arkts`，含 MIT LICENSE 与 VENDORED.md），`go.mod` 不含任何 `replace`，因此远程 `go install …@latest` 可用。
 
 提示：Swift 语法的 C 代码在编译时会打印 `TOKEN_COUNT redefined` 警告，无害；可用 `CGO_CFLAGS="-O2 -w"` 静默。
 
@@ -281,7 +282,7 @@ skills 只驱动 CLI，不重新实现逻辑。
 ## 局限
 
 - **cgo**：tree-sitter 语法是 C 代码，需要 C 编译器；交叉编译需相应工具链。
-- **ArkTS 语法**：使用 `harmony-contrib/tree-sitter-arkts`（vendored 于 `third_party/tree-sitter-arkts`，MIT），上游报告约 94% 的真实工程文件可无错解析；出错文件记录在 `parse_failures`（仍尽量抽取符号），不会中断扫描。
+- **ArkTS 语法**：使用 `harmony-contrib/tree-sitter-arkts`（vendored 于 `internal/grammars/arkts`，MIT），上游报告约 94% 的真实工程文件可无错解析；出错文件记录在 `parse_failures`（仍尽量抽取符号），不会中断扫描。
 - Swift 语法来自 `alex-pinkus/tree-sitter-swift`（使用带生成文件的 tag 版本）；Kotlin 为 `tree-sitter-grammars/tree-sitter-kotlin` v1.1.0；Java/JS/TS 为官方语法。
 - 引用边为名称级解析，没有类型推断；跨平台不建立边。
 - template writer 产出的页面偏“结构化索引”，叙述质量需 claude 模式。
@@ -306,4 +307,4 @@ go vet ./... && gofmt -l cmd internal skills
 DEMO_LLM=template demo/run.sh           # 端到端 demo
 ```
 
-目录：`cmd/kb`（入口）、`internal/extract`（tree-sitter 符号/调用点）、`internal/scan`（遍历 + 引用解析）、`internal/facts`（三端事实）、`internal/engine`（diff/plan/compound/claims/docs）、`internal/wiki`（页面/索引/日志/verify）、`internal/cli`、`skills/`、`examples/`、`demo/`、`third_party/tree-sitter-arkts`。
+目录：`cmd/kb`（入口）、`internal/extract`（tree-sitter 符号/调用点）、`internal/scan`（遍历 + 引用解析）、`internal/facts`（三端事实）、`internal/engine`（diff/plan/compound/claims/docs）、`internal/wiki`（页面/索引/日志/verify）、`internal/cli`、`skills/`、`examples/`、`demo/`、`internal/grammars/arkts`（vendored ArkTS 语法 + cgo binding）。
