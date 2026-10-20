@@ -142,7 +142,7 @@ func TemplateOverview(f *model.Facts, platforms []string, commit string) *wiki.P
 	if len(schemes) > 0 {
 		fmt.Fprintf(&b, "\n深链 scheme：`%s`；测试态注入：`?token=<t>&cart=<sku,sku>`。\n", strings.Join(sortedKeys(schemes), "`, `"))
 	}
-	fmt.Fprintf(&b, "\n规模：%d 条路由、%d 个 testID、%d 个接口调用点。机器可读：[routes.json](../facts/routes.json) · [testids.json](../facts/testids.json) · [apis.json](../facts/apis.json)\n", len(f.Routes), len(f.TestIDs), len(f.APIs))
+	fmt.Fprintf(&b, "\n规模：%d 条路由、%d 个 testID、%d 个接口调用点。三端差异见 [parity.md](parity.md)。机器可读：[routes.json](../facts/routes.json) · [testids.json](../facts/testids.json) · [apis.json](../facts/apis.json)\n", len(f.Routes), len(f.TestIDs), len(f.APIs))
 	pg := &wiki.Page{Path: OverviewPage, HasFM: true, Body: b.String()}
 	pg.Front = wiki.Front{ID: wiki.IDFromPath(OverviewPage), Title: "总览", Kind: "overview", Platforms: platforms, Routes: rids, SourceCommit: commit, Status: wiki.StatusCurrent}
 	return pg

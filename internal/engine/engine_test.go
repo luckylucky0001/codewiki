@@ -50,8 +50,8 @@ func TestDiffCommentOnlyAndBody(t *testing.T) {
 	testutil.ApplyChange(t, dir, "01-cart-limit")
 	cur, _ := scanDir(t, cfg, dir)
 	d := DiffGraphs(old, cur)
-	if d.Counts[ClassBody] != 3 || len(d.Changes) != 3 {
-		t.Fatalf("want exactly 3 body changes (cart limits), got %v %+v", d.Counts, d.Changes)
+	if d.Counts[ClassBody] != 2 || len(d.Changes) != 2 {
+		t.Fatalf("want exactly 2 body changes (android + harmony cart limits), got %v %+v", d.Counts, d.Changes)
 	}
 	for _, c := range d.Changes {
 		if !strings.Contains(strings.ToLower(c.ID), "max") {
@@ -336,6 +336,40 @@ func TestSharedComponentEditDoesNotStaleFeatures(t *testing.T) {
 					t.Fatalf("features/cart went stale on %s", a.Sym)
 				}
 			}
+		}
+	}
+}
+
+func TestParityConstantDiff(t *testing.T) {
+	cfg, dir := withChange(t)
+	g0, f0 := scanDir(t, cfg, dir)
+	plats := []string{"android", "ios", "harmony"}
+	p0 := ComputeParity(g0, f0, plats)
+	if p0.Gaps != 0 {
+		t.Fatalf("baseline minishop must be at parity: %+v", p0)
+	}
+	testutil.ApplyChange(t, dir, "01-cart-limit")
+	g1, f1 := scanDir(t, cfg, dir)
+	p1 := ComputeParity(g1, f1, plats)
+	if len(p1.Constants) != 1 || p1.Constants[0].Name != "max_cart_items" ||
+		p1.Constants[0].Values["android"].Value != "50" || p1.Constants[0].Values["ios"].Value != "99" || p1.Constants[0].Values["harmony"].Value != "50" {
+		t.Fatalf("constant diff: %+v", p1.Constants)
+	}
+	if !strings.Contains(string(RenderParity(p1)), "max_cart_items") {
+		t.Fatal("parity page misses the constant")
+	}
+	// a route missing on one platform is a gap
+	f2 := *f1
+	f2.Routes = nil
+	for _, r := range f1.Routes {
+		if !(r.RouteID == "cart" && r.Platform == "ios") {
+			f2.Routes = append(f2.Routes, r)
+		}
+	}
+	p2 := ComputeParity(g1, &f2, plats)
+	for _, r := range p2.Features {
+		if r.RouteID == "cart" && (len(r.MissingRoute) != 1 || r.MissingRoute[0] != "ios") {
+			t.Fatalf("missing route not reported: %+v", r)
 		}
 	}
 }

@@ -153,6 +153,9 @@ Exit 1 when verification fails (nothing is published).`,
 		help: "Uses $KB_GRAPH (set by kb compound for LLM tasks) when present, otherwise scans the repo.", run: cmdAnchor})
 	register(&command{name: "lint-tid", usage: "[--strict]", summary: "testID coverage per route and platform",
 		flags: func(fs *flag.FlagSet) { fs.Bool("strict", false, "exit 1 when a testID is missing on some platform") }, run: cmdLintTid})
+	register(&command{name: "parity", usage: "[--strict]", summary: "feature × platform matrix: routes, testIDs, APIs and constants that differ across platforms",
+		help:  "Also generated as wiki/pages/parity.md on every compound (verified for freshness).",
+		flags: func(fs *flag.FlagSet) { fs.Bool("strict", false, "exit 1 when any gap or constant difference exists") }, run: cmdParity})
 	register(&command{name: "install-skills", usage: "<target-repo> [--dry-run]", summary: "install kb skills into <target>/.claude/skills for Claude Code",
 		flags: func(fs *flag.FlagSet) { fs.Bool("dry-run", false, "list files only") }, run: cmdInstallSkills})
 }
@@ -1118,5 +1121,35 @@ func cmdInstallSkills(a *app, fs *flag.FlagSet, args []string) int {
 			fmt.Fprintln(w, x)
 		}
 	})
+	return ExitOK
+}
+
+// ---------- parity ----------
+
+func cmdParity(a *app, fs *flag.FlagSet, _ []string) int {
+	cfg, code := a.cfgOrFail()
+	if cfg == nil {
+		return code
+	}
+	res, err := scan.ScanRepo(cfg)
+	if err != nil {
+		return a.fail(ExitInternal, err)
+	}
+	f := facts.Extract(cfg, res)
+	var plats []string
+	for _, p := range cfg.Platforms {
+		plats = append(plats, p.Name)
+	}
+	p := engine.ComputeParity(res.Graph, f, plats)
+	a.emit(p, func(w io.Writer) {
+		md := string(engine.RenderParity(p))
+		if i := strings.Index(md, "# "); i >= 0 {
+			md = md[i:]
+		}
+		fmt.Fprint(w, md)
+	})
+	if p.Gaps > 0 && boolFlag(fs, "strict") {
+		return ExitStale
+	}
 	return ExitOK
 }

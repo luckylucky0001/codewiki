@@ -217,6 +217,10 @@ func ResolveRefs(g *model.Graph) {
 			return c.ID == s.ID || c.ID == s.Parent || c.Parent == s.ID || strings.HasPrefix(s.ID, c.ID+".")
 		}
 		refs := map[string]bool{}
+		called := map[string]bool{}
+		for _, n := range s.CallNames {
+			called[n] = true
+		}
 		for _, n := range s.RefNames {
 			var pick []*model.Symbol
 			for _, c := range byFile[key{s.File, n, ""}] {
@@ -249,7 +253,20 @@ func ResolveRefs(g *model.Graph) {
 							}
 						}
 						if len(top) > 1 {
-							top = nil // several members with this name: ambiguous
+							// several members with this name: if the name is called,
+							// prefer the single callable candidate, otherwise the single
+							// non-callable one
+							var fit []*model.Symbol
+							for _, c := range top {
+								isFn := c.Kind == "function" || c.Kind == "method" || c.Kind == "constructor"
+								if isFn == called[n] {
+									fit = append(fit, c)
+								}
+							}
+							top = nil
+							if len(fit) == 1 {
+								top = fit
+							}
 						}
 					}
 					pick = top

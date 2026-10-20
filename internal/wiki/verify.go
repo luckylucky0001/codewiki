@@ -73,7 +73,7 @@ func Verify(wikiDir string, g *model.Graph, opt VerifyOptions) *Report {
 				r.Errors = append(r.Errors, Issue{Code: "E_FRONTMATTER", Page: p.Path, Detail: "invalid status " + p.Front.Status})
 			}
 		}
-		if strings.HasPrefix(p.Path, "pages/") && len(p.Front.Sources) == 0 && p.Front.Kind != "overview" {
+		if strings.HasPrefix(p.Path, "pages/") && len(p.Front.Sources) == 0 && p.Front.Kind != "overview" && !p.Front.Generated {
 			r.Warnings = append(r.Warnings, Issue{Code: "W_NO_SOURCES", Page: p.Path, Detail: "page has no code anchors"})
 		}
 		if p.Front.Status == StatusStale {

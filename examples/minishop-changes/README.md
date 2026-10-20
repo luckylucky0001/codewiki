@@ -5,6 +5,6 @@
 
 | 变更集 | 内容 | 期望 |
 |---|---|---|
-| `01-cart-limit` | 三端购物车上限 99 → 50；Android/iOS 登录 ViewModel 仅改注释与空白 | 注释变化为 no-op；上限常量 body 变化 → 商品详情/购物车页面与 `_conflicts.md` 重写；spec `FR-002`（99）变为 conflict |
+| `01-cart-limit` | Android 与 HarmonyOS 购物车上限 99 → 50（**iOS 漏改**，仍为 99）；Android/iOS 登录 ViewModel 仅改注释与空白 | 注释变化为 no-op；上限常量 body 变化 → 购物车/商品详情页与 `_conflicts.md` 重写；spec `FR-002`（99）变为 conflict；`kb parity` 报告 `max_cart_items` 三端不一致（50/99/50） |
 | `02-arkts-api-rename` | ArkTS：`Api.loadProducts` 重命名为 `fetchProducts`（函数体不变）；`CartStore.addItem(sku)` 增加 `quantity` 参数 | diff 识别 renamed（similarity 1.0）与 signature 变化；沿引用边传播到调用方页面 |
 | `03-profile-route` | 三端新增 `profile` 路由、页面与 testID | facts 新增路由；plan 生成 `create pages/features/profile.md` 并更新总览 |

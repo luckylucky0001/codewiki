@@ -90,6 +90,7 @@ for cs in "$ROOT"/examples/minishop-changes/*/; do
   kbsave "$p-$name.3-plan.json" plan --json --dry-run
   kbsave "$p-$name.4-compound.txt" compound "${LF[@]}"
   kbsave "$p-$name.5-verify.txt" verify
+  kbsave "$p-$name.6-parity.txt" parity
   gitc add -A && gitc commit -qm "docs(wiki): compound after $name"
   i=$((i+1))
 done
@@ -100,6 +101,7 @@ kbsave 91-context.txt context android/app/src/main/java/com/minishop/ui/cart/Car
 kbsave 92-get-cart.md get features/cart
 kbsave 93-get-conflicts.md get _conflicts
 kbsave 94-lint-tid.txt lint-tid
+kbsave 94-parity.json parity --json
 kbsave 95-status.txt status
 kbsave 96-verify.json verify --json
 cp "$REPO/wiki/log.md" "$OUT/97-log.md"
@@ -149,6 +151,12 @@ log "SUMMARY.md"
     echo '```'
     echo
   done
+  echo "## Parity（三端一致性）"
+  echo
+  echo "Gaps after the last merge: $(jq '.gaps' "$OUT/94-parity.json"); constants that differ across platforms:"
+  echo
+  jq -r '.constant_diffs[] | "- `\(.name)`: " + ([.values | to_entries[] | "\(.key)=\(.value.value)"] | join(", "))' "$OUT/94-parity.json"
+  echo
   echo "## Queries"
   echo
   echo '```'

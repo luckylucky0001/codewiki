@@ -26,7 +26,8 @@ type Symbol struct {
 	Value     string   `json:"value,omitempty"` // literal initializer for constants
 	Refs      []string `json:"refs,omitempty"`
 
-	RefNames []string `json:"-"` // unresolved identifier names (scan-time only)
+	RefNames  []string `json:"-"` // unresolved identifier names (scan-time only)
+	CallNames []string `json:"-"` // subset of RefNames used as calls (followed by "(")
 }
 
 // FileInfo describes one scanned source file.

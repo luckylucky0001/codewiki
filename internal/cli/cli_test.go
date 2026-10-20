@@ -118,7 +118,7 @@ func TestTemplateFlow(t *testing.T) {
 		t.Fatalf("verify after change: %d (want 1)", code)
 	}
 	_, d := runJSON(t, dir, "diff")
-	if d["counts"].(map[string]any)["body"].(float64) != 3 {
+	if d["counts"].(map[string]any)["body"].(float64) != 2 {
 		t.Fatalf("diff counts %v", d["counts"])
 	}
 	code, v = runJSON(t, dir, "compound")

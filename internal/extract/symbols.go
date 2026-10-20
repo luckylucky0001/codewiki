@@ -394,6 +394,17 @@ func (c *fileCtx) finishSymbol(sn *symNode) {
 	texts := make([]string, len(toks))
 	var normTexts []string
 	refSet := map[string]bool{}
+	selfCount := 0
+	for _, t := range toks {
+		if t.ident && t.text == sn.sym.Name {
+			selfCount++
+		}
+	}
+	if selfCount > 1 {
+		// the name is used again inside the body (e.g. vm.login() calling
+		// api.login()): keep it as a reference; resolution skips the symbol itself
+		refSet[sn.sym.Name] = true
+	}
 	for i, t := range toks {
 		texts[i] = t.text
 		if t.text == sn.sym.Name {
@@ -418,6 +429,16 @@ func (c *fileCtx) finishSymbol(sn *symNode) {
 		sn.sym.RefNames = append(sn.sym.RefNames, r)
 	}
 	sort.Strings(sn.sym.RefNames)
+	called := map[string]bool{}
+	for i := 0; i+1 < len(toks); i++ {
+		if toks[i].ident && refSet[toks[i].text] && (toks[i+1].text == "(" || strings.HasPrefix(toks[i+1].text, "(")) {
+			called[toks[i].text] = true
+		}
+	}
+	for r := range called {
+		sn.sym.CallNames = append(sn.sym.CallNames, r)
+	}
+	sort.Strings(sn.sym.CallNames)
 	sn.sym.Value = c.literalValue(sn.node)
 }
 

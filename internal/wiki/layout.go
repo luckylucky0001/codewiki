@@ -105,6 +105,7 @@ func Init(wikiDir string, dryRun bool) ([]string, error) {
 
 var sectionOrder = []struct{ prefix, title string }{
 	{"pages/overview", "总览"},
+	{"pages/parity", "三端一致性 parity（生成）"},
 	{"pages/features/", "功能 features"},
 	{"pages/flows/", "流程 flows"},
 	{"pages/concepts/", "概念 concepts"},

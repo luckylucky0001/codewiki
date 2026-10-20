@@ -207,7 +207,9 @@ func ExpectedFacts(cfg *config.Config, g *model.Graph, f *model.Facts) map[strin
 	for _, p := range cfg.Platforms {
 		plats = append(plats, p.Name)
 	}
-	return facts.Render(f, g, plats)
+	out := facts.Render(f, g, plats)
+	out[ParityPage] = RenderParity(ComputeParity(g, f, plats))
+	return out
 }
 
 // Compound runs scan → diff → plan → LLM → verify → atomic publish.

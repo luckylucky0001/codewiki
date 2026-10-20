@@ -13,7 +13,7 @@ import (
 )
 
 // CacheVersion invalidates caches written by incompatible extractors.
-const CacheVersion = "scan-cache/2"
+const CacheVersion = "scan-cache/4" // bump whenever extract/ output changes
 
 // CacheFile is the cache location relative to the wiki dir (gitignored).
 const CacheFile = ".kb/cache/scan.gob.gz"
@@ -114,6 +114,7 @@ func (c *Cache) get(rel, hash, lang, platform string) (extract.FileResult, bool)
 		cp := *s
 		cp.Refs = nil
 		cp.RefNames = append([]string(nil), s.RefNames...)
+		cp.CallNames = append([]string(nil), s.CallNames...)
 		syms[i] = &cp
 	}
 	return extract.FileResult{Symbols: syms, Calls: e.Calls, Failure: e.Failure}, true
@@ -125,6 +126,7 @@ func (c *Cache) put(rel, hash, lang, platform string, fr extract.FileResult) {
 		cp := *s
 		cp.Refs = nil
 		cp.RefNames = append([]string(nil), s.RefNames...)
+		cp.CallNames = append([]string(nil), s.CallNames...)
 		syms[i] = &cp
 	}
 	c.mu.Lock()
