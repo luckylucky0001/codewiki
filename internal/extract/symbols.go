@@ -46,6 +46,8 @@ type FileResult struct {
 	Symbols []*model.Symbol
 	Calls   []Call
 	Failure *model.ParseFailure
+	Package string
+	Imports []string // "name|source"
 }
 
 type symNode struct {
@@ -90,6 +92,7 @@ func ParseFile(ps *Parsers, lang, platform, relPath, repoPath string, src []byte
 		c.finishSymbol(sn)
 	}
 	c.collectCalls(root, &res.Calls)
+	res.Package, res.Imports = c.imports(root)
 	for _, sn := range c.syms {
 		res.Symbols = append(res.Symbols, sn.sym)
 	}

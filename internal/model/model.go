@@ -36,6 +36,11 @@ type FileInfo struct {
 	Lang     string `json:"lang"`
 	Hash     string `json:"hash"`
 	Symbols  int    `json:"symbols"`
+	// Package is the Kotlin/Java package (scope for top-level resolution).
+	Package string `json:"package,omitempty"`
+	// Imports are "name|source" pairs (Kotlin/Java fully qualified import,
+	// ArkTS/TS `import {name} from 'source'`); name "*" = wildcard.
+	Imports []string `json:"imports,omitempty"`
 }
 
 // ParseFailure records a file the parser could not fully handle.

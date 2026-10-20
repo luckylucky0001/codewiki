@@ -8,6 +8,7 @@ import (
 	"errors"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -144,7 +145,7 @@ func ScanWith(cfg *config.Config, dir string, opt Options) (*Result, error) {
 		}
 		g.Symbols = append(g.Symbols, r.fr.Symbols...)
 		res.Calls[r.rel] = r.fr.Calls
-		g.Files[r.rel] = model.FileInfo{Platform: r.platform, Lang: r.lang, Hash: r.hash, Symbols: len(r.fr.Symbols)}
+		g.Files[r.rel] = model.FileInfo{Platform: r.platform, Lang: r.lang, Hash: r.hash, Symbols: len(r.fr.Symbols), Package: r.fr.Package, Imports: r.fr.Imports}
 		res.Stats.Files++
 		if r.hit {
 			res.Stats.CacheHits++
@@ -193,15 +194,42 @@ func runJob(ps *extract.Parsers, j job, c *Cache) jobResult {
 
 var errTooLarge = errors.New("file too large (>2MiB), skipped")
 
-// ResolveRefs turns identifier names into symbol ids using simple name
-// resolution on the same platform: same-file declarations win, then members
-// whose parent type is also referenced, then a unique (≤3) global match.
-// Ambiguous names are dropped. Index-based, so it is linear in practice.
+// ResolveRefs turns identifier names into symbol ids. Resolution is scope
+// aware: same-file declarations first, then explicit imports (Kotlin/Java
+// fully qualified imports, ArkTS/TS `import {X} from './file'`; imports of
+// external packages shadow project symbols), then members of types that are
+// visible in the file (or reached through a referenced property's type), then
+// top-level symbols visible by package (Kotlin/Java same package or wildcard
+// import) or module (Swift). Ambiguous names are dropped.
 func ResolveRefs(g *model.Graph) {
 	type key struct{ a, b, c string }
 	byName := map[key][]*model.Symbol{}   // platform, name
 	byFile := map[key][]*model.Symbol{}   // file, name
 	byParent := map[key][]*model.Symbol{} // platform, parent name, name
+	fileScope := map[string]map[string]bool{}
+	projectPkgs := map[string]bool{}
+	imports := map[string]map[string]string{} // file -> name -> source
+	wild := map[string][]string{}             // file -> wildcard packages / modules
+	for f, fi := range g.Files {
+		if fi.Package != "" {
+			projectPkgs[fi.Package] = true
+		}
+		m := map[string]string{}
+		for _, imp := range fi.Imports {
+			name, src, _ := strings.Cut(imp, "|")
+			if name == "*" {
+				wild[f] = append(wild[f], src)
+				continue
+			}
+			m[name] = src
+		}
+		imports[f] = m
+		sc := map[string]bool{}
+		for n := range m {
+			sc[n] = true
+		}
+		fileScope[f] = sc
+	}
 	for _, s := range g.Symbols {
 		byName[key{s.Platform, s.Name, ""}] = append(byName[key{s.Platform, s.Name, ""}], s)
 		byFile[key{s.File, s.Name, ""}] = append(byFile[key{s.File, s.Name, ""}], s)
@@ -211,16 +239,83 @@ func ResolveRefs(g *model.Graph) {
 				byParent[k] = append(byParent[k], s)
 			}
 		}
+		sc := fileScope[s.File]
+		if sc == nil {
+			sc = map[string]bool{}
+			fileScope[s.File] = sc
+		}
+		for _, n := range s.RefNames {
+			sc[n] = true
+		}
 	}
-	for _, s := range g.Symbols {
+	pkgOf := func(file string) string { return g.Files[file].Package }
+	langOf := func(file string) string { return g.Files[file].Lang }
+	isES := func(l string) bool { return l == "arkts" || l == "typescript" || l == "tsx" || l == "javascript" }
+
+	// resolveImport returns (candidates, handled). handled=true with no
+	// candidates means the name refers to an external package.
+	resolveImport := func(s *model.Symbol, n string) ([]*model.Symbol, bool) {
+		src, ok := imports[s.File][n]
+		if !ok {
+			return nil, false
+		}
+		lang := langOf(s.File)
+		switch {
+		case lang == "kotlin" || lang == "java":
+			pkg := src
+			if i := strings.LastIndex(src, "."); i >= 0 {
+				pkg = src[:i]
+			}
+			orig := src[strings.LastIndex(src, ".")+1:]
+			var out []*model.Symbol
+			for _, c := range byName[key{s.Platform, orig, ""}] {
+				if pkgOf(c.File) == pkg && c.Parent == "" {
+					out = append(out, c)
+				}
+			}
+			if len(out) == 0 && !projectPkgs[pkg] {
+				// maybe Outer.Inner import; otherwise external
+				outerPkg := pkg
+				if i := strings.LastIndex(pkg, "."); i >= 0 {
+					outerPkg = pkg[:i]
+				}
+				if !projectPkgs[outerPkg] {
+					return nil, true
+				}
+			}
+			return out, true
+		case isES(lang):
+			orig := n
+			if i := strings.Index(src, "#"); i >= 0 {
+				src, orig = src[:i], src[i+1:]
+			}
+			if !strings.HasPrefix(src, ".") {
+				return nil, true // package import (@kit.ArkUI, react, …)
+			}
+			base := path.Clean(path.Join(path.Dir(s.File), src))
+			var out []*model.Symbol
+			for _, ext := range []string{"", ".ets", ".ts", ".js", ".tsx", ".mjs", "/index.ets", "/index.ts", "/index.js"} {
+				for _, c := range byFile[key{base + ext, orig, ""}] {
+					if c.Parent == "" {
+						out = append(out, c)
+					}
+				}
+			}
+			return out, true
+		}
+		return nil, false
+	}
+
+	pass := func(s *model.Symbol, scope map[string]bool) []string {
 		self := func(c *model.Symbol) bool {
 			return c.ID == s.ID || c.ID == s.Parent || c.Parent == s.ID || strings.HasPrefix(s.ID, c.ID+".")
 		}
-		refs := map[string]bool{}
 		called := map[string]bool{}
 		for _, n := range s.CallNames {
 			called[n] = true
 		}
+		lang := langOf(s.File)
+		refs := map[string]bool{}
 		for _, n := range s.RefNames {
 			var pick []*model.Symbol
 			for _, c := range byFile[key{s.File, n, ""}] {
@@ -229,29 +324,77 @@ func ResolveRefs(g *model.Graph) {
 				}
 			}
 			if len(pick) == 0 {
-				for _, pn := range s.RefNames {
-					for _, c := range byParent[key{s.Platform, pn, n}] {
+				cands, handled := resolveImport(s, n)
+				if handled {
+					for _, c := range cands {
 						if !self(c) {
 							pick = append(pick, c)
 						}
 					}
+					if len(pick) == 0 {
+						continue // external import shadows project symbols
+					}
 				}
 			}
 			if len(pick) == 0 {
-				all := byName[key{s.Platform, n, ""}]
-				if len(all) <= 3 {
+				var preferred []*model.Symbol
+				for _, pn := range s.RefNames {
+					owners := map[string]bool{}
+					if imp, ok := resolveImport(s, pn); ok {
+						for _, o := range imp {
+							owners[o.ID] = true
+						}
+					}
+					for _, o := range byFile[key{s.File, pn, ""}] {
+						owners[o.ID] = true
+					}
+					for _, c := range byParent[key{s.Platform, pn, n}] {
+						if self(c) {
+							continue
+						}
+						pick = append(pick, c)
+						if owners[c.Parent] {
+							preferred = append(preferred, c)
+						}
+					}
+				}
+				if len(preferred) > 0 {
+					pick = preferred // Owner.member where Owner is imported / local
+				}
+			}
+			if len(pick) == 0 {
+				var vis []*model.Symbol
+				for _, c := range byName[key{s.Platform, n, ""}] {
+					if self(c) {
+						continue
+					}
+					if c.Parent != "" {
+						p := g.Get(c.Parent)
+						if p != nil && (scope[p.Name] || fileScope[s.File][p.Name]) {
+							vis = append(vis, c)
+						}
+						continue
+					}
+					switch {
+					case lang == "kotlin" || lang == "java":
+						if pkgOf(c.File) == pkgOf(s.File) || containsStr(wild[s.File], pkgOf(c.File)) {
+							vis = append(vis, c)
+						}
+					case isES(lang):
+						// top-level ES symbols must be imported (handled above)
+					default:
+						vis = append(vis, c)
+					}
+				}
+				if len(vis) <= 3 {
 					var top []*model.Symbol
-					for _, c := range all {
-						if !self(c) && c.Parent == "" {
+					for _, c := range vis {
+						if c.Parent == "" {
 							top = append(top, c)
 						}
 					}
 					if len(top) == 0 {
-						for _, c := range all {
-							if !self(c) {
-								top = append(top, c)
-							}
-						}
+						top = vis
 						if len(top) > 1 {
 							// several members with this name: if the name is called,
 							// prefer the single callable candidate, otherwise the single
@@ -279,12 +422,43 @@ func ResolveRefs(g *model.Graph) {
 				refs[c.ID] = true
 			}
 		}
-		s.Refs = nil
+		out := make([]string, 0, len(refs))
 		for r := range refs {
-			s.Refs = append(s.Refs, r)
+			out = append(out, r)
 		}
-		sort.Strings(s.Refs)
+		sort.Strings(out)
+		return out
 	}
+	// pass 1: file scope; pass 2: widen the scope with the type names used by
+	// the referenced properties (vm -> CartViewModel, service -> ApiService)
+	first := make([][]string, len(g.Symbols))
+	for i, s := range g.Symbols {
+		first[i] = pass(s, map[string]bool{})
+	}
+	for i, s := range g.Symbols {
+		scope := map[string]bool{}
+		for _, r := range first[i] {
+			if rs := g.Get(r); rs != nil {
+				scope[rs.Name] = true
+				for _, n := range rs.RefNames {
+					scope[n] = true
+				}
+			}
+		}
+		s.Refs = pass(s, scope)
+		if len(s.Refs) == 0 {
+			s.Refs = nil
+		}
+	}
+}
+
+func containsStr(xs []string, x string) bool {
+	for _, y := range xs {
+		if y == x {
+			return true
+		}
+	}
+	return false
 }
 
 type glob struct{ re *regexp.Regexp }

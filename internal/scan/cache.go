@@ -13,7 +13,7 @@ import (
 )
 
 // CacheVersion invalidates caches written by incompatible extractors.
-const CacheVersion = "scan-cache/4" // bump whenever extract/ output changes
+const CacheVersion = "scan-cache/5" // bump whenever extract/ output changes
 
 // CacheFile is the cache location relative to the wiki dir (gitignored).
 const CacheFile = ".kb/cache/scan.gob.gz"
@@ -25,6 +25,8 @@ type cacheEntry struct {
 	Symbols  []*model.Symbol
 	Calls    []extract.Call
 	Failure  *model.ParseFailure
+	Package  string
+	Imports  []string
 }
 
 // Cache maps repo-relative files (by content hash) to their parse results so
@@ -117,7 +119,7 @@ func (c *Cache) get(rel, hash, lang, platform string) (extract.FileResult, bool)
 		cp.CallNames = append([]string(nil), s.CallNames...)
 		syms[i] = &cp
 	}
-	return extract.FileResult{Symbols: syms, Calls: e.Calls, Failure: e.Failure}, true
+	return extract.FileResult{Symbols: syms, Calls: e.Calls, Failure: e.Failure, Package: e.Package, Imports: e.Imports}, true
 }
 
 func (c *Cache) put(rel, hash, lang, platform string, fr extract.FileResult) {
@@ -130,7 +132,7 @@ func (c *Cache) put(rel, hash, lang, platform string, fr extract.FileResult) {
 		syms[i] = &cp
 	}
 	c.mu.Lock()
-	c.Entries[rel] = cacheEntry{Hash: hash, Lang: lang, Platform: platform, Symbols: syms, Calls: fr.Calls, Failure: fr.Failure}
+	c.Entries[rel] = cacheEntry{Hash: hash, Lang: lang, Platform: platform, Symbols: syms, Calls: fr.Calls, Failure: fr.Failure, Package: fr.Package, Imports: fr.Imports}
 	c.dirty = true
 	c.mu.Unlock()
 }
