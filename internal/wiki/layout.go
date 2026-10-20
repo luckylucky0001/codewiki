@@ -139,26 +139,22 @@ func RenderIndex(pages []*Page) []byte {
 		}
 		fmt.Fprintf(&b, "\n## %s\n\n", s.title)
 		if s.prefix == "facts/" {
-			// group by platform sub dir
-			last := ""
+			// one line per platform sub dir, root-level facts files first
+			var order []string
+			links := map[string][]string{}
 			for _, p := range ps {
-				plat := strings.SplitN(strings.TrimPrefix(p.Path, "facts/"), "/", 2)[0]
-				if plat != last {
-					fmt.Fprintf(&b, "- **%s**:", plat)
-					last = plat
+				parts := strings.SplitN(strings.TrimPrefix(p.Path, "facts/"), "/", 2)
+				group := "(root)"
+				if len(parts) == 2 {
+					group = parts[0]
 				}
-				fmt.Fprintf(&b, " [%s](%s)", strings.TrimSuffix(filepath.Base(p.Path), ".md"), p.Path)
-				b.WriteString("")
-				// newline when next is a different platform
-				next := ""
-				for j, q := range ps {
-					if q == p && j+1 < len(ps) {
-						next = strings.SplitN(strings.TrimPrefix(ps[j+1].Path, "facts/"), "/", 2)[0]
-					}
+				if _, ok := links[group]; !ok {
+					order = append(order, group)
 				}
-				if next != plat {
-					b.WriteString("\n")
-				}
+				links[group] = append(links[group], fmt.Sprintf("[%s](%s)", strings.TrimSuffix(filepath.Base(p.Path), ".md"), p.Path))
+			}
+			for _, g := range order {
+				fmt.Fprintf(&b, "- **%s**: %s\n", g, strings.Join(links[g], " "))
 			}
 			continue
 		}

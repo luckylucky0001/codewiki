@@ -99,6 +99,10 @@ func FeatureSymbols(g *model.Graph, f *model.Facts, rid string) []string {
 			continue
 		}
 		queue := []item{{r.Symbol, 0}}
+		stem := strings.SplitN(strings.TrimPrefix(strings.ReplaceAll(" "+rid, "_", " "), " "), " ", 2)[0]
+		if stem != "" {
+			stem = strings.ToUpper(stem[:1]) + stem[1:]
+		}
 		taken := 0
 		for len(queue) > 0 && taken < perPlatform {
 			it := queue[0]
@@ -129,9 +133,10 @@ func FeatureSymbols(g *model.Graph, f *model.Facts, rid string) []string {
 					continue
 				}
 				if containerKinds[rs.Kind] {
-					// types used directly by the entry point (view model, page
-					// component) contribute their members; deeper types do not.
-					if it.depth == 0 {
+					// types used directly by the entry point (its view model or
+					// page component) contribute their members; shared infra
+					// types (routers, API clients) and deeper types do not.
+					if it.depth == 0 && (it.id == r.Symbol || strings.HasPrefix(rs.Name, stem)) {
 						for _, c := range children[rs.ID] {
 							queue = append(queue, item{c, 1})
 						}
