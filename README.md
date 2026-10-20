@@ -18,7 +18,7 @@ flowchart LR
     A[android/ Kotlin+Java] --- I[ios/ Swift] --- H[harmony/ ArkTS]
     D[docs / specs / ADR / AGENTS.md]
   end
-  repo -->|kb scan<br/>tree-sitter| G[(符号图<br/>.kb/graph.json)]
+  repo -->|kb scan<br/>tree-sitter| G[(符号图<br/>.kb/graph.json.gz)]
   repo -->|kb scan| F[facts/*.json + facts/&lt;platform&gt;/*.md]
   G -->|kb diff| DF[unchanged/body/signature/<br/>added/deleted/renamed]
   DF -->|kb plan| P[任务 + write set<br/>.kb/plan.json]
@@ -176,7 +176,7 @@ wiki/
     concepts/shared-components.md  # 被 ≥3 个路由使用的共享符号
     flows/ concepts/ decisions/
     _conflicts.md      # 文档 vs 代码：conflict / verified / unverifiable
-  .kb/graph.json       # 符号图快照（增量基准）
+  .kb/graph.json.gz    # 符号图快照（增量基准，gzip；旧版 graph.json 仍可读）
   .kb/state.json       # last_sha、graph/prompt 版本、writer
   .kb/plan.json  .kb/update_record.json  .kb/ingest/verdicts.json
 ```
@@ -232,7 +232,7 @@ status: current                   # current | stale | outdated-doc
 
 ## 增量 compound 的细节
 
-1. **diff**：基准是上次成功 compound 的 `.kb/graph.json`（而不是 commit 链），所以 squash/rebase/积压多次 merge 都能一次追到 HEAD；`--base <sha>` 用 `git archive` 重新扫描任意版本。
+1. **diff**：基准是上次成功 compound 的 `.kb/graph.json.gz`（而不是 commit 链），所以 squash/rebase/积压多次 merge 都能一次追到 HEAD；`--base <sha>` 用 `git archive` 重新扫描任意版本。
 2. **plan**：
    - 页面自身锚点 body/signature 变化、删除、改名 → 受影响；
    - signature 变化 / 删除 / 改名的符号，沿**反向引用边**走 k 跳（`plan.hops`），锚定到这些调用方的页面也受影响（RepoAgent 式引用失效）；

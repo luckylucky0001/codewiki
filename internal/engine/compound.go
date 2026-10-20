@@ -2,6 +2,7 @@ package engine
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -148,7 +149,19 @@ func ScanRevision(cfg *config.Config, sha string) (*scan.Result, func(), error) 
 
 // LoadGraph reads a graph snapshot.
 func LoadGraph(p string) (*model.Graph, error) {
-	b, err := os.ReadFile(p)
+	var b []byte
+	var err error
+	if fh, gerr := os.Open(p + ".gz"); gerr == nil {
+		zr, zerr := gzip.NewReader(fh)
+		if zerr == nil {
+			b, err = io.ReadAll(zr)
+		} else {
+			err = zerr
+		}
+		fh.Close()
+	} else {
+		b, err = os.ReadFile(p) // wikis written before graph.json.gz
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -158,6 +171,29 @@ func LoadGraph(p string) (*model.Graph, error) {
 	}
 	g.Index()
 	return g, nil
+}
+
+// writeGraph stores the compound baseline as .kb/graph.json.gz (compact
+// JSON, gzip): the indented graph.json was the largest committed wiki file
+// (NextE 24 MB, ~3.7 MB gzipped). A legacy graph.json is removed.
+func writeGraph(kbDir string, g *model.Graph) error {
+	raw, err := json.Marshal(g)
+	if err != nil {
+		return err
+	}
+	var buf bytes.Buffer
+	zw, _ := gzip.NewWriterLevel(&buf, gzip.BestSpeed)
+	if _, err := zw.Write(raw); err != nil {
+		return err
+	}
+	if err := zw.Close(); err != nil {
+		return err
+	}
+	if err := wiki.WriteFileAtomic(filepath.Join(kbDir, "graph.json.gz"), buf.Bytes()); err != nil {
+		return err
+	}
+	_ = os.Remove(filepath.Join(kbDir, "graph.json"))
+	return nil
 }
 
 // Analysis holds scan + facts + diff + plan (shared by diff/plan/compound).
@@ -364,7 +400,7 @@ func Compound(o *Options) (*Result, error) {
 	}
 	if o.Kind == "compound" {
 		_ = os.MkdirAll(filepath.Join(staging, ".kb"), 0o755)
-		_ = os.WriteFile(filepath.Join(staging, ".kb", "graph.json"), gb, 0o644)
+		_ = writeGraph(filepath.Join(staging, ".kb"), a.Graph)
 		st := State{LastSHA: head, GraphVersion: model.GraphVersion, PromptVersion: PromptVersion, LLM: o.LLM, UpdatedAt: time.Now().UTC().Format(time.RFC3339)}
 		writeJSON(filepath.Join(staging, ".kb", "state.json"), st)
 	}
@@ -898,11 +934,7 @@ func advanceBaseline(wikiDir string, g *model.Graph, head, llm string) error {
 	if _, err := os.Stat(filepath.Join(wikiDir, ".kb")); err != nil {
 		return err
 	}
-	gb, err := json.MarshalIndent(g, "", " ")
-	if err != nil {
-		return err
-	}
-	if err := wiki.WriteFileAtomic(filepath.Join(wikiDir, ".kb", "graph.json"), gb); err != nil {
+	if err := writeGraph(filepath.Join(wikiDir, ".kb"), g); err != nil {
 		return err
 	}
 	writeJSON(filepath.Join(wikiDir, ".kb", "state.json"), State{LastSHA: head, GraphVersion: model.GraphVersion, PromptVersion: PromptVersion, LLM: llm, UpdatedAt: time.Now().UTC().Format(time.RFC3339)})

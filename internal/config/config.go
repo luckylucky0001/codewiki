@@ -67,7 +67,7 @@ var ErrNotFound = errors.New("codewiki.yaml not found (run `kb init` first)")
 
 // Load reads <root>/codewiki.yaml, filling defaults.
 func Load(root string) (*Config, error) {
-	abs, err := filepath.Abs(root)
+	abs, err := AbsRoot(root)
 	if err != nil {
 		return nil, err
 	}
@@ -101,6 +101,21 @@ func (c *Config) WikiPath() string {
 		return c.WikiDir
 	}
 	return filepath.Join(c.Root, c.WikiDir)
+}
+
+// AbsRoot is filepath.Abs plus symlink resolution. filepath.WalkDir does not
+// descend into a root that is itself a symlink, so `kb --root <link>` (a repo
+// reached through a symlinked checkout, macOS /tmp -> /private/tmp) used to
+// scan zero files without any error.
+func AbsRoot(p string) (string, error) {
+	abs, err := filepath.Abs(p)
+	if err != nil {
+		return "", err
+	}
+	if real, err := filepath.EvalSymlinks(abs); err == nil {
+		return real, nil
+	}
+	return abs, nil
 }
 
 // Detect guesses platforms from the directory layout of root.

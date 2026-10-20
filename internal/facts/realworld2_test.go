@@ -243,3 +243,18 @@ private func projectComments(_ params: RouteParams) -> Navigation? { return nil 
 		t.Errorf(`"/" is not a route: %v`, rm)
 	}
 }
+
+// NextE: settings pages are pushed by computed names
+// (pushPathByName(item.route)); a component whose build() is a
+// NavDestination / HdsNavDestination is still a destination.
+func TestHarmonyNavDestinationComponents(t *testing.T) {
+	dir := writeTree(t, map[string]string{
+		"feature/settings/src/main/ets/pages/CacheSettingsPage.ets": "@ComponentV2\nexport struct CacheSettingsPage {\n  build() {\n    HdsNavDestination() {\n      Text('x')\n    }\n  }\n}\n",
+		"feature/user/src/main/ets/pages/HistoryPage.ets":           "@Component\nexport struct HistoryPage {\n  build() {\n    NavDestination() {\n      Text('x')\n    }\n    .title('h')\n  }\n}\n",
+		"feature/user/src/main/ets/pages/Row.ets":                   "@Component\nexport struct Row2 {\n  build() {\n    Text('x')\n  }\n}\n",
+	})
+	rm := routeMap(extractTree(t, dir, config.Platform{Name: "harmony", Root: "."}))
+	if !strings.HasSuffix(rm["CacheSettingsPage"].Symbol, "#CacheSettingsPage") || !strings.HasSuffix(rm["HistoryPage"].Symbol, "#HistoryPage") || len(rm) != 2 {
+		t.Fatalf("routes: %+v", rm)
+	}
+}

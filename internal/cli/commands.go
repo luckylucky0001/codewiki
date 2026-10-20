@@ -56,11 +56,11 @@ func (a *app) loadConfigRaw() (*config.Config, error) {
 		if err != nil {
 			return nil, err
 		}
-		root, _ := filepath.Abs(a.root)
+		root, _ := config.AbsRoot(a.root)
 		cfg.Root = root
 		if !filepath.IsAbs(cfg.WikiDir) && dir != "" {
 			// wiki_dir in an external config is relative to the config file
-			absDir, _ := filepath.Abs(dir)
+			absDir, _ := config.AbsRoot(dir)
 			if a.root == "." {
 				cfg.Root = absDir
 			}
