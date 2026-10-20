@@ -720,11 +720,14 @@ func (e *taskEnv) runCmd(t Task) ([]string, *agents.Usage, error) {
 	cmd := exec.CommandContext(ctx, "sh", "-c", cmdline)
 	cmd.Dir = e.staging
 	cmd.Stdin = strings.NewReader(prompt)
-	// stdout and stderr are copied by two goroutines: the shared log buffer
-	// must be locked (bytes.Buffer is not safe for concurrent writes).
+	// stdout and stderr are copied by two goroutines and a pipe read can end
+	// mid-line: each stream is line-buffered and only whole lines enter the
+	// shared (locked) log, so stderr never splices into a JSON event line.
+	// Usage/events are parsed from the separate stdout buffer.
 	var out lockedBuffer
 	var stdout bytes.Buffer
-	cmd.Stdout, cmd.Stderr = io.MultiWriter(&out, &stdout), &out
+	outLines, errLines := &lineWriter{dst: &out}, &lineWriter{dst: &out}
+	cmd.Stdout, cmd.Stderr = io.MultiWriter(outLines, &stdout), errLines
 	env := os.Environ()
 	if e.o.KBPath != "" {
 		env = append(env, "PATH="+filepath.Dir(e.o.KBPath)+string(os.PathListSeparator)+os.Getenv("PATH"))
@@ -732,6 +735,8 @@ func (e *taskEnv) runCmd(t Task) ([]string, *agents.Usage, error) {
 	env = append(env, "KB_ROOT="+e.o.Cfg.Root, "KB_GRAPH="+e.graphPath, "KB_TASK="+t.ID)
 	cmd.Env = env
 	runErr := cmd.Run()
+	outLines.Flush()
+	errLines.Flush()
 	_ = os.WriteFile(filepath.Join(tdir, t.ID+".log"), out.Bytes(), 0o644)
 	var usage *agents.Usage
 	if e.o.ParseUsage != nil {
@@ -951,6 +956,33 @@ func (l *lockedBuffer) Write(p []byte) (int, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	return l.b.Write(p)
+}
+
+// lineWriter forwards only complete lines to dst (one Write per line, so a
+// concurrent writer to dst cannot interleave inside a line); Flush writes
+// the unterminated tail. Each lineWriter is used by a single goroutine.
+type lineWriter struct {
+	dst     io.Writer
+	pending []byte
+}
+
+func (w *lineWriter) Write(p []byte) (int, error) {
+	w.pending = append(w.pending, p...)
+	if i := bytes.LastIndexByte(w.pending, '\n'); i >= 0 {
+		if _, err := w.dst.Write(w.pending[:i+1]); err != nil {
+			return 0, err
+		}
+		w.pending = append(w.pending[:0], w.pending[i+1:]...)
+	}
+	return len(p), nil
+}
+
+// Flush writes any unterminated tail.
+func (w *lineWriter) Flush() {
+	if len(w.pending) > 0 {
+		_, _ = w.dst.Write(w.pending)
+		w.pending = nil
+	}
 }
 
 func (l *lockedBuffer) Bytes() []byte {

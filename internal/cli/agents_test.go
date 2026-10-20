@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -481,6 +482,8 @@ func TestAgentsCommand(t *testing.T) {
 // The task log keeps the agent's stdout (e.g. codex --json events) and its
 // stderr: both are copied concurrently, so the log buffer must be locked.
 // Before the fix the log of a real codex run held only the stderr warning.
+var logLineRe = regexp.MustCompile(`^(\{"type":"item\.completed","n":\d+\}|warn \d+|\{"type":"turn\.completed",.*\})$`)
+
 func TestAgentTaskLogKeepsStdoutAndStderr(t *testing.T) {
 	dir := repo(t)
 	run(t, dir, "init")
@@ -502,6 +505,12 @@ func TestAgentTaskLogKeepsStdoutAndStderr(t *testing.T) {
 		s := string(b)
 		if strings.Count(s, `"type":"item.completed"`) != 3000 || strings.Count(s, "warn ") != 3000 || !strings.Contains(s, "turn.completed") {
 			t.Fatalf("%s: stdout %d/3000, stderr %d/3000", l, strings.Count(s, `"type":"item.completed"`), strings.Count(s, "warn "))
+		}
+		// no line may be spliced from both streams (pipe reads end mid-line)
+		for _, line := range strings.Split(strings.TrimRight(s, "\n"), "\n") {
+			if !logLineRe.MatchString(line) {
+				t.Fatalf("%s: spliced line %q", l, line)
+			}
 		}
 	}
 	for _, tk := range v["result"].(map[string]any)["tasks"].([]any) {
