@@ -1,0 +1,19 @@
+* 4f7dd13 docs(wiki): compound after 03-profile-route
+*   b1df120 Merge branch 'feature/03-profile-route'
+|\  
+| * d4c3c35 feat(profile): add profile route on Android, iOS and HarmonyOS
+|/  
+* 88f6204 docs(wiki): compound after 02-arkts-api-rename
+*   1c63b25 Merge branch 'feature/02-arkts-api-rename'
+|\  
+| * bfed742 refactor(harmony): rename Api.loadProducts -> fetchProducts; CartStore.addItem takes quantity
+|/  
+* 662fafe docs(wiki): compound after 01-cart-limit
+*   3db62a4 Merge branch 'feature/01-cart-limit'
+|\  
+| * 681ab93 feat(cart): lower cart limit to 50 items on all platforms; docs-only comment tweaks in login
+|/  
+* c41a78c docs(wiki): initial compound
+* 8c0f41c docs(wiki): ingest legacy docs and specs
+* 1130a7e chore(wiki): kb init
+* 2d13fe3 chore: import minishop

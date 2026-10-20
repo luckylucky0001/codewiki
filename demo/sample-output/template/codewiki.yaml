@@ -1,0 +1,28 @@
+# codewiki configuration. See README.md ("配置").
+version: 1
+wiki_dir: wiki
+project: repo
+platforms:
+    - name: android
+      root: android
+    - name: ios
+      root: ios
+    - name: harmony
+      root: harmony
+exclude:
+    - '**/build/**'
+    - '**/node_modules/**'
+    - '**/.git/**'
+    - '**/Pods/**'
+    - '**/oh_modules/**'
+    - '**/.gradle/**'
+    - '**/.kb-work/**'
+llm:
+    cmd: claude -p --permission-mode acceptEdits --allowedTools "Read,Write,Edit,Glob,Grep,Bash(kb anchor:*),Bash(kb get:*),Bash(kb search:*)" --output-format text
+    timeout_sec: 600
+plan:
+    hops: 1
+    rebuild_module_ratio: 0.5
+    rebuild_structural_ratio: 0.3
+docs:
+    exclude: []

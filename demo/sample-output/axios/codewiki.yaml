@@ -1,0 +1,8 @@
+version: 1
+project: axios
+wiki_dir: wiki
+platforms:
+  - name: web
+    root: .
+    include: ["lib/**/*.js", "index.js"]
+exclude: ["**/node_modules/**", "**/dist/**", "**/.git/**", "**/test/**", "**/tests/**", "**/examples/**", "**/sandbox/**"]

@@ -1,0 +1,23 @@
+compound 20261020T163257-1c63b25: base 3db62a4 → head 1c63b25, mode incremental, llm template
+mode incremental — anchors changed ∪ signature changes propagated along reference edges
+stats: symbols=214 changes=map[body:4 renamed:1 signature:1 unchanged:208] module_ratio=0.10 structural_ratio=0.01 hops=1 propagated=2
+  t01-_conflicts recheck pages/_conflicts.md            write_set=[.kb/ingest/verdicts.json] reasons=[anchor_body_changed:CartStore, anchor_body_changed:ProductDetailPage.build]
+  t02-features-product_detail update  pages/features/product_detail.md write_set=[pages/features/product_detail.md] reasons=[anchor_signature_changed:CartStore.addItem, anchor_body_changed:ProductDetailPage.build]
+  t03-features-products update  pages/features/products.md     write_set=[pages/features/products.md] reasons=[anchor_renamed:Api.loadProducts, anchor_body_changed:ProductsPage.aboutToAppear]
+  task t01-_conflicts               ok       template 
+  task t02-features-product_detail  ok       template 
+  task t03-features-products        ok       template 
+changed files: 11
+  .kb/graph.json
+  .kb/plan.json
+  .kb/state.json
+  .kb/update_record.json
+  facts/apis.json
+  facts/harmony/apis.md
+  facts/requirements.json
+  log.md
+  pages/_conflicts.md
+  pages/features/product_detail.md
+  pages/features/products.md
+verify PASS: 20 pages, 288 anchors, 0 errors, 0 warnings
+published 11 changed file(s) to demo/output/<ts>-template/repo/wiki

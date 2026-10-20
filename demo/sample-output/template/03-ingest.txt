@@ -1,0 +1,39 @@
+ingest 20261020T163254-1130a7e: base  → head 1130a7e, mode ingest, llm template
+mode ingest — check ingested documents against code
+stats: symbols=214 changes=map[added:214] module_ratio=1.00 structural_ratio=1.00 hops=1 propagated=0
+  t01-_conflicts create  pages/_conflicts.md            write_set=[.kb/ingest/verdicts.json] reasons=[full_rebuild]
+  task t01-_conflicts               ok       template 
+changed files: 31
+  .kb/ingest/verdicts.json
+  .kb/plan.json
+  .kb/update_record.json
+  facts/android/apis.md
+  facts/android/routes.md
+  facts/android/symbols.md
+  facts/android/testids.md
+  facts/apis.json
+  facts/harmony/apis.md
+  facts/harmony/routes.md
+  facts/harmony/symbols.md
+  facts/harmony/testids.md
+  facts/ios/apis.md
+  facts/ios/routes.md
+  facts/ios/symbols.md
+  facts/ios/testids.md
+  facts/requirements.json
+  facts/routes.json
+  facts/testids.json
+  index.md
+  llms.txt
+  log.md
+  pages/_conflicts.md
+  raw/docs/.kiro/specs/login/requirements.md
+  raw/docs/.kiro/steering/product.md
+  raw/docs/docs/adr/0001-navigation.md
+  raw/docs/docs/legacy/cart.md
+  raw/docs/docs/legacy/login.md
+  raw/docs/manifest.json
+  raw/docs/specs/001-cart/plan.md
+  raw/docs/specs/001-cart/spec.md
+verify PASS: 13 pages, 156 anchors, 0 errors, 0 warnings
+published 31 changed file(s) to demo/output/<ts>-template/repo/wiki

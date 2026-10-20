@@ -1,0 +1,807 @@
+{
+  "version": 1,
+  "requirements": [
+    {
+      "id": "AGENTS-a63cdd",
+      "source": "AGENTS.md",
+      "text": "Use `npm ci`; repo `.npmrc` sets `ignore-scripts=true`, and CI also uses `npm ci --ignore-scripts`.",
+      "status": "unverifiable",
+      "anchors": [],
+      "route_ids": [],
+      "evidence": [
+        "[llm] 根目录 .npmrc 含 ignore-scripts=true；CI workflow 使用 npm ci --ignore-scripts",
+        "没有可确定性校验的锚点（需要 LLM 语义核对）"
+      ]
+    },
+    {
+      "id": "AGENTS-e7ae6f",
+      "source": "AGENTS.md",
+      "text": "Do not remove `ignore-scripts=true`; if git hooks are needed after a fresh install, run `npm rebuild husky \u0026\u0026 npx husky` once.",
+      "status": "unverifiable",
+      "anchors": [],
+      "route_ids": [],
+      "evidence": [
+        "[llm] package.json 的 prepare 脚本为 husky，.npmrc 设置 ignore-scripts=true，与描述一致",
+        "没有可确定性校验的锚点（需要 LLM 语义核对）"
+      ]
+    },
+    {
+      "id": "AGENTS-1e2396",
+      "source": "AGENTS.md",
+      "text": "Adding or updating dependencies is security-sensitive; `package-lock.json` is checked by `lockfile-lint` for npm HTTPS hosts and integrity hashes.",
+      "status": "unverifiable",
+      "anchors": [],
+      "route_ids": [],
+      "evidence": [
+        "[llm] package-lock.json 存在，但 lockfile-lint 未在所给事实中确认",
+        "文件 `package-lock.json` 存在（docs/package-lock.json）"
+      ]
+    },
+    {
+      "id": "AGENTS-a53a81",
+      "source": "AGENTS.md",
+      "text": "Build/test/lint tools still execute dependency code despite `ignore-scripts`; avoid unnecessary full builds when a focused check proves the change.",
+      "status": "unverifiable",
+      "anchors": [],
+      "route_ids": [],
+      "evidence": [
+        "[llm] 开发流程建议，无代码证据",
+        "没有可确定性校验的锚点（需要 LLM 语义核对）"
+      ]
+    },
+    {
+      "id": "AGENTS-0daf13",
+      "source": "AGENTS.md",
+      "text": "Build published artifacts: `npm run build` (`gulp clear` deletes `dist/`, then Rollup writes browser ESM/UMD/CJS and Node CJS bundles).",
+      "status": "unverifiable",
+      "anchors": [],
+      "route_ids": [],
+      "evidence": [
+        "[llm] package.json: build = gulp clear \u0026\u0026 cross-env NODE_ENV=production rollup -c",
+        "没有可确定性校验的锚点（需要 LLM 语义核对）"
+      ]
+    },
+    {
+      "id": "AGENTS-ac2769",
+      "source": "AGENTS.md",
+      "text": "Lint source only: `npm run lint`; focused lint: `npx eslint lib/path/to/file.js`.",
+      "status": "unverifiable",
+      "anchors": [],
+      "route_ids": [],
+      "evidence": [
+        "[llm] package.json: lint = eslint lib/**/*.js",
+        "没有可确定性校验的锚点（需要 LLM 语义核对）"
+      ]
+    },
+    {
+      "id": "AGENTS-a67657",
+      "source": "AGENTS.md",
+      "text": "Unit tests: `npm run test:vitest:unit`; focused unit test: `npm run test:vitest:unit -- tests/unit/path.test.js`.",
+      "status": "unverifiable",
+      "anchors": [],
+      "route_ids": [],
+      "evidence": [
+        "[llm] package.json: test:vitest:unit = vitest run --project unit",
+        "没有可确定性校验的锚点（需要 LLM 语义核对）"
+      ]
+    },
+    {
+      "id": "AGENTS-628e09",
+      "source": "AGENTS.md",
+      "text": "Browser tests need Playwright installed first (`npx playwright install` locally; CI uses `npx playwright install --with-deps`); run `npm run test:vitest:browser:headless` for CI parity.",
+      "status": "unverifiable",
+      "anchors": [],
+      "route_ids": [],
+      "evidence": [
+        "[llm] package.json 有 test:vitest:browser:headless；release-branch.yml 使用 npx playwright install --with-deps",
+        "没有可确定性校验的锚点（需要 LLM 语义核对）"
+      ]
+    },
+    {
+      "id": "AGENTS-45fc50",
+      "source": "AGENTS.md",
+      "text": "Smoke/module compatibility suites test the packed package, not the source tree: run `npm run build`, `npm pack`, install the tarball into the relevant `tests/smoke/*` or `tests/module/*` package, then run that suite's npm script.",
+      "status": "unverifiable",
+      "anchors": [],
+      "route_ids": [],
+      "evidence": [
+        "[llm] tests/smoke 与 tests/module 目录存在，但打包安装流程未在给定事实中确认",
+        "没有可确定性校验的锚点（需要 LLM 语义核对）"
+      ]
+    },
+    {
+      "id": "AGENTS-d61cd0",
+      "source": "AGENTS.md",
+      "text": "Source is ESM (`type: module`); public ESM entry is `index.js`, which re-exports the default instance from `lib/axios.js`.",
+      "status": "verified",
+      "anchors": [
+        {
+          "sym": "web://lib/axios.js#axios",
+          "hash": "bb6ce17929b79b9f00533f9e69d23c9629e510471232541fb551959b306815a5"
+        }
+      ],
+      "route_ids": [],
+      "evidence": [
+        "[llm] index.js 与 lib/axios.js 存在，lib/axios.js 导出 createInstance(defaults) 创建的默认实例",
+        "文件 `index.js` 存在（index.js）",
+        "文件 `lib/axios.js` 存在（lib/axios.js）"
+      ]
+    },
+    {
+      "id": "AGENTS-f66160",
+      "source": "AGENTS.md",
+      "text": "Do not edit `dist/` by hand; it is ignored and generated from `lib/` by Rollup.",
+      "status": "unverifiable",
+      "anchors": [],
+      "route_ids": [],
+      "evidence": [
+        "[llm] 无法由给定符号确认 dist/ 的忽略与生成关系",
+        "没有可确定性校验的锚点（需要 LLM 语义核对）"
+      ]
+    },
+    {
+      "id": "AGENTS-9fd788",
+      "source": "AGENTS.md",
+      "text": "Runtime package exports are split by environment: browser/react-native map Node HTTP/platform files to browser/null replacements, while Node CJS ships as `dist/node/axios.cjs`.",
+      "status": "unverifiable",
+      "anchors": [],
+      "route_ids": [],
+      "evidence": [
+        "[llm] package.json browser 字段将 ./dist/node/axios.cjs 映射到 ./dist/browser/axios.cjs，lib/platform/node/index.js 映射到 lib/platform/browser/index.js",
+        "没有可确定性校验的锚点（需要 LLM 语义核对）"
+      ]
+    },
+    {
+      "id": "AGENTS-74b3c2",
+      "source": "AGENTS.md",
+      "text": "Keep public runtime exports, `index.d.ts` (ESM types), and `index.d.cts` (CJS `export = axios` types) in sync for API changes.",
+      "status": "unverifiable",
+      "anchors": [],
+      "route_ids": [],
+      "evidence": [
+        "[llm] index.d.ts 与 index.d.cts 均存在",
+        "文件 `index.d.ts` 存在（index.d.ts）",
+        "`index.d.cts` 在代码中找不到（无法确定性判断）"
+      ]
+    },
+    {
+      "id": "AGENTS-4715f9",
+      "source": "AGENTS.md",
+      "text": "`lib/env/data.js` is version-generated by `gulp version`; do not edit it for normal feature work.",
+      "status": "unverifiable",
+      "anchors": [],
+      "route_ids": [],
+      "evidence": [
+        "[llm] lib/env/data.js 存在，但由 gulp version 生成无符号证据",
+        "文件 `lib/env/data.js` 存在（lib/env/data.js）"
+      ]
+    },
+    {
+      "id": "AGENTS-f5d9b1",
+      "source": "AGENTS.md",
+      "text": "Add user-visible unreleased changes to `PRE_RELEASE_CHANGELOG.md`, not `CHANGELOG.md`. `CHANGELOG.md` is release-owned and should only be updated as part of preparing an actual release.",
+      "status": "unverifiable",
+      "anchors": [],
+      "route_ids": [],
+      "evidence": [
+        "[llm] PRE_RELEASE_CHANGELOG.md 与 CHANGELOG.md 均存在",
+        "文件 `PRE_RELEASE_CHANGELOG.md` 存在（PRE_RELEASE_CHANGELOG.md）",
+        "文件 `CHANGELOG.md` 存在（CHANGELOG.md）",
+        "文件 `CHANGELOG.md` 存在（CHANGELOG.md）"
+      ]
+    },
+    {
+      "id": "AGENTS-1579d3",
+      "source": "AGENTS.md",
+      "text": "Track deferred README, docs site, examples, migration guide, and translated docs updates in `PRE_RELEASE_DOCS.md`. Use enough context for release preparation; do not store brittle diffs or line-number-only notes.",
+      "status": "unverifiable",
+      "anchors": [],
+      "route_ids": [],
+      "evidence": [
+        "[llm] PRE_RELEASE_DOCS.md 存在",
+        "文件 `PRE_RELEASE_DOCS.md` 存在（PRE_RELEASE_DOCS.md）"
+      ]
+    },
+    {
+      "id": "AGENTS-c12108",
+      "source": "AGENTS.md",
+      "text": "Do not update `README.md` or the docs site for unreleased runtime/API changes unless the task is explicitly release preparation. During feature/fix work, record what docs need to say in `PRE_RELEASE_DOCS.md` so it can be applied during release work.",
+      "status": "unverifiable",
+      "anchors": [],
+      "route_ids": [],
+      "evidence": [
+        "[llm] README.md 与 PRE_RELEASE_DOCS.md 存在",
+        "文件 `README.md` 存在（README.md）",
+        "文件 `PRE_RELEASE_DOCS.md` 存在（PRE_RELEASE_DOCS.md）"
+      ]
+    },
+    {
+      "id": "AGENTS-72c10f",
+      "source": "AGENTS.md",
+      "text": "`lib/core/` is axios domain logic: request dispatch, config merge, interceptors, headers, errors. Key classes: `Axios` (request dispatch + interceptor chains), `AxiosError` (standardized error codes), `AxiosHeaders` (case-insensitive header normalization), `InterceptorManager` (sync/async interceptor registration).",
+      "status": "verified",
+      "anchors": [
+        {
+          "sym": "web://lib/core/Axios.js#Axios",
+          "hash": "0704f06b6b76a023ac3b90ee1f784322eea80f95ed126fde1dc29d02fcd617e5"
+        },
+        {
+          "sym": "web://lib/core/AxiosError.js#AxiosError",
+          "hash": "437c478ee7a77cdf78fd3b8fafb41b4173628d1e1b5b42bca5ac18424222ee1a"
+        },
+        {
+          "sym": "web://lib/core/AxiosHeaders.js#AxiosHeaders",
+          "hash": "25fa6337f7e0e792c64b42da8610ed4132f4f5edbefaab575906049fea427826"
+        },
+        {
+          "sym": "web://lib/core/InterceptorManager.js#InterceptorManager",
+          "hash": "0ca165c0bd49bff856fe8246a6d517d9ddf7529b7ebb3b55c2cc1209196d9eba"
+        }
+      ],
+      "route_ids": [],
+      "evidence": [
+        "[llm] 四个类均位于 lib/core/",
+        "符号 `Axios` 存在（1 处）",
+        "符号 `AxiosError` 存在（1 处）",
+        "符号 `AxiosHeaders` 存在（1 处）",
+        "符号 `InterceptorManager` 存在（1 处）"
+      ]
+    },
+    {
+      "id": "AGENTS-6f63ca",
+      "source": "AGENTS.md",
+      "text": "`lib/adapters/` performs I/O; default adapter preference is `['xhr', 'http', 'fetch']`, with capability selection in `lib/adapters/adapters.js`. Detect by capability, not environment name.",
+      "status": "verified",
+      "anchors": [
+        {
+          "sym": "web://lib/defaults/index.js#defaults",
+          "hash": "89fc4b949eabe910dd05c965b5863918a1667a9cada200cc02737488e5cef3b9"
+        }
+      ],
+      "route_ids": [],
+      "evidence": [
+        "[llm] defaults.adapter 为 ['xhr','http','fetch']",
+        "字面量 `['xhr', 'http', 'fetch']` 出现在 web://lib/defaults/index.js#defaults",
+        "文件 `lib/adapters/adapters.js` 存在（lib/adapters/adapters.js）"
+      ]
+    },
+    {
+      "id": "AGENTS-eb8272",
+      "source": "AGENTS.md",
+      "text": "`lib/platform/` selects Node by default; browser builds rely on package/rollup aliasing to `lib/platform/browser`.",
+      "status": "unverifiable",
+      "anchors": [],
+      "route_ids": [],
+      "evidence": [
+        "[llm] package.json browser 字段将 lib/platform/node/index.js 别名到 lib/platform/browser/index.js",
+        "没有可确定性校验的锚点（需要 LLM 语义核对）"
+      ]
+    },
+    {
+      "id": "AGENTS-70df2f",
+      "source": "AGENTS.md",
+      "text": "`lib/helpers/` should stay generic and reusable outside axios; do not put axios-specific request lifecycle logic there.",
+      "status": "unverifiable",
+      "anchors": [],
+      "route_ids": [],
+      "evidence": [
+        "[llm] 设计约定，无法确定性校验",
+        "没有可确定性校验的锚点（需要 LLM 语义核对）"
+      ]
+    },
+    {
+      "id": "AGENTS-5df2af",
+      "source": "AGENTS.md",
+      "text": "New `lib//*.js` files should match existing source style: ESM imports with explicit `.js` extensions, `'use strict';` where current library files use it, and `AxiosError` for axios-originated failures.",
+      "status": "verified",
+      "anchors": [
+        {
+          "sym": "web://lib/core/AxiosError.js#AxiosError",
+          "hash": "437c478ee7a77cdf78fd3b8fafb41b4173628d1e1b5b42bca5ac18424222ee1a"
+        }
+      ],
+      "route_ids": [],
+      "evidence": [
+        "[llm] lib/helpers 等文件以 import AxiosError from '../core/AxiosError.js' 使用显式 .js 扩展",
+        "符号 `AxiosError` 存在（1 处）"
+      ]
+    },
+    {
+      "id": "AGENTS-289a41",
+      "source": "AGENTS.md",
+      "text": "Classes: PascalCase (`Axios`, `AxiosError`, `InterceptorManager`).",
+      "status": "verified",
+      "anchors": [
+        {
+          "sym": "web://lib/core/Axios.js#Axios",
+          "hash": "0704f06b6b76a023ac3b90ee1f784322eea80f95ed126fde1dc29d02fcd617e5"
+        },
+        {
+          "sym": "web://lib/core/AxiosError.js#AxiosError",
+          "hash": "437c478ee7a77cdf78fd3b8fafb41b4173628d1e1b5b42bca5ac18424222ee1a"
+        },
+        {
+          "sym": "web://lib/core/InterceptorManager.js#InterceptorManager",
+          "hash": "0ca165c0bd49bff856fe8246a6d517d9ddf7529b7ebb3b55c2cc1209196d9eba"
+        }
+      ],
+      "route_ids": [],
+      "evidence": [
+        "[llm] 类名均为 PascalCase",
+        "符号 `Axios` 存在（1 处）",
+        "符号 `AxiosError` 存在（1 处）",
+        "符号 `InterceptorManager` 存在（1 处）"
+      ]
+    },
+    {
+      "id": "AGENTS-40dc97",
+      "source": "AGENTS.md",
+      "text": "Functions: camelCase (`buildURL`, `mergeConfig`, `dispatchRequest`).",
+      "status": "verified",
+      "anchors": [
+        {
+          "sym": "web://lib/core/dispatchRequest.js#dispatchRequest",
+          "hash": "c6b2a6d9fb20d9f6e7d50aacd1bc33a79824f7af1626023dfe28cd2c2173570e"
+        },
+        {
+          "sym": "web://lib/core/mergeConfig.js#mergeConfig",
+          "hash": "8a692d24fff7e4bcf2e6fbc1575aefdde1cab29a02ef5d135198e3f2e082c839"
+        },
+        {
+          "sym": "web://lib/helpers/buildURL.js#buildURL",
+          "hash": "f3d3ff4a833545d0e50270cf6b291f9cb5c0759f614e897f4e9ddbf5eda4adb2"
+        }
+      ],
+      "route_ids": [],
+      "evidence": [
+        "[llm] 函数名均为 camelCase",
+        "符号 `buildURL` 存在（1 处）",
+        "符号 `mergeConfig` 存在（1 处）",
+        "符号 `dispatchRequest` 存在（1 处）"
+      ]
+    },
+    {
+      "id": "AGENTS-0ccff1",
+      "source": "AGENTS.md",
+      "text": "Error codes: UPPER_SNAKE_CASE constants on `AxiosError` (`ERR_NETWORK`, `ETIMEDOUT`).",
+      "status": "verified",
+      "anchors": [
+        {
+          "sym": "web://lib/core/AxiosError.js#AxiosError",
+          "hash": "437c478ee7a77cdf78fd3b8fafb41b4173628d1e1b5b42bca5ac18424222ee1a"
+        },
+        {
+          "sym": "web://lib/adapters/fetch.js#factory",
+          "hash": "15552026d9c25e8cd28834e3f5356449fae83dca71eab4c7c9990c1a88702719"
+        },
+        {
+          "sym": "web://lib/helpers/composeSignals.js#composeSignals",
+          "hash": "7e64f35e7d008badc82e83df270c4f34b7cad5610855329311903cd1e91b6dc5"
+        }
+      ],
+      "route_ids": [],
+      "evidence": [
+        "[llm] AxiosError 上以静态 UPPER_SNAKE_CASE 常量定义错误码",
+        "符号 `AxiosError` 存在（1 处）",
+        "`ERR_NETWORK` 出现在代码中（web://lib/adapters/fetch.js#factory）",
+        "`ETIMEDOUT` 出现在代码中（web://lib/helpers/composeSignals.js#composeSignals）"
+      ]
+    },
+    {
+      "id": "AGENTS-0fa2f6",
+      "source": "AGENTS.md",
+      "text": "Internal class slots: `Symbol`-keyed (e.g. `const $internals = Symbol('internals')` in `lib/core/AxiosHeaders.js`) rather than underscore-prefixed properties.",
+      "status": "verified",
+      "anchors": [
+        {
+          "sym": "web://lib/core/AxiosHeaders.js#$internals",
+          "hash": "53816992e184cdb27471ee07128802646c7926c77175daeb70ceb70a70d6dc7f"
+        },
+        {
+          "sym": "web://lib/core/InterceptorManager.js#$internals",
+          "hash": "53816992e184cdb27471ee07128802646c7926c77175daeb70ceb70a70d6dc7f"
+        }
+      ],
+      "route_ids": [],
+      "evidence": [
+        "[llm] const $internals = Symbol('internals') 存在",
+        "`Symbol` 出现在代码中（web://lib/adapters/http.js#kAxiosCurrentReq）",
+        "字面量 `const $internals = Symbol('internals')` 出现在 web://lib/core/AxiosHeaders.js#$internals, web://lib/core/InterceptorManager.js#$internals",
+        "文件 `lib/core/AxiosHeaders.js` 存在（lib/core/AxiosHeaders.js）"
+      ]
+    },
+    {
+      "id": "AGENTS-613914",
+      "source": "AGENTS.md",
+      "text": "Throw `AxiosError` for axios-originated failures; never raw `Error`. Pass `(message, code, config, request, response)` so consumers can introspect.",
+      "status": "conflict",
+      "anchors": [
+        {
+          "sym": "web://lib/core/AxiosError.js#AxiosError",
+          "hash": "437c478ee7a77cdf78fd3b8fafb41b4173628d1e1b5b42bca5ac18424222ee1a"
+        },
+        {
+          "sym": "web://lib/core/AxiosError.js#AxiosError.constructor",
+          "hash": "8e236cf89bb5314ab25f718e939dee97773931a2f0a8683ab00da21777ec11f4"
+        }
+      ],
+      "route_ids": [],
+      "evidence": [
+        "[llm] AxiosError 构造函数签名为 (message, code, config, request, response)，但库中仍有 raw Error：lib/helpers/toFormData.js 抛 new Error('Circular reference detected')，lib/helpers/formDataToStream.js 抛 new Error('boundary must be 1-70 characters long')，CancelToken 构造函数抛 TypeError",
+        "符号 `AxiosError` 存在（1 处）",
+        "`Error` 出现在代码中（web://lib/core/AxiosError.js#AxiosError.from）",
+        "字面量 `(message, code, config, request, response)` 出现在 web://lib/core/AxiosError.js#AxiosError.constructor"
+      ]
+    },
+    {
+      "id": "AGENTS-317f2f",
+      "source": "AGENTS.md",
+      "text": "Wrap third-party errors with `AxiosError.from(error, code, config, request, response)`.",
+      "status": "verified",
+      "anchors": [
+        {
+          "sym": "web://lib/core/AxiosError.js#AxiosError.from",
+          "hash": "35c3cc88f1e0d91647f27c56d5b88274069edce172a536f7334b0336288ca2c2"
+        }
+      ],
+      "route_ids": [],
+      "evidence": [
+        "[llm] AxiosError.from(error, code, config, request, response, customProps) 存在并包装原始错误",
+        "没有可确定性校验的锚点（需要 LLM 语义核对）"
+      ]
+    },
+    {
+      "id": "AGENTS-89562e",
+      "source": "AGENTS.md",
+      "text": "Canonical code list lives in `lib/core/AxiosError.js`; current codes include `ERR_BAD_OPTION_VALUE`, `ERR_BAD_OPTION`, `ECONNABORTED`, `ETIMEDOUT`, `ECONNREFUSED`, `ERR_NETWORK`, `ERR_FR_TOO_MANY_REDIRECTS`, `ERR_DEPRECATED`, `ERR_BAD_RESPONSE`, `ERR_BAD_REQUEST`, `ERR_CANCELED`, `ERR_NOT_SUPPORT`, `ERR_INVALID_URL`, `ERR_FORM_DATA_DEPTH_EXCEEDED`.",
+      "status": "verified",
+      "anchors": [
+        {
+          "sym": "web://lib/core/AxiosError.js#AxiosError",
+          "hash": "437c478ee7a77cdf78fd3b8fafb41b4173628d1e1b5b42bca5ac18424222ee1a"
+        }
+      ],
+      "route_ids": [],
+      "evidence": [
+        "[llm] lib/core/AxiosError.js 定义所列错误码（含 ERR_FR_TOO_MANY_REDIRECTS、ERR_DEPRECATED 静态常量）",
+        "文件 `lib/core/AxiosError.js` 存在（lib/core/AxiosError.js）",
+        "`ERR_BAD_OPTION_VALUE` 出现在代码中（web://lib/adapters/http.js#resolveFamily）",
+        "`ERR_BAD_OPTION` 出现在代码中（web://lib/helpers/validator.js#assertOptions）",
+        "`ECONNABORTED` 出现在代码中（web://lib/core/AxiosError.js#AxiosError）",
+        "`ETIMEDOUT` 出现在代码中（web://lib/helpers/composeSignals.js#composeSignals）",
+        "`ERR_NETWORK` 出现在代码中（web://lib/adapters/fetch.js#factory）",
+        "`ERR_FR_TOO_MANY_REDIRECTS` 在代码中找不到（无法确定性判断）",
+        "`ERR_DEPRECATED` 在代码中找不到（无法确定性判断）",
+        "`ERR_BAD_RESPONSE` 出现在代码中（web://lib/core/settle.js#settle）",
+        "`ERR_BAD_REQUEST` 出现在代码中（web://lib/core/settle.js#settle）",
+        "`ERR_CANCELED` 出现在代码中（web://lib/cancel/CanceledError.js#CanceledError.constructor）",
+        "`ERR_NOT_SUPPORT` 出现在代码中（web://lib/helpers/fromDataURI.js#fromDataURI）",
+        "`ERR_INVALID_URL` 出现在代码中（web://lib/core/buildFullPath.js#assertValidHttpProtocolURL）",
+        "`ERR_FORM_DATA_DEPTH_EXCEEDED` 出现在代码中（web://lib/helpers/formDataToJSON.js#throwIfDepthExceeded）"
+      ]
+    },
+    {
+      "id": "AGENTS-d986b4",
+      "source": "AGENTS.md",
+      "text": "Validate config options through the `validator` helper; do not invent ad-hoc validation paths.",
+      "status": "verified",
+      "anchors": [
+        {
+          "sym": "web://lib/core/Axios.js#validators",
+          "hash": "e739d4af771b6344280dbc74586eefcbda75cb0e8527aa25b0764ec3ccf33862"
+        }
+      ],
+      "route_ids": [],
+      "evidence": [
+        "[llm] Axios.js 使用 validator.assertOptions 校验 transitional 等选项",
+        "`validator` 出现在代码中（web://lib/core/Axios.js#validators）"
+      ]
+    },
+    {
+      "id": "AGENTS-0a0642",
+      "source": "AGENTS.md",
+      "text": "Both support `synchronous: true` (avoids Promise wrapping when no async handler is in the chain) and `runWhen: (config) =\u003e boolean` for conditional execution.",
+      "status": "verified",
+      "anchors": [
+        {
+          "sym": "web://lib/core/InterceptorManager.js#InterceptorManager",
+          "hash": "0ca165c0bd49bff856fe8246a6d517d9ddf7529b7ebb3b55c2cc1209196d9eba"
+        }
+      ],
+      "route_ids": [],
+      "evidence": [
+        "[llm] InterceptorManager.use 存储 synchronous 与 runWhen；Axios._request 检查 runWhen(config) === false 及 synchronous",
+        "没有可确定性校验的锚点（需要 LLM 语义核对）"
+      ]
+    },
+    {
+      "id": "AGENTS-d33ea4",
+      "source": "AGENTS.md",
+      "text": "User calls `axios()` or a method alias.",
+      "status": "verified",
+      "anchors": [
+        {
+          "sym": "web://lib/axios.js#axios",
+          "hash": "bb6ce17929b79b9f00533f9e69d23c9629e510471232541fb551959b306815a5"
+        }
+      ],
+      "route_ids": [],
+      "evidence": [
+        "[llm] axios 为 createInstance(defaults) 返回的可调用实例",
+        "符号 `axios()` 存在（1 处）"
+      ]
+    },
+    {
+      "id": "AGENTS-21fb52",
+      "source": "AGENTS.md",
+      "text": "Merge instance defaults with request config via `mergeConfig`.",
+      "status": "verified",
+      "anchors": [
+        {
+          "sym": "web://lib/core/mergeConfig.js#mergeConfig",
+          "hash": "8a692d24fff7e4bcf2e6fbc1575aefdde1cab29a02ef5d135198e3f2e082c839"
+        }
+      ],
+      "route_ids": [],
+      "evidence": [
+        "[llm] Axios._request 调用 mergeConfig(this.defaults, config)",
+        "符号 `mergeConfig` 存在（1 处）"
+      ]
+    },
+    {
+      "id": "AGENTS-e10b4c",
+      "source": "AGENTS.md",
+      "text": "Select adapter via `lib/adapters/adapters.js` capability check.",
+      "status": "verified",
+      "anchors": [
+        {
+          "sym": "web://lib/core/dispatchRequest.js#dispatchRequest",
+          "hash": "c6b2a6d9fb20d9f6e7d50aacd1bc33a79824f7af1626023dfe28cd2c2173570e"
+        }
+      ],
+      "route_ids": [],
+      "evidence": [
+        "[llm] dispatchRequest 调用 adapters.getAdapter(config.adapter || defaults.adapter, config)",
+        "文件 `lib/adapters/adapters.js` 存在（lib/adapters/adapters.js）"
+      ]
+    },
+    {
+      "id": "AGENTS-0319f8",
+      "source": "AGENTS.md",
+      "text": "Apply `transformRequest` functions.",
+      "status": "verified",
+      "anchors": [
+        {
+          "sym": "web://lib/core/dispatchRequest.js#dispatchRequest",
+          "hash": "c6b2a6d9fb20d9f6e7d50aacd1bc33a79824f7af1626023dfe28cd2c2173570e"
+        }
+      ],
+      "route_ids": [],
+      "evidence": [
+        "[llm] dispatchRequest 对 config.transformRequest 调用 transformData",
+        "`transformRequest` 出现在代码中（web://lib/core/dispatchRequest.js#dispatchRequest）"
+      ]
+    },
+    {
+      "id": "AGENTS-d55a37",
+      "source": "AGENTS.md",
+      "text": "Apply `transformResponse` functions.",
+      "status": "verified",
+      "anchors": [
+        {
+          "sym": "web://lib/core/dispatchRequest.js#dispatchRequest",
+          "hash": "c6b2a6d9fb20d9f6e7d50aacd1bc33a79824f7af1626023dfe28cd2c2173570e"
+        }
+      ],
+      "route_ids": [],
+      "evidence": [
+        "[llm] dispatchRequest 在适配器成功/失败时应用 config.transformResponse",
+        "`transformResponse` 出现在代码中（web://lib/core/dispatchRequest.js#dispatchRequest）"
+      ]
+    },
+    {
+      "id": "AGENTS-94eed0",
+      "source": "AGENTS.md",
+      "text": "Resolve promise with `AxiosResponse` or reject with `AxiosError`.",
+      "status": "verified",
+      "anchors": [
+        {
+          "sym": "web://lib/core/settle.js#settle",
+          "hash": "710896ae6a15c0e6504fdbef5dc6a019dd085093e505818bd0368a13eb0a3606"
+        },
+        {
+          "sym": "web://lib/core/AxiosError.js#AxiosError",
+          "hash": "437c478ee7a77cdf78fd3b8fafb41b4173628d1e1b5b42bca5ac18424222ee1a"
+        }
+      ],
+      "route_ids": [],
+      "evidence": [
+        "[llm] settle 成功时 resolve(response)，否则 reject AxiosError",
+        "`AxiosResponse` 在代码中找不到（无法确定性判断）",
+        "符号 `AxiosError` 存在（1 处）"
+      ]
+    },
+    {
+      "id": "AGENTS-eb7f10",
+      "source": "AGENTS.md",
+      "text": "Both `CancelToken` (legacy) and `AbortSignal` (modern) are supported simultaneously; do not break either path.",
+      "status": "verified",
+      "anchors": [
+        {
+          "sym": "web://lib/cancel/CancelToken.js#CancelToken",
+          "hash": "168b9df9eae9e6977c3804072522a82aaf21385b850ff1aafd613bde86ac4c97"
+        },
+        {
+          "sym": "web://lib/helpers/composeSignals.js#composeSignals",
+          "hash": "7e64f35e7d008badc82e83df270c4f34b7cad5610855329311903cd1e91b6dc5"
+        }
+      ],
+      "route_ids": [],
+      "evidence": [
+        "[llm] CancelToken 类存在，composeSignals 处理 AbortSignal 列表",
+        "符号 `CancelToken` 存在（1 处）",
+        "`AbortSignal` 在代码中找不到（无法确定性判断）"
+      ]
+    },
+    {
+      "id": "AGENTS-0eb273",
+      "source": "AGENTS.md",
+      "text": "Do not use `Function.prototype.bind` directly — use `lib/helpers/bind.js`, which forwards `arguments` via `apply` and is what the rest of the library relies on.",
+      "status": "conflict",
+      "anchors": [
+        {
+          "sym": "web://lib/helpers/bind.js#bind",
+          "hash": "093a5e31a4c3a0b98eb75580e9913a0684024255a26ddc6e865dc8c89ccd5eff"
+        }
+      ],
+      "route_ids": [],
+      "evidence": [
+        "[llm] helpers/bind 存在，但 lib/core/Axios.js 使用 dispatchRequest.bind(this)，lib/utils.js 使用 queueMicrotask.bind(_global)，lib/adapters/http.js 使用 process.nextTick.bind(process)，即库内仍直接使用原生 bind",
+        "`Function.prototype.bind` 在代码中找不到（无法确定性判断）",
+        "文件 `lib/helpers/bind.js` 存在（lib/helpers/bind.js）",
+        "`arguments` 出现在代码中（web://lib/helpers/bind.js#bind）",
+        "`apply` 出现在代码中（web://lib/helpers/bind.js#bind）"
+      ]
+    },
+    {
+      "id": "AGENTS-7b13e1",
+      "source": "AGENTS.md",
+      "text": "Do not throw raw `Error` from library code; use `AxiosError` with an appropriate code (see Error Handling).",
+      "status": "conflict",
+      "anchors": [
+        {
+          "sym": "web://lib/core/AxiosError.js#AxiosError",
+          "hash": "437c478ee7a77cdf78fd3b8fafb41b4173628d1e1b5b42bca5ac18424222ee1a"
+        }
+      ],
+      "route_ids": [],
+      "evidence": [
+        "[llm] lib/helpers/toFormData.js 与 lib/helpers/formDataToStream.js 仍抛出 raw Error，CancelToken 抛出 TypeError",
+        "`Error` 出现在代码中（web://lib/core/AxiosError.js#AxiosError.from）",
+        "符号 `AxiosError` 存在（1 处）"
+      ]
+    },
+    {
+      "id": "AGENTS-55cf19",
+      "source": "AGENTS.md",
+      "text": "Test layout is runtime-first: `tests/unit//*.test.js`, `tests/browser//*.browser.test.js`, `tests/smoke/esm//*.smoke.test.js`, `tests/smoke/cjs//*.smoke.test.cjs`.",
+      "status": "unverifiable",
+      "anchors": [],
+      "route_ids": [],
+      "evidence": [
+        "[llm] tests 下存在 unit、browser、smoke/esm、smoke/cjs，但文件命名模式未逐一核实（smoke 还有 bun、deno 目录）",
+        "没有可确定性校验的锚点（需要 LLM 语义核对）"
+      ]
+    },
+    {
+      "id": "AGENTS-9d035e",
+      "source": "AGENTS.md",
+      "text": "Use `tests/setup/server.js` for local HTTP servers and cleanup with `try/finally`; leaking servers causes Vitest hangs.",
+      "status": "unverifiable",
+      "anchors": [],
+      "route_ids": [],
+      "evidence": [
+        "[llm] tests/setup/server.js 存在",
+        "文件 `tests/setup/server.js` 存在（tests/setup/server.js）"
+      ]
+    },
+    {
+      "id": "AGENTS-808c26",
+      "source": "AGENTS.md",
+      "text": "Type compatibility is exercised through `tests/module/cjs` with TypeScript 4.9 and `tests/module/esm` with TypeScript 5.x; run the matching module suite for declaration changes.",
+      "status": "unverifiable",
+      "anchors": [],
+      "route_ids": [],
+      "evidence": [
+        "[llm] tests/module/cjs 与 esm 存在，TypeScript 版本未核实",
+        "没有可确定性校验的锚点（需要 LLM 语义核对）"
+      ]
+    },
+    {
+      "id": "AGENTS-e62e39",
+      "source": "AGENTS.md",
+      "text": "For config reads that affect behavior, do not use prototype-walking reads (`in`, destructuring, or direct `config.foo` on untrusted config); guard with own-property checks as in `utils.hasOwnProp` / local `own()` helpers.",
+      "status": "verified",
+      "anchors": [
+        {
+          "sym": "web://lib/defaults/index.js#own",
+          "hash": "9130494e77a76d665b0dd84859441fecab33dcbd62d05790b2f2568d79321507"
+        }
+      ],
+      "route_ids": [],
+      "evidence": [
+        "[llm] own(obj,key) 使用 utils.hasOwnProp 做自有属性检查",
+        "`config.foo` 在代码中找不到（无法确定性判断）",
+        "`utils.hasOwnProp` 出现在代码中（web://lib/defaults/index.js#own）",
+        "符号 `own()` 存在（1 处）"
+      ]
+    },
+    {
+      "id": "AGENTS-27dbbf",
+      "source": "AGENTS.md",
+      "text": "New merge or object materialization code must continue filtering `proto`, `constructor`, and `prototype`; regressions here are security bugs.",
+      "status": "verified",
+      "anchors": [
+        {
+          "sym": "web://lib/core/mergeConfig.js#mergeConfig",
+          "hash": "8a692d24fff7e4bcf2e6fbc1575aefdde1cab29a02ef5d135198e3f2e082c839"
+        }
+      ],
+      "route_ids": [],
+      "evidence": [
+        "[llm] lib/utils.js 过滤 __proto__/constructor/prototype；mergeConfig 使用 null 原型对象",
+        "`proto` 出现在代码中（web://lib/utils.js#isFormData）",
+        "符号 `constructor` 存在（9 处）",
+        "符号 `prototype` 存在（1 处）"
+      ]
+    },
+    {
+      "id": "AGENTS-c825f1",
+      "source": "AGENTS.md",
+      "text": "Changes touching URL construction, redirects, proxy/env handling, XSRF, socket paths, decompression limits, or adapters should consult `THREATMODEL.md` and add focused regression tests.",
+      "status": "unverifiable",
+      "anchors": [],
+      "route_ids": [],
+      "evidence": [
+        "[llm] THREATMODEL.md 存在",
+        "文件 `THREATMODEL.md` 存在（THREATMODEL.md）"
+      ]
+    },
+    {
+      "id": "AGENTS-acf768",
+      "source": "AGENTS.md",
+      "text": "Keep `withXSRFToken` cross-origin behavior explicit: only `true` forces cross-origin XSRF header attachment.",
+      "status": "verified",
+      "anchors": [
+        {
+          "sym": "web://lib/helpers/resolveConfig.js#resolveConfig",
+          "hash": "0334d8e1980b55af0a0c80c17b020cd19435295899b3f3ecf6cdbd29359b6b6f"
+        }
+      ],
+      "route_ids": [],
+      "evidence": [
+        "[llm] resolveConfig 以严格 withXSRFToken === true 判断跨域附带 XSRF 头",
+        "`withXSRFToken` 出现在代码中（web://lib/helpers/resolveConfig.js#resolveConfig）",
+        "`true` 出现在代码中（web://lib/utils.js#isBoolean）"
+      ]
+    },
+    {
+      "id": "AGENTS-c1cd42",
+      "source": "AGENTS.md",
+      "text": "Do not weaken `beforeRedirect`, proxy, or `socketPath` safeguards without tests covering credential leakage or SSRF-style cases.",
+      "status": "verified",
+      "anchors": [
+        {
+          "sym": "web://lib/core/mergeConfig.js#mergeConfig",
+          "hash": "8a692d24fff7e4bcf2e6fbc1575aefdde1cab29a02ef5d135198e3f2e082c839"
+        }
+      ],
+      "route_ids": [],
+      "evidence": [
+        "[llm] mergeConfig 处理 beforeRedirect 与 socketPath 配置",
+        "`beforeRedirect` 出现在代码中（web://lib/core/mergeConfig.js#mergeConfig）",
+        "`socketPath` 出现在代码中（web://lib/core/mergeConfig.js#mergeConfig）"
+      ]
+    }
+  ]
+}

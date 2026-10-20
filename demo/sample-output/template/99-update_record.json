@@ -1,0 +1,47 @@
+{
+  "base_sha": "1c63b2588c722f19b1af2385675e0cbabb288cf4",
+  "changed": [
+    "facts/android/routes.md",
+    "facts/android/symbols.md",
+    "facts/android/testids.md",
+    "facts/harmony/routes.md",
+    "facts/harmony/symbols.md",
+    "facts/harmony/testids.md",
+    "facts/ios/routes.md",
+    "facts/ios/symbols.md",
+    "facts/ios/testids.md",
+    "facts/routes.json",
+    "facts/testids.json",
+    "index.md",
+    "llms.txt",
+    "pages/features/profile.md",
+    "pages/overview.md"
+  ],
+  "date": "2026-10-20",
+  "head_sha": "b1df1208f6df622d9b7b94c88294728105521734",
+  "kind": "compound",
+  "llm": "template",
+  "mode": "incremental",
+  "reason": "anchors changed ∪ signature changes propagated along reference edges",
+  "run_id": "20261020T163259-b1df120",
+  "tasks": [
+    {
+      "id": "t01-features-profile",
+      "page": "pages/features/profile.md",
+      "op": "create",
+      "writer": "template",
+      "status": "ok",
+      "millis": 0
+    },
+    {
+      "id": "t02-overview",
+      "page": "pages/overview.md",
+      "op": "update",
+      "writer": "template",
+      "status": "ok",
+      "millis": 0
+    }
+  ],
+  "verify_errors": 0,
+  "verify_ok": true
+}

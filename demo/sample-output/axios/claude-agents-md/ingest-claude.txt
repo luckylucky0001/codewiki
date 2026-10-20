@@ -1,0 +1,26 @@
+ingest 20261020T162938-56a5f1a: base  → head 56a5f1a, mode ingest, llm cmd
+mode ingest — check ingested documents against code
+stats: symbols=335 changes=map[added:335] module_ratio=0.67 structural_ratio=1.00 hops=1 propagated=0
+  t01-_conflicts create  pages/_conflicts.md            write_set=[.kb/ingest/verdicts.json] reasons=[full_rebuild]
+  task t01-_conflicts               ok       cmd 
+changed files: 17
+  .kb/ingest/verdicts.json
+  .kb/plan.json
+  .kb/update_record.json
+  facts/apis.json
+  facts/requirements.json
+  facts/routes.json
+  facts/testids.json
+  facts/web/apis.md
+  facts/web/routes.md
+  facts/web/symbols.md
+  facts/web/testids.md
+  index.md
+  llms.txt
+  log.md
+  pages/_conflicts.md
+  raw/docs/AGENTS.md
+  raw/docs/manifest.json
+verify PASS: 5 pages, 60 anchors, 0 errors, 0 warnings
+published 17 changed file(s) to /tmp/claude-0/-home-user-axios/f608cc50-0c09-5f4c-8195-0e8da779e294/scratchpad/axios-kb-claude/wiki
+exit 0

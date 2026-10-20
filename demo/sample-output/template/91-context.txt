@@ -1,0 +1,14 @@
+file android/app/src/main/java/com/minishop/ui/cart/CartViewModel.kt
+pages (4):
+  pages/_conflicts.md — 文档核对（冲突与已验证断言） [current] anchors=2
+  pages/features/cart.md — 购物车（cart） [current] anchors=6
+  pages/features/product_detail.md — 商品详情（product_detail） [current] anchors=6
+  pages/features/products.md — 商品列表（products） [current] anchors=1
+symbols (7):
+  L10   class      android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel
+  L23   property   android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.MAX_CART_ITEMS
+  L13   function   android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.addItem
+  L11   property   android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.items
+  L24   property   android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.pending
+  L26   function   android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.preload
+  L20   function   android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.total

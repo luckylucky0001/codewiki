@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "root": "demo/output/<ts>-template/repo",
+  "docs": [
+    {
+      "path": ".kiro/specs/login/requirements.md",
+      "kind": "spec",
+      "convention": "kiro",
+      "hash": "5da8e26e973a4c61fe68d95069d0fd4094bdce648da19ae64fefd91852c04b8b",
+      "title": "Requirements Document: Login",
+      "bytes": 991
+    },
+    {
+      "path": ".kiro/steering/product.md",
+      "kind": "agent-guide",
+      "convention": "kiro",
+      "hash": "667f2a914510ee383115d43cfa321cd9bb10778ec952bf55a68ece22f8f75989",
+      "title": "Product steering",
+      "bytes": 218
+    },
+    {
+      "path": "README.md",
+      "kind": "readme",
+      "convention": "readme",
+      "hash": "9f7fa31222b18e3d99de93ef2155db845809f95520e83027d2a5708faed5f59c",
+      "title": "MiniShop (codewiki example)",
+      "bytes": 263
+    },
+    {
+      "path": "docs/adr/0001-navigation.md",
+      "kind": "adr",
+      "convention": "adr",
+      "hash": "4e01a5fad8e2c0b155e6b545b151a9d7a57e3bf930d555510d56e31d8b54bef3",
+      "title": "ADR 0001：三端统一路由表",
+      "bytes": 478
+    },
+    {
+      "path": "docs/legacy/cart.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "b2ba38a32774a2fb033f0003281c0551c075665ae572813be26a7e01024c2e3c",
+      "title": "购物车与下单（旧文档）",
+      "bytes": 431
+    },
+    {
+      "path": "docs/legacy/login.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "f1f395712f081d081a27c9f96c93ce629dae55fdc36ff3111eb924346ec9de4b",
+      "title": "登录模块说明（2023 版，已部分过时）",
+      "bytes": 471
+    },
+    {
+      "path": "specs/001-cart/plan.md",
+      "kind": "design",
+      "convention": "spec-kit",
+      "hash": "d3ea71cc7fbf4c139a1fb9ff4ed9042deab74dc7101b61d8a45b18a0897725fc",
+      "title": "Implementation Plan: 购物车",
+      "bytes": 209
+    },
+    {
+      "path": "specs/001-cart/spec.md",
+      "kind": "spec",
+      "convention": "spec-kit",
+      "hash": "2e217ea528eef27590094d9e129facc13fbf2215bcf4872de345081693603f75",
+      "title": "Feature Specification: 购物车（Cart）",
+      "bytes": 955
+    }
+  ]
+}

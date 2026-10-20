@@ -1,0 +1,278 @@
+{
+  "version": 1,
+  "testids": [
+    {
+      "platform": "android",
+      "tid": "add_to_cart",
+      "route_id": "product_detail",
+      "file": "android/app/src/main/java/com/minishop/ui/products/ProductDetailScreen.kt",
+      "line": 21
+    },
+    {
+      "platform": "android",
+      "tid": "cart_checkout",
+      "route_id": "cart",
+      "file": "android/app/src/main/java/com/minishop/ui/cart/CartScreen.kt",
+      "line": 17
+    },
+    {
+      "platform": "android",
+      "tid": "checkout_submit",
+      "route_id": "checkout",
+      "file": "android/app/src/main/java/com/minishop/ui/checkout/CheckoutScreen.kt",
+      "line": 22
+    },
+    {
+      "platform": "android",
+      "tid": "login_password",
+      "route_id": "login",
+      "file": "android/app/src/main/java/com/minishop/ui/login/LoginScreen.kt",
+      "line": 20
+    },
+    {
+      "platform": "android",
+      "tid": "login_submit",
+      "route_id": "login",
+      "file": "android/app/src/main/java/com/minishop/ui/login/LoginScreen.kt",
+      "line": 23
+    },
+    {
+      "platform": "android",
+      "tid": "login_username",
+      "route_id": "login",
+      "file": "android/app/src/main/java/com/minishop/ui/login/LoginScreen.kt",
+      "line": 19
+    },
+    {
+      "platform": "android",
+      "tid": "nav_back",
+      "route_id": "",
+      "file": "android/app/src/main/java/com/minishop/ui/components/MiniShopTopBar.kt",
+      "line": 18
+    },
+    {
+      "platform": "android",
+      "tid": "order_status",
+      "route_id": "order_detail",
+      "file": "android/app/src/main/java/com/minishop/ui/order/OrderDetailScreen.kt",
+      "line": 14
+    },
+    {
+      "platform": "android",
+      "tid": "product_item_",
+      "route_id": "products",
+      "file": "android/app/src/main/java/com/minishop/ui/products/ProductsScreen.kt",
+      "line": 20
+    },
+    {
+      "platform": "android",
+      "tid": "product_list",
+      "route_id": "products",
+      "file": "android/app/src/main/java/com/minishop/ui/products/ProductsScreen.kt",
+      "line": 18
+    },
+    {
+      "platform": "android",
+      "tid": "profile_logout",
+      "route_id": "profile",
+      "file": "android/app/src/main/java/com/minishop/ui/profile/ProfileScreen.kt",
+      "line": 17
+    },
+    {
+      "platform": "android",
+      "tid": "profile_name",
+      "route_id": "profile",
+      "file": "android/app/src/main/java/com/minishop/ui/profile/ProfileScreen.kt",
+      "line": 16
+    },
+    {
+      "platform": "android",
+      "tid": "tab_cart",
+      "route_id": "products",
+      "file": "android/app/src/main/java/com/minishop/ui/products/ProductsScreen.kt",
+      "line": 17
+    },
+    {
+      "platform": "harmony",
+      "tid": "add_to_cart",
+      "route_id": "product_detail",
+      "file": "harmony/entry/src/main/ets/pages/ProductDetailPage.ets",
+      "line": 25
+    },
+    {
+      "platform": "harmony",
+      "tid": "cart_checkout",
+      "route_id": "cart",
+      "file": "harmony/entry/src/main/ets/pages/CartPage.ets",
+      "line": 18
+    },
+    {
+      "platform": "harmony",
+      "tid": "checkout_submit",
+      "route_id": "checkout",
+      "file": "harmony/entry/src/main/ets/pages/CheckoutPage.ets",
+      "line": 22
+    },
+    {
+      "platform": "harmony",
+      "tid": "login_password",
+      "route_id": "login",
+      "file": "harmony/entry/src/main/ets/pages/LoginPage.ets",
+      "line": 29
+    },
+    {
+      "platform": "harmony",
+      "tid": "login_submit",
+      "route_id": "login",
+      "file": "harmony/entry/src/main/ets/pages/LoginPage.ets",
+      "line": 31
+    },
+    {
+      "platform": "harmony",
+      "tid": "login_username",
+      "route_id": "login",
+      "file": "harmony/entry/src/main/ets/pages/LoginPage.ets",
+      "line": 27
+    },
+    {
+      "platform": "harmony",
+      "tid": "nav_back",
+      "route_id": "",
+      "file": "harmony/entry/src/main/ets/common/BackButton.ets",
+      "line": 6
+    },
+    {
+      "platform": "harmony",
+      "tid": "order_status",
+      "route_id": "order_detail",
+      "file": "harmony/entry/src/main/ets/pages/OrderDetailPage.ets",
+      "line": 16
+    },
+    {
+      "platform": "harmony",
+      "tid": "product_item_",
+      "route_id": "products",
+      "file": "harmony/entry/src/main/ets/pages/ProductsPage.ets",
+      "line": 26
+    },
+    {
+      "platform": "harmony",
+      "tid": "product_list",
+      "route_id": "products",
+      "file": "harmony/entry/src/main/ets/pages/ProductsPage.ets",
+      "line": 30
+    },
+    {
+      "platform": "harmony",
+      "tid": "profile_logout",
+      "route_id": "profile",
+      "file": "harmony/entry/src/main/ets/pages/ProfilePage.ets",
+      "line": 18
+    },
+    {
+      "platform": "harmony",
+      "tid": "profile_name",
+      "route_id": "profile",
+      "file": "harmony/entry/src/main/ets/pages/ProfilePage.ets",
+      "line": 17
+    },
+    {
+      "platform": "harmony",
+      "tid": "tab_cart",
+      "route_id": "products",
+      "file": "harmony/entry/src/main/ets/pages/ProductsPage.ets",
+      "line": 20
+    },
+    {
+      "platform": "ios",
+      "tid": "add_to_cart",
+      "route_id": "product_detail",
+      "file": "ios/MiniShop/Features/Products/ProductDetailView.swift",
+      "line": 13
+    },
+    {
+      "platform": "ios",
+      "tid": "cart_checkout",
+      "route_id": "cart",
+      "file": "ios/MiniShop/Features/Cart/CartView.swift",
+      "line": 11
+    },
+    {
+      "platform": "ios",
+      "tid": "checkout_submit",
+      "route_id": "checkout",
+      "file": "ios/MiniShop/Features/Checkout/CheckoutView.swift",
+      "line": 9
+    },
+    {
+      "platform": "ios",
+      "tid": "login_password",
+      "route_id": "login",
+      "file": "ios/MiniShop/Features/Login/LoginView.swift",
+      "line": 12
+    },
+    {
+      "platform": "ios",
+      "tid": "login_submit",
+      "route_id": "login",
+      "file": "ios/MiniShop/Features/Login/LoginView.swift",
+      "line": 13
+    },
+    {
+      "platform": "ios",
+      "tid": "login_username",
+      "route_id": "login",
+      "file": "ios/MiniShop/Features/Login/LoginView.swift",
+      "line": 11
+    },
+    {
+      "platform": "ios",
+      "tid": "nav_back",
+      "route_id": "",
+      "file": "ios/MiniShop/Components/BackButton.swift",
+      "line": 8
+    },
+    {
+      "platform": "ios",
+      "tid": "order_status",
+      "route_id": "order_detail",
+      "file": "ios/MiniShop/Features/Order/OrderDetailView.swift",
+      "line": 9
+    },
+    {
+      "platform": "ios",
+      "tid": "product_item_",
+      "route_id": "products",
+      "file": "ios/MiniShop/Features/Products/ProductsView.swift",
+      "line": 9
+    },
+    {
+      "platform": "ios",
+      "tid": "product_list",
+      "route_id": "products",
+      "file": "ios/MiniShop/Features/Products/ProductsView.swift",
+      "line": 8
+    },
+    {
+      "platform": "ios",
+      "tid": "profile_logout",
+      "route_id": "profile",
+      "file": "ios/MiniShop/Features/Profile/ProfileView.swift",
+      "line": 10
+    },
+    {
+      "platform": "ios",
+      "tid": "profile_name",
+      "route_id": "profile",
+      "file": "ios/MiniShop/Features/Profile/ProfileView.swift",
+      "line": 9
+    },
+    {
+      "platform": "ios",
+      "tid": "tab_cart",
+      "route_id": "products",
+      "file": "ios/MiniShop/Features/Products/ProductsView.swift",
+      "line": 14
+    }
+  ]
+}

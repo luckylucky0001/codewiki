@@ -1,0 +1,10 @@
+base 8c0f41c → head 3db62a4
+  unchanged  211
+  body       3
+  signature  0
+  added      0
+  deleted    0
+  renamed    0
+body      android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.MAX_CART_ITEMS
+body      harmony://entry/src/main/ets/common/CartStore.ets#MAX_CART_ITEMS
+body      ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.maxCartItems

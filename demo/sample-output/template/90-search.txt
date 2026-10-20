@@ -1,0 +1,6 @@
+  6.0 page   features/cart  购物车（cart）
+       # 购物车（cart） > 由 `kb compound --llm template` 根据 facts 与符号图
+  4.0 page   _conflicts  文档核对（冲突与已验证断言）
+       [docs/legacy/cart.md](../raw/docs/docs/legacy/cart.md) L3）购物车最多 10 件商品（常量 `MAX_CART_ITEMS`，iOS 为 `maxCartItems`）
+  1.0 page   overview  总览
+       ---|---|---|---|---| | `cart` | `cart` | ✓ | ✓ | ✓ | [购物车（cart）](features/cart.md) | | `checkout` | `checkout` | ✓ | ✓ |

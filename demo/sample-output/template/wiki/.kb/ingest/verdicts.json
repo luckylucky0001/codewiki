@@ -1,0 +1,599 @@
+{
+  "version": 1,
+  "claims": [
+    {
+      "id": "LOGIN-R1.1",
+      "source": ".kiro/specs/login/requirements.md",
+      "raw": "raw/docs/.kiro/specs/login/requirements.md",
+      "line": 15,
+      "text": "WHEN the user submits valid credentials THEN the system SHALL call `POST /api/login` and navigate to `products`.",
+      "style": "kiro",
+      "status": "verified",
+      "anchors": [
+        "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.login",
+        "android://app/src/main/java/com/minishop/ui/products/ProductsScreen.kt#ProductsScreen",
+        "harmony://entry/src/main/ets/common/Api.ets#Api.login",
+        "harmony://entry/src/main/ets/pages/ProductsPage.ets#ProductsBuilder",
+        "ios://MiniShop/Features/Login/LoginViewModel.swift#LoginViewModel.login",
+        "ios://MiniShop/Features/Products/ProductsView.swift#ProductsView"
+      ],
+      "route_ids": [
+        "login",
+        "products"
+      ],
+      "evidence": [
+        "接口 `POST /api/login` 存在（android, harmony, ios）",
+        "路由 `products` 存在"
+      ]
+    },
+    {
+      "id": "LOGIN-R1.2",
+      "source": ".kiro/specs/login/requirements.md",
+      "raw": "raw/docs/.kiro/specs/login/requirements.md",
+      "line": 16,
+      "text": "WHEN the password is shorter than 6 characters THEN the system SHALL reject the login without calling the backend.",
+      "style": "kiro",
+      "status": "unverifiable",
+      "route_ids": [
+        "login"
+      ],
+      "evidence": [
+        "没有可确定性校验的锚点（需要 LLM 语义核对）"
+      ]
+    },
+    {
+      "id": "LOGIN-R1.3",
+      "source": ".kiro/specs/login/requirements.md",
+      "raw": "raw/docs/.kiro/specs/login/requirements.md",
+      "line": 17,
+      "text": "WHEN login succeeds THEN the system SHALL persist the token via `TokenStore.save`.",
+      "style": "kiro",
+      "status": "verified",
+      "anchors": [
+        "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.save",
+        "harmony://entry/src/main/ets/common/TokenStore.ets#TokenStore.save",
+        "ios://MiniShop/Networking/APIClient.swift#TokenStore.save"
+      ],
+      "route_ids": [
+        "login"
+      ],
+      "evidence": [
+        "符号 `TokenStore.save` 存在（3 处）"
+      ]
+    },
+    {
+      "id": "LOGIN-R2.1",
+      "source": ".kiro/specs/login/requirements.md",
+      "raw": "raw/docs/.kiro/specs/login/requirements.md",
+      "line": 25,
+      "text": "WHEN the app is opened with `minishop://login?token=\u003ct\u003e` THEN the system SHALL store the token before rendering.",
+      "style": "kiro",
+      "status": "verified",
+      "anchors": [
+        "android://app/src/main/java/com/minishop/ui/login/LoginScreen.kt#LoginScreen",
+        "harmony://entry/src/main/ets/pages/LoginPage.ets#LoginBuilder",
+        "ios://MiniShop/Features/Login/LoginView.swift#LoginView"
+      ],
+      "route_ids": [
+        "login"
+      ],
+      "evidence": [
+        "deeplink `minishop://login` 存在"
+      ]
+    },
+    {
+      "id": "LOGIN-R2.2",
+      "source": ".kiro/specs/login/requirements.md",
+      "raw": "raw/docs/.kiro/specs/login/requirements.md",
+      "line": 26,
+      "text": "WHEN the user taps `login_submit` with an empty username THEN the system SHALL show an SMS verification dialog.",
+      "style": "kiro",
+      "status": "verified",
+      "anchors": [
+        "android://app/src/main/java/com/minishop/ui/login/LoginScreen.kt#LoginScreen",
+        "harmony://entry/src/main/ets/pages/LoginPage.ets#LoginPage.build",
+        "ios://MiniShop/Features/Login/LoginView.swift#LoginView.body"
+      ],
+      "route_ids": [
+        "login"
+      ],
+      "evidence": [
+        "testID `login_submit` 存在"
+      ]
+    },
+    {
+      "id": "PRODUCT-4d19f5",
+      "source": ".kiro/steering/product.md",
+      "raw": "raw/docs/.kiro/steering/product.md",
+      "line": 4,
+      "text": "All platforms MUST expose identical testIDs such as `nav_back` and `product_list`.",
+      "style": "must",
+      "status": "verified",
+      "anchors": [
+        "android://app/src/main/java/com/minishop/ui/components/MiniShopTopBar.kt#MiniShopTopBar",
+        "android://app/src/main/java/com/minishop/ui/products/ProductsScreen.kt#ProductsScreen",
+        "harmony://entry/src/main/ets/common/BackButton.ets#BackButton.build",
+        "harmony://entry/src/main/ets/pages/ProductsPage.ets#ProductsPage.build",
+        "ios://MiniShop/Components/BackButton.swift#BackButton.body",
+        "ios://MiniShop/Features/Products/ProductsView.swift#ProductsView.body"
+      ],
+      "route_ids": [
+        "products"
+      ],
+      "evidence": [
+        "testID `nav_back` 存在",
+        "testID `product_list` 存在"
+      ]
+    },
+    {
+      "id": "0001-NAVIGATION-5c8d9b",
+      "source": "docs/adr/0001-navigation.md",
+      "raw": "raw/docs/docs/adr/0001-navigation.md",
+      "line": 7,
+      "text": "三端使用同一套 route pattern：`login`、`products`、`product/{id}`、`cart`、`checkout`、`order/{id}`。",
+      "style": "statement",
+      "status": "verified",
+      "anchors": [
+        "android://app/src/main/java/com/minishop/ui/cart/CartScreen.kt#CartScreen",
+        "android://app/src/main/java/com/minishop/ui/checkout/CheckoutScreen.kt#CheckoutScreen",
+        "android://app/src/main/java/com/minishop/ui/login/LoginScreen.kt#LoginScreen",
+        "android://app/src/main/java/com/minishop/ui/order/OrderDetailScreen.kt#OrderDetailScreen",
+        "android://app/src/main/java/com/minishop/ui/products/ProductDetailScreen.kt#ProductDetailScreen",
+        "android://app/src/main/java/com/minishop/ui/products/ProductsScreen.kt#ProductsScreen",
+        "harmony://entry/src/main/ets/pages/CartPage.ets#CartBuilder",
+        "harmony://entry/src/main/ets/pages/CheckoutPage.ets#CheckoutBuilder",
+        "harmony://entry/src/main/ets/pages/LoginPage.ets#LoginBuilder",
+        "harmony://entry/src/main/ets/pages/OrderDetailPage.ets#OrderDetailBuilder",
+        "harmony://entry/src/main/ets/pages/ProductDetailPage.ets#ProductDetailBuilder",
+        "harmony://entry/src/main/ets/pages/ProductsPage.ets#ProductsBuilder",
+        "ios://MiniShop/Features/Cart/CartView.swift#CartView",
+        "ios://MiniShop/Features/Checkout/CheckoutView.swift#CheckoutView",
+        "ios://MiniShop/Features/Login/LoginView.swift#LoginView",
+        "ios://MiniShop/Features/Order/OrderDetailView.swift#OrderDetailView",
+        "ios://MiniShop/Features/Products/ProductDetailView.swift#ProductDetailView",
+        "ios://MiniShop/Features/Products/ProductsView.swift#ProductsView"
+      ],
+      "route_ids": [
+        "cart",
+        "checkout",
+        "login",
+        "order_detail",
+        "product_detail",
+        "products"
+      ],
+      "evidence": [
+        "路由 `login` 存在",
+        "路由 `products` 存在",
+        "路由 `product/{id}` 存在",
+        "路由 `cart` 存在",
+        "路由 `checkout` 存在",
+        "路由 `order/{id}` 存在"
+      ]
+    },
+    {
+      "id": "0001-NAVIGATION-7bb06a",
+      "source": "docs/adr/0001-navigation.md",
+      "raw": "raw/docs/docs/adr/0001-navigation.md",
+      "line": 8,
+      "text": "HarmonyOS 使用 Navigation 系统路由表 `router_map.json`（buildFunction 形如 `ProductDetailBuilder`），不再使用 `main_pages.json` 承载业务页面。",
+      "style": "statement",
+      "status": "verified",
+      "anchors": [
+        "harmony://entry/src/main/ets/pages/ProductDetailPage.ets#ProductDetailBuilder"
+      ],
+      "route_ids": [
+        "product_detail"
+      ],
+      "evidence": [
+        "文件 `router_map.json` 存在（harmony/entry/src/main/resources/base/profile/router_map.json）",
+        "符号 `ProductDetailBuilder` 存在（1 处）",
+        "文件 `main_pages.json` 存在（harmony/entry/src/main/resources/base/profile/main_pages.json）"
+      ]
+    },
+    {
+      "id": "0001-NAVIGATION-ad00b5",
+      "source": "docs/adr/0001-navigation.md",
+      "raw": "raw/docs/docs/adr/0001-navigation.md",
+      "line": 9,
+      "text": "所有页面 MUST 支持 `minishop://\u003cpattern\u003e` 深链，并支持测试参数 `?token=\u003ct\u003e\u0026cart=\u003csku,sku\u003e` 注入状态。",
+      "style": "must",
+      "status": "unverifiable",
+      "route_ids": [
+        "cart"
+      ],
+      "evidence": [
+        "没有可确定性校验的锚点（需要 LLM 语义核对）"
+      ]
+    },
+    {
+      "id": "CART-43567f",
+      "source": "docs/legacy/cart.md",
+      "raw": "raw/docs/docs/legacy/cart.md",
+      "line": 3,
+      "text": "购物车最多 10 件商品（常量 `MAX_CART_ITEMS`，iOS 为 `maxCartItems`）。",
+      "style": "statement",
+      "status": "conflict",
+      "anchors": [
+        "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.MAX_CART_ITEMS",
+        "harmony://entry/src/main/ets/common/CartStore.ets#MAX_CART_ITEMS",
+        "ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.maxCartItems"
+      ],
+      "evidence": [
+        "代码中 `CartViewModel.MAX_CART_ITEMS` = 50（android），文档写的是 10",
+        "代码中 `MAX_CART_ITEMS` = 50（harmony），文档写的是 10",
+        "代码中 `CartViewModel.maxCartItems` = 50（ios），文档写的是 10"
+      ]
+    },
+    {
+      "id": "CART-cbf050",
+      "source": "docs/legacy/cart.md",
+      "raw": "raw/docs/docs/legacy/cart.md",
+      "line": 4,
+      "text": "加入购物车调用 `POST /api/cart`，按钮 testID 为 `add_to_cart`。",
+      "style": "statement",
+      "status": "verified",
+      "anchors": [
+        "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.addToCart",
+        "android://app/src/main/java/com/minishop/ui/products/ProductDetailScreen.kt#ProductDetailScreen",
+        "harmony://entry/src/main/ets/common/Api.ets#Api.addToCart",
+        "harmony://entry/src/main/ets/pages/ProductDetailPage.ets#ProductDetailPage.build",
+        "ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.addItem",
+        "ios://MiniShop/Features/Products/ProductDetailView.swift#ProductDetailView.body"
+      ],
+      "route_ids": [
+        "cart",
+        "product_detail"
+      ],
+      "evidence": [
+        "接口 `POST /api/cart` 存在（android, harmony, ios）",
+        "testID `add_to_cart` 存在"
+      ]
+    },
+    {
+      "id": "CART-9b9a98",
+      "source": "docs/legacy/cart.md",
+      "raw": "raw/docs/docs/legacy/cart.md",
+      "line": 5,
+      "text": "购物车页路由为 `cart`，结算按钮 testID 为 `cart_checkout`。",
+      "style": "statement",
+      "status": "verified",
+      "anchors": [
+        "android://app/src/main/java/com/minishop/ui/cart/CartScreen.kt#CartScreen",
+        "harmony://entry/src/main/ets/pages/CartPage.ets#CartBuilder",
+        "harmony://entry/src/main/ets/pages/CartPage.ets#CartPage.build",
+        "ios://MiniShop/Features/Cart/CartView.swift#CartView",
+        "ios://MiniShop/Features/Cart/CartView.swift#CartView.body"
+      ],
+      "route_ids": [
+        "cart"
+      ],
+      "evidence": [
+        "路由 `cart` 存在",
+        "testID `cart_checkout` 存在"
+      ]
+    },
+    {
+      "id": "CART-7d3eb7",
+      "source": "docs/legacy/cart.md",
+      "raw": "raw/docs/docs/legacy/cart.md",
+      "line": 6,
+      "text": "下单接口为 `POST /api/order/create`，成功后进入订单详情 `minishop://order/{id}`。",
+      "style": "statement",
+      "status": "conflict",
+      "anchors": [
+        "android://app/src/main/java/com/minishop/ui/order/OrderDetailScreen.kt#OrderDetailScreen",
+        "harmony://entry/src/main/ets/pages/OrderDetailPage.ets#OrderDetailBuilder",
+        "ios://MiniShop/Features/Order/OrderDetailView.swift#OrderDetailView"
+      ],
+      "route_ids": [
+        "order_detail"
+      ],
+      "evidence": [
+        "接口 `POST /api/order/create` 在代码中不存在",
+        "deeplink `minishop://order/{id}` 存在"
+      ]
+    },
+    {
+      "id": "CART-9509ed",
+      "source": "docs/legacy/cart.md",
+      "raw": "raw/docs/docs/legacy/cart.md",
+      "line": 7,
+      "text": "商品详情接口为 `GET /api/products/{id}`。",
+      "style": "statement",
+      "status": "verified",
+      "anchors": [
+        "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.getProduct",
+        "harmony://entry/src/main/ets/common/Api.ets#Api.loadProduct",
+        "ios://MiniShop/Features/Products/ProductsViewModel.swift#ProductsViewModel.loadProduct"
+      ],
+      "route_ids": [
+        "products"
+      ],
+      "evidence": [
+        "接口 `GET /api/products/{id}` 存在（android, harmony, ios）"
+      ]
+    },
+    {
+      "id": "LOGIN-4dbfba",
+      "source": "docs/legacy/login.md",
+      "raw": "raw/docs/docs/legacy/login.md",
+      "line": 3,
+      "text": "登录使用手机号 + 短信验证码：先调用 `POST /api/sms/send` 发送验证码，再调用 `POST /api/login` 校验。",
+      "style": "statement",
+      "status": "conflict",
+      "anchors": [
+        "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.login",
+        "harmony://entry/src/main/ets/common/Api.ets#Api.login",
+        "ios://MiniShop/Features/Login/LoginViewModel.swift#LoginViewModel.login"
+      ],
+      "route_ids": [
+        "login"
+      ],
+      "evidence": [
+        "接口 `POST /api/sms/send` 在代码中不存在",
+        "接口 `POST /api/login` 存在（android, harmony, ios）"
+      ]
+    },
+    {
+      "id": "LOGIN-514629",
+      "source": "docs/legacy/login.md",
+      "raw": "raw/docs/docs/legacy/login.md",
+      "line": 4,
+      "text": "登录页的输入框 testID 为 `login_username`、`login_password`，提交按钮为 `login_submit`。",
+      "style": "statement",
+      "status": "verified",
+      "anchors": [
+        "android://app/src/main/java/com/minishop/ui/login/LoginScreen.kt#LoginScreen",
+        "harmony://entry/src/main/ets/pages/LoginPage.ets#LoginPage.build",
+        "ios://MiniShop/Features/Login/LoginView.swift#LoginView.body"
+      ],
+      "route_ids": [
+        "login"
+      ],
+      "evidence": [
+        "testID `login_username` 存在",
+        "testID `login_password` 存在",
+        "testID `login_submit` 存在"
+      ]
+    },
+    {
+      "id": "LOGIN-974e57",
+      "source": "docs/legacy/login.md",
+      "raw": "raw/docs/docs/legacy/login.md",
+      "line": 5,
+      "text": "登录成功后跳转到商品列表 `minishop://products`。",
+      "style": "statement",
+      "status": "verified",
+      "anchors": [
+        "android://app/src/main/java/com/minishop/ui/products/ProductsScreen.kt#ProductsScreen",
+        "harmony://entry/src/main/ets/pages/ProductsPage.ets#ProductsBuilder",
+        "ios://MiniShop/Features/Products/ProductsView.swift#ProductsView"
+      ],
+      "route_ids": [
+        "products"
+      ],
+      "evidence": [
+        "deeplink `minishop://products` 存在"
+      ]
+    },
+    {
+      "id": "LOGIN-120849",
+      "source": "docs/legacy/login.md",
+      "raw": "raw/docs/docs/legacy/login.md",
+      "line": 6,
+      "text": "登录逻辑集中在 `LoginViewModel.login` 中。",
+      "style": "statement",
+      "status": "verified",
+      "anchors": [
+        "android://app/src/main/java/com/minishop/ui/login/LoginViewModel.kt#LoginViewModel.login",
+        "ios://MiniShop/Features/Login/LoginViewModel.swift#LoginViewModel.login"
+      ],
+      "route_ids": [
+        "login"
+      ],
+      "evidence": [
+        "符号 `LoginViewModel.login` 存在（2 处）"
+      ]
+    },
+    {
+      "id": "LOGIN-e5f114",
+      "source": "docs/legacy/login.md",
+      "raw": "raw/docs/docs/legacy/login.md",
+      "line": 7,
+      "text": "会话 token 由 `SessionManager.saveToken()` 持久化。",
+      "style": "statement",
+      "status": "conflict",
+      "evidence": [
+        "符号 `SessionManager.saveToken()` 在代码中不存在（类型 `SessionManager` 也不存在）"
+      ]
+    },
+    {
+      "id": "PLAN-404208",
+      "source": "specs/001-cart/plan.md",
+      "raw": "raw/docs/specs/001-cart/plan.md",
+      "line": 3,
+      "text": "Android: `CartViewModel` (Compose + ViewModel)；iOS: `CartViewModel` (ObservableObject)；HarmonyOS: `CartStore`。",
+      "style": "statement",
+      "status": "verified",
+      "anchors": [
+        "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel",
+        "harmony://entry/src/main/ets/common/CartStore.ets#CartStore",
+        "ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel"
+      ],
+      "evidence": [
+        "符号 `CartViewModel` 存在（2 处）",
+        "符号 `CartViewModel` 存在（2 处）",
+        "符号 `CartStore` 存在（1 处）"
+      ]
+    },
+    {
+      "id": "PLAN-3e24ef",
+      "source": "specs/001-cart/plan.md",
+      "raw": "raw/docs/specs/001-cart/plan.md",
+      "line": 4,
+      "text": "三端共享上限常量，接口 `POST /api/cart`。",
+      "style": "statement",
+      "status": "verified",
+      "anchors": [
+        "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.addToCart",
+        "harmony://entry/src/main/ets/common/Api.ets#Api.addToCart",
+        "ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.addItem"
+      ],
+      "route_ids": [
+        "cart"
+      ],
+      "evidence": [
+        "接口 `POST /api/cart` 存在（android, harmony, ios）"
+      ]
+    },
+    {
+      "id": "001-CART-SPEC-503548",
+      "source": "specs/001-cart/spec.md",
+      "raw": "raw/docs/specs/001-cart/spec.md",
+      "line": 14,
+      "text": "WHEN the user taps `add_to_cart` on product detail THE SYSTEM SHALL call `POST /api/cart`.",
+      "style": "ears",
+      "status": "verified",
+      "anchors": [
+        "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.addToCart",
+        "android://app/src/main/java/com/minishop/ui/products/ProductDetailScreen.kt#ProductDetailScreen",
+        "harmony://entry/src/main/ets/common/Api.ets#Api.addToCart",
+        "harmony://entry/src/main/ets/pages/ProductDetailPage.ets#ProductDetailPage.build",
+        "ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.addItem",
+        "ios://MiniShop/Features/Products/ProductDetailView.swift#ProductDetailView.body"
+      ],
+      "route_ids": [
+        "cart",
+        "product_detail"
+      ],
+      "evidence": [
+        "接口 `POST /api/cart` 存在（android, harmony, ios）",
+        "testID `add_to_cart` 存在"
+      ]
+    },
+    {
+      "id": "001-CART-SPEC-4d53d3",
+      "source": "specs/001-cart/spec.md",
+      "raw": "raw/docs/specs/001-cart/spec.md",
+      "line": 15,
+      "text": "WHEN the cart is empty THE SYSTEM SHALL disable `cart_checkout`.",
+      "style": "ears",
+      "status": "verified",
+      "anchors": [
+        "android://app/src/main/java/com/minishop/ui/cart/CartScreen.kt#CartScreen",
+        "harmony://entry/src/main/ets/pages/CartPage.ets#CartPage.build",
+        "ios://MiniShop/Features/Cart/CartView.swift#CartView.body"
+      ],
+      "route_ids": [
+        "cart"
+      ],
+      "evidence": [
+        "testID `cart_checkout` 存在"
+      ]
+    },
+    {
+      "id": "FR-001",
+      "source": "specs/001-cart/spec.md",
+      "raw": "raw/docs/specs/001-cart/spec.md",
+      "line": 21,
+      "text": "System MUST let users add a product to the cart from the product detail page (`add_to_cart`, `POST /api/cart`).",
+      "style": "spec-kit",
+      "status": "verified",
+      "anchors": [
+        "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.addToCart",
+        "android://app/src/main/java/com/minishop/ui/products/ProductDetailScreen.kt#ProductDetailScreen",
+        "harmony://entry/src/main/ets/common/Api.ets#Api.addToCart",
+        "harmony://entry/src/main/ets/pages/ProductDetailPage.ets#ProductDetailPage.build",
+        "ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.addItem",
+        "ios://MiniShop/Features/Products/ProductDetailView.swift#ProductDetailView.body"
+      ],
+      "route_ids": [
+        "cart",
+        "product_detail"
+      ],
+      "evidence": [
+        "接口 `POST /api/cart` 存在（android, harmony, ios）",
+        "testID `add_to_cart` 存在"
+      ]
+    },
+    {
+      "id": "FR-002",
+      "source": "specs/001-cart/spec.md",
+      "raw": "raw/docs/specs/001-cart/spec.md",
+      "line": 22,
+      "text": "The cart MUST hold at most 99 items (`MAX_CART_ITEMS`).",
+      "style": "spec-kit",
+      "status": "conflict",
+      "anchors": [
+        "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.MAX_CART_ITEMS",
+        "harmony://entry/src/main/ets/common/CartStore.ets#MAX_CART_ITEMS"
+      ],
+      "route_ids": [
+        "cart"
+      ],
+      "evidence": [
+        "代码中 `CartViewModel.MAX_CART_ITEMS` = 50（android），文档写的是 99",
+        "代码中 `MAX_CART_ITEMS` = 50（harmony），文档写的是 99"
+      ]
+    },
+    {
+      "id": "FR-003",
+      "source": "specs/001-cart/spec.md",
+      "raw": "raw/docs/specs/001-cart/spec.md",
+      "line": 23,
+      "text": "Checkout MUST create an order via `POST /api/orders` and then show `order_status`.",
+      "style": "spec-kit",
+      "status": "verified",
+      "anchors": [
+        "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.createOrder",
+        "android://app/src/main/java/com/minishop/ui/order/OrderDetailScreen.kt#OrderDetailScreen",
+        "harmony://entry/src/main/ets/common/Api.ets#Api.createOrder",
+        "harmony://entry/src/main/ets/pages/OrderDetailPage.ets#OrderDetailPage.build",
+        "ios://MiniShop/Features/Checkout/CheckoutView.swift#CheckoutView.placeOrder",
+        "ios://MiniShop/Features/Order/OrderDetailView.swift#OrderDetailView.body"
+      ],
+      "route_ids": [
+        "order_detail"
+      ],
+      "evidence": [
+        "接口 `POST /api/orders` 存在（android, harmony, ios）",
+        "testID `order_status` 存在"
+      ]
+    },
+    {
+      "id": "FR-004",
+      "source": "specs/001-cart/spec.md",
+      "raw": "raw/docs/specs/001-cart/spec.md",
+      "line": 24,
+      "text": "Users MUST be able to apply a coupon code at checkout (`POST /api/coupons/apply`).",
+      "style": "spec-kit",
+      "status": "conflict",
+      "route_ids": [
+        "checkout"
+      ],
+      "evidence": [
+        "接口 `POST /api/coupons/apply` 在代码中不存在"
+      ]
+    },
+    {
+      "id": "FR-005",
+      "source": "specs/001-cart/spec.md",
+      "raw": "raw/docs/specs/001-cart/spec.md",
+      "line": 25,
+      "text": "The cart page MUST be reachable via deep link `minishop://cart`.",
+      "style": "spec-kit",
+      "status": "verified",
+      "anchors": [
+        "android://app/src/main/java/com/minishop/ui/cart/CartScreen.kt#CartScreen",
+        "harmony://entry/src/main/ets/pages/CartPage.ets#CartBuilder",
+        "ios://MiniShop/Features/Cart/CartView.swift#CartView"
+      ],
+      "route_ids": [
+        "cart"
+      ],
+      "evidence": [
+        "deeplink `minishop://cart` 存在"
+      ]
+    }
+  ]
+}

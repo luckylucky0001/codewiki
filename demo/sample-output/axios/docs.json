@@ -1,0 +1,1192 @@
+{
+  "version": 1,
+  "root": "/home/user/axios",
+  "docs": [
+    {
+      "path": ".github/copilot-instructions.md",
+      "kind": "agent-guide",
+      "convention": "agents-md",
+      "hash": "2efd7dede4494a95288737688264bff57c0571e30e8cc89fc77fd4ec575ecc0b",
+      "title": "GitHub Copilot Instructions",
+      "bytes": 4516
+    },
+    {
+      "path": "AGENTS.md",
+      "kind": "agent-guide",
+      "convention": "agents-md",
+      "hash": "5cdb89f7647451becab2fb3db19cea393c1dfd184e8f0a5d09537185016d9e71",
+      "title": "AGENTS.md",
+      "bytes": 8873
+    },
+    {
+      "path": "CLAUDE.md",
+      "kind": "agent-guide",
+      "convention": "agents-md",
+      "hash": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49",
+      "bytes": 11
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "04b8efb965ba1209e34fa28b8a2f2a05349d2b90966c56120b8844d851f2c641",
+      "title": "Contributing",
+      "bytes": 1461
+    },
+    {
+      "path": "README.md",
+      "kind": "readme",
+      "convention": "readme",
+      "hash": "becb5a88faa9450c8018f457d39ff05c9da43c7b28229ea5d5942b50a4c4e1cf",
+      "bytes": 108241
+    },
+    {
+      "path": "SECURITY.md",
+      "kind": "design",
+      "convention": "security",
+      "hash": "e2f38eb60f2a39700f6f20f2902e8c7dec34128a8f29c00f10b0bd028264439f",
+      "title": "Security policy",
+      "bytes": 5160
+    },
+    {
+      "path": "THREATMODEL.md",
+      "kind": "design",
+      "convention": "security",
+      "hash": "9b2d28766b999f913473e3ae0979346a0dc973a721119de81e8c86d1a2654480",
+      "title": "Axios threat model",
+      "bytes": 94611
+    },
+    {
+      "path": "docs/es/index.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "829533383c7f122a7a2f1bede4b2ff18a0236641413ee0abce670850219a10bc",
+      "title": "https://vitepress.dev/reference/default-theme-home-page",
+      "bytes": 10126
+    },
+    {
+      "path": "docs/es/pages/advanced/adapters.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "1337addb3e6a3ced696ceb801cb182cabe03b49a77994978b72645dfd9057a1d",
+      "title": "Adaptadores",
+      "bytes": 4024
+    },
+    {
+      "path": "docs/es/pages/advanced/api-reference.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "64de4a6c7ce62a46411048c4a65d72af32d03da21d1e7876dff5169ff327a1a5",
+      "title": "Referencia de la API",
+      "bytes": 14348
+    },
+    {
+      "path": "docs/es/pages/advanced/authentication.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "14c4b2adba79fa496e31eb1a2f9c9a37d4d7b66385f342e26988b52fceb24dc5",
+      "title": "Autenticación",
+      "bytes": 4719
+    },
+    {
+      "path": "docs/es/pages/advanced/cancellation.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "23836ab6abf9eeef86b716509822531b5274fb1ea5ef87e67e9b34f363aa8d5c",
+      "title": "Cancelación",
+      "bytes": 3452
+    },
+    {
+      "path": "docs/es/pages/advanced/config-defaults.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "1fcb52c85cf27eec9cf35f8a762e3a8eafb5ba83fc6f60f9071549ac51718250",
+      "title": "Valores predeterminados de configuración",
+      "bytes": 3143
+    },
+    {
+      "path": "docs/es/pages/advanced/create-an-instance.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "e66e491a4e9abdc9fd25d99b3e0a7865d1c155a804fc8e629bc7ac16c885969b",
+      "title": "Crear una instancia",
+      "bytes": 2989
+    },
+    {
+      "path": "docs/es/pages/advanced/error-handling.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "25df011c49168fd866ae6924e8cd28ec5ba8f170c09674fc4377cc35efd60908",
+      "title": "Manejo de errores",
+      "bytes": 8918
+    },
+    {
+      "path": "docs/es/pages/advanced/fetch-adapter.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "50555f681f0b5ec42769337d42e94da4eb0ae015acaa833499be467a355cae54",
+      "title": "Adaptador Fetch <Badge type=\"tip\" text=\"Nuevo\" />",
+      "bytes": 3853
+    },
+    {
+      "path": "docs/es/pages/advanced/file-posting.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "cde0dad04b3215f7493a04cbc80243d2363111af0ba391ed7b611f8a0eb5b4ad",
+      "title": "Publicación de archivos",
+      "bytes": 3202
+    },
+    {
+      "path": "docs/es/pages/advanced/header-methods.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "d79616f56d046a153bf7e1a74b29857e8ed2cfd8dc92bae026636ef66181c97c",
+      "title": "Métodos de encabezados <Badge type=\"tip\" text=\"Nuevo\" />",
+      "bytes": 9329
+    },
+    {
+      "path": "docs/es/pages/advanced/headers.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "e88f521e5906905023cd92c8ae7123969174623685c39e32e501d85cf7aac825",
+      "title": "Encabezados <Badge type=\"tip\" text=\"Nuevo\" />",
+      "bytes": 5516
+    },
+    {
+      "path": "docs/es/pages/advanced/html-form-processing.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "6bc296d4941b48854a8e1b650b19cfc25c265ec55147d017b07f76ad37330b10",
+      "title": "Envío de formularios HTML (navegador) <Badge type=\"tip\" text=\"Nuevo\" />",
+      "bytes": 1917
+    },
+    {
+      "path": "docs/es/pages/advanced/http2.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "b3e39c418dd6dba9129f14c274f606bbd38af36320d9495de6a063d686c292ac",
+      "title": "HTTP2 <Badge type=\"warning\" text=\"Experimental\" /> <Badge type=\"tip\" text=\"v1.13.0+\" />",
+      "bytes": 2717
+    },
+    {
+      "path": "docs/es/pages/advanced/interceptors.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "041c224460c426accdc0959bf747a5cb1b54cec3a7b30d961c12dd53a8dc9358",
+      "title": "Interceptores",
+      "bytes": 7725
+    },
+    {
+      "path": "docs/es/pages/advanced/multipart-form-data-format.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "02037b670fc40ac11aa13da885687cc66fe386ecb1f41631b9637c3cd2727d63",
+      "title": "Formato multipart-form-data",
+      "bytes": 7734
+    },
+    {
+      "path": "docs/es/pages/advanced/progress-capturing.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "f9d9e5f700d718239072f9ef1288da3d250d38a28111ab7c2700541db260fd31",
+      "title": "Captura de progreso <Badge type=\"tip\" text=\"Nuevo\" />",
+      "bytes": 1993
+    },
+    {
+      "path": "docs/es/pages/advanced/promises.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "6d560f5dbbd146bc3f012a3090c53c7e40e2bac5418e914ad593adc0205f7f19",
+      "title": "Promises",
+      "bytes": 2754
+    },
+    {
+      "path": "docs/es/pages/advanced/rate-limiting.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "768669e4374a1d1bcad838a80f9b8a4749803c841f09fd595a11ea778a7d65ad",
+      "title": "Limitación de velocidad <Badge type=\"tip\" text=\"Nuevo\" />",
+      "bytes": 2243
+    },
+    {
+      "path": "docs/es/pages/advanced/request-config.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "790aa9bb06225a5810ce51fa2d14f23aba5354667dd9c1b77a1da1dc9c2e73a5",
+      "title": "Configuración de solicitud",
+      "bytes": 33525
+    },
+    {
+      "path": "docs/es/pages/advanced/request-method-aliases.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "23c757e4d0c8248960c66f214201e7b31c26447974193fb496ec7794709d9a07",
+      "title": "Alias de solicitud",
+      "bytes": 7260
+    },
+    {
+      "path": "docs/es/pages/advanced/response-schema.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "582575501448a191ef7c86cc990546ba59b1e315efeff36c405d8c9f678f691f",
+      "title": "Esquema de respuesta",
+      "bytes": 2828
+    },
+    {
+      "path": "docs/es/pages/advanced/retry.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "f8138b0c2de2bc8f0436ecfbcfe48a7e7fcefbbc5c009882d4f359c2efdfaf70",
+      "title": "Reintentos y recuperación de errores",
+      "bytes": 3901
+    },
+    {
+      "path": "docs/es/pages/advanced/testing.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "629608515fdc4e2f68eb35f0b950ec50dddd2de0734773179a23415b79764b3e",
+      "title": "Pruebas",
+      "bytes": 4232
+    },
+    {
+      "path": "docs/es/pages/advanced/type-script.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "a04bf097370c3c55e0a15ee76ffd4a32c11f7137b931fdd075266f5d4a6da3ee",
+      "title": "TypeScript",
+      "bytes": 6228
+    },
+    {
+      "path": "docs/es/pages/advanced/x-www-form-urlencoded-format.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "24d2a922860db667cdae97f0c47a35e56807328a938889130999caf8855dab6a",
+      "title": "Formato x-www-form-urlencoded",
+      "bytes": 4887
+    },
+    {
+      "path": "docs/es/pages/getting-started/examples/commonjs.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "7f0ce1c87c75b6a61f224060a2e5e5c33b973ada8226de730eadf6fddd5ed70f",
+      "title": "Ejemplos en JavaScript",
+      "bytes": 4389
+    },
+    {
+      "path": "docs/es/pages/getting-started/examples/typescript.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "9927d0dcc393016c0da57497c871c14e292b55f99c38e4564946efc94945eeff",
+      "title": "Ejemplo en TypeScript",
+      "bytes": 3501
+    },
+    {
+      "path": "docs/es/pages/getting-started/features.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "352d7518ed9a2fb31b781a0f6ee0dce9d682d14c5656a896e1a529a68b7461cc",
+      "title": "Características",
+      "bytes": 3156
+    },
+    {
+      "path": "docs/es/pages/getting-started/first-steps.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "e4117b0687f54e6a311e9b73e4586b08254903c43153952205dad9a0c7dd09fe",
+      "title": "Primeros pasos",
+      "bytes": 4153
+    },
+    {
+      "path": "docs/es/pages/getting-started/upgrade-guide.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "8c41fb9904a2f4eac8da51cb7c34f52f7c202032994686b3fe7239ed0b2cab53",
+      "title": "Guía de actualización",
+      "bytes": 5863
+    },
+    {
+      "path": "docs/es/pages/misc/security.md",
+      "kind": "design",
+      "convention": "security",
+      "hash": "92459ca06ce730b41be08254103bae39629a05568c67e3bad984d6d11f0b85c1",
+      "title": "Política de seguridad",
+      "bytes": 12636
+    },
+    {
+      "path": "docs/es/pages/misc/semver.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "9e5846a8663e3469de5f24224de7063b2f55a06b71b81ba1072888ef3cab6f11",
+      "title": "Versionado semántico",
+      "bytes": 2642
+    },
+    {
+      "path": "docs/es/pages/misc/sponsors.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "d6e7f3df2c459931f92a2397ca86fd3f507ab61eb80bf20c1c144a78f1347199",
+      "bytes": 4990
+    },
+    {
+      "path": "docs/fr/index.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "d7b83c7d3dcd91669629602489c141ce9ffafa57a977eab4a705e1b8911709eb",
+      "title": "https://vitepress.dev/reference/default-theme-home-page",
+      "bytes": 10129
+    },
+    {
+      "path": "docs/fr/pages/advanced/adapters.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "ea5e35dfefbef305243dbf550c8daecd1bf3d167a98533d3377a1054fa6e09d8",
+      "title": "Adaptateurs",
+      "bytes": 4286
+    },
+    {
+      "path": "docs/fr/pages/advanced/api-reference.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "d6d5daf7fcba18e95bb27561a541ced300a78375373f8a4d7c5e84b1a2ae0a32",
+      "title": "Référence API",
+      "bytes": 14552
+    },
+    {
+      "path": "docs/fr/pages/advanced/authentication.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "c1d5207d7981c658dfec4bc695d03e089e4c4dcdb238f23ea5db91380fa3f140",
+      "title": "Authentification",
+      "bytes": 4844
+    },
+    {
+      "path": "docs/fr/pages/advanced/cancellation.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "7c2ccbb047a3bd934578159031ffd99a8b648ba0ee9ebf8f03775e75f30025f9",
+      "title": "Annulation",
+      "bytes": 3572
+    },
+    {
+      "path": "docs/fr/pages/advanced/config-defaults.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "b78b8f3a4060b15ae3a030196ea98709a803dfc525a748e03850ac4381ff5c63",
+      "title": "Valeurs par défaut de configuration",
+      "bytes": 3140
+    },
+    {
+      "path": "docs/fr/pages/advanced/create-an-instance.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "7b9058f9a434bd86bf294ab64196588fb3d90c1655987900543b747e5412427e",
+      "title": "Créer une instance",
+      "bytes": 3016
+    },
+    {
+      "path": "docs/fr/pages/advanced/error-handling.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "02cafdb9d99969817b0970edf081677aed50ecba7655e70ba856f86f6e0dae0a",
+      "title": "Gestion des erreurs",
+      "bytes": 9015
+    },
+    {
+      "path": "docs/fr/pages/advanced/fetch-adapter.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "e0557914b44e6ca6b8ee654f393d7388b53d199dfb71d45bfc32a4bc9423f4d0",
+      "title": "Adaptateur Fetch <Badge type=\"tip\" text=\"Nouveau\" />",
+      "bytes": 4025
+    },
+    {
+      "path": "docs/fr/pages/advanced/file-posting.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "9c0f1592a067ea313d0f42f86e544b4ab5f7b22ebc12a4069abbf1b6a142d26d",
+      "title": "Envoi de fichiers",
+      "bytes": 3329
+    },
+    {
+      "path": "docs/fr/pages/advanced/header-methods.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "aef93465384dfbf90ca1826c24f8e0fe5d6f567de82d351188153b86817b7560",
+      "title": "Méthodes d'en-têtes <Badge type=\"tip\" text=\"Nouveau\" />",
+      "bytes": 9280
+    },
+    {
+      "path": "docs/fr/pages/advanced/headers.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "8f4f8a7a602a85aa273bb8c5b59e715f443b44e9e900c1df94110457fe35309c",
+      "title": "En-têtes <Badge type=\"tip\" text=\"Nouveau\" />",
+      "bytes": 5627
+    },
+    {
+      "path": "docs/fr/pages/advanced/html-form-processing.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "4c569e0cd3599fd38fcc659ab6641782db617c590de5c077bc3fe2826d527c84",
+      "title": "Traitement de formulaires HTML (navigateur) <Badge type=\"tip\" text=\"Nouveau\" />",
+      "bytes": 1980
+    },
+    {
+      "path": "docs/fr/pages/advanced/http2.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "bcc43ff185aa7f4543da734af6c12228c16d512314cd1bc6557bdcb4d921debd",
+      "title": "HTTP2 <Badge type=\"warning\" text=\"Expérimental\" /> <Badge type=\"tip\" text=\"v1.13.0+\" />",
+      "bytes": 2844
+    },
+    {
+      "path": "docs/fr/pages/advanced/interceptors.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "b2888b690e82eb051102c8cb4fe5b048f863af65d432bcd7976b91bade4a2461",
+      "title": "Intercepteurs",
+      "bytes": 7900
+    },
+    {
+      "path": "docs/fr/pages/advanced/multipart-form-data-format.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "4933cb3eab7fde72668f9333f4438c037100aa8aaeb5a1d32dab63a3790f5b32",
+      "title": "Format multipart/form-data",
+      "bytes": 7894
+    },
+    {
+      "path": "docs/fr/pages/advanced/progress-capturing.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "dce5184e94ef0afd961906b54cc4c6a76b0a2d39675ad64922dec5dd3d62a54c",
+      "title": "Capture de progression <Badge type=\"tip\" text=\"Nouveau\" />",
+      "bytes": 2185
+    },
+    {
+      "path": "docs/fr/pages/advanced/promises.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "713678b3225777a02b116947efa4d57514cfa132b1abebd7a24795f60ae0a7d5",
+      "title": "Promises",
+      "bytes": 2787
+    },
+    {
+      "path": "docs/fr/pages/advanced/rate-limiting.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "7e755117c607c491b66d21b04734dd11ba25415ec48dde6cc81a57bd81fb03d7",
+      "title": "Limitation de débit <Badge type=\"tip\" text=\"Nouveau\" />",
+      "bytes": 2424
+    },
+    {
+      "path": "docs/fr/pages/advanced/request-config.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "2ca557cceb362ffc833c6f82346200cfd205b1b591a17262671de63eeb43407d",
+      "title": "Configuration de requête",
+      "bytes": 34736
+    },
+    {
+      "path": "docs/fr/pages/advanced/request-method-aliases.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "2fd56c160d835a077017cf6f67a52469e21caee023d4e2fdb174505c407be848",
+      "title": "Alias de requête",
+      "bytes": 7592
+    },
+    {
+      "path": "docs/fr/pages/advanced/response-schema.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "e5be3163d79eb8e51731a7d44ff94489126692cc5b0fa9be2fd51f93b3e23f0c",
+      "title": "Schéma de réponse",
+      "bytes": 2812
+    },
+    {
+      "path": "docs/fr/pages/advanced/retry.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "b3e7a729a58841200c70d5c865744ccd3f659a2654281d2936c4f1e40c28372c",
+      "title": "Nouvelles tentatives et récupération sur erreur",
+      "bytes": 4163
+    },
+    {
+      "path": "docs/fr/pages/advanced/testing.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "5adf1519241b1f56ffa1c4e796b9495ecd4c826478a5ee408122f0d70ce08e2c",
+      "title": "Tests",
+      "bytes": 4445
+    },
+    {
+      "path": "docs/fr/pages/advanced/type-script.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "5403cec25225b318d08fda4e09910e42b9350266073ce18d33e8ac633b0e08fb",
+      "title": "TypeScript",
+      "bytes": 6408
+    },
+    {
+      "path": "docs/fr/pages/advanced/x-www-form-urlencoded-format.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "e127328fa02ab1fffa39447cf9bbd050378014047fe330a7ca463cc55006f0a2",
+      "title": "Format x-www-form-urlencoded",
+      "bytes": 4989
+    },
+    {
+      "path": "docs/fr/pages/getting-started/examples/commonjs.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "8fa53cd9c25b2c8efb12948cd94b4757bad5e553700d17bae39b35f358ec5f87",
+      "title": "Exemples JavaScript",
+      "bytes": 4472
+    },
+    {
+      "path": "docs/fr/pages/getting-started/examples/typescript.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "3a40fd8e59b7f3d2e05e6841d6e8508f1906a20616f6ee2c2a6eb8fc4e120743",
+      "title": "Exemple TypeScript",
+      "bytes": 3581
+    },
+    {
+      "path": "docs/fr/pages/getting-started/features.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "63a209631c79ef282313864f80dda9287bfd05aad6d4f7c13f964d49d50c2f44",
+      "title": "Fonctionnalités",
+      "bytes": 3161
+    },
+    {
+      "path": "docs/fr/pages/getting-started/first-steps.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "02db0981e65dbcc15f65e1a79957c686af3b272b9d0b7a86000b995308ceae26",
+      "title": "Premiers pas",
+      "bytes": 4466
+    },
+    {
+      "path": "docs/fr/pages/getting-started/upgrade-guide.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "bb6f1d4970e15dd740d0f15b432f743cbcf71103674b01106e035ed7aab93e3c",
+      "title": "Guide de migration",
+      "bytes": 5965
+    },
+    {
+      "path": "docs/fr/pages/misc/security.md",
+      "kind": "design",
+      "convention": "security",
+      "hash": "0e5e849be7d3d9642c5c1f8a9b787998be2ffe4be0139074002ab62a2e5bfc30",
+      "title": "Politique de sécurité",
+      "bytes": 12924
+    },
+    {
+      "path": "docs/fr/pages/misc/semver.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "309a4494635dea9e7e12696e47932947d1a539c5f9832489dce8f9c8e0e3c770",
+      "title": "Versionnage sémantique",
+      "bytes": 2810
+    },
+    {
+      "path": "docs/fr/pages/misc/sponsors.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "82f7ae50597d11a8f44590f3f5ab78c111038e19596bd1477749041e7e1f2fec",
+      "bytes": 4981
+    },
+    {
+      "path": "docs/index.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "14094e7b8d0907cf0e6f96e0789aa640dba2b8cd36fe99da8a310a2b7e1b4809",
+      "title": "https://vitepress.dev/reference/default-theme-home-page",
+      "bytes": 10057
+    },
+    {
+      "path": "docs/pages/advanced/adapters.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "56a8c3ecee4c3832ecca8c1a0bae42890518641ebaf34ddba94ae59aec16325a",
+      "title": "Adapters",
+      "bytes": 3741
+    },
+    {
+      "path": "docs/pages/advanced/api-reference.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "c6e38a17e9279c2ac10a08442cad36f3d328b93504b4694a7941cbb45fce1d8a",
+      "title": "API reference",
+      "bytes": 13433
+    },
+    {
+      "path": "docs/pages/advanced/authentication.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "2e55b8f20472e05e70ac394cfc6fe6ab2566fd019584e8140fdcfb937141c240",
+      "title": "Authentication",
+      "bytes": 4425
+    },
+    {
+      "path": "docs/pages/advanced/cancellation.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "2127f2b913c5d0f4a86dd2d6df9676a961b21eee2ab38a2c17bd6c80f1fbd2a4",
+      "title": "Cancellation",
+      "bytes": 3255
+    },
+    {
+      "path": "docs/pages/advanced/config-defaults.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "a608392dfc046b29907fd10364b43c9f981ffa9c6cec04553450dd486e1f30b3",
+      "title": "Config defaults",
+      "bytes": 2562
+    },
+    {
+      "path": "docs/pages/advanced/create-an-instance.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "88a27f925f9f76cdc8960397e4930636090472ae0e99932778df609c7ffb68d0",
+      "title": "Creating an instance",
+      "bytes": 2645
+    },
+    {
+      "path": "docs/pages/advanced/error-handling.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "6d2b6a116d71875c0b0a076d5c103ca9c532a2d6bafdf15706b4ae20212351c8",
+      "title": "Error handling",
+      "bytes": 8182
+    },
+    {
+      "path": "docs/pages/advanced/fetch-adapter.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "56332decfc1cf168cab5dcc9b62fbb2ede462e4553c09eeb1443ea0c8bc34c24",
+      "title": "Fetch adapter <Badge type=\"tip\" text=\"New\" />",
+      "bytes": 3514
+    },
+    {
+      "path": "docs/pages/advanced/file-posting.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "469935a9d1ebb8322c463cd0341c5b4175dcbbdab4ca6d55170ead5577840e5b",
+      "title": "File posting",
+      "bytes": 2989
+    },
+    {
+      "path": "docs/pages/advanced/header-methods.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "42035375ce20f7760db88152cc6119e5317ce90030849c8b212779c70c836058",
+      "title": "Header methods <Badge type=\"tip\" text=\"New\" />",
+      "bytes": 8308
+    },
+    {
+      "path": "docs/pages/advanced/headers.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "99ef69fbb5a4f6d447bae838f105456432e035e4c3bba8f62622e539b8eca7ee",
+      "title": "Headers <Badge type=\"tip\" text=\"New\" />",
+      "bytes": 5921
+    },
+    {
+      "path": "docs/pages/advanced/html-form-processing.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "7f4553f2ecddfe9410d539176b0995a012d148fdbad0963c1c0da48784c1d1bc",
+      "title": "HTML form posting (browser) <Badge type=\"tip\" text=\"New\" />",
+      "bytes": 1758
+    },
+    {
+      "path": "docs/pages/advanced/http2.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "4e1b180e1313b5d293aa53855aedd62166e665e359371809e64136bbc7bf7540",
+      "title": "HTTP2 <Badge type=\"warning\" text=\"Experimental\" /> <Badge type=\"tip\" text=\"v1.13.0+\" />",
+      "bytes": 2470
+    },
+    {
+      "path": "docs/pages/advanced/interceptors.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "5f5ef581937384cd13259f832a00b7502e33c6033dd1cc0c97c20ef1ba9884ef",
+      "title": "Interceptors",
+      "bytes": 7100
+    },
+    {
+      "path": "docs/pages/advanced/multipart-form-data-format.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "f1942f99c24686d6db954062a41f8229a3f0fcd209e976519b6278402796bc7f",
+      "title": "multipart-form-data format",
+      "bytes": 6967
+    },
+    {
+      "path": "docs/pages/advanced/progress-capturing.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "865243587b2fbcfbef8cd071a261ef64da4bad3e252dce852ac7848e1c0f794e",
+      "title": "Progress capturing <Badge type=\"tip\" text=\"New\" />",
+      "bytes": 1928
+    },
+    {
+      "path": "docs/pages/advanced/promises.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "fd1a83fa84d7019d479a248758341e0d272a11c1c74c4f8d4e3778e61ab52bfa",
+      "title": "Promises",
+      "bytes": 2626
+    },
+    {
+      "path": "docs/pages/advanced/rate-limiting.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "2fe810be14f82c345ecd28104ab0710dde1e1de72bababbb35d93b7150c1d03d",
+      "title": "Rate limiting <Badge type=\"tip\" text=\"New\" />",
+      "bytes": 2087
+    },
+    {
+      "path": "docs/pages/advanced/request-config.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "484aa213c09f0cde4f73d4475f199cf950cb3f0e96ca91d40fc55a7cf849a19d",
+      "title": "Request config",
+      "bytes": 30227
+    },
+    {
+      "path": "docs/pages/advanced/request-method-aliases.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "ac7dd672d2c81a1f14b09c94f4c2e1261f9133f8ec14253ffde1eb9b487a5018",
+      "title": "Request aliases",
+      "bytes": 6822
+    },
+    {
+      "path": "docs/pages/advanced/response-schema.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "60419f64342b44d721e0be8d8b8b2dd12580343c7498b249f97f454fb6780e70",
+      "title": "Response schema",
+      "bytes": 2466
+    },
+    {
+      "path": "docs/pages/advanced/retry.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "b62147860e0140bf914203a5d5ad57adfd26bf86c1284bb5b852bb2135313383",
+      "title": "Retry and error recovery",
+      "bytes": 3664
+    },
+    {
+      "path": "docs/pages/advanced/testing.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "25ee76741d833345c2dc50b7cdc5c8df700011eef8f00b9f87ea591075d4d1f6",
+      "title": "Testing",
+      "bytes": 4040
+    },
+    {
+      "path": "docs/pages/advanced/type-script.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "30bc5796da7867616584bb0c1f184010bb2c47e3a43e4a16616f0a3cae311e54",
+      "title": "TypeScript",
+      "bytes": 5610
+    },
+    {
+      "path": "docs/pages/advanced/x-www-form-urlencoded-format.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "d94aea82c60f35782004adadb4029add1abebfc4976bcbd8b993d2b26bf24dea",
+      "title": "x-www-form-urlencoded format",
+      "bytes": 4484
+    },
+    {
+      "path": "docs/pages/getting-started/examples/commonjs.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "0b01158624f66cd14a5fead528683f60fe7aea1513b843d124645750099c984e",
+      "title": "JavaScript examples",
+      "bytes": 4287
+    },
+    {
+      "path": "docs/pages/getting-started/examples/typescript.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "d7312a63acfa5c2b947d2ebb25710397351de971b311c8912a4f69e991b067f6",
+      "title": "TypeScript example",
+      "bytes": 3316
+    },
+    {
+      "path": "docs/pages/getting-started/features.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "ed94641e5b866a5a6f1e88ca46a7f70441f4e04a60a29e9591a2840ac9393f1c",
+      "title": "Features",
+      "bytes": 2562
+    },
+    {
+      "path": "docs/pages/getting-started/first-steps.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "c86c01b8dafec323dc97fb7bc944bfe51296223916cb3005e6b682c61c31af11",
+      "title": "First steps",
+      "bytes": 3837
+    },
+    {
+      "path": "docs/pages/getting-started/upgrade-guide.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "d4be18fe030cdc3b68fb49218d654f4bc2e9763cd6905b4651412b75ee118b3e",
+      "title": "Upgrade guide",
+      "bytes": 5044
+    },
+    {
+      "path": "docs/pages/misc/security.md",
+      "kind": "design",
+      "convention": "security",
+      "hash": "156a85ca8b6b432bc77ee47cf456453e59fa7aef096b2c5824dd26e03195493a",
+      "title": "Security policy",
+      "bytes": 11042
+    },
+    {
+      "path": "docs/pages/misc/semver.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "0609354cb139ef7783239a0e4ae489e89f6598c3b89135c930c031e6d7b11d91",
+      "title": "Semantic versioning",
+      "bytes": 2373
+    },
+    {
+      "path": "docs/pages/misc/sponsors.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "cc9f6a95cbfe398d9660fad14bf731d7dcdcd5835bc0c8a155195769bb710763",
+      "bytes": 4968
+    },
+    {
+      "path": "docs/zh/index.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "8d73ecf265e118a07aad4ede6f40090b57abadd5e89cc424583bdb3ec73977ed",
+      "title": "https://vitepress.dev/reference/default-theme-home-page",
+      "bytes": 10027
+    },
+    {
+      "path": "docs/zh/pages/advanced/adapters.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "6105eda4819fecd08bdb7c42ede7477ea11d12484c4e1ae710d680332103a4dc",
+      "title": "适配器",
+      "bytes": 3601
+    },
+    {
+      "path": "docs/zh/pages/advanced/api-reference.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "8e38cb8080c7751416fc21724de33cb1f32e1c1ddfe059b1ad6f4bc345596c5e",
+      "title": "API 参考",
+      "bytes": 12050
+    },
+    {
+      "path": "docs/zh/pages/advanced/authentication.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "625d7bc6242cbf13ba32cb8d90de0402004ea33efd7f6535600be373a35a93e2",
+      "title": "认证",
+      "bytes": 4332
+    },
+    {
+      "path": "docs/zh/pages/advanced/cancellation.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "ce5b63ca36a736848c2a3d0b059a2887a7c95324d58bd6c5e06f64caf17c10f7",
+      "title": "取消请求",
+      "bytes": 3093
+    },
+    {
+      "path": "docs/zh/pages/advanced/config-defaults.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "e91a6f09f2bfbe742cca0036319d75510a7406696ebe42481aca003a7f22f9ce",
+      "title": "配置默认值",
+      "bytes": 2284
+    },
+    {
+      "path": "docs/zh/pages/advanced/create-an-instance.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "c171ef13bbfbd601dc9000740a94b18e39db4a7d97e6238fe1e3f894140330b1",
+      "title": "创建实例",
+      "bytes": 2601
+    },
+    {
+      "path": "docs/zh/pages/advanced/error-handling.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "ed8ff0b1c0910997429d6c21ed549fffad2b29758267b4cda2a877d6678f284c",
+      "title": "错误处理",
+      "bytes": 7937
+    },
+    {
+      "path": "docs/zh/pages/advanced/fetch-adapter.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "1be92f36c834ad188f81034d6f4810de23f80ef9d366f4da5ea84652ffd66ab3",
+      "title": "Fetch 适配器 <Badge type=\"tip\" text=\"新特性\" />",
+      "bytes": 3236
+    },
+    {
+      "path": "docs/zh/pages/advanced/file-posting.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "3e652c251d590bb076cd5f4eed11ee1b1fc6f5099260ba042061abfed9c412b7",
+      "title": "文件上传",
+      "bytes": 2927
+    },
+    {
+      "path": "docs/zh/pages/advanced/header-methods.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "3ed433386d15be993626ebf98b2c7d50a029bba108bc15918e23bc4ff00e7aae",
+      "title": "请求头方法 <Badge type=\"tip\" text=\"新特性\" />",
+      "bytes": 7827
+    },
+    {
+      "path": "docs/zh/pages/advanced/headers.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "f33b1d2201eefdcd84174780876593bb6a50a0eb7be3bc065a25f4095604f925",
+      "title": "请求头 <Badge type=\"tip\" text=\"新特性\" />",
+      "bytes": 4608
+    },
+    {
+      "path": "docs/zh/pages/advanced/html-form-processing.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "d4136d8305c90dd73d15affdf09663c4d50d757817015e1ebb2c3f86e46e4f3e",
+      "title": "HTML 表单提交（浏览器） <Badge type=\"tip\" text=\"新特性\" />",
+      "bytes": 1729
+    },
+    {
+      "path": "docs/zh/pages/advanced/http2.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "c19d6ce03de4afd5652f896bb92ae1f5cbedb07b972afed83e577f52139e103c",
+      "title": "HTTP2 <Badge type=\"warning\" text=\"实验性\" /> <Badge type=\"tip\" text=\"v1.13.0+\" />",
+      "bytes": 2354
+    },
+    {
+      "path": "docs/zh/pages/advanced/interceptors.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "77b785ea51c4b2e096da68a033195bd9b005466ba9e15cab03f5afe2ec1b66dd",
+      "title": "拦截器",
+      "bytes": 6325
+    },
+    {
+      "path": "docs/zh/pages/advanced/multipart-form-data-format.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "7d0c9b801f1a70388022ef041660ac54d0e4594808170598f94113d5d76df3ef",
+      "title": "multipart/form-data 格式",
+      "bytes": 6670
+    },
+    {
+      "path": "docs/zh/pages/advanced/progress-capturing.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "5a65d05d0b5594d54dadf6831ad90f821ecf64741e1e74ea79bbd3ad7a1014a1",
+      "title": "进度捕获 <Badge type=\"tip\" text=\"新特性\" />",
+      "bytes": 1721
+    },
+    {
+      "path": "docs/zh/pages/advanced/promises.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "1efd2860432ca43d4221186e4cc2cfa140168f6906cd0dcdd31c9460f0a76ea6",
+      "title": "Promise",
+      "bytes": 2537
+    },
+    {
+      "path": "docs/zh/pages/advanced/rate-limiting.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "d3edd0ab7ae8bc3776f85833be8f7c678b1e9cb1b332d620fbf3f0390481cfa2",
+      "title": "速率限制 <Badge type=\"tip\" text=\"新特性\" />",
+      "bytes": 1946
+    },
+    {
+      "path": "docs/zh/pages/advanced/request-config.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "12020084216dbf0257ad5e7cfb2b915c36244b2264b85642b5476f9c273496f8",
+      "title": "请求配置",
+      "bytes": 28488
+    },
+    {
+      "path": "docs/zh/pages/advanced/request-method-aliases.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "59f0589f35187e3d5718b9444c83567f3e32cfa694bea3e7af6b3a1902b89501",
+      "title": "请求别名",
+      "bytes": 5946
+    },
+    {
+      "path": "docs/zh/pages/advanced/response-schema.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "0cb511eec5f94415ee278c037b775a2000f3e2bf0d9688994763be1d2b6294c7",
+      "title": "响应结构",
+      "bytes": 2345
+    },
+    {
+      "path": "docs/zh/pages/advanced/retry.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "938478a70aa2d6e187268be60cc806b2eeb85508fc3e62c40f984b43dbad96a5",
+      "title": "重试与错误恢复",
+      "bytes": 3641
+    },
+    {
+      "path": "docs/zh/pages/advanced/testing.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "7474eebdfdeb859eee4fd23a7e0e22629efc9f5f8a6b278d87aad76c1de606a7",
+      "title": "测试",
+      "bytes": 4001
+    },
+    {
+      "path": "docs/zh/pages/advanced/type-script.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "aef8a1e87ab5c9acb701f4279a9db5b62d338778b9ba3474ed9fe10aa69444c3",
+      "title": "TypeScript",
+      "bytes": 5747
+    },
+    {
+      "path": "docs/zh/pages/advanced/x-www-form-urlencoded-format.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "89d8d1e077e86017d066c4620fa1ed09ae5d9aa82ecd18b0b11de2d0108baf85",
+      "title": "x-www-form-urlencoded 格式",
+      "bytes": 4374
+    },
+    {
+      "path": "docs/zh/pages/getting-started/examples/commonjs.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "98c7d41cd83aa56a09ee3462bb5371596ab29c526bfd20bb91eb6ce99be4cd9e",
+      "title": "JavaScript 示例",
+      "bytes": 4238
+    },
+    {
+      "path": "docs/zh/pages/getting-started/examples/typescript.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "3cf5cce75a8bb83f20096f2fadd5a65a8cf607de6ba3fde9ec6beee11cee5917",
+      "title": "TypeScript 示例",
+      "bytes": 3384
+    },
+    {
+      "path": "docs/zh/pages/getting-started/features.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "170e60cd409bc8729f8372db4637e96aedc2914d74c2981ba5b44e5834663381",
+      "title": "功能特性",
+      "bytes": 2304
+    },
+    {
+      "path": "docs/zh/pages/getting-started/first-steps.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "ffc4e7ad884c5a2cd5871439f1b857cbac25bc6f786456be45c82f416d704353",
+      "title": "入门指南",
+      "bytes": 3373
+    },
+    {
+      "path": "docs/zh/pages/getting-started/upgrade-guide.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "d97d623fee28ccb14f30d4a9380d59126c6d308825a38eda6ce4e2b420b86237",
+      "title": "升级指南",
+      "bytes": 4553
+    },
+    {
+      "path": "docs/zh/pages/misc/security.md",
+      "kind": "design",
+      "convention": "security",
+      "hash": "7be6c3f5cf401da58b8b78836a0764baeda1400bd736d821a7c4cd334b9da25b",
+      "title": "安全政策",
+      "bytes": 10343
+    },
+    {
+      "path": "docs/zh/pages/misc/semver.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "c7de720c612eed03eb09f36a8b60e7b8c225a732d06fa3de1475eaefd2fda480",
+      "title": "语义化版本",
+      "bytes": 1812
+    },
+    {
+      "path": "docs/zh/pages/misc/sponsors.md",
+      "kind": "doc",
+      "convention": "docs",
+      "hash": "5aea33f27b426371a89c5131061a150b93199298adb3ae9a8e0cc0af513b6bca",
+      "bytes": 4954
+    },
+    {
+      "path": "examples/README.md",
+      "kind": "readme",
+      "convention": "readme",
+      "hash": "af2fa70ab3af1ac031226ef23464da3ad1f15c6e52af9f02121b9826cac8b5d5",
+      "title": "axios examples",
+      "bytes": 212
+    },
+    {
+      "path": "lib/adapters/README.md",
+      "kind": "readme",
+      "convention": "readme",
+      "hash": "82e7ad662220113a72d91bde36ad5c43139310b1c9d73c7b996d645879af3ef2",
+      "title": "axios // adapters",
+      "bytes": 911
+    },
+    {
+      "path": "lib/core/README.md",
+      "kind": "readme",
+      "convention": "readme",
+      "hash": "6982a869f4da4405a7b74e182ca2eea0da2ade583edd606d182bfc49aee4cd2a",
+      "title": "axios // core",
+      "bytes": 399
+    },
+    {
+      "path": "lib/env/README.md",
+      "kind": "readme",
+      "convention": "readme",
+      "hash": "9edc67c3c914a8eb30a6d8ccc12d6ccf21937af25bbd05b6176647dbbec13b50",
+      "title": "axios // env",
+      "bytes": 131
+    },
+    {
+      "path": "lib/helpers/README.md",
+      "kind": "readme",
+      "convention": "readme",
+      "hash": "b8fe226abed5bdd9fc5eed1d9b906f4eff742f838685b5ab4fd08e41fe57c193",
+      "title": "axios // helpers",
+      "bytes": 351
+    },
+    {
+      "path": "tests/README.md",
+      "kind": "readme",
+      "convention": "readme",
+      "hash": "0e0a50b340ab5c4838100b6f48bd86db702b57077b324be797d57b974230f5ec",
+      "title": "Test Contribution Guide",
+      "bytes": 4039
+    }
+  ]
+}

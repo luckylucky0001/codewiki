@@ -1,0 +1,13 @@
+base 3db62a4 → head 1c63b25
+  unchanged  208
+  body       4
+  signature  1
+  added      0
+  deleted    0
+  renamed    1
+body      harmony://entry/src/main/ets/common/Api.ets#Api
+body      harmony://entry/src/main/ets/common/CartStore.ets#CartStore
+body      harmony://entry/src/main/ets/pages/ProductDetailPage.ets#ProductDetailPage.build
+body      harmony://entry/src/main/ets/pages/ProductsPage.ets#ProductsPage.aboutToAppear
+renamed   harmony://entry/src/main/ets/common/Api.ets#Api.loadProducts → harmony://entry/src/main/ets/common/Api.ets#Api.fetchProducts (similarity 1.00)
+signature harmony://entry/src/main/ets/common/CartStore.ets#CartStore.addItem
