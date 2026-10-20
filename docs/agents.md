@@ -134,7 +134,10 @@ llm:
 
    agent 自己报告的错误也会写进任务错误里，比如 Codex 的 `turn.failed`、Claude 的 `is_error`。
 
-实跑示例：在 minishop 上应用 01-cart-limit 改动后，`kb compound --agent claude --model haiku` 完成 2 个任务，共 $0.0316，verify 通过（[输出](../demo/sample-output/agents/compound-agent-claude-haiku.txt)）。
+实跑示例：
+
+- 在 minishop 上应用 01-cart-limit 改动后，`kb compound --agent claude --model haiku` 完成 2 个任务，共 $0.0316，verify 通过（[输出](../demo/sample-output/agents/compound-agent-claude-haiku.txt)）。
+- `kb ingest docs/legacy/cart.md --agent claude --model haiku` 用 1 个任务完成断言核对，耗时 18 s，花费 $0.0075。结果是 2 条 conflict（购物车上限文档写 10、代码是 99；下单接口文档写 `/api/order/create`、代码是 `/api/orders`）和 3 条 verified（[输出](../demo/sample-output/agents/ingest-agent-claude-haiku.txt)）。
 
 ### Codex 端到端：真实二进制 + mock 模型
 

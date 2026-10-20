@@ -1,0 +1,38 @@
+$ kb ingest docs/legacy/cart.md --agent claude --model haiku
+ingest 20261020T230957-0ea95be: base e6398ac → head 0ea95be, mode ingest, llm cmd (agent claude)
+mode ingest — check ingested documents against code
+changed_route_ids: []; changed_files: 2
+stats: symbols=214 changes=map[unchanged:214] module_ratio=0.00 structural_ratio=0.00 hops=1 propagated=0
+  task t01-_conflicts               ok       cmd  (in 4 / out 3048 tok, cached 97492, $0.0075)
+agent usage: (in 4 / out 3048 tok, cached 97492, $0.0075)
+changed files: 10
+  .kb/ingest/verdicts.json
+  .kb/plan.json
+  .kb/update_record.json
+  facts/requirements.json
+  index.md
+  llms.txt
+  log.md
+  pages/_conflicts.md
+  raw/docs/docs/legacy/cart.md
+  raw/docs/manifest.json
+verify PASS: 23 pages, 209 anchors, 0 errors, 0 warnings
+published 10 changed file(s) to <scratch>/ingrun/wiki
+
+$ kb conflicts
+outdated documentation: 2 conflict(s) (verified 3, unverifiable 0) — code wins
+
+[conflict] CART-43567f  docs/legacy/cart.md:3
+  doc:  购物车最多 10 件商品（常量 `MAX_CART_ITEMS`，iOS 为 `maxCartItems`）。
+  code: [llm] 三端代码的购物车上限常量均为 99（Android `CartViewModel.MAX_CART_ITEMS`、HarmonyOS `MAX_CART_ITEMS`、iOS `CartViewModel.maxCartItems`），而非文档所写的 10。
+  code: 代码中 `CartViewModel.MAX_CART_ITEMS` = 99（android），文档写的是 10
+  code: 代码中 `MAX_CART_ITEMS` = 99（harmony），文档写的是 10
+  code: 代码中 `CartViewModel.maxCartItems` = 99（ios），文档写的是 10
+  fix:  按代码更新文档中的取值：代码中 `CartViewModel.MAX_CART_ITEMS` = 99（android），文档写的是 10
+
+[conflict] CART-7d3eb7  docs/legacy/cart.md:6
+  doc:  下单接口为 `POST /api/order/create`，成功后进入订单详情 `minishop://order/{id}`。
+  code: [llm] 三端下单接口实际为 `POST /api/orders`，代码中不存在 `POST /api/order/create`；订单详情深链 `minishop://order/{id}` 确实存在（route `order_detail`）。
+  code: 接口 `POST /api/order/create` 在代码中不存在
+  code: deeplink `minishop://order/{id}` 存在
+  fix:  删除或改写这条说法：代码中没有对应实现（[llm] 三端下单接口实际为 `POST /api/orders`，代码中不存在 `POST /api/order/create`；订单详情深链 `minishop://order/{id}` 确实存在（route `order_detail`）。）
