@@ -18,3 +18,8 @@ Codex 和 Gemini 端到端运行的证据（真实 CLI 二进制，模型 API �
 - `internal/cli/gemini_real_test.go`
 
 设置 `KB_CODEX_BIN` / `KB_GEMINI_BIN` 后会运行这些测试。
+
+## 子目录
+
+- [`codex-mock/`](codex-mock/)：由 `demo/codex-mock-demo.sh` 生成。真实的 codex-cli 0.163.0 配合脚本化的 mock 模型，跑通 `kb compound --agent codex` 和 `kb ingest --agent codex`，包括真实的 `--json` 事件流、写集合回滚和 verify。哪些环节是真实的、哪些是 mock，见 [docs/agents.md](../../../docs/agents.md)。
+- [`ab-claude-vs-all/`](ab-claude-vs-all/)：由 `demo/agents-ab.sh` 生成。对比 `kb install --agent claude` 和 `--agent all`，用 haiku 真实运行 18 次。两组都没有读取其他 agent 的文件，首个动作相同，花费也相同。
