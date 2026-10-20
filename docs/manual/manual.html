@@ -347,7 +347,7 @@ pages (4):
   <li>wiki 自身的提交又触发 compound，形成循环。用 <code>paths-ignore: wiki/**</code> 加 <code>[skip ci]</code> 避免。</li>
   <li>路由在运行时拼接时无法静态求值。路由表应保持为常量或资源文件：<code>object Routes</code>、<code>enum Route: String</code>、<code>router_map.json</code>。</li>
   <li>多个页面锚定同一个共享符号会导致大面积 stale。交给 shared-components / navigation 概念页处理即可。</li>
-  <li>修改抽取器后要提升 <code>scan.CacheVersion</code>，否则会读到旧缓存。</li>
+  <li>扫描缓存版本由抽取器指纹（嵌入的源码 + 节点表 + 语法 ABI）自动派生，无需手动提升版本号。</li>
 </ul>
 </section>
 

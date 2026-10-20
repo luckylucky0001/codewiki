@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/luckylucky0001/codewiki/internal/config"
+	"github.com/luckylucky0001/codewiki/internal/extract"
 )
 
 func TestMatchGlob(t *testing.T) {
@@ -204,5 +205,24 @@ func TestSwiftMemberViaPropertyType(t *testing.T) {
 	refs := refsOf(t, r, "ios://CartView.swift#CartView.body")
 	if !strings.Contains(refs, "CartVM.swift#CartViewModel.total") || strings.Contains(refs, "OrderViewModel") {
 		t.Fatalf("vm.total() must resolve through vm's type: %s", refs)
+	}
+}
+
+func TestCacheRejectsOtherExtractorVersion(t *testing.T) {
+	dir := t.TempDir()
+	p := filepath.Join(dir, "c.gob.gz")
+	c := NewCache()
+	c.put("a.kt", "h", "kotlin", "android", extract.FileResult{})
+	if err := c.Save(p); err != nil {
+		t.Fatal(err)
+	}
+	if LoadCache(p).Len() != 1 {
+		t.Fatal("same version must load")
+	}
+	old := CacheVersion
+	CacheVersion = old + "-different-extractor"
+	defer func() { CacheVersion = old }()
+	if LoadCache(p).Len() != 0 {
+		t.Fatal("cache written by another extractor build must be ignored")
 	}
 }

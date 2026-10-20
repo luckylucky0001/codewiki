@@ -3,6 +3,7 @@ package scan
 import (
 	"compress/gzip"
 	"encoding/gob"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
@@ -12,8 +13,13 @@ import (
 	"github.com/luckylucky0001/codewiki/internal/model"
 )
 
-// CacheVersion invalidates caches written by incompatible extractors.
-const CacheVersion = "scan-cache/5" // bump whenever extract/ output changes
+// cacheFormat is bumped only when the cache file layout itself changes.
+const cacheFormat = "scan-cache/6"
+
+// CacheVersion is derived automatically from the extractor fingerprint (its
+// embedded sources, node tables and grammar ABI) plus the graph version, so a
+// forgotten manual bump can never serve stale parse results.
+var CacheVersion = fmt.Sprintf("%s/g%d/%s", cacheFormat, model.GraphVersion, extract.Fingerprint()[:16])
 
 // CacheFile is the cache location relative to the wiki dir (gitignored).
 const CacheFile = ".kb/cache/scan.gob.gz"

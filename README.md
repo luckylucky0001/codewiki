@@ -265,7 +265,7 @@ e2e impact --changed-routes "$ROUTES" --requirements wiki/facts/requirements.jso
 
 ## 增量扫描缓存与性能
 
-`kb` 在 `wiki/.kb/cache/scan.gob.gz` 中按文件保存解析结果（键 = 仓库相对路径 + 内容 sha256 + 语言/平台 + 抽取器版本），未变化的文件不再调用 tree-sitter；删除的文件会被清理。解析在 `GOMAXPROCS` 个 goroutine 上并行（每个 worker 自己的 parser），引用解析为索引查找（线性）。缓存目录由 `kb init` 加入 `.gitignore`，CI 模板用 `actions/cache` 持久化；`KB_NO_CACHE=1` 可禁用。
+`kb` 在 `wiki/.kb/cache/scan.gob.gz` 中按文件保存解析结果（键 = 仓库相对路径 + 内容 sha256 + 语言/平台；缓存版本由抽取器指纹自动派生：`internal/extract` 的 Go 源码通过 `go:embed` 计入 hash，再加上各语言节点表、语法 ABI 版本与 node kind 数量，因此改了抽取器而忘记手动 bump 也不会读到旧缓存），未变化的文件不再调用 tree-sitter；删除的文件会被清理。解析在 `GOMAXPROCS` 个 goroutine 上并行（每个 worker 自己的 parser），引用解析为索引查找（线性）。缓存目录由 `kb init` 加入 `.gitignore`，CI 模板用 `actions/cache` 持久化；`KB_NO_CACHE=1` 可禁用。
 
 `kb bench` 测量冷/热扫描（4 核容器，Go 1.24，2026-10-20 实测）：
 
