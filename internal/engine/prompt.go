@@ -127,6 +127,8 @@ func (e *taskEnv) buildPrompt(t Task, claims []Claim) string {
 			draft = TemplateFeature(g, f, t.RouteID, short(e.head))
 		} else if t.Kind == "overview" {
 			draft = TemplateOverview(f, e.platforms(), short(e.head))
+		} else if t.Page == NavigationPage || t.Page == SharedPage {
+			draft = TemplateConcept(g, f, t.Page, short(e.head))
 		}
 		if draft != nil {
 			b.WriteString("## 确定性草稿（锚点正确；请改写为更有用的说明：职责、三端实现差异、数据流、测试要点）\n\n````markdown\n" + string(draft.Render()) + "\n````\n\n")

@@ -533,12 +533,23 @@ func (e *taskEnv) runTemplate(t Task) error {
 		return e.writePage(TemplateFeature(e.a.Graph, e.a.Facts, t.RouteID, short(e.head)))
 	case "overview":
 		return e.writePage(TemplateOverview(e.a.Facts, e.platforms(), short(e.head)))
+	case "concept":
+		if t.Page == NavigationPage || t.Page == SharedPage {
+			return e.writePage(TemplateConcept(e.a.Graph, e.a.Facts, t.Page, short(e.head)))
+		}
+		fallthrough
+	default:
+		return e.restamp(t)
 	case "conflicts":
 		e.claims, e.claimsSet = e.templateClaims(), true
 		writeJSON(filepath.Join(e.staging, filepath.FromSlash(VerdictsFile)), Verdicts{Version: 1, Claims: e.claims})
 		return nil
-	default:
-		// unknown page kinds: restamp anchors that still exist (content unchanged)
+	}
+}
+
+// restamp keeps a hand-written page's content and refreshes anchors that still exist.
+func (e *taskEnv) restamp(t Task) error {
+	{
 		p := filepath.Join(e.staging, filepath.FromSlash(t.Page))
 		b, err := os.ReadFile(p)
 		if err != nil {

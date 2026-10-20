@@ -100,7 +100,7 @@ func TemplateFeature(g *model.Graph, f *model.Facts, rid, commit string) *wiki.P
 	for _, p := range plats {
 		fmt.Fprintf(&b, "**%s**\n\n%s\n\n", p, strings.Join(byPlat[p], "\n"))
 	}
-	b.WriteString("## 相关页面\n\n- [总览](../overview.md)\n")
+	b.WriteString("## 相关页面\n\n- [总览](../overview.md)\n- [导航与深链](../concepts/navigation.md) · [共享组件](../concepts/shared-components.md)\n")
 	for _, p := range plats {
 		fmt.Fprintf(&b, "- [%s routes facts](../../facts/%s/routes.md)\n", p, p)
 	}
@@ -147,3 +147,45 @@ func TemplateOverview(f *model.Facts, platforms []string, commit string) *wiki.P
 	pg.Front = wiki.Front{ID: wiki.IDFromPath(OverviewPage), Title: "总览", Kind: "overview", Platforms: platforms, Routes: rids, SourceCommit: commit, Status: wiki.StatusCurrent}
 	return pg
 }
+
+// TemplateConcept renders the navigation / shared-components concept pages.
+func TemplateConcept(g *model.Graph, f *model.Facts, page, commit string) *wiki.Page {
+	as := ComputeAnchors(g, f)
+	ids, title, intro := as.Shared, "共享组件", fmt.Sprintf("被 ≥%d 个路由引用的符号（返回按钮、顶栏、API 客户端等）。它们不计入单个功能页的锚点，改动它们只会让本页失效，而不会让所有功能页一起变 stale。", SharedThreshold)
+	if page == NavigationPage {
+		ids, title, intro = as.Navigation, "导航与深链", "路由表、路由器、导航栈与深链/测试参数处理代码（三端）。路由事实见 facts/*/routes.md。"
+	}
+	var b strings.Builder
+	fmt.Fprintf(&b, "# %s\n\n> %s\n\n", title, intro)
+	byPlat := map[string][]string{}
+	for _, id := range ids {
+		s := g.Get(id)
+		used := ""
+		if u := as.UsedBy[id]; len(u) > 0 {
+			used = "（routes: " + strings.Join(u, ", ") + "）"
+		}
+		byPlat[s.Platform] = append(byPlat[s.Platform], fmt.Sprintf("| %s | `%s` | `%s` | %s |", s.Kind, s.ID, esc(s.Signature), used))
+	}
+	plats := sortedKeys(func() map[string]bool {
+		m := map[string]bool{}
+		for p := range byPlat {
+			m[p] = true
+		}
+		return m
+	}())
+	if len(plats) == 0 {
+		b.WriteString("（无）\n")
+	}
+	for _, p := range plats {
+		fmt.Fprintf(&b, "## %s\n\n| kind | 符号 | 签名 | 使用方 |\n|---|---|---|---|\n%s\n\n", p, strings.Join(byPlat[p], "\n"))
+	}
+	b.WriteString("## 相关页面\n\n- [总览](../overview.md)\n")
+	pg := &wiki.Page{Path: page, HasFM: true, Body: b.String()}
+	pg.Front = wiki.Front{ID: wiki.IDFromPath(page), Title: title, Kind: "concept", Platforms: plats, SourceCommit: commit, Status: wiki.StatusCurrent}
+	for _, id := range ids {
+		pg.Front.Sources = append(pg.Front.Sources, model.Anchor{Sym: id, Hash: g.Get(id).Hash})
+	}
+	return pg
+}
+
+func esc(s string) string { return strings.ReplaceAll(s, "|", "\\|") }

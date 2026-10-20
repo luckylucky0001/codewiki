@@ -309,3 +309,33 @@ func TestLLMEvidenceDedupe(t *testing.T) {
 		t.Fatalf("got %q", got)
 	}
 }
+
+func TestSharedComponentEditDoesNotStaleFeatures(t *testing.T) {
+	cfg, dir := withChange(t)
+	old, f0 := scanDir(t, cfg, dir)
+	pages := append(pagesFor(old, f0), TemplateConcept(old, f0, SharedPage, "c0"), TemplateConcept(old, f0, NavigationPage, "c0"))
+	for _, rid := range routeIDs(f0) {
+		for _, id := range FeatureSymbols(old, f0, rid) {
+			if strings.Contains(id, "BackButton") || strings.Contains(id, "MiniShopTopBar") || strings.Contains(id, "AppRouter") {
+				t.Fatalf("feature %s anchors shared symbol %s", rid, id)
+			}
+		}
+	}
+	p := filepath.Join(dir, "ios/MiniShop/Components/BackButton.swift")
+	b, _ := os.ReadFile(p)
+	os.WriteFile(p, []byte(strings.Replace(string(b), `Button("Back")`, `Button("Go back")`, 1)), 0o644)
+	cur, f1 := scanDir(t, cfg, dir)
+	plan := BuildPlan(PlanInput{Cfg: cfg, Diff: DiffGraphs(old, cur), Old: old, Cur: cur, Facts: f1, Pages: pages})
+	if len(plan.Tasks) != 1 || plan.Tasks[0].Page != SharedPage {
+		t.Fatalf("BackButton edit must only re-check %s, got %+v", SharedPage, plan.Tasks)
+	}
+	for _, pg := range pages {
+		if pg.Path == FeaturePage("cart") {
+			for _, a := range pg.Front.Sources {
+				if s := cur.Get(a.Sym); s == nil || s.Hash != a.Hash {
+					t.Fatalf("features/cart went stale on %s", a.Sym)
+				}
+			}
+		}
+	}
+}

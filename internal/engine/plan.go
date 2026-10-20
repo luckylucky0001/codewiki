@@ -78,79 +78,6 @@ const (
 
 var containerKinds = map[string]bool{"class": true, "struct": true, "object": true, "interface": true, "enum": true, "component": true, "protocol": true, "extension": true}
 
-// FeatureSymbols selects the anchor/context symbols for a route: the route
-// entry symbol, its members, and same-platform references up to 2 hops.
-func FeatureSymbols(g *model.Graph, f *model.Facts, rid string) []string {
-	seen := map[string]bool{}
-	var out []string
-	children := map[string][]string{}
-	for _, s := range g.Symbols {
-		if s.Parent != "" {
-			children[s.Parent] = append(children[s.Parent], s.ID)
-		}
-	}
-	type item struct {
-		id    string
-		depth int
-	}
-	const perPlatform = 10
-	for _, r := range f.Routes {
-		if r.RouteID != rid || g.Get(r.Symbol) == nil {
-			continue
-		}
-		queue := []item{{r.Symbol, 0}}
-		stem := strings.SplitN(strings.TrimPrefix(strings.ReplaceAll(" "+rid, "_", " "), " "), " ", 2)[0]
-		if stem != "" {
-			stem = strings.ToUpper(stem[:1]) + stem[1:]
-		}
-		taken := 0
-		for len(queue) > 0 && taken < perPlatform {
-			it := queue[0]
-			queue = queue[1:]
-			if seen[it.id] {
-				continue
-			}
-			seen[it.id] = true
-			s := g.Get(it.id)
-			if s == nil {
-				continue
-			}
-			if !containerKinds[s.Kind] || it.depth == 0 {
-				out = append(out, s.ID)
-				taken++
-			}
-			if it.depth == 0 {
-				for _, c := range children[s.ID] {
-					queue = append(queue, item{c, 0})
-				}
-			}
-			if it.depth >= 2 {
-				continue
-			}
-			for _, ref := range s.Refs {
-				rs := g.Get(ref)
-				if rs == nil || rs.Platform != s.Platform {
-					continue
-				}
-				if containerKinds[rs.Kind] {
-					// types used directly by the entry point (its view model or
-					// page component) contribute their members; shared infra
-					// types (routers, API clients) and deeper types do not.
-					if it.depth == 0 && (it.id == r.Symbol || strings.HasPrefix(rs.Name, stem)) {
-						for _, c := range children[rs.ID] {
-							queue = append(queue, item{c, 1})
-						}
-					}
-					continue
-				}
-				queue = append(queue, item{ref, it.depth + 1})
-			}
-		}
-	}
-	sort.Strings(out)
-	return out
-}
-
 func routeIDs(f *model.Facts) []string {
 	m := map[string]bool{}
 	for _, r := range f.Routes {
@@ -221,7 +148,22 @@ func BuildPlan(in PlanInput) *Plan {
 		return Task{Op: op, Kind: "overview", Page: OverviewPage, Title: "总览", WriteSet: []string{OverviewPage}, Reasons: reasons}
 	}
 
+	anchors := ComputeAnchors(in.Cur, in.Facts)
+	conceptTask := func(page string, reasons []Reason) Task {
+		op := OpCreate
+		if pagesByPath[page] != nil {
+			op = OpUpdate
+		}
+		ctx := anchors.Shared
+		title := "共享组件"
+		if page == NavigationPage {
+			ctx, title = anchors.Navigation, "导航与深链"
+		}
+		return Task{Op: op, Kind: "concept", Page: page, Title: title, WriteSet: []string{page}, Reasons: reasons, Context: append([]string{}, ctx...)}
+	}
 	if p.Mode == "full" {
+		add(conceptTask(NavigationPage, []Reason{{Code: "full_rebuild"}}))
+		add(conceptTask(SharedPage, []Reason{{Code: "full_rebuild"}}))
 		for _, rid := range rids {
 			add(featureTask(rid, []Reason{{Code: "full_rebuild", Detail: p.Reason}}))
 		}
@@ -235,6 +177,12 @@ func BuildPlan(in PlanInput) *Plan {
 
 	// ---- incremental ----
 	class := map[string]Change{}
+	added := map[string]bool{}
+	for _, c := range in.Diff.Changes {
+		if c.Class == ClassAdded || c.Class == ClassRenamed {
+			added[c.ID] = true
+		}
+	}
 	renamedTo := map[string]string{}
 	breaking := map[string]bool{}
 	for _, c := range in.Diff.Changes {
@@ -315,6 +263,29 @@ func BuildPlan(in PlanInput) *Plan {
 				reasons = append(reasons, Reason{Code: "anchor_drift", Sym: a.Sym, Detail: "hash differs from page (manual edit or missed run)"})
 			}
 		}
+		// anchor set drift: the CLI-computed anchor set gained symbols
+		var want []string
+		switch {
+		case pg.Path == NavigationPage:
+			want = anchors.Navigation
+		case pg.Path == SharedPage:
+			want = anchors.Shared
+		case pg.Front.Kind == "feature" && len(pg.Front.Routes) == 1:
+			want = anchors.Feature[pg.Front.Routes[0]]
+		}
+		have := map[string]bool{}
+		for _, a := range pg.Front.Sources {
+			have[a.Sym] = true
+		}
+		for _, id := range want {
+			if have[id] {
+				continue
+			}
+			_, isAdded := added[id]
+			if isAdded || pg.Front.Kind == "concept" {
+				reasons = append(reasons, Reason{Code: "anchor_added", Sym: id})
+			}
+		}
 		for _, rid := range pg.Front.Routes {
 			if !contains(rids, rid) {
 				reasons = append(reasons, Reason{Code: "route_removed", Detail: rid})
@@ -328,6 +299,8 @@ func BuildPlan(in PlanInput) *Plan {
 			add(conflictsTask(reasons))
 		case pg.Path == OverviewPage:
 			add(overviewTask(reasons))
+		case pg.Path == NavigationPage || pg.Path == SharedPage:
+			add(conceptTask(pg.Path, reasons))
 		case pg.Front.Kind == "feature" && len(pg.Front.Routes) == 1 && contains(rids, pg.Front.Routes[0]):
 			add(featureTask(pg.Front.Routes[0], reasons))
 		default:
@@ -358,6 +331,11 @@ func BuildPlan(in PlanInput) *Plan {
 	}
 	if ov := pagesByPath[OverviewPage]; ov == nil || routesChanged || !sameSet(ov.Front.Routes, rids) {
 		add(overviewTask([]Reason{{Code: "route_set_changed"}}))
+	}
+	for _, cp := range []string{NavigationPage, SharedPage} {
+		if pagesByPath[cp] == nil {
+			add(conceptTask(cp, []Reason{{Code: "page_missing"}}))
+		}
 	}
 	if in.HasDocs && pagesByPath[ConflictsPage] == nil {
 		add(conflictsTask([]Reason{{Code: "docs_unchecked"}}))
