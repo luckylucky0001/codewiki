@@ -567,40 +567,53 @@ kb eval --doc my-old-spec.md --golden my-labels.yaml                    # 任意
 
 ## 真实开源项目验证
 
-在 5 个公开项目上只读运行 scan / facts / bench / compound，详情见 [docs/validation.md](docs/validation.md)：
+在 **23 个公开仓库**上做了只读验证，覆盖 Android（Compose、nav-graph XML、Appyx 多模块）、iOS（SwiftUI、UIKit）、HarmonyOS NEXT（社区应用、华为官方模板）、KMP 和 JS。每个仓库都跑了 init / scan / bench / compound / verify / routes / lint-tid / parity / ingest，**23/23 全部通过 `kb verify`**。完整表格、逐项召回对照、假冲突判定和局限见 [docs/validation.md](docs/validation.md)。
 
-| 语言 | 文件 | 无错解析率 | 项目 |
-|---|---|---|---|
-| Kotlin | 311 | 100% | android/nowinandroid |
-| Swift | 431 | 99.5% | Dimillian/IceCubesApp |
-| ArkTS | 3858 | **100%**（语法补丁前 99.9%） | HarmonyOS-Cases/Cases、openharmony/applications_app_samples（sparse）、arkTS_universal_starter |
-| TS / JS | 1102 | 100% | 同上 |
+| 语言 | 文件 | 无错解析率 |
+|---|---|---|
+| Kotlin | 6,126 | 98.7%（失败集中在 Kotlin 2.x 新语法） |
+| Java | 88 | 100% |
+| Swift | 4,830 | 95.8%（kickstarter 的自定义运算符占 157 个） |
+| ArkTS | 7,161 | 99.4% |
+| TS / JS | 1,621 | 99.9% |
 
-| 项目 | 符号 | 路由 | testID | API | 冷 / 热扫描 |
-|---|---|---|---|---|---|
-| nowinandroid | 1,748 | 5（Navigation 3 `entry<T>`） | 14 | 4（Retrofit 相对路径） | 690 / 97 ms |
-| IceCubesApp | 6,058 | 28（`navigationDestination(for:)` 枚举） | 0 | 78（`Endpoint` 枚举） | 2,245 / 274 ms |
-| HarmonyOS-Cases | 20,141 | 88（router_map.json） | 1,437 | 7 | 9,105 / 853 ms |
-| app_samples | 51,342 | 10 | 2,674 | 1 | 32,043 / 3,935 ms |
+| 项目（节选） | 符号 | 路由（召回） | 冷 / 热扫描 | 峰值 RSS |
+|---|---|---|---|---|
+| nowinandroid | 1,748 | 5（5/5） | 0.8 / 0.09 s | 58 MB |
+| compose-samples | 2,831 | 30（30/30） | 1.4 / 0.16 s | 75 MB |
+| architecture-components-samples | 1,841 | 19（nav-graph XML，19/19） | 0.6 / 0.09 s | 52 MB |
+| element-x-android | 22,161 | 176（Appyx，176/179） | 11.0 / 1.7 s | 667 MB |
+| kotlinconf-app（KMP） | 1,442 | 25（25/25，parity 0 假缺口） | 0.6 / 0.07 s | 51 MB |
+| IceCubesApp | 6,058 | 42 | 1.9 / 0.22 s | 98 MB |
+| kickstarter/ios-oss | 37,731 | 48（URL 路由表 39/39） | 13.9 / 2.2 s | 524 MB |
+| HarmonyOS-Cases | 20,141 | 191 | 6.3 / 0.9 s | 377 MB |
+| app_samples | 51,342 | 416 | 18.3 / 3.2 s | 886 MB |
+| NextE | 19,921 | 58（页面 51/51） | 8.1 / 1.0 s | 386 MB |
 
-API 抽取覆盖以下写法：
+第 7 轮验证中修复了 22 个问题，每个都配了最小片段回归测试，主要包括：
 
-- Android：Retrofit、Ktor、OkHttp；
-- iOS：URLSession 封装、Alamofire、Moya `TargetType` 与自定义 `Endpoint` 枚举；
-- HarmonyOS：`@kit.NetworkKit` http、`@ohos/axios`、RCP（Remote Communication Kit）；
-- JS/TS：axios。
+- **路由召回**：
+  - nav-graph XML；
+  - Compose 路由引用与多应用同名屏幕；
+  - Appyx `NavTarget`；
+  - SwiftUI 值类型 destination、`NavigationLink(value:/destination:)`；
+  - URL 路由表；
+  - HarmonyOS `$profile:` 路由表、main_pages、`pushPathByName`、`NavDestination` 组件；
+  - KMP commonMain 在 parity 中视为全平台共享。
+- **规模**：
+  - 热扫描的 O(R²) 引用解析改为线性并行，kickstarter 11.6 s → 2.2 s；
+  - ingest 建索引，NextE 66 s → 21 s；
+  - `_conflicts.md` 页面预算，2.19 MB → 0.34 MB；
+  - 大 wiki 使用分层 index.md 和 llms.txt，app_samples 的 index.md 97 KB → 4.1 KB；
+  - `.kb/graph.json.gz`，24 MB → 3.7 MB。
+- **易用性与正确性**：
+  - `kb init` 识别根目录的 Gradle、Xcode、HarmonyOS 工程，以及 KMP 的重叠根；
+  - 符号链接根；
+  - 每个 wiki 一把 compound 锁；
+  - 升级 kb 后缓存的 facts 自动失效。
+- **假冲突**：新增 17 个仓库的冲突从 191 个降到 6 个（假冲突 187 → 3）。剩下的假冲突是条件句和构建产物。axios 原有 8 个假冲突，来自外部包类名 `MockAdapter`，现在为 0。
 
-每种写法都有最小片段测试。
-
-验证中修复了 5 个问题，每个都配了最小片段回归测试：
-
-- Kotlin 类型安全导航，包括 tree-sitter 把 `entry<K> {}` 解析成比较表达式的歧义；
-- SwiftUI 带关联值的路由枚举；
-- 上游 router_map 中悬空的 buildFunction（这是 HarmonyOS-Cases 仓库自身的 bug，现改为报告 warning，不再阻断发布）；
-- `file://` 等非应用 scheme 被误当作深链；
-- 符号解析误选测试代码。
-
-ArkTS 原有的 4 个解析失败都来自 ArkUI 属性调用中的尾逗号。我们修补了 vendored 的 `grammar.js` 并重新生成 parser（记录在 `internal/grammars/arkts/VENDORED.md`），之后为 0 个失败。
+目前**不支持** UIKit / AppKit 导航（NetNewsWire、wikipedia-ios）和自定义导航框架（DroidconKotlin），也不解析 Objective-C。这些仓库的符号、testID、API 和文档核对仍然可用。
 
 ## 安全
 

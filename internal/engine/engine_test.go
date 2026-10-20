@@ -596,3 +596,27 @@ func TestGraphBaselineGzipAndLegacy(t *testing.T) {
 		t.Fatalf("graph.json.gz: %v", err)
 	}
 }
+
+// axios docs: `MockAdapter` comes from the doc's own example import of the
+// external package axios-mock-adapter; a name imported from the repository's
+// own package is still checked.
+func TestDocImportedExternalNames(t *testing.T) {
+	dir := t.TempDir()
+	os.WriteFile(filepath.Join(dir, "package.json"), []byte(`{"name":"axios"}`), 0o644)
+	os.MkdirAll(filepath.Join(dir, "docs"), 0o755)
+	doc := "Use `MockAdapter` or `removedHelper`.\n\n```js\nimport MockAdapter from \"axios-mock-adapter\";\nimport { removedHelper } from 'axios';\n```\n"
+	os.WriteFile(filepath.Join(dir, "docs", "testing.md"), []byte(doc), 0o644)
+	g := &model.Graph{Symbols: []*model.Symbol{
+		{ID: "web://lib/adapters/xhr.js#XhrAdapter", Name: "XhrAdapter", Qual: "XhrAdapter", Kind: "class", File: "lib/adapters/xhr.js"},
+		{ID: "web://lib/adapters/http.js#HttpAdapter", Name: "HttpAdapter", Qual: "HttpAdapter", Kind: "class", File: "lib/adapters/http.js"},
+	}}
+	k := &Checker{G: g, F: &model.Facts{}, Dir: dir}
+	ext := &Claim{ID: "a", Source: "docs/testing.md", Text: "When testing retry logic, use `MockAdapter` so the interceptor runs."}
+	k.Check(ext)
+	if ext.Status == ClaimConflict {
+		t.Fatalf("external MockAdapter judged a conflict: %v", ext.Evidence)
+	}
+	if m := k.docImports("docs/testing.md"); m["MockAdapter"] != "axios-mock-adapter" || m["removedHelper"] != "" {
+		t.Fatalf("doc imports: %v", m)
+	}
+}

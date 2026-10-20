@@ -305,9 +305,24 @@ func RenderLLMSTxt(pages []*Page) []byte {
 	var b strings.Builder
 	b.WriteString("# codewiki\n\n> Code-anchored knowledge base. Every page lists `sources` (symbol id + hash) verified against HEAD by `kb verify`.\n\n")
 	b.WriteString("## Docs\n\n- [index.md](index.md): layered table of contents\n- [AGENTS.md](AGENTS.md): writing schema\n- [facts/routes.json](facts/routes.json), [facts/testids.json](facts/testids.json), [facts/apis.json](facts/apis.json), [facts/requirements.json](facts/requirements.json): machine-readable facts\n\n## Pages\n\n")
+	files := RenderIndexFiles(pages)
+	hier := len(files) > 1 // large wiki: feature pages are listed in index/*.md
 	for _, p := range pages {
-		if strings.HasPrefix(p.Path, "pages/") {
+		if strings.HasPrefix(p.Path, "pages/") && !(hier && strings.HasPrefix(p.Path, "pages/features/")) {
 			fmt.Fprintf(&b, "- [%s](%s)\n", p.Front.Title, p.Path)
+		}
+	}
+	if hier {
+		var subs []string
+		for rel := range files {
+			if rel != "index.md" {
+				subs = append(subs, rel)
+			}
+		}
+		sort.Strings(subs)
+		b.WriteString("\n## Feature indexes (one per module)\n\n")
+		for _, rel := range subs {
+			fmt.Fprintf(&b, "- [%s](%s)\n", strings.TrimSuffix(strings.TrimPrefix(rel, SubIndexDir+"/features-"), ".md"), rel)
 		}
 	}
 	return []byte(b.String())
