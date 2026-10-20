@@ -195,6 +195,25 @@ func cmdInit(a *app, fs *flag.FlagSet, _ []string) int {
 	} else if err != nil {
 		return a.fail(ExitInternal, err)
 	}
+	// keep run scratch space (.kb-work: staging, prompts, lock) out of git
+	if work := filepath.Join(filepath.Dir(cfg.WikiPath()), ".kb-work"); strings.HasPrefix(work, cfg.Root+string(os.PathSeparator)) {
+		gi := filepath.Join(cfg.Root, ".gitignore")
+		cur, _ := os.ReadFile(gi)
+		entry, _ := filepath.Rel(cfg.Root, work)
+		entry = "/" + filepath.ToSlash(entry) + "/"
+		if !strings.Contains(string(cur), entry) {
+			created = append(created, ".gitignore (+"+entry+")")
+			if !dry {
+				s := string(cur)
+				if s != "" && !strings.HasSuffix(s, "\n") {
+					s += "\n"
+				}
+				if err := wiki.WriteFileAtomic(gi, []byte(s+"# codewiki run scratch space\n"+entry+"\n")); err != nil {
+					return a.fail(ExitInternal, err)
+				}
+			}
+		}
+	}
 	w, err := wiki.Init(cfg.WikiPath(), dry)
 	if err != nil {
 		return a.fail(ExitInternal, err)

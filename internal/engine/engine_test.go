@@ -302,3 +302,10 @@ func TestClassifyDoc(t *testing.T) {
 		t.Error("non-doc classified")
 	}
 }
+
+func TestLLMEvidenceDedupe(t *testing.T) {
+	got := llmEvidence([]string{"[llm] [llm] 代码上限 50；接口 `POST /api/cart` 存在（android）", "代码上限 50"}, []string{"接口 `POST /api/cart` 存在（android）"})
+	if got != "代码上限 50" {
+		t.Fatalf("got %q", got)
+	}
+}
