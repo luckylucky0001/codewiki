@@ -44,6 +44,70 @@ override, e.g. "." for a committed config). See docs/agents.md.`,
 		}, run: cmdInstall})
 }
 
+func init() {
+	register(&command{name: "agents", usage: "[name] [--model m]", summary: "list supported coding agents: backend command line, consumer files, verification level",
+		help:  "kb agents codex prints the exact command kb compound --agent codex runs (prompt on stdin, cwd = staging wiki).",
+		flags: func(fs *flag.FlagSet) { fs.String("model", "", "model passed to the adapter") },
+		run:   cmdAgents})
+}
+
+func cmdAgents(a *app, fs *flag.FlagSet, args []string) int {
+	names := agents.Names()
+	if len(args) == 1 {
+		if _, err := agents.Get(args[0]); err != nil {
+			return a.fail(ExitUsage, usageError{err.Error()})
+		}
+		names = []string{strings.ToLower(args[0])}
+	}
+	type row struct {
+		Name         string `json:"name"`
+		Display      string `json:"display"`
+		Backend      string `json:"backend_command,omitempty"`
+		BackendLevel string `json:"backend_verification,omitempty"`
+		Instructions string `json:"instructions,omitempty"`
+		Skills       string `json:"skills_dir,omitempty"`
+		MCP          string `json:"mcp_config,omitempty"`
+		MCPHint      string `json:"mcp_hint,omitempty"`
+		ConsumerLvl  string `json:"consumer_verification"`
+		Notes        string `json:"notes,omitempty"`
+	}
+	var rows []row
+	for _, n := range names {
+		ad, _ := agents.Get(n)
+		r := row{Name: ad.Name, Display: ad.Display, BackendLevel: ad.BackendLevel, Instructions: ad.Instructions, Skills: ad.SkillsDir, MCPHint: ad.MCPHint, ConsumerLvl: ad.ConsumerLvl, Notes: ad.Notes}
+		if ad.Backend() {
+			r.Backend, _ = ad.Command(agents.BackendOpts{Model: strFlag(fs, "model")})
+		}
+		if ad.MCP != nil {
+			r.MCP = ad.MCP.Path
+		}
+		rows = append(rows, r)
+	}
+	a.emit(map[string]any{"ok": true, "agents": rows}, func(w io.Writer) {
+		if len(rows) == 1 && rows[0].Backend != "" {
+			fmt.Fprintln(w, rows[0].Backend)
+			return
+		}
+		for _, r := range rows {
+			fmt.Fprintf(w, "%s (%s)\n", r.Name, r.Display)
+			if r.Backend != "" {
+				fmt.Fprintf(w, "  backend  [%s] %s\n", r.BackendLevel, r.Backend)
+			} else {
+				fmt.Fprintf(w, "  backend  —  %s\n", r.Notes)
+			}
+			fmt.Fprintf(w, "  consumer [%s] %s", r.ConsumerLvl, r.Instructions)
+			if r.Skills != "" {
+				fmt.Fprintf(w, ", %s/", r.Skills)
+			}
+			if r.MCP != "" {
+				fmt.Fprintf(w, ", MCP %s", r.MCP)
+			}
+			fmt.Fprintln(w)
+		}
+	})
+	return ExitOK
+}
+
 // installAction is one file kb install touched (or would touch).
 type installAction struct {
 	Agent  string `json:"agent"`

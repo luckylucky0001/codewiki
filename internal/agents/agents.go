@@ -23,9 +23,10 @@ import (
 
 // Verification levels.
 const (
-	RealRun     = "real-run"     // executed end-to-end in this repo's validation
-	CLIVerified = "cli-verified" // flags / discovery checked against the real CLI (--help, debug output), not run against a model
-	DocsOnly    = "docs-only"    // from vendor documentation only
+	RealRun     = "real-run"               // executed end-to-end in this repo's validation
+	MockModel   = "real-binary/mock-model" // the real CLI ran end-to-end against a local mock of the model API
+	CLIVerified = "cli-verified"           // flags / discovery checked against the real CLI (--help, debug output), not run against a model
+	DocsOnly    = "docs-only"              // from vendor documentation only
 )
 
 // BackendOpts parameterize the backend command line.
@@ -188,7 +189,7 @@ var registry = map[string]*Adapter{
 			return append(a, "-")
 		},
 		ParseUsage:   parseCodex,
-		BackendLevel: CLIVerified,
+		BackendLevel: MockModel,
 		Instructions: "AGENTS.md", SkillsDir: ".agents/skills",
 		MCP:         &MCPTarget{Path: ".codex/config.toml", Format: "toml-mcp_servers", Note: "Codex loads project .codex/config.toml only for trusted projects; or register globally: codex mcp add codewiki -- kb mcp --root <repo>"},
 		MCPHint:     "codex mcp add codewiki -- kb mcp --root <repo>   (writes [mcp_servers.codewiki] to ~/.codex/config.toml)",
