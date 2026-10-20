@@ -123,7 +123,7 @@ docs:
 | `kb anchor <symbol-id...>` | 打印符号当前 hash（LLM 写 frontmatter 时用） |
 | `kb lint-tid [--strict]` | testID 覆盖矩阵：路由 × tid × 平台 |
 | `kb parity [--strict]` | 功能 × 平台一致性矩阵：路由 / testID / 可达接口是否齐全，以及同名常量的跨平台取值差异；同时生成 `pages/parity.md` |
-| `kb install-skills <repo>` | 把 skills 安装到 `<repo>/.claude/skills/` |
+| `kb install-skills <repo> [--no-agents-md]` | 把 skills 安装到 `<repo>/.claude/skills/`。同时在 `AGENTS.md` 和 `CLAUDE.md` 中写入或更新一段 `<!-- codewiki:begin -->…<!-- codewiki:end -->` 指引块，把各类问题映射到对应命令：路由/深链 → facts、testID → `kb lint-tid`、三端差异 → `kb parity`、过时文档 → `kb conflicts`、改文件前 → `kb context`。重复运行结果不变，块外内容保持原样 |
 | `kb bench [--synthetic N]` | 冷/热扫描基准（合成仓库或 `--root` 指定的真实仓库） |
 | `kb eval [--llm …]` | 用人工标注的 golden set 评测断言核对与 plan 影响面（precision/recall） |
 | `kb hook install --mode post-receive\|post-merge [--repo <git dir>]` | 安装 git 钩子：服务端 push 到 master 或客户端 merge 后自动 compound（串行 + 追平） |
@@ -465,7 +465,17 @@ kb eval --doc my-old-spec.md --golden my-labels.yaml                    # 任意
 
 **大仓库变体（HarmonyOS Cases，1952 个 .ets 文件，5 题 × 2 次）**：A 10/10、平均 5.9 turns、$0.039；B 10/10、平均 5.9 turns、$0.040，**没有差别**。这些问题都能用一个唯一的字符串直接 grep 到答案，grep 在大仓库上也很快，A 组也几乎没用 wiki。所以“仓库越大 wiki 越有用”这个推测，这次**没有得到支持**。
 
-**大仓库 + 汇总类问题（第 7 轮，Cases，5 题 × 2 次）**：问题包括 router_map 总数和分布、dangling buildFunction、哪些页面设置了 testID、哪些文件发网络请求、最常用的 testID。标准答案直接从源码算出。结果：A **10/10**、17.6 turns、$0.149、51 s；B **9/10**、14.0 turns、$0.126、46 s。A 多对 1 次，但 turns 和费用更高，样本也小，**算不上可证明的优势**。关键在于，A 组 10 次运行里**没有一次调用 `kb` 或 skill**，只是 grep 时顺带搜到了 `wiki/` 下的文件。minishop 上的收益全部来自 agent 真正调用了 `kb parity` 或 `kb conflicts` 的题目。所以瓶颈在 **skill 的触发和命令的命名**：要有一个名字直接对应问题的命令，并在 skill 描述里写明。wiki 的内容本身不是问题。打分正则修正了两处（对两组同样适用），已披露。详见 bench/agent-qa/README.md。
+**大仓库 + 汇总类问题（第 7 轮，Cases，5 题 × 2 次）**：问题包括 router_map 总数和分布、dangling buildFunction、哪些页面设置了 testID、哪些文件发网络请求、最常用的 testID。标准答案直接从源码算出。结果：A **10/10**、17.6 turns、$0.149、51 s；B **9/10**、14.0 turns、$0.126、46 s。A 多对 1 次，但 turns 和费用更高，样本也小，**算不上可证明的优势**。关键在于，A 组 10 次运行里**没有一次调用 `kb` 或 skill**，只是 grep 时顺带搜到了 `wiki/` 下的文件。minishop 上的收益全部来自 agent 真正调用了 `kb parity` 或 `kb conflicts` 的题目。所以瓶颈在 **skill 的触发和命令的命名**：要有一个名字直接对应问题的命令，并在 skill 描述里写明。wiki 的内容本身不是问题。打分正则修正了两处（对两组同样适用），已披露。
+
+**加上 AGENTS.md / CLAUDE.md 指引块后（第 8 轮，只重跑 A 组，5 题 × 2 次）**：`kb install-skills` 现在会写入 codewiki 指引块（见上方命令表）。结果如下：
+
+- **A 组：10/10、平均 13.8 turns、$0.142、52 s。** 对比：之前的 A 组 10/10、17.6 turns、$0.149、51 s；B 组 9/10、14.0 turns、$0.126、46 s。
+- 行为变化很明显。工具调用中涉及 `wiki/` 的运行从 **2/10 增加到 8/10**，调用 `kb` 的运行从 **0/10 增加到 2/10**（G3 中调用了 `kb lint-tid`）。skill 仍然没有被触发。
+- 但结果上的收益有限：turns 比之前的 A 组少 22%，与 B 组持平；费用和耗时都没有优于 B。
+- 原因之一是，agent 想用 `ls`、`head`、`python` 读取 `wiki/facts/*.json`，但基准只允许 `Bash(kb:*)`，这些调用被拒绝了，agent 只能退回到 Read 和 Grep。
+- 结论：指引块能让 agent 注意到 wiki，这一点得到了验证。但要把注意力转化成更少的步骤，还需要两点：一是指引块直接写出“用 Read 打开 `wiki/facts/routes.json`”这类可执行的动作；二是让 `kb` 命令直接回答汇总问题（例如 `kb lint-tid --pages`）。原始数据见 `demo/sample-output/agent-bench-cases-agg/with-agents-block/`。
+
+详见 bench/agent-qa/README.md。
 
 打分正则有一处修正（接口路径前带 host 时匹配失败），已在文档中披露。方法、逐题结果和原始 transcript 见 [bench/agent-qa/README.md](bench/agent-qa/README.md) 和 `demo/sample-output/agent-bench/`。基准总花费 $0.75。
 

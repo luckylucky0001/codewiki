@@ -303,6 +303,58 @@ func TestInstallSkills(t *testing.T) {
 	}
 }
 
+// The AGENTS.md / CLAUDE.md pointer block is idempotent and never touches
+// content outside its markers.
+func TestInstallSkillsAgentsBlockIdempotent(t *testing.T) {
+	dir := t.TempDir()
+	own := "# Team rules\n\nUse tabs.\n"
+	os.WriteFile(filepath.Join(dir, "AGENTS.md"), []byte(own), 0o644)
+	if code, v := runJSON(t, dir, "install-skills", dir); code != 0 {
+		t.Fatal(v)
+	}
+	a1, _ := os.ReadFile(filepath.Join(dir, "AGENTS.md"))
+	c1, err := os.ReadFile(filepath.Join(dir, "CLAUDE.md"))
+	if err != nil {
+		t.Fatal("CLAUDE.md not created")
+	}
+	for name, b := range map[string][]byte{"AGENTS.md": a1, "CLAUDE.md": c1} {
+		s := string(b)
+		if strings.Count(s, "<!-- codewiki:begin") != 1 || strings.Count(s, "<!-- codewiki:end -->") != 1 {
+			t.Fatalf("%s: want exactly one block:\n%s", name, s)
+		}
+		for _, cmd := range []string{"kb lint-tid", "kb parity", "kb conflicts", "kb context <file>", "wiki/facts/routes.json"} {
+			if !strings.Contains(s, cmd) {
+				t.Fatalf("%s: block lacks %q", name, cmd)
+			}
+		}
+	}
+	if !strings.HasPrefix(string(a1), own) {
+		t.Fatalf("existing AGENTS.md content not preserved:\n%s", a1)
+	}
+	// second run: byte-identical, nothing reported as changed
+	_, v := runJSON(t, dir, "install-skills", dir)
+	if p, _ := v["agent_pointers"].([]any); len(p) != 0 {
+		t.Fatalf("second run changed %v", p)
+	}
+	a2, _ := os.ReadFile(filepath.Join(dir, "AGENTS.md"))
+	if string(a2) != string(a1) {
+		t.Fatal("AGENTS.md changed on re-run")
+	}
+	// user edits after the block survive an update of the block
+	os.WriteFile(filepath.Join(dir, "AGENTS.md"), []byte(strings.Replace(string(a1), "kb parity", "kb parity-old", 1)+"\n## Later notes\n"), 0o644)
+	runJSON(t, dir, "install-skills", dir)
+	a3, _ := os.ReadFile(filepath.Join(dir, "AGENTS.md"))
+	if strings.Contains(string(a3), "parity-old") || !strings.Contains(string(a3), "## Later notes") || !strings.HasPrefix(string(a3), own) {
+		t.Fatalf("block not refreshed in place:\n%s", a3)
+	}
+	// --no-agents-md leaves the files alone
+	d2 := t.TempDir()
+	runJSON(t, d2, "install-skills", d2, "--no-agents-md")
+	if _, err := os.Stat(filepath.Join(d2, "AGENTS.md")); err == nil {
+		t.Fatal("--no-agents-md wrote AGENTS.md")
+	}
+}
+
 func TestDiffBaseRevision(t *testing.T) {
 	dir := repo(t)
 	run(t, dir, "init")

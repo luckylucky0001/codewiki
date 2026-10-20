@@ -101,3 +101,22 @@ AGENT_QUESTIONS=bench/agent-qa/questions-cases-agg.json AGENT_REPS=2 AGENT_MAX_T
 - G5 题面写的是“整个仓库”，B 的一个回答把 docs/*.md 里的 1 个示例也算进去，得到 14。这个解读合理，现在 13 和 14 都接受。
 
 两项修正对 A、B 同样适用。修正前的结果（A 10/10，B 7/10）保留在 `results.before-scoring-fix.md`。
+
+## 加上 AGENTS.md / CLAUDE.md 指引块（第 8 轮，只重跑 A 组）
+
+`kb install-skills` 会在目标仓库的 `AGENTS.md` 和 `CLAUDE.md` 里写入一段带标记的指引块，把各类问题映射到对应命令。块的内容见 `demo/sample-output/agent-bench-cases-agg/with-agents-block/agents-block.md`。写入是幂等的，块外内容不会被改动，有测试覆盖（`TestInstallSkillsAgentsBlockIdempotent`）。
+
+用同一组 5 道汇总题，A 组每题跑 2 次，用 haiku，turn 上限 40，花费 $0.14：
+
+| | 通过 | 平均 turns | 总费用 | 平均耗时 | 工具调用涉及 wiki 的运行 | 调用 `kb` 的运行 |
+|---|---|---|---|---|---|---|
+| A + 指引块（第 8 轮） | 10/10 | **13.8** | $0.142 | 52 s | **8/10** | **2/10** |
+| A（第 7 轮，无指引块） | 10/10 | 17.6 | $0.149 | 51 s | 2/10 | 0/10 |
+| B（第 7 轮，只有源码） | 9/10 | 14.0 | $0.126 | 46 s | — | — |
+
+**结论如实写：**
+
+- 指引块确实改变了 agent 的行为：涉及 wiki 的运行从 2/10 增加到 8/10，`kb` 首次被调用（G3 中的 `kb lint-tid`）。turns 比无指引块时少 22%。skill 仍然没有被触发。
+- 但和 B 组相比，**准确率、turns、费用和耗时都没有明显优势**。
+- 一个具体原因：agent 想用 `ls`、`head`、`python` 读取 `wiki/facts/*.json`，但基准只允许 `Bash(kb:*)`，这些调用被拒绝，agent 只能退回到 Read 和 Grep（G1 和 G2 的每次运行都有 1–2 次被拒）。
+- 下一步：一是指引块里直接写出“用 Read 打开 `wiki/facts/routes.json`”这类可执行动作；二是让 `kb` 直接回答汇总问题，例如 `kb lint-tid --pages`、`kb routes --dangling`。这一轮没有做。
