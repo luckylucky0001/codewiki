@@ -1,11 +1,13 @@
 package extract
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"hash/fnv"
 	"math/bits"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -69,6 +71,43 @@ type fileCtx struct {
 
 // ParseFile parses src and extracts symbols and call sites. It never panics:
 // internal errors are reported through FileResult.Failure.
+var reKotlinTypeDecl = regexp.MustCompile(`\b(class|object|interface)\b`)
+
+// kotlinOneLineBodies works around a tree-sitter-kotlin (v1.1.0) gap: a class
+// body whose last member ends on the same line as the closing brace —
+// `object Routes { const val HOME = "home" }` — is a syntax error, while
+// `{ … ;}` parses. On a line that declares a class / object / interface and
+// closes its body (balanced braces, ends with " }"), the space before the
+// final brace becomes ';'. Byte offsets and line numbers are unchanged.
+func kotlinOneLineBodies(src []byte) []byte {
+	var out []byte
+	start := 0
+	for start <= len(src) {
+		end := bytes.IndexByte(src[start:], '\n')
+		if end < 0 {
+			end = len(src)
+		} else {
+			end += start
+		}
+		line := src[start:end]
+		t := bytes.TrimRight(line, " \t\r")
+		if n := len(t); n >= 3 && t[n-1] == '}' && t[n-2] == ' ' && t[n-3] != '{' {
+			open := bytes.IndexByte(t, '{')
+			if open > 0 && reKotlinTypeDecl.Match(t[:open]) && bytes.Count(t, []byte("{")) == bytes.Count(t, []byte("}")) && !bytes.Contains(t, []byte("//")) {
+				if out == nil {
+					out = append([]byte(nil), src...)
+				}
+				out[start+n-2] = ';'
+			}
+		}
+		start = end + 1
+	}
+	if out == nil {
+		return src
+	}
+	return out
+}
+
 func ParseFile(ps *Parsers, lang, platform, relPath, repoPath string, src []byte) (res FileResult) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -78,6 +117,9 @@ func ParseFile(ps *Parsers, lang, platform, relPath, repoPath string, src []byte
 	parser, spec, err := ps.get(lang)
 	if err != nil {
 		return FileResult{Failure: &model.ParseFailure{File: repoPath, Error: err.Error()}}
+	}
+	if lang == "kotlin" {
+		src = kotlinOneLineBodies(src)
 	}
 	tree := parser.Parse(src, nil)
 	if tree == nil {

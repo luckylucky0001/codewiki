@@ -270,3 +270,25 @@ func contains(xs []string, x string) bool {
 	}
 	return false
 }
+
+// tree-sitter-kotlin rejects a class body closed on the line of its last
+// member (`object Routes { const val HOME = "home" }`); kb rewrites the space
+// before that brace to ';' (offsets and lines unchanged). Seen in
+// compose-samples, kotlinconf-app, element-x.
+func TestKotlinOneLineClassBody(t *testing.T) {
+	src := "package a\n\nobject Routes { const val HOME = \"home\" }\n\ndata class P(val a: Int) { override fun toString() = \"p\" }\n\nclass Empty { }\n\nfun f() { if (x) { g() } }\n"
+	r := parse(t, "kotlin", "A.kt", src)
+	if r.Failure != nil {
+		t.Fatalf("parse failure: %+v", r.Failure)
+	}
+	m := byQual(r)
+	if m["Routes.HOME"] == nil || m["Routes.HOME"].Value != "home" || m["P.toString"] == nil || m["f"] == nil {
+		t.Fatalf("symbols: %v", keys(m))
+	}
+	if m["f"].StartLine != 9 {
+		t.Fatalf("line numbers must not move: f at %d", m["f"].StartLine)
+	}
+	if string(kotlinOneLineBodies([]byte("val s = \"{ x }\"\n"))) != "val s = \"{ x }\"\n" {
+		t.Fatal("only type declarations are rewritten")
+	}
+}
