@@ -168,7 +168,7 @@ func today() string { return time.Now().UTC().Format("2006-01-02") }
 func cmdInit(a *app, fs *flag.FlagSet, _ []string) int {
 	root, _ := filepath.Abs(a.root)
 	dry := boolFlag(fs, "dry-run")
-	var created []string
+	created := []string{}
 	cfgPath := filepath.Join(root, config.FileName)
 	cfg, err := config.Load(root)
 	if errors.Is(err, config.ErrNotFound) {
