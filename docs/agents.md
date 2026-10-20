@@ -18,7 +18,7 @@ kb agents                                                     # 查看支持矩�
 | Agent | 后端（`--agent`） | 指令文件 | Skills | MCP（`--mcp`） | 验证等级 |
 |---|---|---|---|---|---|
 | **Claude Code** | `claude -p --permission-mode acceptEdits --allowedTools '<文件工具+kb 只读命令>' --output-format json` | `CLAUDE.md` | `.claude/skills/` | `.mcp.json` | 后端和消费者都是**实跑** |
-| **OpenAI Codex CLI** | `codex exec --sandbox workspace-write -c 'approval_policy="never"' --skip-git-repo-check --ephemeral --color never --json -` | `AGENTS.md` | `.agents/skills/` | `.codex/config.toml`（项目需被信任），或 `codex mcp add` | 后端：**真二进制 / mock 模型**；消费者：**CLI 核对** |
+| **OpenAI Codex CLI** | `codex exec --sandbox workspace-write -c 'approval_policy="never"' --skip-git-repo-check --ephemeral --color never --json -` | `AGENTS.md` | `.agents/skills/` | `.codex/config.toml`（项目需被信任），或 `codex mcp add` | 后端：**真二进制 / mock 模型**（compound 和 ingest 都跑过，见下文“Codex 端到端”）；消费者：**CLI 核对** |
 | **Gemini CLI** | `gemini --skip-trust --approval-mode auto_edit --output-format json -p '…'`（完整 prompt 从 stdin 读入） | `GEMINI.md` | `.agents/skills/` | `.gemini/settings.json`（`trust: true`） | 后端和消费者都是**真二进制 / mock 模型** |
 | **Cursor** | 无适配器，用 `--llm-cmd` | `.cursor/rules/codewiki.mdc`（`alwaysApply: true`） | — | `.cursor/mcp.json` | **仅文档** |
 | **GitHub Copilot** | 无适配器，用 `--llm-cmd` | `.github/copilot-instructions.md` | — | 打印手工配置说明 | **仅文档** |
@@ -122,6 +122,27 @@ llm:
 
 实跑示例：在 minishop 上应用 01-cart-limit 改动后，`kb compound --agent claude --model haiku` 完成 2 个任务，共 $0.0316，verify 通过（[输出](../demo/sample-output/agents/compound-agent-claude-haiku.txt)）。
 
+### Codex 端到端：真实二进制 + mock 模型
+
+`demo/codex-mock-demo.sh` 让真实的 codex-cli 0.163.0 完整跑一遍 `kb compound --agent codex` 和 `kb ingest --agent codex`，只有模型是假的。模型由 [demo/mock-model/mock_openai_responses.py](../demo/mock-model/mock_openai_responses.py) 代替：它是 OpenAI Responses API 的流式 mock，通过 Codex 的自定义 provider（`model_providers.mock.base_url`）接入。结果在 [demo/sample-output/agents/codex-mock/](../demo/sample-output/agents/codex-mock/)。
+
+| 环节 | 真实 / mock | 观察到的结果 |
+|---|---|---|
+| `codex exec` 二进制、参数解析、`-` 从 stdin 读 prompt | **真实** | kb 适配器生成的整条命令行全部被接受 |
+| Codex 配置、自定义 provider、`approval_policy="never"` | **真实** | 运行全程无人工干预，不会卡在审批 |
+| 模型输出（工具调用的内容、最终回答） | **mock** | 脚本化两轮：第一轮用 `exec_command` 写入写集合内的页面，外加一个写集合之外的 `pages/evil-codex.md`；第二轮回答 `done` |
+| 工具执行（`exec_command`）和 `workspace-write` 沙箱 | **真实** | 命令在 staging 里执行；写 staging 之外的非 /tmp 路径报 `Read-only file system`（单独探针） |
+| `--json` 事件流 | **真实** | `thread.started → turn.started → item.* (command_execution) → item.completed (agent_message) → turn.completed{usage}`，见 `04-codex-exec-json-events.jsonl` |
+| 用量解析 | **真实解析，mock 数值** | 每个任务 `in 2000 / out 40 tok, cached 200, reasoning 10`（mock 每次返回 1000/20/100/5，每个任务 2 次请求） |
+| kb prompt 与不可信数据包裹 | **真实** | mock 收到的请求里有 `codewiki 任务` 和 `<untrusted-data …>` |
+| 写集合守卫 | **真实** | 每个任务都是 `violation`，`reverted: pages/evil-codex.md`，发布出来的 wiki 里没有这个文件 |
+| 后处理、verify、原子发布 | **真实** | `verify PASS`；mock 写的页面被重新盖上 `sources` 锚点后发布 |
+| `kb ingest --agent codex`（断言核对任务，写 `.kb/ingest/verdicts.json`） | **真实**（mock 的结论全是 unverifiable） | `_conflicts.md` 和 `requirements.json` 重新生成，越界写入同样被回滚 |
+
+这次运行顺带发现并修复了一个 bug：agent 的 stdout 和 stderr 由两个 goroutine 并发写进同一个未加锁的 buffer，导致 Codex 的 JSON 事件在任务日志里几乎全部丢失（3000 行里只剩 27 行）。修复后有回归测试 `TestAgentTaskLogKeepsStdoutAndStderr`。
+
+另外，Codex 运行时会尝试连接 `chatgpt.com` 和 `ab.chatgpt.com`。在本环境里这些连接被代理拒绝，任务不受影响。
+
 ## CI
 
 [`.github/workflows/compound.yml`](../.github/workflows/compound.yml) 按以下规则选择写作器：
@@ -167,6 +188,26 @@ steps:
 - Claude 后端：`--allowedTools` 只放行文件工具和 `kb anchor` / `kb get` / `kb search`。
 - Codex 后端：在沙箱内执行的命令能读到 `KB_ROOT`、`KB_GRAPH`、`KB_TASK`，`kb anchor` 可用（实测）。Gemini 后端在 headless 模式下没有 shell，prompt 里已经给出所有 hash，不需要运行 kb 命令。
 - MCP 工具全部只读，所以给 Gemini 设置 `trust: true` 是安全的。
+
+## 故障排查
+
+| 现象 | 原因 / 处理 |
+|---|---|
+| **Claude**：任务 `failed`，日志里是 `{"type":"result","is_error":true,…}` | 先看 `usage.error`，也就是 Claude 返回的 `result` 或 `subtype`，例如 `error_max_turns`。确认 `ANTHROPIC_API_KEY` 或登录状态；`--model` 要写 Claude Code 认识的别名（`haiku`、`sonnet`、`opus`） |
+| **Claude**：`.mcp.json` 里的 codewiki 工具没出现 | 项目级 MCP 第一次使用时需要批准（交互模式下执行 `/mcp`）。`-p` 模式下用 `--mcp-config .mcp.json --strict-mcp-config`，并在 `--allowedTools` 里放行 `mcp__codewiki__kb_*` |
+| **Codex**：`Not inside a trusted directory` 或 `git repo check` | kb 的命令行已经带了 `--skip-git-repo-check`，因为 staging 不是 git 仓库。如果是自定义的 `--llm-cmd`，需要自己加上 |
+| **Codex**：任务一直挂到 `llm.timeout_sec` | 有审批在等待。kb 的命令行固定 `-c approval_policy="never"`；自定义命令不要用 `--ask-for-approval on-request` |
+| **Codex**：`llm command failed: … : Reconnecting… / stream disconnected` | 连不上模型 API（网络、代理或额度问题）。agent 报告的错误已经附在任务错误里；`--fallback` 会改用 template 继续 |
+| **Codex**：页面写了，但 kb 报 `LLM did not write …` | 写到了 staging 之外（被沙箱拒绝），或者写到了别的路径。看任务日志里 `command_execution` 的 `aggregated_output` |
+| **Codex**：模型看不到 AGENTS.md 里的 codewiki 块 | 根目录有 `AGENTS.override.md`，或者块的位置超过了 32 KiB。`kb install` 会提示；可以用 `codex debug prompt-input` 自查 |
+| **Codex**：`codex mcp list` 里没有 codewiki | 项目没有被信任，`.codex/config.toml` 不会加载。要么信任项目，要么执行 `codex mcp add codewiki -- kb mcp --root $PWD` |
+| **Codex**：用量全是 0 | 没有 `turn.completed` 事件，说明运行中途失败了；看 `usage.error`。Codex 本身不报告费用 |
+| **Gemini**：`Invalid auth method selected`（code 41） | 设置 `GEMINI_API_KEY`，并在 `~/.gemini/settings.json` 里配置 `security.auth.selectedType: "gemini-api-key"`（或者设置 `GEMINI_DEFAULT_AUTH_TYPE`） |
+| **Gemini**：后端什么都没写 | 没有 `--skip-trust` 时，文件夹不被信任，auto_edit 会降级（kb 的命令行已经带上）。headless 模式下没有 shell 工具，这是预期行为 |
+| **Gemini**：MCP 显示 Disabled，或者 `-p` 时没有 `mcp_codewiki_*` 工具 | 文件夹没有被信任（用 `/permissions` 或 `~/.gemini/trustedFolders.json`），或者条目缺少 `"trust": true`。重新执行 `kb install --agent gemini --mcp` 可以补上 |
+| **Cursor**：规则不生效 | 确认是 `.cursor/rules/codewiki.mdc`，带 frontmatter 且 `alwaysApply: true`。没有 frontmatter 的 `.md` 会被 Cursor 忽略 |
+| **全部**：`kb install` 跳过了某个 JSON 文件 | 文件里有注释，或者不是合法 JSON。kb 不会改写这种文件，提示里会给出手工配置的写法 |
+| **全部**：任务状态是 `violation` | agent 写了写集合之外的文件，已被回滚，内容在 `reverted` 列表里。页面本身仍然发布。如果一直出现，查看 `--keep-work` 留下的 `.kb-work/<run>/tasks/<id>.prompt.md` 和 `.log` |
 
 ## 局限
 
