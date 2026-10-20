@@ -3,6 +3,7 @@ package engine
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path"
@@ -153,6 +154,7 @@ type Checker struct {
 	fileList  []string
 	routeRes  map[string]*regexp.Regexp
 	ignore    []string // root .gitignore patterns
+	docImp    map[string]map[string]string
 }
 
 func normAPIPath(p string) string {
@@ -238,6 +240,66 @@ var rePlaceholderPath = regexp.MustCompile(`[<{]|\bv?X\.Y\.Z\b|\bYYYY|\bxxx\b`)
 var reCreate = regexp.MustCompile("(?i)(\\bcreate( a| an| the)?( new)?( file)?|新建|创建)\\s*$")
 
 var reExample = regexp.MustCompile("(?i)(e\\.g\\.?,?|for example,?|such as|例如|比如)\\s*\\(?$")
+
+var (
+	reDocImportES = regexp.MustCompile(`import\s+(?:type\s+)?(?:(\w+)\s*,?\s*)?(?:\{([^}]*)\}|\*\s+as\s+(\w+))?\s*from\s+['"]([^'"]+)['"]`)
+	reDocRequire  = regexp.MustCompile(`(?:const|let|var)\s+(\w+)\s*=\s*require\(\s*['"]([^'"]+)['"]\s*\)`)
+)
+
+// docImports maps names that a document's own example code imports from a
+// non-relative package to that package (axios docs: `import MockAdapter from
+// "axios-mock-adapter"`): such names are not expected in this repository.
+func (k *Checker) docImports(src string) map[string]string {
+	if k.docImp == nil {
+		k.docImp = map[string]map[string]string{}
+	}
+	if m, ok := k.docImp[src]; ok {
+		return m
+	}
+	m := map[string]string{}
+	k.docImp[src] = m
+	b, err := os.ReadFile(filepath.Join(k.Dir, filepath.FromSlash(src)))
+	if err != nil {
+		return m
+	}
+	text := string(b)
+	// the repository's own package (`import { x } from 'axios'` in axios) is not external
+	self := ""
+	if pj, err := os.ReadFile(filepath.Join(k.Dir, "package.json")); err == nil {
+		var p struct {
+			Name string `json:"name"`
+		}
+		_ = json.Unmarshal(pj, &p)
+		self = p.Name
+	}
+	external := func(pkg string) bool {
+		return !strings.HasPrefix(pkg, ".") && !strings.HasPrefix(pkg, "/") && (self == "" || (pkg != self && !strings.HasPrefix(pkg, self+"/")))
+	}
+	for _, mm := range reDocImportES.FindAllStringSubmatch(text, -1) {
+		if !external(mm[4]) {
+			continue
+		}
+		names := []string{mm[1], mm[3]}
+		for _, n := range strings.Split(mm[2], ",") {
+			n = strings.TrimSpace(n)
+			if i := strings.Index(n, " as "); i >= 0 {
+				n = strings.TrimSpace(n[i+4:])
+			}
+			names = append(names, n)
+		}
+		for _, n := range names {
+			if n != "" {
+				m[n] = mm[4]
+			}
+		}
+	}
+	for _, mm := range reDocRequire.FindAllStringSubmatch(text, -1) {
+		if external(mm[2]) {
+			m[mm[1]] = mm[2]
+		}
+	}
+	return m
+}
 
 // gitignored reports whether a missing path is ignored by the repo's root
 // .gitignore (secrets, generated files): absent by design, not outdated.
@@ -518,6 +580,10 @@ func (k *Checker) Check(c *Claim) {
 				}
 				if example {
 					evidence = append(evidence, fmt.Sprintf("`%s` 是文档举的示例名，不要求存在", span))
+					continue
+				}
+				if pkg := k.docImports(c.Source)[strings.SplitN(name, ".", 2)[0]]; pkg != "" {
+					evidence = append(evidence, fmt.Sprintf("`%s` 由文档示例代码从外部包 `%s` 导入，不在本仓库中", span, pkg))
 					continue
 				}
 				if first := strings.SplitN(name, ".", 2)[0]; strings.Contains(name, ".") && isPascal(first) && !builtinTypes[first] && k.tokenSearch(first) == "" && len(k.findSymbols(first)) == 0 {
