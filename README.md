@@ -303,6 +303,8 @@ kb bench --root /path/to/repo --config cfg.yaml  # 真实仓库；缓存写到�
 - **conflict**：代码与之矛盾——**以代码为准**，列入 `pages/_conflicts.md`；
 - **unverifiable**：没有证据，不提升为知识。
 
+LLM 的判定会写入 `requirements.json` 的 evidence，以 `[llm]` 开头。后续 template 重检时，如果该断言锚定的代码 hash 没有变化，就保留 LLM 的判定，不让确定性检查覆盖掉语义结论。
+
 template 模式做确定性检查：接口 method+path 对 `apis.json`、深链对 `routes.json`、testID、route id/pattern、符号名（含数值常量与文档数字比对）、文件名、代码字面量在符号体中检索。claude 模式做语义核对（例如“用户名为空时弹出短信验证对话框”——testID 存在但行为不存在 → conflict）。`_conflicts.md` 本身锚定所用证据符号，代码变化后会被自动重新核对（例如购物车上限 99→50 后 spec `FR-002` 由 verified 变为 conflict）。
 
 ## CI 接入

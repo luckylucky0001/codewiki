@@ -1,5 +1,5 @@
 {
-  "base_sha": "56ad6811ddfc6d46ed83007a8eb203bbe7504ab5",
+  "base_sha": "bb5e145e633dc062887e70f96fb0a0122a68db9e",
   "changed": [
     "facts/android/routes.md",
     "facts/android/symbols.md",
@@ -21,12 +21,12 @@
     "pages/parity.md"
   ],
   "date": "2026-10-20",
-  "head_sha": "ad4e3b0f505eade2c5575be46fbbc91a49463a6f",
+  "head_sha": "8cdd41bbee4be9481e75070297ba604b5e97d3d1",
   "kind": "compound",
   "llm": "cmd",
   "mode": "incremental",
   "reason": "anchors changed ∪ signature changes propagated along reference edges",
-  "run_id": "20261020T170608-ad4e3b0",
+  "run_id": "20261020T174447-8cdd41b",
   "tasks": [
     {
       "id": "t01-concepts-navigation",
@@ -34,23 +34,23 @@
       "op": "update",
       "writer": "cmd",
       "status": "ok",
-      "millis": 63126
+      "millis": 66103
     },
     {
       "id": "t02-concepts-shared-components",
       "page": "pages/concepts/shared-components.md",
       "op": "update",
-      "writer": "cmd",
+      "writer": "template",
       "status": "ok",
-      "millis": 44807
+      "millis": 3
     },
     {
       "id": "t03-features-profile",
       "page": "pages/features/profile.md",
       "op": "create",
-      "writer": "template",
+      "writer": "cmd",
       "status": "ok",
-      "millis": 0
+      "millis": 44398
     },
     {
       "id": "t04-overview",
@@ -58,7 +58,7 @@
       "op": "update",
       "writer": "template",
       "status": "ok",
-      "millis": 0
+      "millis": 4
     }
   ],
   "verify_errors": 0,

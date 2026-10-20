@@ -1,14 +1,14 @@
-compound 20261020T170608-ad4e3b0: base 56ad681 → head ad4e3b0, mode incremental, llm cmd
+compound 20261020T174447-8cdd41b: base bb5e145 → head 8cdd41b, mode incremental, llm cmd
 mode incremental — anchors changed ∪ signature changes propagated along reference edges
 changed_route_ids: [profile]; changed_files: 8
 stats: symbols=224 changes=map[added:10 body:4 unchanged:210] module_ratio=0.22 structural_ratio=0.04 hops=1 propagated=0
-  t01-concepts-navigation update  pages/concepts/navigation.md   write_set=[pages/concepts/navigation.md] reasons=[anchor_body_changed:MiniShopNavHost, anchor_body_changed:Routes, anchor_body_changed:Route, anchor_added:Routes.PROFILE, …+2]
-  t02-concepts-shared-components update  pages/concepts/shared-components.md write_set=[pages/concepts/shared-components.md] reasons=[anchor_added:LoginResponse.token, anchor_added:TokenStore.token]
-  t03-features-profile create  pages/features/profile.md      write_set=[pages/features/profile.md] reasons=[route_added]
-  t04-overview update  pages/overview.md              write_set=[pages/overview.md] reasons=[route_set_changed]
+  t01-concepts-navigation update  pages/concepts/navigation.md   p2 write_set=[pages/concepts/navigation.md] reasons=[anchor_body_changed:MiniShopNavHost, anchor_body_changed:Routes, anchor_body_changed:Route, anchor_added:Routes.PROFILE, …+2]
+  t02-concepts-shared-components update  pages/concepts/shared-components.md p3 write_set=[pages/concepts/shared-components.md] reasons=[anchor_added:LoginResponse.token, anchor_added:TokenStore.token]
+  t03-features-profile create  pages/features/profile.md      p1 write_set=[pages/features/profile.md] reasons=[route_added]
+  t04-overview update  pages/overview.md              p4 write_set=[pages/overview.md] reasons=[route_set_changed]
   task t01-concepts-navigation      ok       cmd 
-  task t02-concepts-shared-components ok       cmd 
-  task t03-features-profile         ok       template 
+  task t02-concepts-shared-components ok       template 
+  task t03-features-profile         ok       cmd 
   task t04-overview                 ok       template 
 changed files: 23
   .kb/graph.json
@@ -34,5 +34,5 @@ changed files: 23
   pages/features/profile.md
   pages/overview.md
   pages/parity.md
-verify PASS: 24 pages, 356 anchors, 0 errors, 0 warnings
+verify PASS: 24 pages, 350 anchors, 0 errors, 0 warnings
 published 23 changed file(s) to demo/output/<run>/repo/wiki

@@ -209,14 +209,14 @@
 <div class="two">
 <div>
 <h3>4.1 安装与初始化</h3>
-<pre><code>go install github.com/luckylucky0001/codewiki/cmd/kb@latest
-# 需要 Go 1.24 与 C 编译器（cgo）；go.mod 中没有 replace
+<pre><code>go install \
+  github.com/luckylucky0001/codewiki/cmd/kb@latest
 cd your-monorepo
-kb init                      # codewiki.yaml + wiki 骨架
+kb init           # 配置 + wiki 骨架
 kb discover-docs --json &gt; docs.json
 kb ingest --manifest docs.json
-kb compound [--llm claude]   # 首次运行为全量
-kb verify                    # CI 门禁</code></pre>
+kb compound       # 首次全量；--llm claude
+kb verify         # CI 门禁</code></pre>
 </div>
 <div>
 <h3>4.2 配置 codewiki.yaml</h3>
@@ -226,9 +226,11 @@ platforms:
   - {name: android, root: android}
   - {name: ios,     root: ios}
   - {name: harmony, root: harmony}
-llm: {cmd: "claude -p --permission-mode acceptEdits ..."}
-plan: {hops: 1, rebuild_module_ratio: 0.5,
-       rebuild_structural_ratio: 0.3}</code></pre>
+llm:
+  cmd: claude -p --permission-mode ...
+plan:
+  hops: 1
+  rebuild_module_ratio: 0.5</code></pre>
 </div>
 </div>
 <p>指定 <code>--config &lt;file&gt; --root &lt;repo&gt;</code> 时，wiki 会写到被分析仓库之外，用于只读分析第三方仓库（axios 和 5 个开源项目都是这样跑的）。</p>
@@ -260,7 +262,7 @@ status: current            # current | stale | outdated-doc
 <h2><span class="num">5</span>Demo 操作流程与评测</h2>
 <p><code>demo/run.sh</code> 用 <code>examples/minishop</code> 建一个临时 git 仓库。这是同一个电商 App 的三端实现，包含 6 条路由、11 类 testID、5 个接口。脚本依次执行 init → discover-docs → ingest → 首次 compound，然后把 3 个变更集以 <code>--no-ff</code> 合并到 master，每次合并后运行 status / diff / plan / compound / verify / parity，最后运行 <code>kb eval</code>。<code>DEMO_LLM=template</code> 约 1 分钟，结果可复现；<code>DEMO_LLM=claude</code> 使用真实的 <code>claude -p</code>。</p>
 <h3>5.1 文档发现与断言核对</h3>
-<p>共发现 9 份文档：spec-kit 的 <code>specs/001-cart/spec.md</code> 和 <code>plan.md</code>，Kiro 的 requirements 和 steering，ADR，以及 3 份旧文档。从中抽取 33 条断言。三次合并后，template 模式结果为 <b>verified 24 / conflict 6 / unverifiable 3</b>，claude 模式结果为 <b>CLAUDE_CLAIMS</b>。</p>
+<p>共发现 9 份文档：spec-kit 的 <code>specs/001-cart/spec.md</code> 和 <code>plan.md</code>，Kiro 的 requirements 和 steering，ADR，以及 3 份旧文档。从中抽取 33 条断言。三次合并后，template 模式结果为 <b>verified 24 / conflict 6 / unverifiable 3</b>，claude 模式结果为 <b>verified 23 / conflict 7 / unverifiable 3</b>（LOGIN-R2.2 等语义冲突在后续 template 重检中被保留，因为锚定的代码未变）。</p>
 <table>
   <tr><th>断言（来源）</th><th>结论与证据（以代码为准）</th></tr>
   <tr><td>登录使用短信验证码，<code>POST /api/sms/send</code>（旧文档）</td><td class="bad">conflict：代码中不存在该接口，只有 <code>POST /api/login</code></td></tr>
@@ -295,7 +297,7 @@ status: current            # current | stale | outdated-doc
 </table>
 <p>第一轮实测中，agent 有一次没有触发 skill，HarmonyOS 的值只能靠 grep 得到。据此给 kb-query / kb-lint 的 description 补充了跨平台取值类问法和 <code>kb parity</code>，修正后两个问题都在第一步触发了对应 skill。</p>
 <h3>5.5 claude 模式写页面</h3>
-<p>claude 模式下，每次 compound 最多给 2 个 LLM 任务（按价值排序），其余用 template；首次全量也用 template，以控制成本。最终结果为 CLAUDE_PAGES，所有步骤 verify 通过。LLM 写的页面有三端对照、失败处理差异和测试要点，还发现了示例代码中 <code>preload</code> 写入的 <code>pending</code> 从未被消费的问题。写集以外的写入会被自动回滚，有专门测试覆盖。</p>
+<p>claude 模式下，每次 compound 最多给 2 个 LLM 任务（按价值排序），其余用 template；首次全量也用 template，以控制成本。最终 24 个页面、350 个锚点，所有步骤 verify 通过。LLM 写的页面有三端对照、失败处理差异和测试要点，还发现了示例代码中 <code>preload</code> 写入的 <code>pending</code> 从未被消费的问题。写集以外的写入会被自动回滚，有专门测试覆盖。</p>
 </section>
 
 <!-- ============ 6 ============ -->

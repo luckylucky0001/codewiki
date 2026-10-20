@@ -9,12 +9,12 @@ sources:
     hash: 04fc4a76c52c7def97e7e7e8c75b25f3609ef967500beb8ffe9b5b493a46ad02
   - sym: android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.getProduct
     hash: aec1ad5dda84abee9cd40ac64626e5c14c13d9d6063352d0d6a1b1e1a0b04cbd
-  - sym: android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.listProducts
-    hash: 811ab70ffe53f90e955509d706154fc4ac2a5a73f93d1085bec1db580e8dfe1c
   - sym: android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.MAX_CART_ITEMS
     hash: c874d1a813b4bf8aa6817442999368d7da32979bf689f785a5cea94c2ca423bb
   - sym: android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.addItem
     hash: 31497a415b9556bb374e5e6171fae5b2b1eb67ea5b9b009000bd7d2d63366b79
+  - sym: android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.items
+    hash: 6933c36bf1380135f949cc722b04f5f4ca17951c7af709a0d83f4a7bc818c3c7
   - sym: android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.pending
     hash: cdb3e2698d888b400e74a4bbc9d61a3211ed7109a074fa4b698ed66de0209bd7
   - sym: android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.preload
@@ -65,12 +65,14 @@ sources:
     hash: 3ee801bf69a8b65767a6aac58bb85ae9f15efd745d969198ab4a71956e822945
   - sym: ios://MiniShop/Networking/APIClient.swift#Product.title
     hash: be0eb9a3cabfe19db23b6287518ceb5b1fd2513d7ed2f9e89878c29f277bfcc5
-source_commit: 56ad681
+source_commit: bb5e145
 status: current
 ---
 # 商品详情（product_detail）
 
-> 由 `kb compound --llm template` 根据 facts 与符号图确定性生成；使用 claude 模式可获得更完整的叙述。锚点见 frontmatter `sources`。
+## 概述
+
+商品详情页按路由 `product/{id}` 展示单个商品：进入页面时按 `id` 请求 `GET /api/products/{id}`，显示商品标题（Android 另显示价格），并提供「Add to cart」按钮（testID `add_to_cart`），点击后把商品加入购物车并调用 `POST /api/cart`。
 
 ## 路由与深链
 
@@ -82,7 +84,42 @@ status: current
 
 测试注入参数：`?token=<t>&cart=<sku,sku>`（见各端 deeplink 处理代码）。
 
-## testID
+## 三端实现对照
+
+| 项 | android | harmony | ios |
+|---|---|---|---|
+| 加载时机 | `LaunchedEffect(id)` 调用 `android://app/src/main/java/com/minishop/ui/products/ProductsViewModel.kt#ProductsViewModel.loadProduct` | `harmony://entry/src/main/ets/pages/ProductDetailPage.ets#ProductDetailPage.aboutToAppear` 读取导航参数后调用 `harmony://entry/src/main/ets/common/Api.ets#Api.loadProduct` | `.task` 调用 `ios://MiniShop/Features/Products/ProductsViewModel.swift#ProductsViewModel.loadProduct`（失败返回 `nil`） |
+| 商品状态 | `remember` 的 `product` | `harmony://entry/src/main/ets/pages/ProductDetailPage.ets#ProductDetailPage.product`（`@State`） | `ios://MiniShop/Features/Products/ProductDetailView.swift#ProductDetailView.product`（`@State`） |
+| 加购调用 | `cart.addItem(it.id)`，使用已加载商品的 `id` | `harmony://entry/src/main/ets/pages/ProductDetailPage.ets#ProductDetailPage.build` 中 `CartStore.addItem(this.product.id, 1)`，仅在商品已加载时触发，数量显式传 1 | `cart.addItem(sku: id)`，使用路由参数 `id`，不依赖商品是否加载完成 |
+| 购物车实现 | `android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.addItem` | `harmony://entry/src/main/ets/common/CartStore.ets#CartStore.addItem`（签名 `(sku, quantity)`） | `ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.addItem` |
+| 页面展示 | 顶栏标题 + 价格文本 | `BackButton` + 标题 | `BackButton` + 标题 |
+
+`addItem` 的共同逻辑：超过购物车上限时返回 `false` 且不发请求；否则本地追加 SKU、异步发起 `POST /api/cart`，返回 `true`。页面侧均忽略返回值，不向用户提示上限。
+
+三端差异：
+
+- Android / iOS：`addItem` 只接收 `sku`，请求数量固定为 1；判断条件为「当前条目数已达上限」（Android `items.size >= MAX_CART_ITEMS`）。
+- Harmony：`CartStore.addItem` 新增 `quantity` 参数，判断条件为 `CartStore.items.length + quantity > MAX_CART_ITEMS`，通过后向 `items` 追加一次 SKU，并把 `quantity` 传给 `Api.addToCart`。详情页传入 `1`，因此与另两端行为一致；但若其他调用方传入大于 1 的数量，本地条目只增加 1 条而上限检查按 `quantity` 计算。
+
+## 接口与数据流
+
+| 平台 | 方法 | 路径 | 调用符号 |
+|---|---|---|---|
+| android | POST | `/api/cart` | `android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.addToCart` |
+| android | GET | `/api/products/{id}` | `android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.getProduct` |
+| harmony | GET | `/api/products/{id}` | `harmony://entry/src/main/ets/common/Api.ets#Api.loadProduct` |
+| ios | POST | `/api/cart` | `ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.addItem` |
+| ios | GET | `/api/products/{id}` | `ios://MiniShop/Features/Products/ProductsViewModel.swift#ProductsViewModel.loadProduct` |
+
+数据流：路由参数 `id` → 加载商品（`Product` 含 `id`、`title`、`price`：`ios://MiniShop/Networking/APIClient.swift#Product.id`、`ios://MiniShop/Networking/APIClient.swift#Product.title`、`ios://MiniShop/Networking/APIClient.swift#Product.price`）→ 点击按钮 → 购物车 `addItem` → `POST /api/cart`（iOS 请求体 `CartRequest`，字段 `sku`：`ios://MiniShop/Networking/APIClient.swift#CartRequest.sku`，`quantity` 为 1）。
+
+## 购物车上限
+
+- Android：`android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.MAX_CART_ITEMS` = `50`（旧版本页面曾记为 99，已过时）。
+- Harmony 在 `CartStore.addItem` 中与 `MAX_CART_ITEMS` 比较，iOS 在 `CartViewModel.addItem` 中与 `CartViewModel.maxCartItems` 比较；这两端的具体数值未在本页所依据的符号中给出，跨端对齐请另行核对。
+- 相关 Android 成员：`android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.items`（SKU 列表）、`android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.total`（返回 `items.size`）、`android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.preload` 与 `android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.pending`（`preload` 仅向私有 `pending` 追加 SKU）。
+
+## testID 与测试要点
 
 | 平台 | tid | 位置 |
 |---|---|---|
@@ -90,61 +127,11 @@ status: current
 | harmony | `add_to_cart` | `harmony/entry/src/main/ets/pages/ProductDetailPage.ets:25` |
 | ios | `add_to_cart` | `ios/MiniShop/Features/Products/ProductDetailView.swift:13` |
 
-## 接口
+测试要点：
 
-| 平台 | 方法 | 路径 | 调用符号 |
-|---|---|---|---|
-| android | POST | `/api/cart` | `android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.addToCart` |
-| android | GET | `/api/products` | `android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.listProducts` |
-| android | GET | `/api/products/{id}` | `android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.getProduct` |
-| harmony | GET | `/api/products/{id}` | `harmony://entry/src/main/ets/common/Api.ets#Api.loadProduct` |
-| ios | POST | `/api/cart` | `ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.addItem` |
-| ios | GET | `/api/products/{id}` | `ios://MiniShop/Features/Products/ProductsViewModel.swift#ProductsViewModel.loadProduct` |
-
-## 关键常量
-
-- `CartViewModel.MAX_CART_ITEMS` = `50`（android）
-
-## 相关代码
-
-**android**
-
-- `android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.addToCart` — function `@POST("/api/cart") suspend fun addToCart(@Body body: CartRequest): CartResponse`
-- `android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.getProduct` — function `@GET("/api/products/{id}") suspend fun getProduct(@Path("id") id: String): Product`
-- `android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.listProducts` — function `@GET("/api/products") suspend fun listProducts(): List<Product>`
-- `android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.MAX_CART_ITEMS` — property `const val MAX_CART_ITEMS`
-- `android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.addItem` — function `fun addItem(sku: String): Boolean`
-- `android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.pending` — property `private val pending`
-- `android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.preload` — function `fun preload(sku: String)`
-- `android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.total` — function `fun total(): Int`
-- `android://app/src/main/java/com/minishop/ui/products/ProductDetailScreen.kt#ProductDetailScreen` — composable `@Composable fun ProductDetailScreen(id: String, onBack: () -> Unit, vm: ProductsViewModel = viewModel(), cart: CartViewModel = viewModel())`
-- `android://app/src/main/java/com/minishop/ui/products/ProductsViewModel.kt#ProductsViewModel.loadProduct` — function `suspend fun loadProduct(id: String): Product`
-- `android://app/src/main/java/com/minishop/ui/products/ProductsViewModel.kt#ProductsViewModel.loadProducts` — function `suspend fun loadProducts()`
-- `android://app/src/main/java/com/minishop/ui/products/ProductsViewModel.kt#ProductsViewModel.products` — property `var products: List<Product>`
-
-**harmony**
-
-- `harmony://entry/src/main/ets/common/Api.ets#Api.loadProduct` — method `static async loadProduct(id: string): Promise<Product>`
-- `harmony://entry/src/main/ets/common/CartStore.ets#CartStore.addItem` — method `static addItem(sku: string, quantity: number): boolean`
-- `harmony://entry/src/main/ets/pages/ProductDetailPage.ets#ProductDetailBuilder` — function `@Builder export function ProductDetailBuilder()`
-- `harmony://entry/src/main/ets/pages/ProductDetailPage.ets#ProductDetailPage.aboutToAppear` — method `aboutToAppear(): void`
-- `harmony://entry/src/main/ets/pages/ProductDetailPage.ets#ProductDetailPage.build` — method `build()`
-- `harmony://entry/src/main/ets/pages/ProductDetailPage.ets#ProductDetailPage.product` — property `@State product: Product | undefined`
-
-**ios**
-
-- `ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.addItem` — function `func addItem(sku: String) -> Bool`
-- `ios://MiniShop/Features/Products/ProductDetailView.swift#ProductDetailView` — struct `struct ProductDetailView: View`
-- `ios://MiniShop/Features/Products/ProductDetailView.swift#ProductDetailView.body` — property `var body: some View`
-- `ios://MiniShop/Features/Products/ProductDetailView.swift#ProductDetailView.cart` — property `@StateObject private var cart`
-- `ios://MiniShop/Features/Products/ProductDetailView.swift#ProductDetailView.id` — property `let id: String`
-- `ios://MiniShop/Features/Products/ProductDetailView.swift#ProductDetailView.product` — property `@State private var product: Product?`
-- `ios://MiniShop/Features/Products/ProductDetailView.swift#ProductDetailView.vm` — property `@StateObject private var vm`
-- `ios://MiniShop/Features/Products/ProductsViewModel.swift#ProductsViewModel.loadProduct` — function `func loadProduct(id: String) async -> Product?`
-- `ios://MiniShop/Networking/APIClient.swift#CartRequest.sku` — property `let sku: String`
-- `ios://MiniShop/Networking/APIClient.swift#Product.id` — property `let id: String`
-- `ios://MiniShop/Networking/APIClient.swift#Product.price` — property `let price: Int`
-- `ios://MiniShop/Networking/APIClient.swift#Product.title` — property `let title: String`
+- 三端使用同一 testID `add_to_cart`。
+- Android/Harmony 在商品未加载完成时点击无效果；iOS 直接用路由 `id` 加购，行为不同。
+- 购物车已满时点击按钮不会新增条目，也不会发出 `POST /api/cart`；Android 的上限为 50（需先通过 `cart` 注入参数填满）。
 
 ## 相关页面
 

@@ -10,8 +10,6 @@ sources:
     hash: 7dcd362edc1216606ccf4916aed55fc74855c4095cc2b4583fa705a55c7959a9
   - sym: android://app/src/main/java/com/minishop/data/ApiService.kt#ApiClient.service
     hash: 3fe962f0317cd2eb2057b5d5b2a5825fa045583e3425e998d41e5e76a56e1a05
-  - sym: android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.items
-    hash: 6933c36bf1380135f949cc722b04f5f4ca17951c7af709a0d83f4a7bc818c3c7
   - sym: android://app/src/main/java/com/minishop/ui/components/MiniShopTopBar.kt#MiniShopTopBar
     hash: a950939b071b355f1752ab5ba76842b203ccc17a22905e00e98b7cce1f172af5
   - sym: harmony://entry/src/main/ets/common/Api.ets#Api
@@ -38,8 +36,6 @@ sources:
     hash: b6f29af6cc3428a33a0672d119e060c8983c74a2f3131f01378651ee4362e43e
   - sym: ios://MiniShop/Networking/APIClient.swift#APIClient.shared
     hash: 74c5c163f81b3f1a5f29c398419c92c86ef926961f9820a252da3c3a06c310b9
-  - sym: ios://MiniShop/Networking/APIClient.swift#CartResponse.count
-    hash: 7ccd9948ba99f0e16f94e88d2a0b4cd26c8a16dcf86de7f21b9f6d77eb857118
   - sym: ios://MiniShop/Networking/APIClient.swift#LoginResponse.token
     hash: d31dd686a0bb1c46c11e0ebcd19b599d5aa898cb82b6ce956b5f579cba6d3e17
   - sym: ios://MiniShop/Networking/APIClient.swift#TokenStore
@@ -50,19 +46,12 @@ sources:
     hash: 160dd603b73cd275a6b0089cbe4b95d633ac45773c271403286088aa378bff21
   - sym: ios://MiniShop/Networking/APIClient.swift#TokenStore.token
     hash: cc9a2bad373da05b2c10efdd69bf76de940bebff0e4ee5477b4b4cd213b4dc72
-source_commit: ad4e3b0
+source_commit: 8cdd41b
 status: current
 ---
 # 共享组件
 
 > 被 ≥3 个路由引用的符号（返回按钮、顶栏、API 客户端等）。它们不计入单个功能页的锚点，改动它们只会让本页失效，而不会让所有功能页一起变 stale。
-
-## 概述
-
-- **网络层**：三端各有一个集中式 API 入口，基础地址均为 `https://api.minishop.example`（Android/iOS 在代码中声明；Harmony 使用 `BASE_URL`）。
-- **登录令牌**：iOS 由 `TokenStore` 在内存中持有 token，`APIClient.send` 自动附加；Harmony 仅 `addToCart` 携带 token。
-- **返回导航**：三端的返回按钮统一使用 testID `nav_back`（见下文“testID 与测试要点”）。
-- **购物车状态**：购物车列表在 Android（`items`）与 iOS（`CartViewModel`）中由 ViewModel 持有。
 
 ## android
 
@@ -71,10 +60,7 @@ status: current
 | object | `android://app/src/main/java/com/minishop/data/ApiService.kt#ApiClient` | `object ApiClient` | （routes: cart, checkout, login, product_detail, products） |
 | property | `android://app/src/main/java/com/minishop/data/ApiService.kt#ApiClient.BASE_URL` | `const val BASE_URL` |  |
 | property | `android://app/src/main/java/com/minishop/data/ApiService.kt#ApiClient.service` | `val service: ApiService` | （routes: cart, checkout, login, product_detail, products） |
-| property | `android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.items` | `val items`（`mutableListOf<String>()`） | （routes: cart, product_detail, products） |
-| composable | `android://app/src/main/java/com/minishop/ui/components/MiniShopTopBar.kt#MiniShopTopBar` | `@Composable fun MiniShopTopBar(title: String, onBack: (() -> Unit)? = null)` | （routes: cart, checkout, order_detail, product_detail） |
-
-`ApiClient.service` 通过 Retrofit 以 `BASE_URL` 构建。`MiniShopTopBar` 仅在 `onBack != null` 时渲染返回图标。
+| composable | `android://app/src/main/java/com/minishop/ui/components/MiniShopTopBar.kt#MiniShopTopBar` | `@Composable fun MiniShopTopBar(title: String, onBack: (() -> Unit)? = null)` | （routes: cart, checkout, order_detail, product_detail, profile） |
 
 ## harmony
 
@@ -82,57 +68,26 @@ status: current
 |---|---|---|---|
 | class | `harmony://entry/src/main/ets/common/Api.ets#Api` | `export class Api` | （routes: checkout, login, product_detail, products） |
 | method | `harmony://entry/src/main/ets/common/Api.ets#Api.addToCart` | `static async addToCart(sku: string, quantity: number): Promise<void>` |  |
-| component | `harmony://entry/src/main/ets/common/BackButton.ets#BackButton` | `@Component export struct BackButton` | （routes: cart, checkout, order_detail, product_detail） |
+| component | `harmony://entry/src/main/ets/common/BackButton.ets#BackButton` | `@Component export struct BackButton` | （routes: cart, checkout, order_detail, product_detail, profile） |
 | method | `harmony://entry/src/main/ets/common/BackButton.ets#BackButton.build` | `build()` |  |
-
-`Api` 为全静态方法集合，基于 `http.createHttp().request`：
-
-| 方法 | 请求 | 返回 |
-|---|---|---|
-| `login(username, password)` | POST `/api/login` | token（取响应 JSON 的 `token`） |
-| `fetchProducts()` | GET `/api/products` | `Product[]` |
-| `loadProduct(id)` | GET `/api/products/<id>` | `Product` |
-| `addToCart(sku, quantity)` | POST `/api/cart`，带 `Authorization: Bearer <TokenStore.get()>` | `void` |
-| `createOrder(paymentMethod)` | POST `/api/orders` | orderId（取响应 JSON 的 `orderId`） |
-
-注意：`createOrder` 的请求头中没有 `Authorization`，仅 `addToCart` 携带 Bearer token。
-
-`BackButton` 通过 `@Consume('pathStack') pathStack: NavPathStack` 在点击时 `pop()`。
 
 ## ios
 
 | kind | 符号 | 签名 | 使用方 |
 |---|---|---|---|
-| struct | `ios://MiniShop/Components/BackButton.swift#BackButton` | `struct BackButton: View` | （routes: cart, checkout, order_detail, product_detail） |
-| property | `ios://MiniShop/Components/BackButton.swift#BackButton.body` | `var body: some View` |  |
-| property | `ios://MiniShop/Components/BackButton.swift#BackButton.dismiss` | `@Environment(\.dismiss) private var dismiss` |  |
-| class | `ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel` | `@MainActor final class CartViewModel: ObservableObject` | （routes: cart, checkout, login, product_detail, products） |
-| function | `ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.preload` | `static func preload(_ skus: [String])` | （routes: cart, checkout, login, products） |
+| struct | `ios://MiniShop/Components/BackButton.swift#BackButton` | `struct BackButton: View` | （routes: cart, checkout, order_detail, product_detail, profile） |
+| property | `ios://MiniShop/Components/BackButton.swift#BackButton.body` | `var body: some View` | （routes: cart, checkout, order_detail, product_detail, profile） |
+| property | `ios://MiniShop/Components/BackButton.swift#BackButton.dismiss` | `@Environment(\.dismiss) private var dismiss` | （routes: cart, checkout, order_detail, product_detail, profile） |
+| class | `ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel` | `@MainActor final class CartViewModel: ObservableObject` | （routes: cart, checkout, login, product_detail, products, profile） |
+| function | `ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.preload` | `static func preload(_ skus: [String])` | （routes: cart, checkout, login, products, profile） |
 | class | `ios://MiniShop/Networking/APIClient.swift#APIClient` | `final class APIClient` | （routes: cart, checkout, login, product_detail, products） |
 | function | `ios://MiniShop/Networking/APIClient.swift#APIClient.send` | `func send<T: Decodable>(_ method: HTTPMethod, path: String, body: Encodable? = nil) async throws -> T` | （routes: cart, checkout, login, product_detail, products） |
 | property | `ios://MiniShop/Networking/APIClient.swift#APIClient.shared` | `static let shared` | （routes: cart, checkout, login, product_detail, products） |
-| property | `ios://MiniShop/Networking/APIClient.swift#CartResponse.count` | `let count: Int` | （routes: cart, checkout, login, product_detail, products） |
-| property | `ios://MiniShop/Networking/APIClient.swift#LoginResponse.token` | `let token: String`（`struct LoginResponse: Decodable`） |  |
-| class | `ios://MiniShop/Networking/APIClient.swift#TokenStore` | `final class TokenStore` | （routes: cart, checkout, login, products） |
-| function | `ios://MiniShop/Networking/APIClient.swift#TokenStore.save` | `func save(_ token: String)` | （routes: cart, checkout, login, products） |
-| property | `ios://MiniShop/Networking/APIClient.swift#TokenStore.shared` | `static let shared` | （routes: cart, checkout, login, products） |
-| property | `ios://MiniShop/Networking/APIClient.swift#TokenStore.token` | `private(set) var token: String?` |  |
-
-## 接口与数据流
-
-- iOS 请求：`APIClient.send` 统一构造请求；`TokenStore.shared` 的 `token` 非空时自动附加 `Authorization: Bearer`，请求体用 JSON 编码，响应按泛型 `Decodable` 解码。
-- iOS 令牌：登录响应类型 `LoginResponse` 带 `token: String`；`TokenStore.token` 为 `private(set)`，外部只能通过 `TokenStore.save` 写入，且仅保存在内存属性中（不持久化，应用重启后丢失）。
-- iOS `CartViewModel` 加入购物车后，向 POST `/api/cart` 发送 `CartRequest(sku:quantity:)`，响应类型为 `CartResponse`（字段 `count`）。`CartViewModel.preload` 把 SKU 追加到静态 `pending` 列表。
-- Harmony：`Api` 直接拼接 `BASE_URL`，token 取自 `TokenStore.get()`，仅在 `addToCart` 中使用。
-- Android：请求通过 `ApiClient.service`（Retrofit）发出。
-
-## testID 与测试要点
-
-| 平台 | 返回按钮标识 | 实现 |
-|---|---|---|
-| android | `nav_back`（`testTag`） | `MiniShopTopBar` 的 `IconButton` |
-| harmony | `nav_back`（`id`） | `BackButton.build` |
-| ios | `nav_back`（`accessibilityIdentifier`） | `BackButton.body` |
+| property | `ios://MiniShop/Networking/APIClient.swift#LoginResponse.token` | `let token: String` | （routes: checkout, login, profile） |
+| class | `ios://MiniShop/Networking/APIClient.swift#TokenStore` | `final class TokenStore` | （routes: cart, checkout, login, products, profile） |
+| function | `ios://MiniShop/Networking/APIClient.swift#TokenStore.save` | `func save(_ token: String)` | （routes: cart, checkout, login, products, profile） |
+| property | `ios://MiniShop/Networking/APIClient.swift#TokenStore.shared` | `static let shared` | （routes: cart, checkout, login, products, profile） |
+| property | `ios://MiniShop/Networking/APIClient.swift#TokenStore.token` | `private(set) var token: String?` | （routes: checkout, login, profile） |
 
 ## 相关页面
 

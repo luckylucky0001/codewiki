@@ -82,66 +82,55 @@ sources:
     hash: 0fbe631d08afe24b8d26ee6911bafb84fad369e681ecfe0c1308b7d0b484d8a2
   - sym: ios://MiniShop/Navigation/Route.swift#Route.profile
     hash: b4eeb3dba90bf3318c66b05247e35a69b93faa580f5dccccb1aa35bc61f0d6dd
-source_commit: ad4e3b0
+source_commit: 8cdd41b
 status: current
 ---
 # 导航与深链
 
 ## 概述
 
-三端共用同一套路由模式（pattern）与 `minishop://<pattern>` 深链格式。当前共 7 条路由，其中 `profile` 为新增路由（三端均已加入）。路由事实见 [android routes](../../facts/android/routes.md)、[harmony routes](../../facts/harmony/routes.md)、[ios routes](../../facts/ios/routes.md)；整体背景见 [总览](../overview.md)。
+三端使用同一套路由模式（7 条）和同一个深链协议 `minishop://`。各端实现方式不同：Android 用 Compose Navigation，Harmony 用 `NavPathStack`，iOS 用 `AppRouter` 管理 `[Destination]` 路径。路由事实见 [android](../../facts/android/routes.md)、[harmony](../../facts/harmony/routes.md)、[ios](../../facts/ios/routes.md)。
 
 ## 路由与深链
 
-| 路由 | pattern | Android | iOS | Harmony 页面名 |
-|---|---|---|---|---|
-| login | `login` | `Routes.LOGIN` | `Route.login` | `login` |
-| products | `products` | `Routes.PRODUCTS` | `Route.products` | `products` |
-| product_detail | `product/{id}` | `Routes.PRODUCT_DETAIL` | `Route.productDetail` | `product_detail` |
-| cart | `cart` | `Routes.CART` | `Route.cart` | `cart` |
-| checkout | `checkout` | `Routes.CHECKOUT` | `Route.checkout` | `checkout` |
-| order_detail | `order/{id}` | `Routes.ORDER_DETAIL` | `Route.orderDetail` | `order_detail` |
-| profile | `profile` | `Routes.PROFILE` | `Route.profile` | `profile` |
+| 路由模式 | Android | iOS | Harmony（pushPathByName 名称） |
+|---|---|---|---|
+| `login` | `android://app/src/main/java/com/minishop/navigation/Routes.kt#Routes.LOGIN` | `ios://MiniShop/Navigation/Route.swift#Route.login` | `login` |
+| `products` | `android://app/src/main/java/com/minishop/navigation/Routes.kt#Routes.PRODUCTS` | `ios://MiniShop/Navigation/Route.swift#Route.products` | `products` |
+| `product/{id}` | `android://app/src/main/java/com/minishop/navigation/Routes.kt#Routes.PRODUCT_DETAIL` | `ios://MiniShop/Navigation/Route.swift#Route.productDetail` | `product_detail` |
+| `cart` | `android://app/src/main/java/com/minishop/navigation/Routes.kt#Routes.CART` | `ios://MiniShop/Navigation/Route.swift#Route.cart` | `cart` |
+| `checkout` | `android://app/src/main/java/com/minishop/navigation/Routes.kt#Routes.CHECKOUT` | `ios://MiniShop/Navigation/Route.swift#Route.checkout` | `checkout` |
+| `order/{id}` | `android://app/src/main/java/com/minishop/navigation/Routes.kt#Routes.ORDER_DETAIL` | `ios://MiniShop/Navigation/Route.swift#Route.orderDetail` | `order_detail` |
+| `profile`（新增） | `android://app/src/main/java/com/minishop/navigation/Routes.kt#Routes.PROFILE` | `ios://MiniShop/Navigation/Route.swift#Route.profile` | `ProfilePage` 持有 `pathStack` |
 
-- 深链格式：`minishop://<pattern>?token=<t>&cart=<sku,sku>`；`token` 与 `cart` 为测试参数（见下文）。
-- Android 起始页为 `Routes.LOGIN`；登录成功后跳转 `Routes.PRODUCTS`。
-- `Routes.PROFILE` 的页面 `ProfileScreen`：`onLogout` 导航到 `Routes.LOGIN`，`onBack` 调用 `popBackStack()`。
+- 深链格式：`minishop://<pattern>?token=<t>&cart=<sku,sku>`，例如 `minishop://product/42`。
+- Android：`android://app/src/main/java/com/minishop/navigation/MiniShopNavHost.kt#DEEPLINK_BASE` 为 `minishop://`，`android://app/src/main/java/com/minishop/navigation/MiniShopNavHost.kt#MiniShopNavHost` 为每条路由都注册 `navDeepLink`（含 `profile`），起始页为 `Routes.LOGIN`。
+- Profile 路由：Android 中 `ProfileScreen` 的 `onLogout` 导航到 `Routes.LOGIN`，`onBack` 调用 `popBackStack()`；iOS 新增 `Route.profile`；Harmony 新增 `ProfilePage` 并消费 `pathStack`。
 
 ## 三端实现对照
 
-| 维度 | Android | Harmony | iOS |
+| 项 | Android | Harmony | iOS |
 |---|---|---|---|
-| 路由表 | `android://app/src/main/java/com/minishop/navigation/Routes.kt#Routes`（字符串常量） | 页面名字符串（`pushPathByName`） | `ios://MiniShop/Navigation/Route.swift#Route`（`enum Route: String, CaseIterable`） |
-| 导航容器 | `android://app/src/main/java/com/minishop/navigation/MiniShopNavHost.kt#MiniShopNavHost`（`NavHost`） | `harmony://entry/src/main/ets/pages/Index.ets#Index.pathStack`（`@Provide('pathStack')`） | `ios://MiniShop/Navigation/AppRouter.swift#AppRouter.path`（`@Published var path: [Destination]`） |
-| 页面获取导航栈 | `nav` 回调（`onBack`/`onCheckout` 等） | 各页面 `@Consume('pathStack')`，如 `harmony://entry/src/main/ets/pages/ProfilePage.ets#ProfilePage.pathStack` | `ios://MiniShop/Navigation/AppRouter.swift#RootView.router`（`@EnvironmentObject`） |
-| 深链入口 | `navDeepLink`，前缀 `DEEPLINK_BASE`（`minishop://`） | `harmony://entry/src/main/ets/pages/Index.ets#Index.openDeepLink` | `ios://MiniShop/Navigation/AppRouter.swift#AppRouter.handle` |
-| 参数解析 | NavHost 的 `{id}` 参数 | `openDeepLink` 手工按 `/` 切分 | `ios://MiniShop/Navigation/AppRouter.swift#AppRouter.match` 逐段匹配 `{param}` |
-| 测试参数 | `android://app/src/main/java/com/minishop/MainActivity.kt#MainActivity.applyTestParams` | `harmony://entry/src/main/ets/entryability/EntryAbility.ets#EntryAbility.applyTestParams` | `AppRouter.handle` 内处理 |
-
-要点：
-
-- iOS 的 `ios://MiniShop/Navigation/Route.swift#Destination` 由 `route` 与 `params` 组成，被 `AppRouter.match` 返回后 append 到 `path`。`ios://MiniShop/App/MiniShopApp.swift#MiniShopApp.router` 持有 `AppRouter` 实例。
-- Harmony 没有集中的路由表符号：`harmony://entry/src/main/ets/pages/Index.ets#Index.openDeepLink` 对 `product/<id>`、`order/<id>` 特殊处理为 `product_detail`/`order_detail` 并传 `{ id }`，其余直接 `pushPathByName(parts[0], null)`；`profile` 走默认分支。
-- `BackButton` 通过 `harmony://entry/src/main/ets/common/BackButton.ets#BackButton.pathStack` 共享同一导航栈。
+| 路由表 | `android://app/src/main/java/com/minishop/navigation/Routes.kt#Routes`（字符串常量） | 页面名字符串（无集中枚举） | `ios://MiniShop/Navigation/Route.swift#Route`（`String` 枚举，`CaseIterable`） |
+| 导航状态 | `rememberNavController()` 的返回栈 | `harmony://entry/src/main/ets/pages/Index.ets#Index.pathStack`（`@Provide`） | `ios://MiniShop/Navigation/AppRouter.swift#AppRouter.path`（`@Published`） |
+| 子页获取导航 | 回调 lambda（`onOpen`/`onBack` 等） | 各页 `@Consume('pathStack')`，如 `harmony://entry/src/main/ets/pages/ProfilePage.ets#ProfilePage.pathStack` | `ios://MiniShop/Navigation/AppRouter.swift#RootView.router`（`@EnvironmentObject`） |
+| 深链入口 | `NavHost` 的 `navDeepLink` | `harmony://entry/src/main/ets/pages/Index.ets#Index.openDeepLink` | `ios://MiniShop/Navigation/AppRouter.swift#AppRouter.handle` |
+| 路由匹配 | Navigation 库内置 | 手工拆分路径：`product`/`order` 取 `parts[1]` 作为 `id` | `ios://MiniShop/Navigation/AppRouter.swift#AppRouter.match` 逐段匹配 `{param}` |
+| 测试参数 | `android://app/src/main/java/com/minishop/MainActivity.kt#MainActivity.applyTestParams` | `harmony://entry/src/main/ets/entryability/EntryAbility.ets#EntryAbility.applyTestParams` | 在 `handle` 内处理 |
 
 ## 接口与数据流
 
-1. 外部 URL → 各端深链入口（`navDeepLink` / `openDeepLink` / `handle`）。
-2. 解析测试参数：`token` 写入 TokenStore；`cart` 按逗号拆分 SKU 并调用 CartViewModel/CartStore 的 `preload`。
-3. 路由匹配后压栈（Android `navigate`，Harmony `pushPathByName`，iOS `path.append`）。
+- iOS：`MiniShopApp.router`（`ios://MiniShop/App/MiniShopApp.swift#MiniShopApp.router`）创建 `AppRouter`；`handle(url:)` 仅接受 scheme 为 `minishop`，先处理 query，再用 `match` 得到 `ios://MiniShop/Navigation/Route.swift#Destination`（含 `route` 与 `params`）并追加到 `path`。
+- Harmony：`openDeepLink` 对非 `minishop://` 的 URI 回退为已登录 `products`、未登录 `login`；`product/<id>` 与 `order/<id>` 分别映射到 `product_detail`、`order_detail` 并传 `{ id }`；其余直接以首段作为页面名。返回由 `harmony://entry/src/main/ets/common/BackButton.ets#BackButton.pathStack` 实现。
+- 测试参数（三端一致）：`token` 写入 `TokenStore`，`cart`（逗号分隔 SKU）预加载购物车；Android/Harmony 在入口处解析，iOS 在 `handle` 内解析。
 
-差异点（以代码为准）：
+## 注意事项
 
-- Harmony `openDeepLink` 对非 `minishop://` 前缀的 URI 不解析，直接按登录态跳转 `products`（已登录）或 `login`。
-- iOS `handle` 仅接受 scheme 为 `minishop` 的 URL，未匹配的路由静默忽略。
-- Harmony 的 `applyTestParams` 在 `EntryAbility`，Android 在 `MainActivity`，iOS 内联于 `handle`。
-
-## testID 与测试要点
-
-- 测试可用 `minishop://products?token=<t>&cart=<sku,sku>` 一次完成登录态与购物车预置，再落到目标页。
-- 验证 `product/{id}`、`order/{id}` 两条带参路由在三端的参数传递一致。
-- 验证 `minishop://profile` 在三端均可到达，且 Android 上登出回到 `login`。
+- Android 深链 `profile` 与其他路由一样已注册；Harmony 的 `openDeepLink` 对 `profile` 走默认分支（`pushPathByName('profile', null)`），需确认其在导航目的地中已注册，本页不做断言。
+- Profile 尚无 `features/` 页面，因此此处不链接。
 
 ## 相关页面
 
 - [总览](../overview.md)
+- [登录](../features/login.md)、[商品列表](../features/products.md)、[商品详情](../features/product_detail.md)
+- [购物车](../features/cart.md)、[结算](../features/checkout.md)、[订单详情](../features/order_detail.md)

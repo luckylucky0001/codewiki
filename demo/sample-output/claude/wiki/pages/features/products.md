@@ -47,12 +47,14 @@ sources:
     hash: 22a33fb48918bb7a97d40a7a2512460d93468171f49d23bf8ab8e6fce77fd574
   - sym: ios://MiniShop/Networking/APIClient.swift#Product.title
     hash: be0eb9a3cabfe19db23b6287518ceb5b1fd2513d7ed2f9e89878c29f277bfcc5
-source_commit: 56ad681
+source_commit: bb5e145
 status: current
 ---
 # 商品列表（products）
 
-> 由 `kb compound --llm template` 根据 facts 与符号图确定性生成；使用 claude 模式可获得更完整的叙述。锚点见 frontmatter `sources`。
+## 概述
+
+商品列表是 MiniShop 的商品入口页：进入页面时拉取 `GET /api/products`，以列表展示每个商品的 `title`，点击条目进入商品详情（传 `id`），点击 Cart 按钮进入购物车。三端行为一致，仅加载触发方式与网络封装不同。
 
 ## 路由与深链
 
@@ -62,23 +64,26 @@ status: current
 | harmony | `products` | `minishop://products` | `harmony://entry/src/main/ets/pages/ProductsPage.ets#ProductsBuilder` |
 | ios | `products` | `minishop://products` | `ios://MiniShop/Features/Products/ProductsView.swift#ProductsView` |
 
-测试注入参数：`?token=<t>&cart=<sku,sku>`（见各端 deeplink 处理代码）。
+各端路由详情见 [android](../../facts/android/routes.md)、[harmony](../../facts/harmony/routes.md)、[ios](../../facts/ios/routes.md)。
 
-## testID
+## 三端实现对照
 
-| 平台 | tid | 位置 |
-|---|---|---|
-| android | `product_item_` | `android/app/src/main/java/com/minishop/ui/products/ProductsScreen.kt:20` |
-| android | `product_list` | `android/app/src/main/java/com/minishop/ui/products/ProductsScreen.kt:18` |
-| android | `tab_cart` | `android/app/src/main/java/com/minishop/ui/products/ProductsScreen.kt:17` |
-| harmony | `product_item_` | `harmony/entry/src/main/ets/pages/ProductsPage.ets:26` |
-| harmony | `product_list` | `harmony/entry/src/main/ets/pages/ProductsPage.ets:30` |
-| harmony | `tab_cart` | `harmony/entry/src/main/ets/pages/ProductsPage.ets:20` |
-| ios | `product_item_` | `ios/MiniShop/Features/Products/ProductsView.swift:9` |
-| ios | `product_list` | `ios/MiniShop/Features/Products/ProductsView.swift:8` |
-| ios | `tab_cart` | `ios/MiniShop/Features/Products/ProductsView.swift:14` |
+| 项 | android | harmony | ios |
+|---|---|---|---|
+| 页面 | `ProductsScreen` | `ProductsBuilder` → `ProductsPage.build` | `ProductsView.body` |
+| 加载触发 | `LaunchedEffect(Unit)` 调 `vm.loadProducts()` | `ProductsPage.aboutToAppear` 调 `Api.fetchProducts()` | `.task { await vm.loadProducts() }` |
+| 状态 | `ProductsViewModel.products`（`private set`） | `@State` `ProductsPage.products` | `@Published` `ProductsViewModel.products` |
+| 点击条目 | 回调 `onOpen(p.id)` | `pathStack.pushPathByName('product_detail', { id: p.id })` | `router.path.append(Destination(route: .productDetail, params: ["id": p.id]))` |
+| 进入购物车 | 回调 `onCart` | `pathStack.pushPathByName('cart', null)` | `router.path.append(Destination(route: .cart))` |
+| 失败处理 | 未捕获，异常向上抛 | 未捕获 | `try?` 失败时列表置为 `[]` |
 
-## 接口
+要点：
+
+- android：`android://app/src/main/java/com/minishop/ui/products/ProductsViewModel.kt#ProductsViewModel.loadProducts` 直接把 `listProducts()` 结果赋给 `products`；`android://app/src/main/java/com/minishop/ui/products/ProductsViewModel.kt#ProductsViewModel.loadProduct` 按 id 取单个商品。
+- harmony：网络请求封装在 `harmony://entry/src/main/ets/common/Api.ets#Api.fetchProducts`（原名 `Api.loadProducts`，仅重命名，已同步）。`harmony://entry/src/main/ets/pages/ProductsPage.ets#ProductsPage.aboutToAppear` 现调用 `Api.fetchProducts().then(...)` 并把结果写入 `products`。
+- ios：`ios://MiniShop/Features/Products/ProductsView.swift#ProductsView.vm` 持有 view model，`ios://MiniShop/Features/Products/ProductsView.swift#ProductsView.router` 负责跳转；`loadProduct(id:)` 失败返回 `nil`。模型 `Product` 含 `id`、`title`、`price`（见 `ios://MiniShop/Networking/APIClient.swift#Product.id`、`ios://MiniShop/Networking/APIClient.swift#Product.title`），请求方法使用 `ios://MiniShop/Networking/APIClient.swift#HTTPMethod.get`。
+
+## 接口与数据流
 
 | 平台 | 方法 | 路径 | 调用符号 |
 |---|---|---|---|
@@ -88,47 +93,21 @@ status: current
 | ios | GET | `/api/products` | `ios://MiniShop/Features/Products/ProductsViewModel.swift#ProductsViewModel.loadProducts` |
 | ios | GET | `/api/products/{id}` | `ios://MiniShop/Features/Products/ProductsViewModel.swift#ProductsViewModel.loadProduct` |
 
-## 关键常量
+数据流：页面出现 → 请求 `/api/products` → 更新 `products` 状态 → 列表重绘。harmony 端当前没有 `/api/products/{id}` 的列表页调用。
 
-- `ProductsPage.products` = `[]`（harmony）
-- `ProductsViewModel.products` = `[]`（ios）
+## testID 与测试要点
 
-## 相关代码
+| tid | android | harmony | ios |
+|---|---|---|---|
+| `product_list` | `ProductsScreen.kt:18` | `ProductsPage.ets:30` | `ProductsView.swift:8` |
+| `product_item_` + id | `ProductsScreen.kt:20` | `ProductsPage.ets:26` | `ProductsView.swift:9` |
+| `tab_cart` | `ProductsScreen.kt:17` | `ProductsPage.ets:20` | `ProductsView.swift:14` |
 
-**android**
-
-- `android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.getProduct` — function `@GET("/api/products/{id}") suspend fun getProduct(@Path("id") id: String): Product`
-- `android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.listProducts` — function `@GET("/api/products") suspend fun listProducts(): List<Product>`
-- `android://app/src/main/java/com/minishop/ui/products/ProductsScreen.kt#ProductsScreen` — composable `@Composable fun ProductsScreen(onOpen: (String) -> Unit, onCart: () -> Unit, vm: ProductsViewModel = viewModel())`
-- `android://app/src/main/java/com/minishop/ui/products/ProductsViewModel.kt#ProductsViewModel.loadProduct` — function `suspend fun loadProduct(id: String): Product`
-- `android://app/src/main/java/com/minishop/ui/products/ProductsViewModel.kt#ProductsViewModel.loadProducts` — function `suspend fun loadProducts()`
-- `android://app/src/main/java/com/minishop/ui/products/ProductsViewModel.kt#ProductsViewModel.products` — property `var products: List<Product>`
-
-**harmony**
-
-- `harmony://entry/src/main/ets/common/Api.ets#Api.fetchProducts` — method `static async fetchProducts(): Promise<Product[]>`
-- `harmony://entry/src/main/ets/pages/ProductsPage.ets#ProductsBuilder` — function `@Builder export function ProductsBuilder()`
-- `harmony://entry/src/main/ets/pages/ProductsPage.ets#ProductsPage.aboutToAppear` — method `aboutToAppear(): void`
-- `harmony://entry/src/main/ets/pages/ProductsPage.ets#ProductsPage.build` — method `build()`
-- `harmony://entry/src/main/ets/pages/ProductsPage.ets#ProductsPage.products` — property `@State products: Product[]`
-
-**ios**
-
-- `ios://MiniShop/Features/Products/ProductsView.swift#ProductsView` — struct `struct ProductsView: View`
-- `ios://MiniShop/Features/Products/ProductsView.swift#ProductsView.body` — property `var body: some View`
-- `ios://MiniShop/Features/Products/ProductsView.swift#ProductsView.router` — property `@EnvironmentObject var router: AppRouter`
-- `ios://MiniShop/Features/Products/ProductsView.swift#ProductsView.vm` — property `@StateObject private var vm`
-- `ios://MiniShop/Features/Products/ProductsViewModel.swift#ProductsViewModel.loadProduct` — function `func loadProduct(id: String) async -> Product?`
-- `ios://MiniShop/Features/Products/ProductsViewModel.swift#ProductsViewModel.loadProducts` — function `func loadProducts() async`
-- `ios://MiniShop/Features/Products/ProductsViewModel.swift#ProductsViewModel.products` — property `@Published var products: [Product]`
-- `ios://MiniShop/Networking/APIClient.swift#HTTPMethod.get` — case `case get`
-- `ios://MiniShop/Networking/APIClient.swift#Product.id` — property `let id: String`
-- `ios://MiniShop/Networking/APIClient.swift#Product.title` — property `let title: String`
+- 条目 testID 形如 `product_item_<id>`，点击后进入商品详情。
+- 三端 `tab_cart` 均跳转购物车。
+- 测试注入参数：`?token=<t>&cart=<sku,sku>`（见各端 deeplink 处理代码）。
 
 ## 相关页面
 
 - [总览](../overview.md)
 - [导航与深链](../concepts/navigation.md) · [共享组件](../concepts/shared-components.md)
-- [android routes facts](../../facts/android/routes.md)
-- [harmony routes facts](../../facts/harmony/routes.md)
-- [ios routes facts](../../facts/ios/routes.md)

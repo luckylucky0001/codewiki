@@ -1,10 +1,12 @@
- 15.0 page   features/cart  购物车（cart）
-       # 购物车（cart） ## 概述 购物车页展示当前商品数量（`Items: N
- 10.0 page   _conflicts  文档核对（冲突与已验证断言）
+ 18.0 page   features/cart  购物车（cart）
+       # 购物车（cart） ## 概述 购物车页展示商品数量（`Items: N`）和
+ 12.0 page   features/product_detail  商品详情（product_detail）
+       」按钮（testID `add_to_cart`），点击后把商品加入购物车并调用 `POST /api/cart`。 ## 路由与深链 | 平台 | pattern |
+  7.0 page   _conflicts  文档核对（冲突与已验证断言）
        [docs/legacy/cart.md](../raw/docs/docs/legacy/cart.md) L3）购物车最多 10 件商品（常量 `MAX_CART_ITEMS`，iOS 为 `maxCartItems`）
-  3.0 page   concepts/shared-components  共享组件
-       nav_back`（见下文“testID 与测试要点”）。 - **购物车状态**：购物车列表在 Android（`items`）与 iOS（`CartViewMo
-  1.0 page   concepts/navigation  导航与深链
-       /products?token=<t>&cart=<sku,sku>` 一次完成登录态与购物车预置，再落到目标页。 - 验证 `product/{id}`、`order/{id}` 两
+  3.0 page   features/products  商品列表（products）
+       目进入商品详情（传 `id`），点击 Cart 按钮进入购物车。三端行为一致，仅加载触发方式与网络封装不同。
+  2.0 page   concepts/navigation  导航与深链
+       写入 `TokenStore`，`cart`（逗号分隔 SKU）预加载购物车；Android/Harmony 在入口处解析，iOS 在 `handle` 内解析。
   1.0 page   overview  总览
        ---|---|---|---|---| | `cart` | `cart` | ✓ | ✓ | ✓ | [购物车（cart）](features/cart.md) | | `checkout` | `checkout` | ✓ | ✓ |

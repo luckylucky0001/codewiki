@@ -1,5 +1,5 @@
-kb compound: head=56ad681 base=ad013ce mode=incremental tasks=4 (anchors changed ∪ signature changes propagated along reference edges)
-  [ok] recheck  pages/_conflicts.md                cmd 
-  [ok] update   pages/concepts/shared-components.md cmd 
-  [ok] update   pages/features/product_detail.md   template 
-  [ok] update   pages/features/products.md         template 
+kb compound: head=bb5e145 base=27c7b72 mode=incremental tasks=4 (anchors changed ∪ signature changes propagated along reference edges)
+  [ok] recheck  pages/_conflicts.md                template 
+  [ok] update   pages/concepts/shared-components.md template 
+  [ok] update   pages/features/product_detail.md   cmd 
+  [ok] update   pages/features/products.md         cmd 

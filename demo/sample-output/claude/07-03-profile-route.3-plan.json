@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "base": "56ad6811ddfc6d46ed83007a8eb203bbe7504ab5",
-  "head": "ad4e3b0f505eade2c5575be46fbbc91a49463a6f",
+  "base": "bb5e145e633dc062887e70f96fb0a0122a68db9e",
+  "head": "8cdd41bbee4be9481e75070297ba604b5e97d3d1",
   "mode": "incremental",
   "reason": "anchors changed ∪ signature changes propagated along reference edges",
   "stats": {
@@ -92,7 +92,8 @@
         "ios://MiniShop/Navigation/Route.swift#Route.productDetail",
         "ios://MiniShop/Navigation/Route.swift#Route.products",
         "ios://MiniShop/Navigation/Route.swift#Route.profile"
-      ]
+      ],
+      "priority": 2
     },
     {
       "id": "t02-concepts-shared-components",
@@ -117,7 +118,6 @@
         "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiClient",
         "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiClient.BASE_URL",
         "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiClient.service",
-        "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.items",
         "android://app/src/main/java/com/minishop/ui/components/MiniShopTopBar.kt#MiniShopTopBar",
         "harmony://entry/src/main/ets/common/Api.ets#Api",
         "harmony://entry/src/main/ets/common/Api.ets#Api.addToCart",
@@ -131,13 +131,13 @@
         "ios://MiniShop/Networking/APIClient.swift#APIClient",
         "ios://MiniShop/Networking/APIClient.swift#APIClient.send",
         "ios://MiniShop/Networking/APIClient.swift#APIClient.shared",
-        "ios://MiniShop/Networking/APIClient.swift#CartResponse.count",
         "ios://MiniShop/Networking/APIClient.swift#LoginResponse.token",
         "ios://MiniShop/Networking/APIClient.swift#TokenStore",
         "ios://MiniShop/Networking/APIClient.swift#TokenStore.save",
         "ios://MiniShop/Networking/APIClient.swift#TokenStore.shared",
         "ios://MiniShop/Networking/APIClient.swift#TokenStore.token"
-      ]
+      ],
+      "priority": 3
     },
     {
       "id": "t03-features-profile",
@@ -170,7 +170,8 @@
         "ios://MiniShop/Features/Profile/ProfileView.swift#ProfileView",
         "ios://MiniShop/Features/Profile/ProfileView.swift#ProfileView.body",
         "ios://MiniShop/Features/Profile/ProfileView.swift#ProfileView.router"
-      ]
+      ],
+      "priority": 1
     },
     {
       "id": "t04-overview",
@@ -186,7 +187,8 @@
           "code": "route_set_changed"
         }
       ],
-      "context": []
+      "context": [],
+      "priority": 4
     }
   ],
   "changed_route_ids": [

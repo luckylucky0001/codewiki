@@ -7,8 +7,6 @@ routes: [login]
 sources:
   - sym: android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.login
     hash: 16d311d2a6158c5d17707cadc88b03bbe10eb3bc49d630600109bbafc5d030d8
-  - sym: android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.TokenStore
-    hash: f549b73c3c010a905c49c7d9e1bc0db31faf1440205dcb28dfda15ff8fc9545c
   - sym: android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.getInstance
     hash: 2b6bd9f0e44082ede243ce416768560b138ca4343a19fe489c75cee166d4e1ae
   - sym: android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.save
@@ -61,7 +59,7 @@ sources:
     hash: d31dd686a0bb1c46c11e0ebcd19b599d5aa898cb82b6ce956b5f579cba6d3e17
   - sym: ios://MiniShop/Networking/APIClient.swift#TokenStore.token
     hash: cc9a2bad373da05b2c10efdd69bf76de940bebff0e4ee5477b4b4cd213b4dc72
-source_commit: 4e93a3f
+source_commit: 4b29970
 status: current
 ---
 # 登录（login）
@@ -113,7 +111,6 @@ status: current
 **android**
 
 - `android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.login` — function `@POST("/api/login") suspend fun login(@Body body: LoginRequest): LoginResponse`
-- `android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.TokenStore` — constructor `private TokenStore()`
 - `android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.getInstance` — method `public static synchronized TokenStore getInstance()`
 - `android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.save` — method `public void save(String token)`
 - `android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.token` — property `private String token;`

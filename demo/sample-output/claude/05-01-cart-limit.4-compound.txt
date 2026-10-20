@@ -1,13 +1,13 @@
-compound 20261020T170238-ad013ce: base 4e93a3f → head ad013ce, mode incremental, llm cmd
+compound 20261020T174123-27c7b72: base 4b29970 → head 27c7b72, mode incremental, llm cmd
 mode incremental — anchors changed ∪ signature changes propagated along reference edges
 changed_route_ids: [cart product_detail]; changed_files: 4
 stats: symbols=214 changes=map[body:2 unchanged:212] module_ratio=0.10 structural_ratio=0.00 hops=1 propagated=0
-  t01-_conflicts recheck pages/_conflicts.md            write_set=[.kb/ingest/verdicts.json] reasons=[anchor_body_changed:CartViewModel.MAX_CART_ITEMS, anchor_body_changed:MAX_CART_ITEMS]
-  t02-features-cart update  pages/features/cart.md         write_set=[pages/features/cart.md] reasons=[anchor_body_changed:CartViewModel.MAX_CART_ITEMS]
-  t03-features-product_detail update  pages/features/product_detail.md write_set=[pages/features/product_detail.md] reasons=[anchor_body_changed:CartViewModel.MAX_CART_ITEMS]
-  task t01-_conflicts               ok       cmd 
+  t01-_conflicts recheck pages/_conflicts.md            p3 write_set=[.kb/ingest/verdicts.json] reasons=[anchor_body_changed:CartViewModel.MAX_CART_ITEMS, anchor_body_changed:MAX_CART_ITEMS]
+  t02-features-cart update  pages/features/cart.md         p1 write_set=[pages/features/cart.md] reasons=[anchor_body_changed:CartViewModel.MAX_CART_ITEMS]
+  t03-features-product_detail update  pages/features/product_detail.md p2 write_set=[pages/features/product_detail.md] reasons=[anchor_body_changed:CartViewModel.MAX_CART_ITEMS]
+  task t01-_conflicts               ok       template 
   task t02-features-cart            ok       cmd 
-  task t03-features-product_detail  ok       template 
+  task t03-features-product_detail  ok       cmd 
 changed files: 11
   .kb/graph.json
   .kb/ingest/verdicts.json
@@ -20,5 +20,5 @@ changed files: 11
   pages/features/cart.md
   pages/features/product_detail.md
   pages/parity.md
-verify PASS: 23 pages, 341 anchors, 0 errors, 0 warnings
+verify PASS: 23 pages, 324 anchors, 0 errors, 0 warnings
 published 11 changed file(s) to demo/output/<run>/repo/wiki
