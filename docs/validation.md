@@ -307,7 +307,7 @@
   - 功能页超过 150 个时，index.md 按模块分组：按路径前缀合并到不超过 40 组，每组链接到 `index/features-<module>.md`；
   - verify 把子索引中的页面视为已索引、可达；
   - 每条索引最多显示 8 个路由 id。
-- 效果：app_samples 97 KB → **4.1 KB**；Cases 27.5 KB → 1.3 KB。
+- 效果：app_samples 97 KB → **4.1 KB**；Cases 27.5 KB → 1.3 KB。`llms.txt` 同样改为列出子索引：app_samples 50 KB → 3.5 KB。
 
 **17. wiki 体积**（NextE）
 

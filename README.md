@@ -604,7 +604,7 @@ kb eval --doc my-old-spec.md --golden my-labels.yaml                    # 任意
   - 热扫描的 O(R²) 引用解析改为线性并行，kickstarter 11.6 s → 2.2 s；
   - ingest 建索引，NextE 66 s → 21 s；
   - `_conflicts.md` 页面预算，2.19 MB → 0.34 MB；
-  - 大 wiki 使用分层 index.md，app_samples 97 KB → 4.1 KB；
+  - 大 wiki 使用分层 index.md 和 llms.txt，app_samples 的 index.md 97 KB → 4.1 KB；
   - `.kb/graph.json.gz`，24 MB → 3.7 MB。
 - **易用性与正确性**：
   - `kb init` 识别根目录的 Gradle、Xcode、HarmonyOS 工程，以及 KMP 的重叠根；
