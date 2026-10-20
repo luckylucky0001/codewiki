@@ -160,11 +160,14 @@ func Detect(root string) []Platform {
 			dirs("android", "app")
 		}
 	}
-	if !dirs("ios", "ios", "iOS", "iosApp", "app/iosApp") {
-		if glob("*.xcodeproj") || glob("*.xcworkspace") || exists("Package.swift") {
-			out = append(out, Platform{Name: "ios", Root: "."})
-			atRoot["ios"] = true
-		}
+	// an Xcode project at the root is a native iOS/macOS repo whose iOS/ dir is
+	// just one target (NetNewsWire: iOS/ holds 88 of 728 Swift files);
+	// RN / Flutter / KMP keep their Xcode project inside ios/ or iosApp/
+	if glob("*.xcodeproj") || glob("*.xcworkspace") || (exists("Package.swift") && !atRoot["android"]) {
+		out = append(out, Platform{Name: "ios", Root: "."})
+		atRoot["ios"] = true
+	} else {
+		dirs("ios", "ios", "iOS", "iosApp", "app/iosApp")
 	}
 	if !dirs("harmony", "harmony", "harmonyos", "ohos", "HarmonyOS") {
 		if exists("build-profile.json5") || exists("oh-package.json5") || isDir("AppScope") {
