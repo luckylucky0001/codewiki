@@ -79,7 +79,7 @@ var mcpTools = []mcpTool{
 			p, err := strArg(m, "page")
 			return []string{"get", p}, err
 		}},
-	{Name: "kb_context", Description: "Pages, symbols, routes, testIDs and APIs describing a source file. Call before editing the file.",
+	{Name: "kb_context", Description: "Pages, symbols, routes, testIDs, APIs and documented requirements (id/text/status/source) anchored in a source file. Call before editing or writing tests for the file.",
 		InputSchema: obj(map[string]any{"file": map[string]any{"type": "string", "description": "repo-relative path"}}, "file"),
 		args: func(m map[string]any) ([]string, error) {
 			f, err := strArg(m, "file")

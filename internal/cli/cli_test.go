@@ -512,3 +512,44 @@ func TestPromptInjectionHardening(t *testing.T) {
 		t.Fatal("injection in a source comment reached the prompt")
 	}
 }
+
+func TestContextIncludesRequirements(t *testing.T) {
+	dir := repo(t)
+	run(t, dir, "init")
+	_, man := runJSON(t, dir, "discover-docs")
+	mp := filepath.Join(t.TempDir(), "docs.json")
+	b, _ := json.Marshal(man)
+	os.WriteFile(mp, b, 0o644)
+	if code, v := runJSON(t, dir, "ingest", "--manifest", mp); code != 0 {
+		t.Fatalf("ingest: %d %v", code, v)
+	}
+	code, v := runJSON(t, dir, "context", "android/app/src/main/java/com/minishop/ui/cart/CartViewModel.kt")
+	if code != 0 {
+		t.Fatalf("context: %d %v", code, v)
+	}
+	reqs, _ := v["requirements"].([]any)
+	got := map[string]map[string]any{}
+	for _, r := range reqs {
+		m := r.(map[string]any)
+		got[m["id"].(string)] = m
+	}
+	if r := got["FR-002"]; r == nil || r["status"] != "verified" || r["source"] != "specs/001-cart/spec.md" || !strings.Contains(r["text"].(string), "99") {
+		t.Fatalf("FR-002 missing or wrong in context requirements: %v", reqs)
+	}
+	if r := got["CART-43567f"]; r == nil || r["status"] != "conflict" {
+		t.Fatalf("outdated cart limit claim should be listed as conflict: %v", reqs)
+	}
+	if _, ok := got["PRODUCTS-f83d5a"]; ok {
+		t.Fatalf("products pagination claim must not anchor into the cart view model: %v", got["PRODUCTS-f83d5a"])
+	}
+	// a file without anchored claims (profile does not exist at the base state) returns [], not null
+	_, v = runJSON(t, dir, "context", "android/app/src/main/java/com/minishop/ui/profile/ProfileScreen.kt")
+	if r, ok := v["requirements"].([]any); !ok || r == nil {
+		t.Fatalf("requirements should be [] for a file without claims: %v", v["requirements"])
+	}
+	// text mode lists them too
+	_, out, _ := run(t, dir, "context", "android/app/src/main/java/com/minishop/ui/cart/CartViewModel.kt")
+	if !strings.Contains(out, "requirements (") || !strings.Contains(out, "[conflict] CART-43567f") {
+		t.Fatalf("text output lacks requirements:\n%s", out)
+	}
+}

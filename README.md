@@ -118,7 +118,7 @@ docs:
 | `kb ingest <docs...> \| --manifest f [--kinds ...] [--llm ...] [--dry-run]` | 复制到 `raw/docs/`，抽取断言（EARS、MUST/SHALL、`FR-001`、Kiro 需求编号），逐条核对 → `pages/_conflicts.md` + `facts/requirements.json` |
 | `kb search <q>` | 页面 + facts + 符号名检索 |
 | `kb get <page-id>` | 输出页面（`features/cart`、`_conflicts`、`facts/ios/routes`） |
-| `kb context <file>` | 描述某文件的页面、符号、路由/testID/接口（改代码前给 coding agent 用） |
+| `kb context <file>` | 描述某文件的页面、符号、路由/testID/接口，以及锚点落在该文件里的**文档需求/业务规则**（`requirements`：id、text、status、source；template 模式同样有）。改代码或生成测试前给 agent 用 |
 | `kb anchor <symbol-id...>` | 打印符号当前 hash（LLM 写 frontmatter 时用） |
 | `kb lint-tid [--strict]` | testID 覆盖矩阵：路由 × tid × 平台 |
 | `kb parity [--strict]` | 功能 × 平台一致性矩阵：路由 / testID / 可达接口是否齐全，以及同名常量的跨平台取值差异；同时生成 `pages/parity.md` |
