@@ -97,10 +97,10 @@
 </table>
 <h3>交付物一览</h3>
 <div class="kpi">
-  <div><b>20</b><span>kb 子命令（全部支持 --json）</span></div>
+  <div><b>21</b><span>kb 子命令（全部支持 --json）</span></div>
   <div><b>7</b><span>tree-sitter 语言：Kotlin/Java/Swift/ArkTS/JS/TS/TSX</span></div>
   <div><b>4</b><span>Agent Skills：compound / ingest / query / lint</span></div>
-  <div><b>72</b><span>Go 测试（单元 + 集成 + 评测 + 安全），vet / gofmt 干净</span></div>
+  <div><b>75</b><span>Go 测试（单元 + 集成 + 评测 + 安全），vet / gofmt 干净</span></div>
 </div>
 </section>
 
@@ -182,16 +182,14 @@
   <tr><td><code>kb diff [--base sha]</code></td><td>按符号 ID 比较新旧图，分为 unchanged / body / signature / added / deleted / renamed，并输出 <code>changed_route_ids</code> 和 <code>changed_files</code></td></tr>
   <tr><td><code>kb plan</code></td><td>为每个受影响页面生成任务，带 reasons 和显式写集，写入 <code>.kb/plan.json</code>；超过阈值时改为全量</td></tr>
   <tr><td><code>kb compound</code></td><td>scan → diff → plan → LLM → verify → 原子发布。支持 <code>--llm template|claude</code>、<code>--fallback</code>、<code>--max-llm-tasks</code></td></tr>
-  <tr><td><code>kb verify [--fix-index]</code></td><td>CI 门禁：锚点 hash、符号是否存在、死链、孤儿页、index 覆盖、facts 和 parity 是否最新、requirements 锚点</td></tr>
-  <tr><td><code>kb status</code></td><td>列出 stale 页面及原因</td></tr>
+  <tr><td><code>kb verify / status</code></td><td>CI 门禁：锚点 hash、符号是否存在、死链、孤儿页、index 覆盖、facts / parity 是否最新；<code>status</code> 列出 stale 页面</td></tr>
   <tr><td><code>kb discover-docs</code></td><td>按 spec-kit、OpenSpec、Kiro、ADR、RFC、AGENTS.md、README、docs/ 的约定发现文档并分类</td></tr>
   <tr><td><code>kb ingest</code></td><td>把文档复制到 <code>raw/docs</code>，抽取断言（EARS、MUST/SHALL、FR-001、Kiro 编号），逐条判为 verified / conflict / unverifiable</td></tr>
   <tr><td><code>kb search / get / context</code></td><td>检索 wiki；按 id 取页面；查询某个文件对应的页面、符号、路由、testID、接口，以及锚定在该文件中的文档需求（供测试生成使用）</td></tr>
-  <tr><td><code>kb anchor</code></td><td>打印符号的当前 hash，LLM 写 frontmatter 时使用</td></tr>
+  <tr><td><code>kb conflicts</code></td><td><b>哪些文档过时</b>：与代码矛盾的断言，附 <code>文件:行号</code>、代码证据和修改建议（MCP：<code>kb_conflicts</code>）</td></tr>
   <tr><td><code>kb lint-tid / parity</code></td><td>testID 覆盖矩阵；功能 × 平台一致性矩阵和跨平台常量差异（生成 <code>pages/parity.md</code>）</td></tr>
   <tr><td><code>kb bench / eval</code></td><td>冷 / 热扫描基准；用人工标注的 golden set 评测断言核对与 plan 影响面（precision / recall）</td></tr>
-  <tr><td><code>kb mcp</code></td><td>stdio MCP server，提供工具 <code>kb_search/get/context/anchor/status/parity</code></td></tr>
-  <tr><td><code>kb install-skills</code></td><td>把 4 个 skill 安装到目标仓库的 <code>.claude/skills/</code></td></tr>
+  <tr><td><code>kb mcp / anchor / install-skills</code></td><td>stdio MCP server（7 个工具）；打印符号当前 hash；把 4 个 skill 装到 <code>.claude/skills/</code></td></tr>
   <tr><td><code>kb hook install</code></td><td>安装 git 钩子：<code>post-receive</code>（服务端 push 到 master 时 compound；有锁串行，能追平进度）/ <code>post-merge</code>（客户端）。配合全局参数 <code>--wiki-dir</code></td></tr>
 </table>
 <h3>三端 facts 来源</h3>
@@ -269,7 +267,6 @@ status: current            # current | stale | outdated-doc
   <tr><th>断言（来源）</th><th>结论与证据（以代码为准）</th></tr>
   <tr><td>登录使用短信验证码，<code>POST /api/sms/send</code>（旧文档）</td><td class="bad">conflict：代码中不存在该接口，只有 <code>POST /api/login</code></td></tr>
   <tr><td>购物车最多 10 件（<code>MAX_CART_ITEMS</code>）</td><td class="bad">conflict：android 与 harmony 为 50，ios 为 99</td></tr>
-  <tr><td><b>FR-002</b>：购物车上限 99（spec-kit）</td><td class="bad">变更集 01 合并后，由 verified 变为 conflict</td></tr>
   <tr><td><b>LOGIN-R2.2</b>：用户名为空时弹出短信验证对话框（Kiro）</td><td class="bad">conflict：代码中没有任何短信 / 验证码相关实现（第 4 轮 template 误判为 verified，只有 claude 能识别）</td></tr>
 </table>
 <h3>5.2 三次合并的增量结果（template 模式实测）</h3>
@@ -281,20 +278,20 @@ status: current            # current | stale | outdated-doc
   <tr><td>03 三端新增 profile 路由</td><td>added 10</td><td><code>profile</code>（route_added）</td><td>4 个任务：create profile、overview、navigation、shared</td></tr>
 </table>
 <p>每一步 verify 都通过，最终得到 <b>24 个页面、377 个锚点</b>。<code>kb parity</code> 报告 <code>max_cart_items</code> 三端分别为 <code>50 / 99 / 50</code>。在修改 <code>BackButton</code> 的单测中，只有 shared-components 页被重新检查。</p>
-<h3>5.3 评测：<code>kb eval</code>（人工标注 golden set）</h3>
-<p><code>examples/minishop-eval/golden.yaml</code> 包含 33 条人工标注的断言，以及每个变更集应当被重新检查的页面。<code>kb eval</code> 在临时仓库中回放 ingest、compound 和三次合并，然后计算 precision / recall。</p>
+<h3>5.3 评测：<code>kb eval</code>（开发集 33 条 / 盲测集 31 条）</h3>
+<p><b>开发集</b>（<code>golden.yaml</code>）有 33 条断言，并标注了每个变更集应该重检的页面；第 5 轮的规则就是看着它写的。<b>盲测集</b>（<code>heldout/</code>）由另一个 agent 编写，它没有读过规则代码，写了一份新的旧文档，共 31 条断言。</p>
 <table>
-  <tr><th>指标</th><th>template 第 4 轮</th><th>template 第 5 轮</th><th>claude（sonnet，仅断言核对）</th></tr>
-  <tr><td>断言准确率</td><td>0.82</td><td><b>0.97</b></td><td>0.88</td></tr>
-  <tr><td>conflict precision / recall</td><td>1.00 / 0.56</td><td><b>1.00 / 1.00</b></td><td>1.00 / 0.78</td></tr>
-  <tr><td>verified precision / recall</td><td>0.88 / 0.92</td><td><b>1.00 / 0.96</b></td><td>0.96 / 0.92</td></tr>
-  <tr><td>plan 影响页面 precision / recall（micro）</td><td colspan="3">0.82 / <b>1.00</b>：没有漏检；多出的 2 页属于保守重检（<code>_conflicts</code>、<code>shared-components</code>）</td></tr>
+  <tr><th>数据集 · 检查器</th><th>准确率</th><th>conflict P / R</th><th>verified P / R</th></tr>
+  <tr><td>开发集 · template 第 4 轮</td><td>0.82</td><td>1.00 / 0.56</td><td>0.88 / 0.92</td></tr>
+  <tr><td>开发集 · template 第 5 轮</td><td>0.97</td><td>1.00 / 1.00</td><td>1.00 / 0.96</td></tr>
+  <tr><td><b>盲测集 · template 第 5 轮（盲测）</b></td><td><b>0.58</b></td><td><b>0.80 / 0.33</b></td><td>0.64 / 0.69</td></tr>
+  <tr><td><b>盲测集 · claude（盲测）</b></td><td><b>0.74</b></td><td><b>1.00 / 0.92</b></td><td>1.00 / 0.46</td></tr>
+  <tr><td>盲测集 · template 第 6 轮修复后（已非盲测）</td><td>0.81</td><td>1.00 / 0.58</td><td>0.80 / 0.92</td></tr>
+  <tr><td>plan 影响页面（开发集，micro）</td><td colspan="3">precision 0.82 / recall <b>1.00</b>：没有漏检，多出的 2 页属于保守重检</td></tr>
 </table>
-<p>第 5 轮新增了 5 条保守的确定性规则：数量值（“最多 / 超时 / 重试 / 少于 N”与按领域词选出的常量比对）、明确说是 testID 却不存在、接口参数在调用处不存在、“共享常量”实际是各端各自声明、需求类断言提到的常见功能（短信、优惠券、分享等）在代码中完全没有。这些规则是看着漏判写的，所以 1.00 偏乐观。为了检验，另外写了 19 条单测断言，并在真实项目上复跑：axios 411 条、Cases 180 条、nowinandroid 22 条、IceCubesApp 22 条，<b>新增误报冲突为 0</b>。</p>
-<h3>5.4 真实 agent 使用 skills（<code>demo/skills-demo.sh</code>）</h3>
-<p>用 <code>claude -p --model haiku</code> 问两个问题。第一个问“购物车上限三端分别是多少”，agent 触发 kb-query，调用 <code>kb search</code> 和 <code>kb parity --json</code>，用了 5 轮、$0.008，答出 50 / 99 / 50，并附上符号 ID 和 2 条冲突。第二个问“wiki 是否与代码一致”，agent 触发 kb-lint，调用 <code>verify</code>、<code>lint-tid</code> 和 <code>parity</code>，用了 17 轮、$0.016，全程只读。第一轮实测时有一次没有触发 skill，之后补充了 skill 的 description。</p>
-<h3>5.5 claude 模式写页面</h3>
-<p>每次 compound 最多给 2 个 LLM 任务（按价值排序），其余用 template。所有步骤 verify 通过。LLM 写的页面有三端对照和测试要点，还发现了 <code>preload</code> 写入的 <code>pending</code> 从未被消费的问题。写集以外的写入会被自动回滚。</p>
+<p><b>结论：第 5 轮的规则过拟合了开发集</b>，盲测下只能抓到三分之一的过时说法。第 6 轮只修了盲测集暴露出的通用 bug：注入检测把正常的接口文档行（例如 Bearer 请求头）误判为外发；数量规则只认紧挨着的数字，也不区分 200KB 这类带单位的值；不存在的项目式类型名（如 <code>…PageBuilder</code>）被放过；构建配置（<code>compileSdk</code>）没有纳入核对。平台范围类、功能不存在类断言属于语义判断，交给 claude 模式。修复后在 5 个真实仓库上复跑，冲突误报都是 0。每条规则都需要盲测集来约束。</p>
+<h3>5.4 真实 agent 使用 skills · 5.5 claude 模式</h3>
+<p><code>demo/skills-demo.sh</code>：haiku 问“购物车上限三端分别是多少”时触发 kb-query，调用 <code>kb parity</code>，5 轮、$0.008 答出 50 / 99 / 50；问“wiki 是否与代码一致”时触发 kb-lint，17 轮，全程只读。claude 模式下每次 compound 最多分配 2 个 LLM 任务，所有步骤 verify 通过，写集以外的写入会被自动回滚。</p>
 <h3>5.6 不依赖 GitHub：每次 push 到 master 触发 compound（<code>demo/hook-demo.sh</code>）</h3>
 <p>先在本地建一个 bare 仓库作为“服务器”，用 <code>kb hook install --mode post-receive</code> 安装钩子。然后连续 push 三个 merge：先 push 01，0.8 s 后 push 02，再过 0.3 s push 03。demo 里用 <code>kb-slow</code> 模拟每次 3 s 的 LLM 耗时，让几次 push 在时间上重叠。</p>
 <p>实测（<code>remote:</code> 输出）：seed 全量 9 个任务；01 增量；02 拿到锁时 master 已经是 03，因此一次追平（<code>e6cff74..1c373e4 (4 new commit(s))</code>）；03 输出 <code>already compounded</code>。每次都 verify PASS。</p>
@@ -306,7 +303,7 @@ status: current            # current | stale | outdated-doc
   <tr><td>A：wiki + skills</td><td>30/30</td><td><b>9.0</b></td><td><b>4.5k</b></td><td><b>$0.25</b></td><td><b>30 s</b></td></tr>
   <tr><td>B：只有源码</td><td>30/30</td><td>12.7</td><td>6.6k</td><td>$0.29</td><td>39 s</td></tr>
 </table>
-<p>结果如实写：仓库只有 49 个文件，两组<b>准确率相同</b>。wiki 带来的是效率：turns 少 29%，耗时少 23%。差别最大的是“三端不一致”这题：A 11 turns / 43 s，B 39 turns / 111 s。“旧文档哪些过时”这题两组持平，因为 haiku 没有调用 skill 去读 <code>_conflicts.md</code>；改了 skill 描述后复测，仍然没有改善。打分正则有一处修正，已披露。总花费 $0.75。</p>
+<p>结果如实写：仓库只有 49 个文件，两组<b>准确率相同</b>。wiki 带来的是效率：turns 少 29%，耗时少 23%。差别最大的是“三端不一致”这题：A 11 turns / 43 s，B 39 turns / 111 s。“旧文档哪些过时”这题两组持平，因为 haiku 没有调用 skill 去读 <code>_conflicts.md</code>；只改 skill 描述没有用。第 6 轮新增 <code>kb conflicts</code> 命令，并在 skill 描述的第一句就指向它，这题降到 <b>4.7 turns / 20 s</b>（原来是 25 turns / 92 s），3 次运行都调用了该命令。在大仓库 HarmonyOS Cases 上（5 题 × 2 次，都是能直接 grep 到的查找题），两组都是 10/10、5.9 turns，<b>没有差别</b>，“越大越有用”的推测没有得到支持。打分正则有一处修正，已披露。总花费约 $1.0。</p>
 </section>
 
 <!-- ============ 6 ============ -->
@@ -344,7 +341,8 @@ status: current            # current | stale | outdated-doc
   <tr><td>合成仓库（Kotlin / Swift / ArkTS 各 1000 个文件）</td><td>3000 / 21000</td><td>3711 ms</td><td>463 ms</td><td>974 ms</td></tr>
   <tr><td>axios 全仓</td><td>243 / 1009</td><td>993 ms</td><td>69 ms</td><td>—</td></tr>
 </table>
-<p>缓存按文件内容 sha256 寻址，缓存版本由抽取器指纹自动派生（嵌入的源码、节点表和语法 ABI）。引用解析会识别 Kotlin package / import、ArkTS <code>import {X} from</code>，以及经由属性类型解析的成员调用。例如 Compose 的 <code>items(...)</code> 被识别为外部 import，不再误连到项目里的同名成员。</p>
+<p><b>ingest 扩展性（第 6 轮）</b>：app_samples（5.1 万个符号）上 ingest 超过 13 分钟。pprof 显示原因是每个代码片段都要对所有符号跑一次正则。改为“每个文件只分词一次，token → 最小覆盖符号”的索引后，扫描缓存就绪时 <b>26 s</b>，冷启动 83 s。</p>
+<p>缓存按文件内容 sha256 寻址，缓存版本由抽取器指纹自动派生（嵌入的源码、节点表和语法 ABI）。</p>
 </section>
 
 <!-- ============ 7 ============ -->
@@ -383,7 +381,7 @@ status: current            # current | stale | outdated-doc
   <li><b>语法覆盖</b>：ArkUI 尾逗号已通过语法补丁修复；Swift 有 2 个文件仍解析失败，写法是 <code>(@Sendable (T) -&gt; Void).self</code> 和 <code>if await x.y {</code>。第 5 轮复查过，上游 main <code>9e3b87f</code> 也没有修复，所以不升级。失败会记入 <code>parse_failures</code>，不会中断扫描。修改 vendored 语法后需要同时更新 <code>GrammarHash</code>，有测试强制检查。</li>
   <li><b>引用解析</b>：基于名称、作用域和 import，没有完整的类型推断，也不建立跨平台的边。</li>
   <li><b>facts 启发式</b>：API 抽取依赖适配器，目前覆盖 Retrofit / Ktor / OkHttp / Alamofire / Moya / Endpoint 枚举 / http / @ohos/axios / RCP / axios。完全自研、动态拼接 URL 的网络层仍识别不到；注入检测是基于规则的，属于纵深防御的一层，不能保证全部拦截。</li>
-  <li><b>断言核对</b>：template 只判断可以确定性检查的部分（golden set 上 conflict recall 已到 1.00，但规则是针对这些漏判写的，样本也小）。流程和措辞上的语义仍需要 claude 模式，单个任务约 30–60 s。</li>
+  <li><b>断言核对</b>：template 在盲测集上的 conflict recall 只有 0.33，修复后为 0.58，所以它只能作为初筛。平台范围、功能是否存在这类语义判断需要 claude 模式（盲测 recall 0.92），单个任务约 30–60 s。</li>
 </ul>
 <h3>路线图</h3>
 <table>

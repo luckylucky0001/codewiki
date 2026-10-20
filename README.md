@@ -118,6 +118,7 @@ docs:
 | `kb ingest <docs...> \| --manifest f [--kinds ...] [--llm ...] [--dry-run]` | 复制到 `raw/docs/`，抽取断言（EARS、MUST/SHALL、`FR-001`、Kiro 需求编号），逐条核对 → `pages/_conflicts.md` + `facts/requirements.json` |
 | `kb search <q>` | 页面 + facts + 符号名检索 |
 | `kb get <page-id>` | 输出页面（`features/cart`、`_conflicts`、`facts/ios/routes`） |
+| `kb conflicts [--all]` | **哪些文档过时**：列出与代码矛盾的文档断言，带 `文件:行号`、代码证据和修改建议（`--json` 机器可读；`--all` 同时列出无证据的断言）。MCP 工具 `kb_conflicts` |
 | `kb context <file>` | 描述某文件的页面、符号、路由/testID/接口，以及锚点落在该文件里的**文档需求/业务规则**（`requirements`：id、text、status、source；template 模式同样有）。改代码或生成测试前给 agent 用 |
 | `kb anchor <symbol-id...>` | 打印符号当前 hash（LLM 写 frontmatter 时用） |
 | `kb lint-tid [--strict]` | testID 覆盖矩阵：路由 × tid × 平台 |
@@ -285,6 +286,8 @@ kb bench --root /path/to/repo --config cfg.yaml  # 真实仓库；缓存写到�
 
 优化记录：第一版引用解析对常见名字（如上千个 `items`）逐一打分，合成仓库上冷/热都要约 20 s（热扫描瓶颈不在解析）；改为按文件 / 父类型 / 全局三级索引后，热扫描降到 0.5 s。
 
+**断言核对（ingest）的扩展性**（第 6 轮）：在 app_samples（51k 符号）上，ingest 跑了 **13 分钟以上**都没结束。用 pprof（`KB_CPUPROFILE=cpu.prof kb ingest …`）查看，原因是每个反引号片段都要对每个符号的函数体跑一次正则，而且每个符号都会重新读文件。改成每个文件只分词一次、建立“token → 最小覆盖符号”索引，再加上文件缓存之后，**扫描缓存就绪时 26 s，冷启动 83 s**。回归测试 `TestCheckerScalesWithTokenIndex` 用 500 条断言对 15k 符号，约 2 s。详见 docs/validation.md。
+
 ## 文档发现与断言核对（spec → 知识）
 
 `kb discover-docs` 按业界约定分类：
@@ -416,6 +419,37 @@ kb eval --llm claude          # 仅断言核对使用 LLM（1 次调用）；页
 
 剩下的 1 条错误是 ADR 中的 `minishop://<pattern>`，这是一个占位符，template 模式无法验证，所以判为 unverifiable。claude 模式仍然有价值：它能处理流程和措辞上的语义，并能对“没有确定性证据”的断言给出判断。
 
+### 盲测集：开发集 33 条之外的检验（第 6 轮）
+
+上面的 1.00 是在**开发集**上得到的，而规则正是看着开发集写的。为了检验，由另一个 agent 写了一份**盲测集**，放在 `examples/minishop-eval/heldout/`。它只读 minishop 的源码，没有读过规则代码，也没有读过开发集的断言。盲测集包括一份新的旧版技术说明（31 条断言：13 verified / 12 conflict / 6 unverifiable）和标注。标注写好后没有根据评测结果改过。
+
+```bash
+kb eval --golden examples/minishop-eval/heldout/golden-heldout.yaml     # 只 ingest 盲测文档
+kb eval --doc my-old-spec.md --golden my-labels.yaml                    # 任意文档 + 标注
+```
+
+| 数据集 | 检查器 | 准确率 | conflict P / R | verified P / R |
+|---|---|---|---|---|
+| 开发集 33 条 | template，第 4 轮 | 0.82 | 1.00 / 0.56 | 0.88 / 0.92 |
+| 开发集 33 条 | template，第 5 轮规则 | 0.97 | 1.00 / 1.00 | 1.00 / 0.96 |
+| **盲测集 31 条** | **template，第 5 轮规则（盲测）** | **0.58** | **0.80 / 0.33** | **0.64 / 0.69** |
+| **盲测集 31 条** | **claude（盲测，同一代码）** | **0.74** | **1.00 / 0.92** | **1.00 / 0.46** |
+| 盲测集 31 条 | template，第 6 轮修复后（**已非盲测**） | 0.81 | 1.00 / 0.58 | 0.80 / 0.92 |
+| 开发集 33 条 | template，第 6 轮修复后 | 0.97 | 1.00 / 1.00 | 1.00 / 0.96 |
+
+**结论：第 5 轮的规则过拟合了开发集。** 开发集上 0.97，盲测集上只有 0.58，conflict recall 只有 0.33。在没见过的文档上，template 模式大约只能抓到三分之一的过时说法。所以“开发集 1.00”这个数不能作为能力指标对外宣传，盲测集的数字才是。
+
+盲测集暴露了几个**通用 bug**。第 6 轮只修了这些，没有针对单条断言调规则：
+
+1. **注入检测误报**：正常的接口文档行，比如“`POST /api/login` 请求体字段为 `username` 和 `password`”和“附加 `Authorization: Bearer <token>`”，被判为 exfiltration，于是被强制标成 unverifiable。现在要求必须同时出现**外发目标**（URL、邮箱、external、webhook 等）才算 exfiltration，并补了中文版规则和回归用例。
+2. **数量规则只认紧挨着的数字**：“最多容纳 50 件”中间隔了字，规则没有触发，结果被 testID 判成了 verified（代码里是 99）。现在允许中间隔几个字。另外，带单位的数字（200KB、800x800、30%）不再和个数常量比较：盲测集里“图片不超过 200KB”原本被误判为冲突。
+3. **不存在的类型名被放过**：比如 `ProductDetailPageBuilder`。现在的判定条件是：反引号里的 PascalCase 名字以项目自己的命名后缀结尾（Builder / ViewModel / Screen / Store …），项目中确实有同后缀的符号，而这个名字在代码里一次都没出现，就判为冲突。框架名（`SharedPreferences`）和内置类型不在此列。
+4. **构建配置不在 facts 里**：比如 `compileSdk` 文档写 34，实际是 35。现在会读取 Gradle、json5 和 xcconfig 中的 `key = 数字` 行，包括 `defaultConfig { …; minSdk = 26 }` 这种写在一行的形式，并与文档中的数字比对。
+
+**没有修的部分**：“三端都显示价格”这类平台范围断言（实际只有 Android 显示），以及“登录失败弹 Toast”“可选支付方式”“token 存 Keychain”这类不存在的功能，template 仍然判错（判为 verified 或 unverifiable）。这些属于语义判断，交给 claude 模式：盲测下 claude 的 conflict recall 是 0.92。但 claude 偏保守，有一半能确定为真的断言它判成了 unverifiable。另外，盲测时的注入检测器仍是旧版，有两行被它误伤。修复后在 axios、Cases、nowinandroid、IceCubesApp、app_samples 上复跑，冲突数仍然都是 0。
+
+**教训**：确定性规则在开发集上很容易“刷到满分”。每一条新规则都需要盲测集和真实仓库的误报检查来约束。以后改规则时，`kb eval --golden examples/minishop-eval/heldout/golden-heldout.yaml` 和开发集要一起跑。盲测集现在已经被看过，也不再是盲的了。下一次评测需要再准备一份新的盲测集。
+
 ## Agent A/B 基准：wiki 对 agent 有多大帮助
 
 `bench/agent-qa/run.sh` 对同一组问题（10 个 minishop 问题，答案可以用正则核对）跑两组：A 组是仓库 + wiki + kb skills；B 组是同一份源码树，没有 wiki 和 skills，只能用 grep 和读文件。模型都是 `claude -p --model haiku`，每题每组跑 3 次。
@@ -425,7 +459,11 @@ kb eval --llm claude          # 仅断言核对使用 LLM（1 次调用）；页
 | A：wiki + skills | 30/30 | **9.0** | **4.5k** | **$0.25** | **30 s** |
 | B：只有源码 | 30/30 | 12.7 | 6.6k | $0.29 | 39 s |
 
-结果如实写：minishop 很小（49 个文件），两组的**准确率相同**。wiki 带来的是**效率**：turns 少 29%，费用少 14%，耗时少 23%。差别最大的是“三端有哪些不一致”这题：A 11 turns / 43 s，B 39 turns / 111 s。“旧文档哪些过时”这题两组都约 25 turns，因为 haiku 没有调用 skill 去读 `_conflicts.md`；在 skill 描述里加提示后复测，也没有改善。A 组 30 次运行中，有 8 次完全没用到 wiki。
+结果如实写：minishop 很小（49 个文件），两组的**准确率相同**。wiki 带来的是**效率**：turns 少 29%，费用少 14%，耗时少 23%。差别最大的是“三端有哪些不一致”这题：A 11 turns / 43 s，B 39 turns / 111 s。“旧文档哪些过时”这题两组都约 25 turns，因为 haiku 没有调用 skill 去读 `_conflicts.md`；只在 skill 描述里加提示，复测也没有改善。A 组 30 次运行中，有 8 次完全没用到 wiki。
+
+**第 6 轮：新增 `kb conflicts` 命令，并在 skill 描述的第一句就指向它。** 只对 A 组重跑这一题 3 次，结果 3 次都调用了 `kb conflicts`（其中 1 次经由 kb-query skill）：**平均 25.3 → 4.7 turns，92 → 20 s，$0.069 → $0.018**，检查点仍然全部命中。这说明 agent 不是不愿意用 wiki，而是要有一个名字直接对应问题的命令。
+
+**大仓库变体（HarmonyOS Cases，1952 个 .ets 文件，5 题 × 2 次）**：A 10/10、平均 5.9 turns、$0.039；B 10/10、平均 5.9 turns、$0.040，**没有差别**。这些问题都能用一个唯一的字符串直接 grep 到答案，grep 在大仓库上也很快，A 组也几乎没用 wiki。所以“仓库越大 wiki 越有用”这个推测，这次**没有得到支持**。wiki 的优势在需要汇总的问题上（三端差异、过时文档），详见 bench/agent-qa/README.md。
 
 打分正则有一处修正（接口路径前带 host 时匹配失败），已在文档中披露。方法、逐题结果和原始 transcript 见 [bench/agent-qa/README.md](bench/agent-qa/README.md) 和 `demo/sample-output/agent-bench/`。基准总花费 $0.75。
 
