@@ -168,6 +168,9 @@ func TestHierarchicalFeatureIndex(t *testing.T) {
 	if r := Verify(dir, graph(), VerifyOptions{}); !r.OK {
 		t.Fatalf("hierarchical index must verify: %s", codes(r))
 	}
+	if llms, _ := os.ReadFile(filepath.Join(dir, "llms.txt")); strings.Contains(string(llms), "features/r0.md") || !strings.Contains(string(llms), "index/features-") {
+		t.Fatalf("llms.txt should list the sub-indexes, not every feature page:\n%s", llms)
+	}
 	// back under the threshold: sub-indexes are removed again
 	FeatureIndexMax = 100
 	if err := FixIndex(dir); err != nil {
