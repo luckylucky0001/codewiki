@@ -22,6 +22,18 @@ import (
 )
 
 func (a *app) loadConfig() (*config.Config, error) {
+	cfg, err := a.loadConfigRaw()
+	if err == nil && a.wikiDir != "" {
+		wd := a.wikiDir
+		if !filepath.IsAbs(wd) {
+			wd = filepath.Join(cfg.Root, wd)
+		}
+		cfg.WikiDir = filepath.Clean(wd)
+	}
+	return cfg, err
+}
+
+func (a *app) loadConfigRaw() (*config.Config, error) {
 	if a.config != "" {
 		dir := filepath.Dir(a.config)
 		b, err := os.ReadFile(a.config)
@@ -189,6 +201,13 @@ func cmdInit(a *app, fs *flag.FlagSet, _ []string) int {
 	} else {
 		cfg, err = config.Load(root)
 	}
+	if cfg != nil && a.wikiDir != "" {
+		wd := a.wikiDir
+		if !filepath.IsAbs(wd) {
+			wd = filepath.Join(root, wd)
+		}
+		cfg.WikiDir = filepath.Clean(wd)
+	}
 	if errors.Is(err, config.ErrNotFound) {
 		cfg = config.Default()
 		cfg.Root = root
@@ -206,6 +225,13 @@ func cmdInit(a *app, fs *flag.FlagSet, _ []string) int {
 		}
 	} else if err != nil {
 		return a.fail(ExitInternal, err)
+	}
+	if a.wikiDir != "" { // wiki kept outside the checkout (e.g. server-side hooks)
+		wd := a.wikiDir
+		if !filepath.IsAbs(wd) {
+			wd = filepath.Join(root, wd)
+		}
+		cfg.WikiDir = filepath.Clean(wd)
 	}
 	// keep run scratch space (.kb-work: staging, prompts, lock) out of git
 	if work := filepath.Join(filepath.Dir(cfg.WikiPath()), ".kb-work"); strings.HasPrefix(work, cfg.Root+string(os.PathSeparator)) {

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -400,5 +401,51 @@ func TestMaxLLMTasksUsesPriority(t *testing.T) {
 	}
 	if llm != 1 {
 		t.Fatalf("exactly one task should use the LLM budget, got %d", llm)
+	}
+}
+
+func TestHookInstall(t *testing.T) {
+	dir := t.TempDir()
+	bare := filepath.Join(dir, "remote.git")
+	testutil.Git(t, dir, "init", "-q", "--bare", bare)
+	code, v := runJSON(t, dir, "hook", "install", "--mode", "post-receive", "--repo", bare, "--kb", "/opt/kb")
+	if code != 0 {
+		t.Fatalf("hook install: %d %v", code, v)
+	}
+	b, err := os.ReadFile(filepath.Join(bare, "hooks", "post-receive"))
+	if err != nil || !strings.Contains(string(b), `KB="${KB:-/opt/kb}"`) || !strings.Contains(string(b), "mkdir \"$STATE/lock\"") {
+		t.Fatalf("post-receive script: %v\n%s", err, b)
+	}
+	if st, _ := os.Stat(filepath.Join(bare, "hooks", "post-receive")); st.Mode()&0o111 == 0 {
+		t.Fatal("hook must be executable")
+	}
+	c, out, _ := run(t, dir, "hook", "install", "--mode", "post-merge")
+	if c != 0 || !strings.Contains(out, "post-merge") {
+		t.Fatalf("print post-merge: %d %s", c, out)
+	}
+	if c, _, _ := run(t, dir, "hook", "install", "--mode", "pre-commit"); c != ExitUsage {
+		t.Fatal("bad mode must be a usage error")
+	}
+}
+
+func TestWikiDirOutsideCheckoutAndNoopAdvancesBaseline(t *testing.T) {
+	dir := repo(t)
+	wikiDir := filepath.Join(t.TempDir(), "wiki")
+	run(t, dir, "init", "--wiki-dir", wikiDir)
+	if code, _, e := run(t, dir, "compound", "--wiki-dir", wikiDir); code != 0 {
+		t.Fatalf("compound: %s", e)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "wiki")); err == nil {
+		t.Fatal("wiki must not be created inside the checkout")
+	}
+	// a commit without symbol changes still advances last_sha
+	os.WriteFile(filepath.Join(dir, "NOTES.txt"), []byte("x"), 0o644)
+	testutil.Git(t, dir, "add", "-A")
+	testutil.Git(t, dir, "commit", "-qm", "notes")
+	run(t, dir, "compound", "--wiki-dir", wikiDir)
+	head, _ := exec.Command("git", "-C", dir, "rev-parse", "HEAD").Output()
+	st, _ := os.ReadFile(filepath.Join(wikiDir, ".kb", "state.json"))
+	if !strings.Contains(string(st), strings.TrimSpace(string(head))) {
+		t.Fatalf("last_sha not advanced on noop: %s", st)
 	}
 }

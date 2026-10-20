@@ -52,11 +52,28 @@
           cd _kb && git add -A && git commit -m "compound ${GITHUB_SHA::7}" && git push origin kb
 ```
 
+## 方案 D：自建 git / GitLab / Gerrit（server-side hook，无需 GitHub Actions）
+
+```bash
+kb hook install --mode post-receive --repo /srv/git/app.git   # 写入 hooks/post-receive
+```
+
+- 推送到 master/main 时，钩子会依次：
+  1. 获取锁（串行）；
+  2. 把分支**当前头**检出到 `app.git/codewiki/src`；
+  3. 运行 `kb compound` 和 `kb verify`，wiki 位于 `app.git/codewiki/wiki`（`--wiki-dir`）。
+- 输出会显示在 pusher 的终端（`remote:` 行），同时写入 `codewiki/hook.log`。
+- 排队中的多次 push 会被一次追平（从 last_sha 开始）。
+- 完整演示见 `demo/hook-demo.sh`，实测结果见 `demo/sample-output/hook/`：3 次 merge 背靠背 push，其中 2 次几乎同时，wiki 最终与 master 一致，verify 通过。
+- GitLab：把脚本放到仓库的 server hooks 目录（`custom_hooks/post-receive`）。
+- Gerrit：放在 `hooks/ref-updated`，参数改为 `--refname` / `--newrev`。
+
 ## 本地 / pre-push 钩子
 
 ```bash
-kb status || kb compound --llm template   # 开发机上快速对齐
-kb verify                                 # pre-push 门禁
+kb hook install --mode post-merge --repo .   # git merge / pull 到 master 后自动运行 compound
+kb status || kb compound --llm template      # 开发机上快速对齐
+kb verify                                    # pre-push 门禁
 ```
 
 ## 退出码约定

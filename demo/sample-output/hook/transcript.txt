@@ -1,0 +1,91 @@
+
+== 1. bare remote + kb post-receive hook
+$ <out>/bin/kb hook install --mode post-receive --repo <out>/remote.git --kb <out>/bin/kb-slow
+installed <out>/remote.git/hooks/post-receive
+
+== 2. seed the project (code + codewiki.yaml; the wiki lives on the server: <out>/remote.git/codewiki/wiki)
+
+== push seed → full compound
+fatal: expected 'acknowledgments', received 'packfile'
+warning: push negotiation failed; proceeding anyway with push
+remote: [codewiki 17:59:09] compound master none..73660c8 (all new commit(s))        
+remote: mode full — no compatible baseline graph (first compound or graph version change)        
+remote:   task t01-concepts-navigation      ok       template         
+remote:   task t02-concepts-shared-components ok       template         
+remote:   task t03-features-cart            ok       template         
+remote:   task t04-features-checkout        ok       template         
+remote:   task t05-features-login           ok       template         
+remote:   task t06-features-order_detail    ok       template         
+remote:   task t07-features-product_detail  ok       template         
+remote:   task t08-features-products        ok       template         
+remote:   task t09-overview                 ok       template         
+remote: published 32 changed file(s) to <out>/remote.git/codewiki/wiki        
+remote: verify PASS: 22 pages, 179 anchors, 0 errors, 0 warnings        
+
+== 3. three merges pushed back-to-back (01, then 02 and 03 nearly simultaneously)
+--- push of merge 01:
+remote: [codewiki 17:59:13] compound master 73660c8..e6cff74 (2 new commit(s))        
+remote: mode incremental — anchors changed ∪ signature changes propagated along reference edges        
+remote:   task t01-features-cart            ok       template         
+remote:   task t02-features-product_detail  ok       template         
+remote: published 8 changed file(s) to <out>/remote.git/codewiki/wiki        
+remote: verify PASS: 22 pages, 179 anchors, 0 errors, 0 warnings        
+--- push of merge 02:
+remote: [codewiki 17:59:16] compound master e6cff74..1c373e4 (4 new commit(s))        
+remote: mode incremental — anchors changed ∪ signature changes propagated along reference edges        
+remote:   task t01-concepts-navigation      ok       template         
+remote:   task t02-concepts-shared-components ok       template         
+remote:   task t03-features-product_detail  ok       template         
+remote:   task t04-features-products        ok       template         
+remote:   task t05-features-profile         ok       template         
+remote:   task t06-overview                 ok       template         
+remote: published 27 changed file(s) to <out>/remote.git/codewiki/wiki        
+remote: verify PASS: 23 pages, 198 anchors, 0 errors, 0 warnings        
+--- push of merge 03:
+remote: [codewiki 17:59:20] master@1c373e4 already compounded (caught up by an earlier run)        
+
+== 5. result on the server
+remote master: 1c373e4fdcd8e08d8f111fe54b2fbaa09a2745d4
+wiki last_sha: 1c373e4fdcd8e08d8f111fe54b2fbaa09a2745d4
+wiki is caught up with master: YES
+
+--- hook.log
+[codewiki 17:59:09] compound master none..73660c8 (all new commit(s))
+mode full — no compatible baseline graph (first compound or graph version change)
+  task t01-concepts-navigation      ok       template 
+  task t02-concepts-shared-components ok       template 
+  task t03-features-cart            ok       template 
+  task t04-features-checkout        ok       template 
+  task t05-features-login           ok       template 
+  task t06-features-order_detail    ok       template 
+  task t07-features-product_detail  ok       template 
+  task t08-features-products        ok       template 
+  task t09-overview                 ok       template 
+published 32 changed file(s) to <out>/remote.git/codewiki/wiki
+verify PASS: 22 pages, 179 anchors, 0 errors, 0 warnings
+[codewiki 17:59:13] compound master 73660c8..e6cff74 (2 new commit(s))
+mode incremental — anchors changed ∪ signature changes propagated along reference edges
+  task t01-features-cart            ok       template 
+  task t02-features-product_detail  ok       template 
+published 8 changed file(s) to <out>/remote.git/codewiki/wiki
+verify PASS: 22 pages, 179 anchors, 0 errors, 0 warnings
+[codewiki 17:59:16] compound master e6cff74..1c373e4 (4 new commit(s))
+mode incremental — anchors changed ∪ signature changes propagated along reference edges
+  task t01-concepts-navigation      ok       template 
+  task t02-concepts-shared-components ok       template 
+  task t03-features-product_detail  ok       template 
+  task t04-features-products        ok       template 
+  task t05-features-profile         ok       template 
+  task t06-overview                 ok       template 
+published 27 changed file(s) to <out>/remote.git/codewiki/wiki
+verify PASS: 23 pages, 198 anchors, 0 errors, 0 warnings
+[codewiki 17:59:20] master@1c373e4 already compounded (caught up by an earlier run)
+
+--- wiki/log.md (compound entries)
+## [2026-10-20] init | dev
+## [2026-10-20] compound | 73660c8 full, 9 task(s), 27 file(s) changed
+## [2026-10-20] compound | e6cff74 incremental, 2 task(s), 3 file(s) changed
+## [2026-10-20] compound | 1c373e4 incremental, 6 task(s), 22 file(s) changed
+
+--- kb verify (server wiki vs pushed head)
+verify PASS: 23 pages, 198 anchors, 0 errors, 0 warnings

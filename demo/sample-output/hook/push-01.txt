@@ -1,0 +1,6 @@
+remote: [codewiki 17:59:13] compound master 73660c8..e6cff74 (2 new commit(s))        
+remote: mode incremental — anchors changed ∪ signature changes propagated along reference edges        
+remote:   task t01-features-cart            ok       template         
+remote:   task t02-features-product_detail  ok       template         
+remote: published 8 changed file(s) to <out>/remote.git/codewiki/wiki        
+remote: verify PASS: 22 pages, 179 anchors, 0 errors, 0 warnings        

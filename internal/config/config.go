@@ -93,7 +93,12 @@ func Load(root string) (*Config, error) {
 }
 
 // WikiPath returns the absolute wiki directory.
-func (c *Config) WikiPath() string { return filepath.Join(c.Root, c.WikiDir) }
+func (c *Config) WikiPath() string {
+	if filepath.IsAbs(c.WikiDir) {
+		return c.WikiDir
+	}
+	return filepath.Join(c.Root, c.WikiDir)
+}
 
 // Detect guesses platforms from the directory layout of root.
 func Detect(root string) []Platform {

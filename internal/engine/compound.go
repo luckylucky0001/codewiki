@@ -303,6 +303,13 @@ func Compound(o *Options) (*Result, error) {
 	r.Changed = changedFiles(before, after)
 	if len(r.Changed) == 0 && o.Kind == "compound" && a.Plan.Mode == "noop" {
 		r.Message = "noop: wiki already up to date"
+		// commits without symbol changes (docs, resources) still advance the
+		// baseline so hooks/CI see the wiki as caught up with HEAD
+		if head != "" && head != a.Diff.Base {
+			if err := advanceBaseline(wikiDir, a.Graph, head, o.LLM); err == nil {
+				r.Message = "noop: wiki already up to date (baseline advanced to " + short(head) + ")"
+			}
+		}
 		r.Verify = wiki.Verify(wikiDir, a.Graph, wiki.VerifyOptions{ExpectedFacts: expected})
 		VerifyRequirements(wikiDir, a.Graph, r.Verify)
 		if !o.Keep {
@@ -834,4 +841,20 @@ func mergeGitChanges(root, base, head, wikiDir string, files []string) []string 
 	}
 	sort.Strings(res)
 	return res
+}
+
+// advanceBaseline records head as compounded without touching any page.
+func advanceBaseline(wikiDir string, g *model.Graph, head, llm string) error {
+	if _, err := os.Stat(filepath.Join(wikiDir, ".kb")); err != nil {
+		return err
+	}
+	gb, err := json.MarshalIndent(g, "", " ")
+	if err != nil {
+		return err
+	}
+	if err := wiki.WriteFileAtomic(filepath.Join(wikiDir, ".kb", "graph.json"), gb); err != nil {
+		return err
+	}
+	writeJSON(filepath.Join(wikiDir, ".kb", "state.json"), State{LastSHA: head, GraphVersion: model.GraphVersion, PromptVersion: PromptVersion, LLM: llm, UpdatedAt: time.Now().UTC().Format(time.RFC3339)})
+	return nil
 }

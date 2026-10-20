@@ -103,7 +103,7 @@ docs:
 
 ## 命令参考
 
-所有命令：`--json`（stdout 输出 JSON）、`--root`、`--config`、`--quiet`；数据 → stdout，日志 → stderr；退出码 **0** 成功、**1** stale/verify 失败、**2** 用法错误、**3** 内部错误；写入类命令支持 `--dry-run`；从不交互；重复运行幂等（无变化时 compound 为 `noop`，不写 log）。
+所有命令：`--json`（stdout 输出 JSON）、`--root`、`--config`、`--wiki-dir`（wiki 放在仓库外）、`--quiet`；数据 → stdout，日志 → stderr；退出码 **0** 成功、**1** stale/verify 失败、**2** 用法错误、**3** 内部错误；写入类命令支持 `--dry-run`；从不交互；重复运行幂等（无变化时 compound 为 `noop`，不写 log）。
 
 | 命令 | 作用 |
 |---|---|
@@ -125,6 +125,7 @@ docs:
 | `kb install-skills <repo>` | 把 skills 安装到 `<repo>/.claude/skills/` |
 | `kb bench [--synthetic N]` | 冷/热扫描基准（合成仓库或 `--root` 指定的真实仓库） |
 | `kb eval [--llm …]` | 用人工标注的 golden set 评测断言核对与 plan 影响面（precision/recall） |
+| `kb hook install --mode post-receive\|post-merge [--repo <git dir>]` | 安装 git 钩子：服务端 push 到 master 或客户端 merge 后自动 compound（串行 + 追平） |
 | `kb mcp` | stdio MCP server（JSON-RPC 2.0），工具：`kb_search`、`kb_get`、`kb_context`、`kb_anchor`、`kb_status`、`kb_parity` |
 
 ## Wiki 布局
@@ -314,6 +315,25 @@ template 模式做确定性检查：接口 method+path 对 `apis.json`、深链�
 - `on: push` 到 master/main；`concurrency` 串行且不取消；
 - 有 `ANTHROPIC_API_KEY` 用 claude，否则 template；`--max-llm-tasks N` 控制成本：按价值排序（feature > flow > concept > 其他，同类按变化锚点数降序；`plan.json` 中的 `priority` 字段），前 N 个交给 LLM，其余用 template；`--fallback` 兜底；
 - `kb verify` 失败 → job 失败；wiki 变更以 `[skip ci]` 提交回仓库（或独立 wiki 仓库 / `kb` 分支）。
+
+### 不依赖 GitHub：git server hook
+
+```bash
+kb hook install --mode post-receive --repo /srv/git/app.git   # 自建 git、GitLab server hooks、Gerrit
+kb hook install --mode post-merge   --repo .                  # 客户端：merge / pull 到 master 后运行
+```
+
+post-receive 钩子的行为：
+
+- 用锁保证串行；
+- 每次 compound 分支的**当前头**，所以排队的多次 push 会从 last_sha 一次追平；
+- wiki 存放在服务端（`--wiki-dir`），不回写 master，避免非快进冲突和钩子递归。
+
+`demo/hook-demo.sh` 的实测（`demo/sample-output/hook/`）：
+
+- 3 次 merge 背靠背 push，其中两次几乎同时；
+- 第二次 push 的钩子一次处理了 4 个新提交，第三次的钩子输出 `already compounded`；
+- 最终 `wiki last_sha == master`，verify 通过。
 
 ## 在 Claude Code 中使用 skills
 

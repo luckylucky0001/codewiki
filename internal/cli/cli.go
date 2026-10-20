@@ -33,6 +33,7 @@ type app struct {
 	json           bool
 	root           string
 	config         string
+	wikiDir        string
 	quiet          bool
 }
 
@@ -66,7 +67,7 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		f := strings.TrimLeft(args[0], "-")
 		pre = append(pre, args[0])
 		args = args[1:]
-		if (f == "root" || f == "config") && len(args) > 0 {
+		if (f == "root" || f == "config" || f == "wiki-dir") && len(args) > 0 {
 			pre = append(pre, args[0])
 			args = args[1:]
 		}
@@ -101,6 +102,7 @@ func Run(args []string, stdout, stderr io.Writer) int {
 	fs.BoolVar(&a.json, "json", false, "machine-readable JSON on stdout")
 	fs.StringVar(&a.root, "root", ".", "repository root")
 	fs.StringVar(&a.config, "config", "", "path to codewiki.yaml (default <root>/codewiki.yaml)")
+	fs.StringVar(&a.wikiDir, "wiki-dir", "", "override wiki_dir (absolute, or relative to --root); e.g. a wiki kept outside the checkout")
 	fs.BoolVar(&a.quiet, "quiet", false, "suppress logs on stderr")
 	if c.flags != nil {
 		c.flags(fs)
@@ -189,7 +191,7 @@ Commands:
 		fmt.Fprintf(w, "  %-14s %s\n", c.name, c.summary)
 	}
 	fmt.Fprintf(w, `
-Global flags (every command): --json  --root <dir>  --config <file>  --quiet
+Global flags (every command): --json  --root <dir>  --config <file>  --wiki-dir <dir>  --quiet
 
 Conventions: data → stdout, logs → stderr; exit 0 ok, 1 stale/verify failed,
 2 usage error, 3 internal error; writers support --dry-run; never interactive.
@@ -220,7 +222,7 @@ func (a *app) cmdUsage(c *command, fs *flag.FlagSet) {
 		}
 		fmt.Fprintf(w, "  --%-16s %s%s\n", f.Name, f.Usage, def)
 	})
-	fmt.Fprintln(w, "  --json / --root / --config / --quiet  (global)")
+	fmt.Fprintln(w, "  --json / --root / --config / --wiki-dir / --quiet  (global)")
 }
 
 func (a *app) logf(format string, args ...any) {
