@@ -196,7 +196,7 @@ steps:
 | **Claude**：任务 `failed`，日志里是 `{"type":"result","is_error":true,…}` | 先看 `usage.error`，也就是 Claude 返回的 `result` 或 `subtype`，例如 `error_max_turns`。确认 `ANTHROPIC_API_KEY` 或登录状态；`--model` 要写 Claude Code 认识的别名（`haiku`、`sonnet`、`opus`） |
 | **Claude**：`.mcp.json` 里的 codewiki 工具没出现 | 项目级 MCP 第一次使用时需要批准（交互模式下执行 `/mcp`）。`-p` 模式下用 `--mcp-config .mcp.json --strict-mcp-config`，并在 `--allowedTools` 里放行 `mcp__codewiki__kb_*` |
 | **Codex**：`Not inside a trusted directory` 或 `git repo check` | kb 的命令行已经带了 `--skip-git-repo-check`，因为 staging 不是 git 仓库。如果是自定义的 `--llm-cmd`，需要自己加上 |
-| **Codex**：任务一直挂到 `llm.timeout_sec` | 有审批在等待。kb 的命令行固定 `-c approval_policy="never"`；自定义命令不要用 `--ask-for-approval on-request` |
+| **Codex**：任务一直挂到 `llm.timeout_sec` | 有审批在等待。kb 的命令行固定 `-c approval_policy="never"`；自定义命令不要把 `approval_policy` 设成 `on-request` 或 `untrusted`（`codex exec` 0.163.0 没有 `-a` 参数，要用 `-c` 设置） |
 | **Codex**：`llm command failed: … : Reconnecting… / stream disconnected` | 连不上模型 API（网络、代理或额度问题）。agent 报告的错误已经附在任务错误里；`--fallback` 会改用 template 继续 |
 | **Codex**：页面写了，但 kb 报 `LLM did not write …` | 写到了 staging 之外（被沙箱拒绝），或者写到了别的路径。看任务日志里 `command_execution` 的 `aggregated_output` |
 | **Codex**：模型看不到 AGENTS.md 里的 codewiki 块 | 根目录有 `AGENTS.override.md`，或者块的位置超过了 32 KiB。`kb install` 会提示；可以用 `codex debug prompt-input` 自查 |
