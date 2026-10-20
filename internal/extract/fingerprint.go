@@ -11,6 +11,8 @@ import (
 	"sync"
 
 	sitter "github.com/tree-sitter/go-tree-sitter"
+
+	"github.com/luckylucky0001/codewiki/internal/grammars/arkts"
 )
 
 // The extractor's own source is embedded so that any code change — not only a
@@ -48,6 +50,7 @@ func fingerprint(src fs.FS, sp map[string]*langSpec) string {
 		fmt.Fprintf(h, "file %s %d\n", n, len(b))
 		h.Write(b)
 	}
+	fmt.Fprintf(h, "arkts-grammar %s\n", arkts.GrammarHash)
 	var langs []string
 	for l := range sp {
 		langs = append(langs, l)

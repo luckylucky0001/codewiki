@@ -18,16 +18,16 @@
 |---|---|---|---|---|
 | Kotlin | 311 | 0 | **100%** | nowinandroid |
 | Swift | 431 | 2 | **99.5%** | IceCubesApp |
-| ArkTS (.ets) | 3858（1952 + 1828 + 78） | 4 | **99.9%** | Cases、app_samples、starter |
+| ArkTS (.ets) | 3858（1952 + 1828 + 78） | 0（修补前 4） | **100%**（修补前 99.9%） | Cases、app_samples、starter |
 | TypeScript | 978 | 0 | 100% | Cases、app_samples、starter |
 | JavaScript | 124 | 0 | 100% | 同上 |
 
 失败原因如下，都属于语法本身的限制，不是抽取器 bug：
 
-- **ArkTS（4 个文件）**：ArkUI 属性方法调用的参数里带尾逗号，例如 `.tabBar(this.TabBarBuilder(...),)`，或者 `),\n )`。上游语法目前还不支持这种写法。
+- **ArkTS（修补前 4 个文件）**：ArkUI 属性方法调用的参数里带尾逗号，例如 `.tabBar(this.TabBarBuilder(...),)`，或者 `),\n )`。上游语法不支持这种写法。我们给 vendored 的 `grammar.js` 打了补丁（`arkui_arguments` 允许尾逗号），并用 tree-sitter-cli 0.24.4（ABI 14）重新生成 `parser.c`。补丁之后 3858 个 ArkTS 文件**全部无错解析**。补丁内容见 `internal/grammars/arkts/VENDORED.md`，回归测试见 `TestTrailingCommaInArkUIArguments`。
 - **Swift（2 个文件）**：一处是 `unsafeBitCast(..., to: (@Sendable (X) -> Void).self)`，带属性的函数类型字面量；另一处是 `if let marker {`（Swift 5.7 的简写）出现在 `Task {}` 里。
 
-ArkTS 语法的上游 README 给出的真实工程无错解析率约为 94%。在这次 3858 个 HarmonyOS NEXT / OpenHarmony 文件上，实测为 99.9%。
+ArkTS 语法的上游 README 给出的真实工程无错解析率约为 94%。在这次 3858 个 HarmonyOS NEXT / OpenHarmony 文件上，实测为 99.9%；打上尾逗号补丁后为 100%。
 
 ## 抽取结果与耗时
 

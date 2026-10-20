@@ -882,6 +882,8 @@ module.exports = grammar(JavaScript, {
         $.spread_element,
         $._arkui_argument_expression,
       )),
+      // codewiki patch: accept a trailing comma, e.g. `.tabBar(builder(),)`
+      optional(','),
       ')',
     ),
 
