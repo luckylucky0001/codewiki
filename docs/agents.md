@@ -88,7 +88,8 @@ kb install-skills ../app                      # 旧命令，保留为别名：.c
 | 指标 | 只装 claude | 装 all |
 |---|---|---|
 | 读取其他 agent 文件的次数 | 0 | 0 |
-| 首个动作 | q1 首个动作是 `kb search`；q2 是 `kb routes`（加 `lint-tid --pages`）；q3 先 Glob 定位文件，随后在 6/6 次里都调用了 `kb context`（另有 1 次首个动作是 `find`） | 同左，但没有出现 `find` |
+| 首个动作：q1 / q2 | 3/3 是 `kb search`；3/3 是 `kb routes`（加 `lint-tid --pages`） | 3/3 是 `kb search`；3/3 是 `kb routes`（加 `lint-tid --pages`） |
+| q3（改文件前） | 先用 Glob（2 次）或 find（1 次）定位文件，之后 3/3 调用了 `kb context` | 3 次都先用 Glob 定位文件，之后 3/3 调用了 `kb context` |
 | 平均轮数 q1 / q2 / q3 | 5.7 / 2.7 / 7.3 | 5.3 / 2.3 / 8.3 |
 | 9 次总花费 | $0.0497 | $0.0484 |
 
