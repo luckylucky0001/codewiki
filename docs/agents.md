@@ -33,6 +33,17 @@ kb agents                                                     # 查看支持矩�
 
 调研过程和来源见 [agents-research.md](agents-research.md)。
 
+## 各 agent 快速上手
+
+| Agent | 让它读 wiki | 让它写 wiki（后端） | 注意 |
+|---|---|---|---|
+| Claude Code | `kb install --agent claude --mcp` | `kb compound --agent claude --model sonnet` | 第一次使用 `.mcp.json` 时 Claude Code 会询问是否启用 |
+| Codex CLI | `kb install --agent codex --mcp`，然后信任项目，或者执行 `codex mcp add codewiki -- kb mcp --root $PWD` | `printenv OPENAI_API_KEY \| codex login --with-api-key`，然后 `kb compound --agent codex` | 根目录有 AGENTS.override.md、或 AGENTS.md 超过 32 KiB 时，`kb install` 会提示 |
+| Gemini CLI | `kb install --agent gemini --mcp`，然后信任文件夹 | 设置 `GEMINI_API_KEY`，选择 API-key 认证，然后 `kb compound --agent gemini` | 后端在 headless 模式下没有 shell 工具，kb 已在 prompt 里给出全部 hash |
+| Cursor | `kb install --agent cursor --mcp` | 使用 `--llm-cmd '<cursor CLI 命令>'` | `.mdc` 规则文件带 `alwaysApply: true` |
+| Copilot | `kb install --agent copilot` | 使用 `--llm-cmd` | MCP 需要按提示手工配置 |
+| 其他 | `kb install --agent generic`，会写 AGENTS.md 和 `.agents/skills` | 使用 `--llm-cmd` 或 `llm.cmd` | 只要求 agent 能从 stdin 读 prompt、在 cwd 里写文件 |
+
 ## 作为消费者：`kb install`
 
 ```bash
