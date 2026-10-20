@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -421,5 +422,32 @@ func TestEvalTemplateGoldenSet(t *testing.T) {
 	}
 	if rep.ImpactMicro.Recall < 1 || rep.ImpactMicro.Precision < 0.8 {
 		t.Fatalf("impact metrics regressed:\n%s", FormatEval(rep))
+	}
+}
+
+func TestTemplateRecheckKeepsFreshLLMVerdicts(t *testing.T) {
+	cfg, dir := withChange(t)
+	g, f := scanDir(t, cfg, dir)
+	staging := t.TempDir()
+	os.MkdirAll(filepath.Join(staging, "facts"), 0o755)
+	doc := []byte("- **FR-009**: Users MUST be able to add items via `addItem`.\n")
+	os.MkdirAll(filepath.Join(staging, "raw/docs/specs"), 0o755)
+	os.WriteFile(filepath.Join(staging, "raw/docs/specs/spec.md"), doc, 0o644)
+	os.WriteFile(filepath.Join(staging, "raw/docs/manifest.json"), []byte(`{"version":1,"docs":[{"path":"specs/spec.md","raw":"raw/docs/specs/spec.md","kind":"spec"}]}`), 0o644)
+	sym := "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.addItem"
+	req := func(hash string) {
+		b, _ := json.Marshal(map[string]any{"version": 1, "requirements": []map[string]any{{"id": "FR-009", "source": "specs/spec.md",
+			"text": "Users MUST be able to add items via `addItem`.", "status": "conflict", "anchors": []map[string]string{{"sym": sym, "hash": hash}},
+			"route_ids": []string{"cart"}, "evidence": []string{"[llm] semantic judgement"}}}})
+		os.WriteFile(filepath.Join(staging, "facts", "requirements.json"), b, 0o644)
+	}
+	env := &taskEnv{a: &Analysis{Graph: g, Facts: f, Scan: &scan.Result{Dir: dir}}, staging: staging}
+	req(g.Get(sym).Hash)
+	if c := env.templateClaims(); len(c) != 1 || c[0].Status != ClaimConflict {
+		t.Fatalf("fresh LLM verdict must be kept: %+v", c)
+	}
+	req("stale-hash")
+	if c := env.templateClaims(); c[0].Status != ClaimVerified {
+		t.Fatalf("stale LLM verdict must be re-checked: %+v", c)
 	}
 }

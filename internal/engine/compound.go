@@ -525,8 +525,31 @@ func (e *taskEnv) platforms() []string {
 func (e *taskEnv) templateClaims() []Claim {
 	claims := AllClaims(e.staging)
 	ck := &Checker{G: e.a.Graph, F: e.a.Facts, Dir: e.a.Scan.Dir}
+	prev := map[string]model.Requirement{}
+	for _, r := range loadRequirements(e.staging) {
+		prev[r.ID] = r
+	}
 	for i := range claims {
 		ck.Check(&claims[i])
+		// keep an earlier LLM verdict while the code it is anchored to is unchanged:
+		// a deterministic re-check must not erase semantic judgements
+		if p, ok := prev[claims[i].ID]; ok && len(p.Evidence) > 0 && strings.HasPrefix(p.Evidence[0], "[llm]") && len(p.Anchors) > 0 && p.Text == claims[i].Text {
+			fresh := true
+			var ids []string
+			for _, a := range p.Anchors {
+				if s := e.a.Graph.Get(a.Sym); s == nil || s.Hash != a.Hash {
+					fresh = false
+					break
+				}
+				ids = append(ids, a.Sym)
+			}
+			if fresh {
+				claims[i].Status, claims[i].Evidence, claims[i].Anchors = p.Status, p.Evidence, ids
+				if len(p.RouteIDs) > 0 {
+					claims[i].RouteIDs = p.RouteIDs
+				}
+			}
+		}
 	}
 	return claims
 }

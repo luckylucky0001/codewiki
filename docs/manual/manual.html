@@ -67,7 +67,8 @@
       <li>架构设计：三层结构与 compound 流程</li>
       <li>核心能力：命令一览</li>
       <li>使用方法：安装、配置、CI、skills</li>
-      <li>Demo 操作流程与实测结果（含 axios 真实仓库案例）</li>
+      <li>Demo 操作流程与评测（含真实 agent 使用 skills）</li>
+      <li>真实项目验证与性能（5 个开源项目 + axios）</li>
       <li>最佳实践与引用</li>
       <li>局限与路线图</li>
     </ol>
@@ -96,10 +97,10 @@
 </table>
 <h3>交付物一览</h3>
 <div class="kpi">
-  <div><b>17</b><span>kb 子命令（全部支持 --json）</span></div>
+  <div><b>19</b><span>kb 子命令（全部支持 --json）</span></div>
   <div><b>7</b><span>tree-sitter 语言：Kotlin/Java/Swift/ArkTS/JS/TS/TSX</span></div>
   <div><b>4</b><span>Agent Skills：compound / ingest / query / lint</span></div>
-  <div><b>45</b><span>Go 测试（单元 + 集成），vet / gofmt 干净</span></div>
+  <div><b>57</b><span>Go 测试（单元 + 集成 + 评测），vet / gofmt 干净</span></div>
 </div>
 </section>
 
@@ -188,7 +189,7 @@
   <tr><td><code>kb search / get / context</code></td><td>检索 wiki；按 id 取页面；查询某个文件对应的页面、符号、路由、testID 和接口</td></tr>
   <tr><td><code>kb anchor</code></td><td>打印符号的当前 hash，LLM 写 frontmatter 时使用</td></tr>
   <tr><td><code>kb lint-tid / parity</code></td><td>testID 覆盖矩阵；功能 × 平台一致性矩阵和跨平台常量差异（生成 <code>pages/parity.md</code>）</td></tr>
-  <tr><td><code>kb bench</code></td><td>在合成仓库或真实仓库上对比冷 / 热扫描耗时</td></tr>
+  <tr><td><code>kb bench / eval</code></td><td>冷 / 热扫描基准；用人工标注的 golden set 评测断言核对与 plan 影响面（precision / recall）</td></tr>
   <tr><td><code>kb mcp</code></td><td>stdio MCP server，提供工具 <code>kb_search/get/context/anchor/status/parity</code></td></tr>
   <tr><td><code>kb install-skills</code></td><td>把 4 个 skill 安装到目标仓库的 <code>.claude/skills/</code></td></tr>
 </table>
@@ -205,172 +206,180 @@
 <!-- ============ 4 ============ -->
 <section class="chapter">
 <h2><span class="num">4</span>使用方法</h2>
-<h3>4.1 安装</h3>
-<pre><code>go install github.com/luckylucky0001/codewiki/cmd/kb@latest   # 需要 Go 1.24 与 C 编译器（cgo）
-# 或：git clone … &amp;&amp; go build -o kb ./cmd/kb
-# ArkTS 语法以源码形式 vendored 在 internal/grammars/arkts（MIT），go.mod 中没有 replace</code></pre>
-<h3>4.2 初始化与配置</h3>
 <div class="two">
 <div>
-<pre><code>cd your-monorepo
-kb init
-kb discover-docs --json &gt; /tmp/docs.json
-kb ingest --manifest /tmp/docs.json \
-   --kinds spec,design,adr,agent-guide,doc
-kb compound            # 首次全量（template）
-kb compound --llm claude
-kb verify</code></pre>
+<h3>4.1 安装与初始化</h3>
+<pre><code>go install github.com/luckylucky0001/codewiki/cmd/kb@latest
+# 需要 Go 1.24 与 C 编译器（cgo）；go.mod 中没有 replace
+cd your-monorepo
+kb init                      # codewiki.yaml + wiki 骨架
+kb discover-docs --json &gt; docs.json
+kb ingest --manifest docs.json
+kb compound [--llm claude]   # 首次运行为全量
+kb verify                    # CI 门禁</code></pre>
 </div>
 <div>
-<pre><code># codewiki.yaml
-version: 1
+<h3>4.2 配置 codewiki.yaml</h3>
+<pre><code>version: 1
 wiki_dir: wiki
 platforms:
   - {name: android, root: android}
   - {name: ios,     root: ios}
   - {name: harmony, root: harmony}
-llm:
-  cmd: claude -p --permission-mode acceptEdits ...
-plan:
-  hops: 1
-  rebuild_module_ratio: 0.5
-  rebuild_structural_ratio: 0.3</code></pre>
+llm: {cmd: "claude -p --permission-mode acceptEdits ..."}
+plan: {hops: 1, rebuild_module_ratio: 0.5,
+       rebuild_structural_ratio: 0.3}</code></pre>
 </div>
 </div>
-<p>可以用 <code>--config &lt;file&gt; --root &lt;repo&gt;</code> 把 wiki 写到被分析仓库之外，只读分析第三方仓库，axios 案例就是这样做的。</p>
+<p>指定 <code>--config &lt;file&gt; --root &lt;repo&gt;</code> 时，wiki 会写到被分析仓库之外，用于只读分析第三方仓库（axios 和 5 个开源项目都是这样跑的）。</p>
 <h3>4.3 页面 frontmatter 契约</h3>
 <pre><code>---
-id: features/cart                       # = 路径去掉 pages/ 与 .md（verify 强制）
+id: features/cart          # = 路径去掉 pages/ 与 .md（verify 强制检查）
 title: 购物车（cart）
-kind: feature                           # feature | concept | overview | conflicts | parity
+kind: feature              # feature | concept | overview | conflicts | parity
 platforms: [android, harmony, ios]
 routes: [cart]
 sources:
   - sym: android://app/src/main/java/com/minishop/ui/cart/CartScreen.kt#CartScreen
     hash: 298d51bd3abcc95697e472891f857dc8…
 source_commit: 516a1c3
-status: current                         # current | stale | outdated-doc
+status: current            # current | stale | outdated-doc
 ---</code></pre>
-<h3>4.4 CI 接入</h3>
-<p><code>.github/workflows/compound.yml</code> 在 push 到 master/main 时触发。<code>concurrency</code> 保证串行，且不取消排队中的运行。<code>actions/cache</code> 缓存 kb 二进制和 <code>wiki/.kb/cache</code>（扫描缓存）。配置了 <code>ANTHROPIC_API_KEY</code> 时用 claude，否则用 template。<code>kb verify</code> 失败时 job 失败；成功时把 wiki 变更以 <code>[skip ci]</code> 提交回仓库。<code>examples/ci/README.md</code> 还说明了独立 wiki 仓库和 <code>kb</code> 孤立分支两种接法。</p>
-<h3>4.5 Skills 与 MCP</h3>
+<h3>4.4 CI、Skills、MCP 与 e2epilot</h3>
 <table>
-  <tr><th>skill</th><th>何时使用</th></tr>
-  <tr><td><code>kb-compound</code></td><td>合并后增量更新；也是 <code>--llm claude</code> 时单个任务的写作规范（写集、frontmatter、链接规则）</td></tr>
-  <tr><td><code>kb-ingest</code></td><td>发现并核对 spec / 旧文档，产出 <code>_conflicts.md</code> 和 <code>requirements.json</code></td></tr>
-  <tr><td><code>kb-query</code></td><td>回答“X 在三端怎么实现”，改代码前先跑 <code>kb context</code></td></tr>
-  <tr><td><code>kb-lint</code></td><td><code>kb verify</code>、<code>--fix-index</code>、<code>lint-tid</code>，以及错误码说明</td></tr>
+  <tr><th style="width:18%">接入点</th><th>做法</th></tr>
+  <tr><td>CI</td><td><code>.github/workflows/compound.yml</code>：push 到 master/main 时触发，<code>concurrency</code> 串行且不取消；<code>actions/cache</code> 缓存 kb 和 <code>wiki/.kb/cache</code>；有 <code>ANTHROPIC_API_KEY</code> 时用 claude，否则用 template。<code>--max-llm-tasks</code> 按价值排序分配预算（feature &gt; flow &gt; concept，同类再按变化锚点数排序）。verify 失败则 job 失败；成功时以 <code>[skip ci]</code> 提交 wiki</td></tr>
+  <tr><td>Skills</td><td><code>kb install-skills &lt;repo&gt;</code> 安装 <code>kb-compound / kb-ingest / kb-query / kb-lint</code>。skill 只负责调用 CLI，不重新实现逻辑（实测见 5.4）</td></tr>
+  <tr><td>MCP</td><td><code>claude mcp add codewiki -- kb mcp --root &lt;repo&gt;</code>，提供 6 个工具：<code>kb_search / get / context / anchor / status / parity</code></td></tr>
+  <tr><td>e2epilot</td><td><code>kb diff --json</code> 和 <code>plan.json</code> 输出 <code>changed_route_ids</code>、<code>changed_routes</code>（附原因）和 <code>changed_files</code>（含 git 资源文件），供 <code>e2e graph invalidate --changed-routes</code> 和 <code>e2e impact</code> 使用</td></tr>
 </table>
-<p>本仓库的 <code>.claude/skills/*</code> 是指向 <code>skills/*</code> 的符号链接，Claude Code 可以直接发现；其他仓库用 <code>kb install-skills &lt;repo&gt;</code> 安装。也可以执行 <code>claude mcp add codewiki -- kb mcp --root &lt;repo&gt;</code>，把 wiki 作为 MCP 工具接入。</p>
-<h3>4.6 与 e2epilot 联动</h3>
-<pre><code>ROUTES=$(kb diff --json | jq -r '.changed_route_ids | join(",")')   # 例：cart,product_detail
-e2e graph invalidate --changed-routes "$ROUTES"
-e2e impact --changed-routes "$ROUTES" --requirements wiki/facts/requirements.json</code></pre>
 </section>
 
 <!-- ============ 5 ============ -->
 <section class="chapter">
-<h2><span class="num">5</span>Demo 操作流程与实测结果</h2>
-<p><code>demo/run.sh</code> 用 <code>examples/minishop</code> 新建一个临时 git 仓库，同一个电商 App 在 Android / iOS / 鸿蒙三端各实现一份：6 条路由，11 类 testID，5 个接口。脚本依次执行 init → discover-docs → ingest → 首次 compound，再把 3 个变更集以 <code>--no-ff</code> 合并到 master，每次合并后运行 status / diff / plan / compound / verify / parity。<code>DEMO_LLM=template</code> 约 1 分钟完成，结果可复现；<code>DEMO_LLM=claude</code> 使用真实的 <code>claude -p</code>。</p>
-<pre><code>DEMO_LLM=template demo/run.sh                       # 输出到 demo/output/&lt;ts&gt;-template/SUMMARY.md
-DEMO_LLM=claude DEMO_MAX_LLM_TASKS=2 demo/run.sh    # 真实 LLM，单个任务约 30–60 s</code></pre>
+<h2><span class="num">5</span>Demo 操作流程与评测</h2>
+<p><code>demo/run.sh</code> 用 <code>examples/minishop</code> 建一个临时 git 仓库。这是同一个电商 App 的三端实现，包含 6 条路由、11 类 testID、5 个接口。脚本依次执行 init → discover-docs → ingest → 首次 compound，然后把 3 个变更集以 <code>--no-ff</code> 合并到 master，每次合并后运行 status / diff / plan / compound / verify / parity，最后运行 <code>kb eval</code>。<code>DEMO_LLM=template</code> 约 1 分钟，结果可复现；<code>DEMO_LLM=claude</code> 使用真实的 <code>claude -p</code>。</p>
 <h3>5.1 文档发现与断言核对</h3>
-<p>共发现 8 份文档：spec-kit 的 <code>specs/001-cart/spec.md</code> 和 <code>plan.md</code>、Kiro 的 <code>.kiro/specs/login/requirements.md</code> 和 steering、ADR、两份旧文档。从中抽出 28 条断言。template 模式的结果是 <b>verified 20 / conflict 6 / unverifiable 2</b>。</p>
+<p>共发现 9 份文档：spec-kit 的 <code>specs/001-cart/spec.md</code> 和 <code>plan.md</code>，Kiro 的 requirements 和 steering，ADR，以及 3 份旧文档。从中抽取 33 条断言。三次合并后，template 模式结果为 <b>verified 24 / conflict 6 / unverifiable 3</b>，claude 模式结果为 <b>CLAUDE_CLAIMS</b>。</p>
 <table>
-  <tr><th>断言（来源）</th><th>结论与证据（代码为准）</th></tr>
-  <tr><td>登录使用手机号 + 短信验证码，<code>POST /api/sms/send</code>（legacy/login.md）</td><td class="bad">conflict：代码中不存在该接口，只有 <code>POST /api/login</code></td></tr>
-  <tr><td>购物车最多 10 件（<code>MAX_CART_ITEMS</code>）（legacy/cart.md）</td><td class="bad">conflict：android 与 harmony 为 50，ios 为 99，与文档的 10 都不一致</td></tr>
-  <tr><td>token 由 <code>SessionManager.saveToken()</code> 持久化（legacy/login.md）</td><td class="bad">conflict：类型 <code>SessionManager</code> 不存在</td></tr>
-  <tr><td><b>FR-002</b>：购物车上限 99（spec-kit）</td><td class="bad">变更集 01 合并后由 verified 变为 conflict</td></tr>
-  <tr><td><b>FR-004</b>：优惠券 <code>POST /api/coupons/apply</code></td><td class="bad">conflict：功能未实现</td></tr>
-  <tr><td><b>LOGIN-R1.1</b>：提交后调用 <code>POST /api/login</code> 并进入 <code>products</code>（Kiro）</td><td class="ok">verified：三端接口与路由都有锚点</td></tr>
-  <tr><td><b>LOGIN-R2.2</b>：用户名为空时弹出短信验证对话框（Kiro）</td><td>template 判为 verified（testID 存在）；<b>claude 判为 conflict</b>：“LoginViewModel.login 仅设置 invalid_credentials，没有短信对话框”</td></tr>
+  <tr><th>断言（来源）</th><th>结论与证据（以代码为准）</th></tr>
+  <tr><td>登录使用短信验证码，<code>POST /api/sms/send</code>（旧文档）</td><td class="bad">conflict：代码中不存在该接口，只有 <code>POST /api/login</code></td></tr>
+  <tr><td>购物车最多 10 件（<code>MAX_CART_ITEMS</code>）</td><td class="bad">conflict：android 与 harmony 为 50，ios 为 99</td></tr>
+  <tr><td><b>FR-002</b>：购物车上限 99（spec-kit）</td><td class="bad">变更集 01 合并后，由 verified 变为 conflict</td></tr>
+  <tr><td><b>LOGIN-R2.2</b>：用户名为空时弹出短信验证对话框（Kiro）</td><td>template 判为 verified（依据只是 testID 存在）；<b>claude 判为 conflict</b>，理由是“只设置 invalid_credentials，没有短信对话框”</td></tr>
 </table>
 <h3>5.2 三次合并的增量结果（template 模式实测）</h3>
 <table>
-  <tr><th style="width:22%">步骤</th><th>diff</th><th style="width:18%">受影响路由</th><th style="width:24%">任务</th><th style="width:9%">verify</th></tr>
-  <tr><td>首次 compound</td><td>无基线，全量重建</td><td>—</td><td>10（6 个功能页 + 总览 + 2 个 concept + _conflicts）</td><td class="ok">PASS</td></tr>
-  <tr><td>01 购物车上限 99→50（iOS 漏改）+ 只改注释</td><td>body 2，unchanged 212；注释改动为 no-op</td><td><code>cart, product_detail</code></td><td>3：cart、product_detail、_conflicts</td><td class="ok">PASS</td></tr>
-  <tr><td>02 ArkTS 改名与签名变化</td><td>renamed 1（<code>Api.loadProducts → fetchProducts</code>，相似度 1.00），signature 1，body 4</td><td><code>product_detail, products</code></td><td>4</td><td class="ok">PASS</td></tr>
-  <tr><td>03 三端新增 profile 路由</td><td>added 10，body 4</td><td><code>profile</code>（route_added）</td><td>4：create profile、overview、navigation、shared</td><td class="ok">PASS</td></tr>
+  <tr><th style="width:24%">步骤</th><th>diff</th><th style="width:19%">changed_route_ids</th><th style="width:24%">任务</th></tr>
+  <tr><td>首次 compound</td><td>无基线，执行全量</td><td>—</td><td>10 个任务：6 个功能页、总览、2 个 concept 页、_conflicts</td></tr>
+  <tr><td>01 上限 99→50（iOS 漏改），另有一处只改注释</td><td>body 2，unchanged 212，只改注释的部分判为 no-op</td><td><code>cart, product_detail</code></td><td>3 个任务：cart、product_detail、_conflicts</td></tr>
+  <tr><td>02 ArkTS 改名并修改签名</td><td>renamed 1（<code>loadProducts→fetchProducts</code>，相似度 1.00），signature 1</td><td><code>product_detail, products</code></td><td>4 个任务</td></tr>
+  <tr><td>03 三端新增 profile 路由</td><td>added 10</td><td><code>profile</code>（route_added）</td><td>4 个任务：create profile、overview、navigation、shared</td></tr>
 </table>
-<p>最终 wiki 共 <b>24 个页面、355 个锚点，verify 通过</b>，<code>lint-tid</code> 无缺口。<code>kb parity</code> 发现了变更集 01 故意留下的三端不一致：<code>max_cart_items</code> 在 android、ios、harmony 分别是 <code>50 / 99 / 50</code>。</p>
-<pre><code>$ kb status        # 合并 01 之后、compound 之前
-stale pages/_conflicts.md (2 anchors: CartViewModel.MAX_CART_ITEMS, MAX_CART_ITEMS)
-stale pages/features/cart.md (1 anchors: CartViewModel.MAX_CART_ITEMS)
-stale pages/features/product_detail.md (1 anchors: CartViewModel.MAX_CART_ITEMS)
-stale pages/parity.md (generated facts out of date)
-$ kb context android/app/src/main/java/com/minishop/ui/cart/CartViewModel.kt
-pages (4):
-  pages/_conflicts.md — 文档核对（冲突与已验证断言） [current] anchors=2
-  pages/concepts/shared-components.md — 共享组件 [current] anchors=1
-  pages/features/cart.md — 购物车（cart） [current] anchors=5
-  pages/features/product_detail.md — 商品详情（product_detail） [current] anchors=5</code></pre>
-<h3>5.3 claude 模式</h3>
-<p>claude 模式用 <code>claude -p --model sonnet</code>，每次 compound 最多 2 个 LLM 任务，其余用 template，首次全量也用 template，以控制成本。所有步骤 verify 均通过，最终得到 24 个页面、356 个锚点。断言核对结果为 <b>verified 18 / conflict 8 / unverifiable 2</b>，比 template 多出 2 条语义冲突：一条是上面的 LOGIN-R2.2；另一条是 spec-kit <code>plan.md</code> 写的“三端共享上限常量”，LLM 给出的结论是“上限常量各自定义且值不同（Android 50、Harmony 50、iOS 99），并非共享”。LLM 写出的页面带有三端对照表、失败处理差异和测试要点。例如结算页指出“iOS 的 <code>placeOrder</code> 用 <code>try?</code> 吞掉错误，失败时不跳转也没有提示”。购物车页发现了示例代码中的一个真实问题：<code>preload</code> 写入的 <code>pending</code> 列表从未被消费。CLI 会自动回滚写集之外的写入；集成测试用一个伪造的 LLM 写 <code>index.md</code>，验证这次写入被回滚。</p>
-<h3>5.4 真实仓库：axios（只读）</h3>
+<p>每一步 verify 都通过，最终得到 <b>24 个页面、372 个锚点</b>。<code>kb parity</code> 报告 <code>max_cart_items</code> 三端分别为 <code>50 / 99 / 50</code>。在修改 <code>BackButton</code> 的单测中，只有 shared-components 页被重新检查。</p>
+<h3>5.3 评测：<code>kb eval</code>（人工标注 golden set）</h3>
+<p><code>examples/minishop-eval/golden.yaml</code> 包含 33 条人工标注的断言，以及每个变更集应当被重新检查的页面。<code>kb eval</code> 在临时仓库中回放 ingest、compound 和三次合并，然后计算 precision / recall。</p>
 <table>
-  <tr><th>指标</th><th>结果</th></tr>
-  <tr><td>扫描</td><td><code>lib/**/*.js</code> 共 70 个文件、323 个符号，0 个 parse failure；全仓 243 个文件、1009 个符号</td></tr>
-  <tr><td>文档发现</td><td>149 份（doc 133 / readme 7 / design 6 / agent-guide 3）</td></tr>
-  <tr><td>template 核对（16 份，174 条）</td><td>verified 89 / unverifiable 85 / <b>conflict 0</b>（误报已从 38 降到 0）</td></tr>
-  <tr><td>AGENTS.md：“default adapter preference is <code>['xhr','http','fetch']</code>”</td><td class="ok">verified，锚点 <code>web://lib/defaults/index.js#defaults</code></td></tr>
-  <tr><td>claude 核对 AGENTS.md（48 条，1 次调用）</td><td>verified 23 / unverifiable 22 / <b>conflict 3</b>：规范要求 “never raw <code>Error</code>”，但 <code>toFormData.js</code> 抛出 <code>new Error('Circular reference detected')</code>；规范要求不直接使用 <code>bind</code>，但 <code>Axios.js</code> 中有 <code>dispatchRequest.bind(this)</code></td></tr>
+  <tr><th>指标</th><th>template</th><th>claude（sonnet，仅断言核对，1 次调用）</th></tr>
+  <tr><td>断言准确率</td><td>0.82</td><td><b>0.88</b></td></tr>
+  <tr><td>conflict precision / recall</td><td>1.00 / 0.56</td><td>1.00 / <b>0.78</b></td></tr>
+  <tr><td>verified precision / recall</td><td>0.88 / 0.92</td><td><b>0.96</b> / 0.92</td></tr>
+  <tr><td>plan 影响页面 precision / recall（micro）</td><td colspan="2">0.82 / <b>1.00</b>：没有漏检；多出的 2 页属于保守重检（<code>_conflicts</code>、<code>shared-components</code>）</td></tr>
 </table>
-<h3>5.5 扫描性能（<code>kb bench</code>，4 核，实测）</h3>
+<p>template 的错误集中在语义类断言上。例如“支持 page/size 分页”只因 API 存在就被判为 verified，<code>share_button</code> 没有被识别为不存在。claude 修正了其中的大部分。这组数字同时作为单测的回归下限。</p>
+<h3>5.4 真实 agent 使用 skills（<code>demo/skills-demo.sh</code>）</h3>
 <table>
-  <tr><th>仓库</th><th>文件 / 符号</th><th>冷扫描</th><th>热扫描（缓存全命中）</th><th>1% 文件变化</th></tr>
-  <tr><td>合成仓库（Kotlin / Swift / ArkTS 各 1000 个文件）</td><td>3000 / 21000</td><td>3711 ms</td><td>463 ms</td><td>974 ms</td></tr>
-  <tr><td>axios lib</td><td>70 / 323</td><td>191 ms</td><td>25 ms</td><td>—</td></tr>
-  <tr><td>axios 全仓</td><td>243 / 1009</td><td>993 ms</td><td>69 ms</td><td>—</td></tr>
-  <tr><td>examples/minishop</td><td>42 / 214</td><td>91 ms</td><td>8 ms</td><td>—</td></tr>
+  <tr><th style="width:36%">问题（<code>claude -p --model haiku</code>）</th><th style="width:13%">skill</th><th>agent 的做法与结果</th></tr>
+  <tr><td>购物车上限三端分别是多少？引用出处</td><td>kb-query</td><td>调用 <code>kb search</code> 和 <code>kb parity --json</code>，用时 5 轮、$0.008。答出 50/99/50，给出 3 个符号 ID 以及 <code>CART-43567f</code>、<code>FR-002</code> 两处冲突</td></tr>
+  <tr><td>wiki 是否与代码一致、三端是否对齐</td><td>kb-lint</td><td>调用 <code>kb verify --json</code>、<code>lint-tid</code> 和 <code>parity</code>，用时 17 轮、$0.016。给出问题清单和建议，全程只读，<code>git status</code> 为空</td></tr>
 </table>
+<p>第一轮实测中，agent 有一次没有触发 skill，HarmonyOS 的值只能靠 grep 得到。据此给 kb-query / kb-lint 的 description 补充了跨平台取值类问法和 <code>kb parity</code>，修正后两个问题都在第一步触发了对应 skill。</p>
+<h3>5.5 claude 模式写页面</h3>
+<p>claude 模式下，每次 compound 最多给 2 个 LLM 任务（按价值排序），其余用 template；首次全量也用 template，以控制成本。最终结果为 CLAUDE_PAGES，所有步骤 verify 通过。LLM 写的页面有三端对照、失败处理差异和测试要点，还发现了示例代码中 <code>preload</code> 写入的 <code>pending</code> 从未被消费的问题。写集以外的写入会被自动回滚，有专门测试覆盖。</p>
 </section>
 
 <!-- ============ 6 ============ -->
 <section class="chapter">
-<h2><span class="num">6</span>最佳实践与引用</h2>
+<h2><span class="num">6</span>真实项目验证与性能</h2>
+<h3>6.1 公开开源项目（只读浅克隆，详见 docs/validation.md）</h3>
 <table>
-  <tr><th style="width:26%">实践</th><th>做法</th><th style="width:24%">参考</th></tr>
-  <tr><td>事实与叙述分离</td><td>CLI 抽取所有能确定的事实，并标记 DO NOT EDIT；LLM 只写解释。分 raw / wiki / schema 三层，index.md 作目录，log.md 只追加</td><td>Karpathy《LLM Wiki》</td></tr>
-  <tr><td>按符号增量</td><td>以符号 ID 和归一化 hash 判定变化，注释与格式改动不触发重写</td><td>FSoft CodeWiki 的增量设计</td></tr>
-  <tr><td>引用失效</td><td>签名变化沿反向引用边传播 k 跳</td><td>RepoAgent</td></tr>
-  <tr><td>受限写集</td><td>每个任务只能写自己的页面，越界写入自动回滚</td><td>OpenDeepWiki</td></tr>
-  <tr><td>repo-map 式上下文</td><td>给 LLM 的是精选的符号签名和源码片段；<code>facts/&lt;p&gt;/symbols.md</code> 就是一份 repo map</td><td>Aider repo-map</td></tr>
-  <tr><td>需求可追踪</td><td>用 EARS 句式（WHEN … THE SYSTEM SHALL …）或 FR-xxx 编号写需求，断言 ID 保持稳定，以代码为准</td><td>GitHub spec-kit、OpenSpec、Kiro、EARS</td></tr>
-  <tr><td>skill 保持薄</td><td>skill 只描述何时用、怎么调 CLI；SKILL.md 少于 500 行，详细内容按需放到 references/</td><td>Agent Skills 规范</td></tr>
-  <tr><td>先验证再发布</td><td>在 staging 上 verify，通过后再原子 rename；CI 串行执行，失败不发布</td><td>—</td></tr>
+  <tr><th>项目</th><th>平台</th><th>文件</th><th>符号</th><th>路由</th><th>testID</th><th>冷 / 热扫描</th></tr>
+  <tr><td>android/nowinandroid</td><td>Kotlin · Navigation 3</td><td>311</td><td>1,748</td><td>5</td><td>14</td><td>690 / 97 ms</td></tr>
+  <tr><td>Dimillian/IceCubesApp</td><td>SwiftUI</td><td>432</td><td>6,058</td><td>28</td><td>0</td><td>2,245 / 274 ms</td></tr>
+  <tr><td>HarmonyOS-Cases/Cases</td><td>ArkTS · router_map</td><td>2,267</td><td>20,141</td><td>88</td><td>1,437</td><td>9,105 / 853 ms</td></tr>
+  <tr><td>openharmony app_samples（sparse）</td><td>ArkTS</td><td>2,612</td><td>51,342</td><td>10</td><td>2,674</td><td>32,043 / 3,935 ms</td></tr>
+  <tr><td>arkTS_universal_starter</td><td>ArkTS</td><td>80</td><td>863</td><td>0</td><td>1</td><td>399 / 33 ms</td></tr>
 </table>
-<h3>常见坑</h3>
+<div class="kpi">
+  <div><b>100%</b><span>Kotlin 无错解析（311 个文件）</span></div>
+  <div><b>99.5%</b><span>Swift（431 个文件，2 个失败）</span></div>
+  <div><b>99.9%</b><span>ArkTS（3858 个文件，4 个失败）</span></div>
+  <div><b>100%</b><span>TS/JS（1102 个文件）</span></div>
+</div>
+<p>ArkTS 的 4 个失败文件都是 ArkUI 属性调用参数中带尾逗号（<code>.tabBar(x,)</code>）。上游报告的真实工程解析率约为 94%。验证过程中修复了 5 个问题：</p>
 <ul>
-  <li>手工修改 wiki 里的 hash 让 verify 变绿，会破坏“知识与代码一致”的保证。应该运行 <code>kb compound</code>。</li>
-  <li>wiki 自身的提交又触发 compound，形成循环。用 <code>paths-ignore: wiki/**</code> 加 <code>[skip ci]</code> 避免。</li>
-  <li>路由在运行时拼接时无法静态求值。路由表应保持为常量或资源文件：<code>object Routes</code>、<code>enum Route: String</code>、<code>router_map.json</code>。</li>
-  <li>多个页面锚定同一个共享符号会导致大面积 stale。交给 shared-components / navigation 概念页处理即可。</li>
-  <li>扫描缓存版本由抽取器指纹（嵌入的源码 + 节点表 + 语法 ABI）自动派生，无需手动提升版本号。</li>
+  <li>Kotlin 类型安全导航 <code>composable&lt;T&gt;</code> / <code>entry&lt;T&gt;</code>：tree-sitter 会把 <code>entry&lt;K&gt; {}</code> 误解析为比较表达式；</li>
+  <li>SwiftUI <code>navigationDestination(for:)</code> 使用带关联值的路由枚举；</li>
+  <li>router_map 中悬空的 buildFunction，属于上游仓库 bug，现在报 warning，不再阻断发布；</li>
+  <li><code>file://</code> 被误当成深链；</li>
+  <li>符号解析误选了测试代码。</li>
 </ul>
+<p>nowinandroid、IceCubesApp、HarmonyOS-Cases 上的完整 <code>kb compound</code> 都通过了 verify，其中 HarmonyOS-Cases 生成了 95 个页面、618 个锚点。</p>
+<h3>6.2 axios（JavaScript，只读）</h3>
+<p>扫描 70 个文件、323 个符号，发现 149 份文档。template 核对 174 条断言：verified 89，<b>conflict 0</b>（误报从 38 降到 0）。AGENTS.md 中“默认 adapter <code>['xhr','http','fetch']</code>”被 verified，锚点为 <code>web://lib/defaults/index.js#defaults</code>。claude 核对 AGENTS.md 发现 3 处规范与实现背离，例如规范要求 “never raw <code>Error</code>”，但 <code>toFormData.js</code> 中 <code>new Error('Circular reference detected')</code>。</p>
+<h3>6.3 扫描性能（<code>kb bench</code>，4 核）</h3>
+<table>
+  <tr><th>仓库</th><th>文件 / 符号</th><th>冷扫描</th><th>热扫描（缓存全命中）</th><th>1% 文件变化</th></tr>
+  <tr><td>合成仓库（Kotlin / Swift / ArkTS 各 1000 个文件）</td><td>3000 / 21000</td><td>3711 ms</td><td>463 ms</td><td>974 ms</td></tr>
+  <tr><td>axios 全仓</td><td>243 / 1009</td><td>993 ms</td><td>69 ms</td><td>—</td></tr>
+</table>
+<p>缓存按文件内容 sha256 寻址，缓存版本由抽取器指纹自动派生（嵌入的源码、节点表和语法 ABI）。引用解析会识别 Kotlin package / import、ArkTS <code>import {X} from</code>，以及经由属性类型解析的成员调用。例如 Compose 的 <code>items(...)</code> 被识别为外部 import，不再误连到项目里的同名成员。</p>
 </section>
 
 <!-- ============ 7 ============ -->
 <section class="chapter">
-<h2><span class="num">7</span>局限与路线图</h2>
+<h2><span class="num">7</span>最佳实践与引用</h2>
+<table>
+  <tr><th style="width:24%">实践</th><th>做法</th><th style="width:23%">参考</th></tr>
+  <tr><td>事实与叙述分离</td><td>CLI 抽取所有能确定的事实，并标记 DO NOT EDIT；LLM 只写解释；采用 raw / wiki / schema 三层，index 加 append-only log</td><td>Karpathy《LLM Wiki》</td></tr>
+  <tr><td>按符号增量</td><td>以符号 ID 和归一化 hash 判断变化，注释与格式改动属于 no-op</td><td>FSoft CodeWiki</td></tr>
+  <tr><td>引用失效</td><td>签名变化沿反向引用边传播 k 跳；引用解析识别 import 和作用域</td><td>RepoAgent</td></tr>
+  <tr><td>受限写集</td><td>每个任务只能写自己的页面，越界写入自动回滚</td><td>OpenDeepWiki</td></tr>
+  <tr><td>repo-map 式上下文</td><td>给 LLM 精选的符号签名和源码片段，而不是整个仓库</td><td>Aider repo-map</td></tr>
+  <tr><td>需求可追踪</td><td>用 EARS 句式或 FR-xxx 编号写需求，断言 ID 保持稳定；与代码冲突时以代码为准</td><td>spec-kit、OpenSpec、Kiro、EARS</td></tr>
+  <tr><td>评测流水线</td><td>维护人工标注的 golden set，跟踪 precision / recall，并把指标设为单测下限</td><td>LLM eval 实践</td></tr>
+  <tr><td>skill 保持薄</td><td>skill 只描述何时用、怎么调 CLI；description 用真实 agent 实测并迭代</td><td>Agent Skills 规范</td></tr>
+  <tr><td>先验证再发布</td><td>在 staging 上 verify 后原子 rename；CI 串行执行；LLM 预算按价值分配</td><td>—</td></tr>
+</table>
+<h3>常见坑</h3>
+<ul>
+  <li>手工修改 hash 让 verify 变绿，会破坏“知识与代码一致”的保证。应该运行 <code>kb compound</code>。</li>
+  <li>wiki 自身的提交又触发 compound。用 <code>paths-ignore: wiki/**</code> 加 <code>[skip ci]</code> 避免。</li>
+  <li>路由在运行时拼接，无法静态求值。应把路由表保持为常量、枚举或 router_map。</li>
+  <li>多个页面都锚定同一个共享符号，导致大面积 stale。改由 shared-components / navigation 概念页承担。</li>
+  <li>verify 通过不代表文档正确。还要看 <code>_conflicts.md</code> 和 <code>kb parity</code>。</li>
+</ul>
+</section>
+
+<!-- ============ 8 ============ -->
+<section class="chapter">
+<h2><span class="num">8</span>局限与路线图</h2>
 <h3>当前局限</h3>
 <ul>
-  <li><b>cgo</b>：tree-sitter 语法是 C 代码，构建需要 C 编译器，交叉编译需要对应的工具链。Swift 语法编译时会输出无害的 <code>TOKEN_COUNT redefined</code> 警告，可用 <code>CGO_CFLAGS=-w</code> 屏蔽。</li>
-  <li><b>ArkTS 语法</b>：使用 harmony-contrib/tree-sitter-arkts。上游报告约 94% 的真实工程文件能无错解析。出错的文件会记入 <code>parse_failures</code>，并尽量继续抽取符号，扫描不会中断。</li>
-  <li><b>引用解析</b>：只做名称级解析，没有类型推断，也不建立跨平台的边。同名成员较多时可能偏保守，偶尔会误连（例如 Compose 的 <code>items(...)</code>）。</li>
-  <li><b>template 写作器</b>：生成的页面偏结构化索引，叙述质量需要 claude 模式。claude 模式单个任务约 30–60 秒，可用 <code>--max-llm-tasks</code> 控制成本。</li>
-  <li><b>断言核对</b>：template 模式只覆盖存在性、字面量和数值，纯散文断言会被忽略；行为类断言需要 LLM 做语义核对。</li>
-  <li><b>facts 启发式</b>：iOS 的 API 抽取依赖 <code>send(.post, path:)</code> 这类封装；路由的 <code>route_id</code> 依赖常量名、枚举名或 router_map 的 name。</li>
+  <li><b>cgo</b>：tree-sitter 语法为 C 代码，构建需要 C 编译器。Swift 语法会产生无害的编译警告，可用 <code>CGO_CFLAGS=-w</code> 屏蔽。</li>
+  <li><b>语法覆盖</b>：ArkUI 调用参数中的尾逗号、Swift 带属性的函数类型字面量仍会解析失败。失败会记入 <code>parse_failures</code>，不会中断扫描。</li>
+  <li><b>引用解析</b>：基于名称、作用域和 import，没有完整的类型推断，也不建立跨平台的边。</li>
+  <li><b>facts 启发式</b>：API 抽取只覆盖 Retrofit、<code>send(.method, path:)</code> 和 <code>http.request</code>；真实项目中自研的网络层（如 nowinandroid、IceCubesApp）无法识别。</li>
+  <li><b>断言核对</b>：template 模式对语义类断言的 recall 有限，conflict recall 为 0.56，需要 claude 模式补充；claude 单个任务约 30–60 s。</li>
 </ul>
 <h3>路线图</h3>
 <table>
   <tr><th style="width:12%">阶段</th><th>内容</th></tr>
-  <tr><td>短期</td><td>引入 SCIP / LSP 符号作为可选的精确引用来源；常量取值差异接入 CI 门禁（<code>kb parity --strict</code>）；为 template 写作器增加流程页（flows/）</td></tr>
-  <tr><td>中期</td><td>与 e2epilot 双向打通：按 <code>changed_route_ids</code> 只重跑受影响流程，并把测试结果回写到 requirements；按模块分片并行执行 LLM 任务</td></tr>
-  <tr><td>长期</td><td>多仓库 / 多 wiki 联邦检索；从 PR 评论增量吸收人工知识（经 verify 后才能沉淀）；更多语言（Dart / C++）</td></tr>
+  <tr><td>短期</td><td>可选接入 SCIP / LSP 作为精确引用源；补充网络层适配器（Ktor、OkHttp、Moya、Alamofire、axios）；<code>kb parity --strict</code> 接入 CI；为 template 增加 flows 页</td></tr>
+  <tr><td>中期</td><td>与 e2epilot 双向打通：按 <code>changed_route_ids</code> 只重跑受影响的流程，并把测试结果回写到 requirements；扩大 golden set，覆盖真实项目</td></tr>
+  <tr><td>长期</td><td>多仓库 / 多 wiki 联邦检索；从 PR 评论中吸收人工知识（需经 verify 才能沉淀）；支持更多语言（Dart、C++）</td></tr>
 </table>
-<div class="note">仓库结构：<code>cmd/kb</code> 入口 · <code>internal/extract</code> tree-sitter 抽取 · <code>internal/scan</code> 并行扫描与缓存 · <code>internal/facts</code> 三端事实 · <code>internal/engine</code> diff / plan / compound / claims / parity / impact · <code>internal/wiki</code> 页面与 verify · <code>internal/cli</code> 命令与 MCP · <code>internal/grammars/arkts</code> vendored 语法 · <code>skills/</code> · <code>examples/</code> · <code>demo/</code></div>
+<div class="note">仓库结构：<code>cmd/kb</code> · <code>internal/extract</code>（tree-sitter）· <code>internal/scan</code>（并行扫描、缓存、引用解析）· <code>internal/facts</code> · <code>internal/engine</code>（diff / plan / compound / claims / parity / impact / eval）· <code>internal/wiki</code> · <code>internal/cli</code>（含 MCP）· <code>internal/grammars/arkts</code> · <code>skills/</code> · <code>examples/</code> · <code>demo/</code> · <code>docs/</code></div>
 </section>
 
 </body>
