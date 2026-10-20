@@ -13,7 +13,7 @@ the write set you are given.
 
 - After a merge to `master`/`main` (CI does this automatically, see `.github/workflows/compound.yml`).
 - `kb status` exits 1 (stale pages) or `kb verify` fails with `E_ANCHOR_STALE`.
-- You are invoked by `kb compound --llm claude` with a task prompt (cwd = staging wiki).
+- You are invoked by `kb compound --agent claude|codex|gemini` (or `--llm-cmd`) with a task prompt (cwd = staging wiki).
 
 ## Orchestrator mode (you run the pipeline)
 

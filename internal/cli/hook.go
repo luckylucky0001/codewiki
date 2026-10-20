@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	register(&command{name: "hook", usage: "install --mode post-receive|post-merge [--repo <git dir>] [--kb <path>] [--llm template|claude] [--branches master,main] [--dry-run]",
+	register(&command{name: "hook", usage: "install --mode post-receive|post-merge [--repo <git dir>] [--kb <path>] [--llm template|claude|codex|gemini] [--branches master,main] [--dry-run]",
 		summary: "install a git hook that runs kb compound on every push/merge to master (self-hosted git, GitLab, Gerrit)",
 		help: `post-receive (server side, bare repo): on pushes to the given branches the hook
   serializes on a lock, checks out the pushed head into <git-dir>/codewiki/src (git
@@ -25,7 +25,7 @@ Without --repo the script is printed to stdout.`,
 			fs.String("mode", "post-receive", "post-receive | post-merge")
 			fs.String("repo", "", "git directory (bare repo for post-receive, working clone for post-merge); empty = print")
 			fs.String("kb", "", "path to the kb binary used by the hook (default: this binary)")
-			fs.String("llm", "template", "writer used by the hook: template | claude")
+			fs.String("llm", "template", "writer used by the hook: template | claude | codex | gemini (agent adapters, see kb agents)")
 			fs.String("branches", "master,main", "branches that trigger compound")
 			fs.Bool("dry-run", false, "print the target path and script without writing")
 		},
