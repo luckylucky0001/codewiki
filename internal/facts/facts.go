@@ -516,6 +516,40 @@ func (c *ctx) routes() {
 			add(r)
 		}
 	}
+	// Appyx (element-x-android): each flow node declares
+	// `sealed interface NavTarget : Parcelable { data object Loading : NavTarget
+	// … }`; every nested target is a destination of that flow. Route ids are
+	// flow-qualified (join_room_loading) because target names repeat.
+	for _, sym := range c.g.Symbols {
+		if sym.Lang != "kotlin" || sym.Parent == "" || (sym.Kind != "class" && sym.Kind != "object") {
+			continue
+		}
+		nt := c.g.Get(sym.Parent)
+		if nt == nil || nt.Name != "NavTarget" || nt.Kind != "interface" || !strings.Contains(nt.Signature, "sealed") {
+			continue
+		}
+		flow := ""
+		if nt.Parent != "" {
+			if fl := c.g.Get(nt.Parent); fl != nil {
+				flow = fl.Name
+				for _, suf := range []string{"FlowNode", "Node"} {
+					if strings.HasSuffix(flow, suf) && len(flow) > len(suf) {
+						flow = strings.TrimSuffix(flow, suf)
+						break
+					}
+				}
+			}
+		}
+		rid := Snake(sym.Name)
+		if flow != "" {
+			rid = Snake(flow) + "_" + rid
+		}
+		pattern := rid
+		for _, m := range reValParam.FindAllStringSubmatch(sym.Signature, -1) {
+			pattern += "/{" + m[1] + "}"
+		}
+		add(model.Route{Platform: sym.Platform, RouteID: rid, Pattern: pattern, File: sym.File, Symbol: sym.ID})
+	}
 	// A component whose build() returns NavDestination() is a Navigation
 	// destination even when it is pushed by a computed name
 	// (pushPathByName(item.route)): NextE 44 -> 51 of 51 destination pages.

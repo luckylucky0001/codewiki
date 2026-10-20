@@ -258,3 +258,30 @@ func TestHarmonyNavDestinationComponents(t *testing.T) {
 		t.Fatalf("routes: %+v", rm)
 	}
 }
+
+// element-x-android: Appyx flow nodes declare their destinations as a nested
+// sealed NavTarget.
+func TestKotlinAppyxNavTargets(t *testing.T) {
+	dir := writeTree(t, map[string]string{
+		"features/joinroom/JoinRoomFlowNode.kt": `package a
+
+class JoinRoomFlowNode(buildContext: BuildContext) : BaseFlowNode<JoinRoomFlowNode.NavTarget>(buildContext) {
+    sealed interface NavTarget : Parcelable {
+        @Parcelize
+        data object Loading : NavTarget
+
+        @Parcelize
+        data class Resolving(val roomAlias: String) : NavTarget
+    }
+}
+`,
+		"features/other/Other.kt": "package b\n\nsealed interface Destination {\n    data object Home : Destination\n}\n",
+	})
+	rm := routeMap(extractTree(t, dir, config.Platform{Name: "android", Root: "."}))
+	if r := rm["join_room_resolving"]; r.Pattern != "join_room_resolving/{roomAlias}" || !strings.HasSuffix(r.Symbol, "#JoinRoomFlowNode.NavTarget.Resolving") {
+		t.Errorf("resolving: %+v (all %v)", r, rm)
+	}
+	if _, ok := rm["join_room_loading"]; !ok || len(rm) != 2 {
+		t.Errorf("routes: %v", rm)
+	}
+}
