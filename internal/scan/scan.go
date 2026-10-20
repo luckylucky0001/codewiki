@@ -141,6 +141,19 @@ func ResolveRefs(g *model.Graph) {
 			if ties > 3 {
 				continue // too ambiguous (e.g. common method names)
 			}
+			if ties > 1 {
+				// several equally good candidates: keep same-file ones, or member
+				// candidates whose parent type is referenced; otherwise drop.
+				var keep []*model.Symbol
+				for _, b := range best {
+					if b.File == s.File {
+						keep = append(keep, b)
+					} else if p := g.Get(b.Parent); p != nil && names[p.Name] {
+						keep = append(keep, b)
+					}
+				}
+				best = keep
+			}
 			for _, b := range best {
 				refs[b.ID] = true
 			}

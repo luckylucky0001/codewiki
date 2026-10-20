@@ -16,6 +16,27 @@ func (c *fileCtx) collectCalls(n *sitter.Node, out *[]Call) {
 			*out = append(*out, call)
 		}
 	}
+	if n.Kind() == "arkui_component_expression" {
+		// ArkUI attribute chains are flattened: ... property: id, arguments: (...)
+		for i := uint(0); i+1 < n.ChildCount(); i++ {
+			if n.FieldNameForChild(uint32(i)) != "property" {
+				continue
+			}
+			prop := n.Child(i)
+			args := n.Child(i + 1)
+			if args == nil || n.FieldNameForChild(uint32(i+1)) != "arguments" {
+				continue
+			}
+			call := Call{Callee: c.text(prop), CalleeText: "." + c.text(prop), Line: int(prop.StartPosition().Row) + 1, Enclosing: c.enclosing(prop)}
+			if fn := n.ChildByFieldName("function"); fn != nil {
+				call.Receiver = c.text(fn) + "()"
+			}
+			for j := uint(0); j < args.NamedChildCount(); j++ {
+				call.Args = append(call.Args, c.buildArg(args.NamedChild(j)))
+			}
+			*out = append(*out, call)
+		}
+	}
 	for i := uint(0); i < n.NamedChildCount(); i++ {
 		c.collectCalls(n.NamedChild(i), out)
 	}
@@ -60,6 +81,11 @@ func (c *fileCtx) buildCall(n *sitter.Node) (Call, bool) {
 		} else {
 			calleeNode = n.NamedChild(0)
 			argsNode = childOfKind(n, "value_arguments")
+			if calleeNode != nil && calleeNode.Kind() == "call_expression" && childOfKind(n, "annotated_lambda") != nil {
+				// trailing-lambda form: call_expression(call_expression(f, args), lambda)
+				argsNode = childOfKind(calleeNode, "value_arguments")
+				calleeNode = calleeNode.NamedChild(0)
+			}
 		}
 	case "swift":
 		calleeNode = n.NamedChild(0)
