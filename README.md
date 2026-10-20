@@ -69,7 +69,7 @@ kb verify                        # CI 门禁：exit 0 = wiki 与 HEAD 一致
 kb search "购物车 上限"; kb get features/cart; kb context android/.../CartViewModel.kt
 ```
 
-完整演示：`demo/run.sh`（见 [demo/README.md](demo/README.md)）。
+完整演示：`demo/run.sh`（见 [demo/README.md](demo/README.md)）。PDF 手册：[docs/codewiki-manual.pdf](docs/codewiki-manual.pdf)（源文件 `docs/manual/manual.html`，`docs/build-pdf.sh` 构建）。
 
 ## 配置 `codewiki.yaml`
 
