@@ -117,6 +117,18 @@ type Facts struct {
 	Schemes  map[string][]string `json:"schemes,omitempty"`  // platform -> deeplink schemes
 	Entries  []Entry             `json:"entries,omitempty"`  // activities, main_pages, abilities
 	Warnings []string            `json:"warnings,omitempty"` // non-fatal extractor notes
+	// Navigation edges between screens (UIKit push / present / show / segue).
+	Navigation []NavEdge `json:"navigation,omitempty"`
+}
+
+// NavEdge is one statically known screen-to-screen transition.
+type NavEdge struct {
+	Platform string `json:"platform"`
+	From     string `json:"from"` // route_id
+	To       string `json:"to"`   // route_id
+	Kind     string `json:"kind"` // push | present | show | segue | storyboard
+	File     string `json:"file"`
+	Line     int    `json:"line"`
 }
 
 // Entry is a platform entry point (Activity, UIAbility, main page, SwiftUI App).

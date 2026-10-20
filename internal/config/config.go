@@ -42,9 +42,17 @@ type Config struct {
 	Docs struct {
 		Exclude []string `yaml:"exclude" json:"exclude"`
 	} `yaml:"docs" json:"docs"`
+	Facts struct {
+		// UIKit: UIKit/AppKit view controllers as screens plus push/present/
+		// segue edges (default on; `facts: {uikit: false}` turns it off).
+		UIKit *bool `yaml:"uikit,omitempty" json:"uikit,omitempty"`
+	} `yaml:"facts,omitempty" json:"facts,omitempty"`
 
 	Root string `yaml:"-" json:"root"` // absolute repo root
 }
+
+// UIKitEnabled reports whether UIKit screen extraction is on (default true).
+func (c *Config) UIKitEnabled() bool { return c.Facts.UIKit == nil || *c.Facts.UIKit }
 
 // DefaultLLMCmd is the default non-interactive LLM invocation. The prompt is
 // passed on stdin and the working directory is the staging wiki.

@@ -58,6 +58,7 @@ func Extract(cfg *config.Config, res *scan.Result) *model.Facts {
 		c.resources(p)
 	}
 	c.routes()
+	c.uikit()
 	c.testIDs()
 	c.apis()
 	c.sortAll()
