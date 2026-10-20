@@ -331,6 +331,13 @@ kb install-skills /path/to/app-repo     # 复制到 /path/to/app-repo/.claude/sk
 
 skills 只驱动 CLI，不重新实现逻辑。
 
+实测：在 demo 仓库执行 `kb install-skills .` 后，用 `claude -p --model haiku` 提问。两个问题都在第一步调用了对应的 skill：
+
+- “购物车上限三端分别是多少？引用出处”触发 kb-query，5 轮，$0.008；
+- “wiki 是否与代码一致、三端是否对齐”触发 kb-lint，17 轮，$0.016。
+
+agent 用的命令是 `kb parity`、`kb verify --json` 和 `kb lint-tid`，给出的结论都带符号 ID 出处。第一轮运行暴露了 skill 描述的不足，据此做了修正。transcript、摘要和修正记录见 [demo/sample-output/skills/](demo/sample-output/skills/README.md)，复现脚本为 `demo/skills-demo.sh`。
+
 也可以把 wiki 作为 MCP 工具接入任意 agent：
 
 ```bash

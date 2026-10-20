@@ -1,0 +1,6 @@
+.claude/skills/kb-compound/SKILL.md
+.claude/skills/kb-compound/references/page-contract.md
+.claude/skills/kb-ingest/SKILL.md
+.claude/skills/kb-ingest/references/conventions.md
+.claude/skills/kb-lint/SKILL.md
+.claude/skills/kb-query/SKILL.md
