@@ -665,6 +665,13 @@ func TestRoutesAndLintTidPages(t *testing.T) {
 	if sum != 18 || len(mods) < 3 {
 		t.Fatalf("modules %v", mods)
 	}
+	// query commands cache facts keyed by a tree stamp; the edit below must invalidate it
+	if _, err := os.Stat(filepath.Join(dir, "wiki/.kb/cache/facts.json.gz")); err != nil {
+		t.Fatalf("facts cache not written: %v", err)
+	}
+	if _, v2 := runJSON(t, dir, "routes"); v2["total"].(float64) != 18 {
+		t.Fatalf("cached routes: %v", v2["total"])
+	}
 	// a router_map entry whose buildFunction does not exist is reported
 	rm := filepath.Join(dir, "harmony/entry/src/main/resources/base/profile/router_map.json")
 	b, _ := os.ReadFile(rm)
@@ -677,6 +684,14 @@ func TestRoutesAndLintTidPages(t *testing.T) {
 	_, out, _ := run(t, dir, "routes")
 	if !strings.Contains(out, "routes in") || !strings.Contains(out, "⚠") {
 		t.Fatalf("text output:\n%s", out)
+	}
+	_, v = runJSON(t, dir, "lint-tid", "--top", "3")
+	tops := v["top"].([]any)
+	if len(tops) != 3 || tops[0].(map[string]any)["count"].(float64) < tops[2].(map[string]any)["count"].(float64) {
+		t.Fatalf("lint-tid --top: %v", tops)
+	}
+	if first := tops[0].(map[string]any); first["count"].(float64) < 3 || first["files"].(float64) < 3 {
+		t.Fatalf("top testID should be shared by the three platforms: %v", first)
 	}
 	code, v = runJSON(t, dir, "lint-tid", "--pages")
 	if code != 0 || v["routed_pages"].(float64) != 18 {

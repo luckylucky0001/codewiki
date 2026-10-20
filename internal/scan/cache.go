@@ -2,10 +2,14 @@ package scan
 
 import (
 	"compress/gzip"
+	"crypto/sha256"
 	"encoding/gob"
+	"encoding/hex"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/luckylucky0001/codewiki/internal/config"
@@ -171,4 +175,47 @@ func ScanRepo(cfg *config.Config) (*Result, error) {
 		_ = c.Save(path)
 	}
 	return res, nil
+}
+
+// TreeStamp is a cheap no-change check for query commands: a hash of the
+// config, the cache version and (path, size, mtime) of every non-excluded file
+// under the platform roots — sources and the manifests / router_map / json5
+// files the fact extractors read. No file contents are read.
+func TreeStamp(cfg *config.Config) (string, error) {
+	abs, err := filepath.Abs(cfg.Root)
+	if err != nil {
+		return "", err
+	}
+	h := sha256.New()
+	fmt.Fprintf(h, "%s\n%+v\n%v\n%s\n", CacheVersion, cfg.Platforms, cfg.Exclude, cfg.WikiDir)
+	excl := compileGlobs(append(append([]string{}, cfg.Exclude...), cfg.WikiDir+"/**"))
+	for _, p := range cfg.Platforms {
+		proot := filepath.Join(abs, filepath.FromSlash(p.Root))
+		err := filepath.WalkDir(proot, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return nil
+			}
+			rel, _ := filepath.Rel(abs, path)
+			rel = filepath.ToSlash(rel)
+			if d.IsDir() {
+				if rel != "." && path != proot && (strings.HasPrefix(d.Name(), ".") || matchAny(excl, rel+"/") || matchAny(excl, rel)) {
+					return filepath.SkipDir
+				}
+				return nil
+			}
+			if matchAny(excl, rel) {
+				return nil
+			}
+			info, err := d.Info()
+			if err != nil {
+				return nil
+			}
+			fmt.Fprintf(h, "%s\x00%d\x00%d\n", rel, info.Size(), info.ModTime().UnixNano())
+			return nil
+		})
+		if err != nil {
+			return "", err
+		}
+	}
+	return hex.EncodeToString(h.Sum(nil)), nil
 }

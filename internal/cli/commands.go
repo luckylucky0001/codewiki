@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -164,11 +166,12 @@ Exit 1 when verification fails (nothing is published).`,
 	register(&command{name: "context", usage: "<file>", summary: "pages, facts, symbols and documented requirements anchored in a source file (use before editing or testing it)", run: cmdContext})
 	register(&command{name: "anchor", usage: "<symbol-id...>", summary: "print the current hash of symbols (for page frontmatter)",
 		help: "Uses $KB_GRAPH (set by kb compound for LLM tasks) when present, otherwise scans the repo.", run: cmdAnchor})
-	register(&command{name: "lint-tid", usage: "[--strict] [--pages]", summary: "testID coverage per route and platform",
-		help: "--pages answers \"which routed pages set testIDs\": every route with the testIDs found in its page source (count and list), plus a total.",
+	register(&command{name: "lint-tid", usage: "[--strict] [--pages] [--top N]", summary: "testID coverage per route and platform",
+		help: "--pages answers \"which routed pages set testIDs\": every route with the testIDs found in its page source (count and list), plus a total. --top N lists the most used testIDs (literal and prefix forms as extracted).",
 		flags: func(fs *flag.FlagSet) {
 			fs.Bool("strict", false, "exit 1 when a testID is missing on some platform")
 			fs.Bool("pages", false, "per routed page: which testIDs its page source sets")
+			fs.Int("top", 0, "the N most used testIDs with occurrence and file counts")
 		}, run: cmdLintTid})
 	register(&command{name: "routes", usage: "[--dangling]", summary: "all routes grouped by module (router_map / NavHost / Route enums) with counts, plus dangling buildFunctions",
 		help: "Answers aggregation questions without grepping: how many routes, which modules register the most, which router_map buildFunction has no implementation (--dangling: only those).",
@@ -1205,13 +1208,15 @@ func cmdLintTid(a *app, fs *flag.FlagSet, _ []string) int {
 	if cfg == nil {
 		return code
 	}
-	res, err := scan.ScanRepo(cfg)
+	f, err := queryFacts(cfg)
 	if err != nil {
 		return a.fail(ExitInternal, err)
 	}
-	f := facts.Extract(cfg, res)
 	if boolFlag(fs, "pages") {
 		return lintTidPages(a, f)
+	}
+	if n := intFlag(fs, "top"); n > 0 {
+		return lintTidTop(a, f, n)
 	}
 	var plats []string
 	for _, p := range cfg.Platforms {
@@ -1373,6 +1378,7 @@ Use the Bash tool only for ` + "`kb ...`" + ` commands; open files with the Read
 | testID coverage across platforms | Bash: ` + "`kb lint-tid`" + ` |
 | one route / page / deeplink in detail | Bash: ` + "`kb search <name>`" + `, then ` + "`kb get features/<route_id>`" + `; or Read ` + "`" + w + "/facts/routes.json`" + ` |
 | HTTP APIs and who calls them | Read ` + "`" + w + "/facts/apis.json`" + `; Grep it for a path |
+| most used testIDs (counts) | Bash: ` + "`kb lint-tid --top 10`" + ` |
 | a specific testID | Grep ` + "`" + w + "/facts/testids.json`" + ` for the id |
 | differences across Android / iOS / HarmonyOS (routes, testIDs, APIs, constants) | Bash: ` + "`kb parity`" + ` |
 | which docs / specs are outdated or contradict the code | Bash: ` + "`kb conflicts`" + ` |
@@ -1415,6 +1421,91 @@ func upsertMarkedBlock(path, block string, dry bool) (bool, error) {
 		return true, nil
 	}
 	return true, wiki.WriteFileAtomic(path, []byte(next))
+}
+
+// queryFacts returns the facts for read-only query commands. When nothing
+// under the platform roots changed since the last query (TreeStamp: path,
+// size, mtime), the facts are loaded from wiki/.kb/cache/facts.json.gz instead
+// of rescanning (reference resolution dominates warm scans on large repos).
+func queryFacts(cfg *config.Config) (*model.Facts, error) {
+	stamp, err := scan.TreeStamp(cfg)
+	if err != nil {
+		return nil, err
+	}
+	p := filepath.Join(cfg.WikiPath(), ".kb", "cache", "facts.json.gz")
+	type snap struct {
+		Stamp string       `json:"stamp"`
+		Facts *model.Facts `json:"facts"`
+	}
+	if fh, err := os.Open(p); err == nil {
+		var s snap
+		zr, zerr := gzip.NewReader(fh)
+		if zerr == nil && json.NewDecoder(zr).Decode(&s) == nil && s.Stamp == stamp && s.Facts != nil {
+			fh.Close()
+			return s.Facts, nil
+		}
+		fh.Close()
+	}
+	res, err := scan.ScanRepo(cfg)
+	if err != nil {
+		return nil, err
+	}
+	f := facts.Extract(cfg, res)
+	if st, err := os.Stat(cfg.WikiPath()); err == nil && st.IsDir() {
+		var buf bytes.Buffer
+		zw := gzip.NewWriter(&buf)
+		if json.NewEncoder(zw).Encode(snap{stamp, f}) == nil && zw.Close() == nil {
+			_ = wiki.WriteFileAtomic(p, buf.Bytes())
+		}
+	}
+	return f, nil
+}
+
+// lintTidTop lists the most used testIDs.
+func lintTidTop(a *app, f *model.Facts, n int) int {
+	type top struct {
+		Tid       string   `json:"tid"`
+		Count     int      `json:"count"`
+		Files     int      `json:"files"`
+		Platforms []string `json:"platforms"`
+	}
+	by := map[string]*top{}
+	files := map[string]map[string]bool{}
+	plats := map[string]map[string]bool{}
+	for _, t := range f.TestIDs {
+		if strings.Trim(t.Tid, `"'`+"`") == "" {
+			continue
+		}
+		if by[t.Tid] == nil {
+			by[t.Tid] = &top{Tid: t.Tid}
+			files[t.Tid], plats[t.Tid] = map[string]bool{}, map[string]bool{}
+		}
+		by[t.Tid].Count++
+		files[t.Tid][t.File] = true
+		plats[t.Tid][t.Platform] = true
+	}
+	var out []top
+	for k, v := range by {
+		v.Files = len(files[k])
+		v.Platforms = sortedKeys(plats[k])
+		out = append(out, *v)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Count != out[j].Count {
+			return out[i].Count > out[j].Count
+		}
+		return out[i].Tid < out[j].Tid
+	})
+	if len(out) > n {
+		out = out[:n]
+	}
+	a.emit(map[string]any{"top": out, "distinct_testids": len(by)}, func(w io.Writer) {
+		fmt.Fprintf(w, "%d distinct testIDs; top %d by occurrences (count / files):\n", len(by), len(out))
+		for _, t := range out {
+			fmt.Fprintf(w, "  %-32s %4d  %3d files  %s\n", t.Tid, t.Count, t.Files, strings.Join(t.Platforms, ","))
+		}
+	})
+	return ExitOK
 }
 
 // moduleOf returns the module root of a source file (the part before /src/main/).
@@ -1475,11 +1566,10 @@ func cmdRoutes(a *app, fs *flag.FlagSet, _ []string) int {
 	if cfg == nil {
 		return code
 	}
-	res, err := scan.ScanRepo(cfg)
+	f, err := queryFacts(cfg)
 	if err != nil {
 		return a.fail(ExitInternal, err)
 	}
-	f := facts.Extract(cfg, res)
 	type mod struct {
 		Module string   `json:"module"`
 		Count  int      `json:"count"`
@@ -1589,4 +1679,13 @@ func cmdEval(a *app, fs *flag.FlagSet, _ []string) int {
 		return ExitStale
 	}
 	return ExitOK
+}
+
+func sortedKeys(m map[string]bool) []string {
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
 }
