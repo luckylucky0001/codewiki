@@ -11,15 +11,16 @@
       "status": "verified",
       "anchors": [
         "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.login",
-        "android://app/src/main/java/com/minishop/ui/products/ProductsScreen.kt#ProductsScreen",
-        "harmony://entry/src/main/ets/common/Api.ets#Api.login"
+        "harmony://entry/src/main/ets/common/Api.ets#Api.login",
+        "ios://MiniShop/Features/Login/LoginViewModel.swift#LoginViewModel.login",
+        "android://app/src/main/java/com/minishop/ui/products/ProductsScreen.kt#ProductsScreen"
       ],
       "route_ids": [
         "login",
         "products"
       ],
       "evidence": [
-        "[llm] 登录调用 POST /api/login，成功后 LoginScreen 触发 onLoggedIn 跳转到 products 路由。",
+        "[llm] 三端登录均调用 POST /api/login，Android LoginScreen 登录成功后回调 onLoggedIn 进入 products 路由。",
         "接口 `POST /api/login` 存在（android, harmony, ios）",
         "路由 `products` 存在"
       ]
@@ -39,7 +40,7 @@
         "login"
       ],
       "evidence": [
-        "[llm] LoginViewModel.login 在 password.length \u003c 6 时先返回 false 并设置 invalid_credentials，不会调用 ApiClient.service.login。",
+        "[llm] Android LoginViewModel.login 在 password.length \u003c 6 时直接返回 false，不调用 ApiClient.service.login。",
         "没有可确定性校验的锚点（需要 LLM 语义核对）"
       ]
     },
@@ -53,13 +54,15 @@
       "status": "verified",
       "anchors": [
         "android://app/src/main/java/com/minishop/ui/login/LoginViewModel.kt#LoginViewModel.login",
-        "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.save"
+        "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.save",
+        "harmony://entry/src/main/ets/common/TokenStore.ets#TokenStore.save",
+        "ios://MiniShop/Networking/APIClient.swift#TokenStore.save"
       ],
       "route_ids": [
         "login"
       ],
       "evidence": [
-        "[llm] 登录成功后 LoginViewModel.login 调用 TokenStore.getInstance().save(resp.token) 保存 token。",
+        "[llm] Android 登录成功后调用 TokenStore.getInstance().save(resp.token) 持久化 token，三端均有 TokenStore.save。",
         "符号 `TokenStore.save` 存在（3 处）"
       ]
     },
@@ -80,7 +83,7 @@
         "login"
       ],
       "evidence": [
-        "[llm] LoginScreen 的代码中没有处理 minishop://login?token= 的 token 参数并在渲染前存储的逻辑。",
+        "[llm] LoginScreen/LoginPage 源码中未见处理 minishop://login?token= 参数并在渲染前存储 token 的逻辑。",
         "deeplink `minishop://login` 存在"
       ]
     },
@@ -93,14 +96,14 @@
       "style": "kiro",
       "status": "conflict",
       "anchors": [
-        "android://app/src/main/java/com/minishop/ui/login/LoginViewModel.kt#LoginViewModel.login",
-        "android://app/src/main/java/com/minishop/ui/login/LoginScreen.kt#LoginScreen"
+        "android://app/src/main/java/com/minishop/ui/login/LoginScreen.kt#LoginScreen",
+        "android://app/src/main/java/com/minishop/ui/login/LoginViewModel.kt#LoginViewModel.login"
       ],
       "route_ids": [
         "login"
       ],
       "evidence": [
-        "[llm] 用户名为空时 LoginViewModel.login 仅设置 invalid_credentials 并返回 false，没有任何短信验证对话框。",
+        "[llm] 用户名为空时 LoginViewModel.login 仅设置 error=invalid_credentials 并返回 false，代码中没有短信验证弹窗。",
         "testID `login_submit` 存在"
       ]
     },
@@ -124,7 +127,7 @@
         "products"
       ],
       "evidence": [
-        "[llm] 三端均暴露 nav_back 与 product_list 这两个 testID。",
+        "[llm] 三端均提供 testID nav_back 与 product_list（Android testTag、Harmony id）。",
         "testID `nav_back` 存在",
         "testID `product_list` 存在"
       ]
@@ -145,8 +148,16 @@
         "android://app/src/main/java/com/minishop/ui/products/ProductDetailScreen.kt#ProductDetailScreen",
         "android://app/src/main/java/com/minishop/ui/products/ProductsScreen.kt#ProductsScreen",
         "harmony://entry/src/main/ets/pages/CartPage.ets#CartBuilder",
+        "harmony://entry/src/main/ets/pages/CheckoutPage.ets#CheckoutBuilder",
+        "harmony://entry/src/main/ets/pages/LoginPage.ets#LoginBuilder",
+        "harmony://entry/src/main/ets/pages/OrderDetailPage.ets#OrderDetailBuilder",
+        "harmony://entry/src/main/ets/pages/ProductDetailPage.ets#ProductDetailBuilder",
         "harmony://entry/src/main/ets/pages/ProductsPage.ets#ProductsBuilder",
         "ios://MiniShop/Features/Cart/CartView.swift#CartView",
+        "ios://MiniShop/Features/Checkout/CheckoutView.swift#CheckoutView",
+        "ios://MiniShop/Features/Login/LoginView.swift#LoginView",
+        "ios://MiniShop/Features/Order/OrderDetailView.swift#OrderDetailView",
+        "ios://MiniShop/Features/Products/ProductDetailView.swift#ProductDetailView",
         "ios://MiniShop/Features/Products/ProductsView.swift#ProductsView"
       ],
       "route_ids": [
@@ -158,7 +169,7 @@
         "order_detail"
       ],
       "evidence": [
-        "[llm] 三端的 deeplink 模式一致：login、products、product/{id}、cart、checkout、order/{id}。",
+        "[llm] 三端的 6 个路由（login/products/product_detail/cart/checkout/order_detail）使用相同的 minishop:// 深链 pattern。",
         "路由 `login` 存在",
         "路由 `products` 存在",
         "路由 `product/{id}` 存在",
@@ -174,7 +185,7 @@
       "line": 8,
       "text": "HarmonyOS 使用 Navigation 系统路由表 `router_map.json`（buildFunction 形如 `ProductDetailBuilder`），不再使用 `main_pages.json` 承载业务页面。",
       "style": "statement",
-      "status": "unverifiable",
+      "status": "verified",
       "anchors": [
         "harmony://entry/src/main/ets/pages/ProductDetailPage.ets#ProductDetailBuilder"
       ],
@@ -182,7 +193,7 @@
         "product_detail"
       ],
       "evidence": [
-        "[llm] ProductDetailBuilder 存在，但 main_pages.json 仍存在且其内容未提供，无法确认其是否不再承载业务页面。",
+        "[llm] Harmony 页面以 ProductDetailBuilder 等 @Builder 导出作为 Navigation 路由表的 buildFunction。",
         "文件 `router_map.json` 存在（harmony/entry/src/main/resources/base/profile/router_map.json）",
         "符号 `ProductDetailBuilder` 存在（1 处）",
         "文件 `main_pages.json` 存在（harmony/entry/src/main/resources/base/profile/main_pages.json）"
@@ -200,7 +211,7 @@
         "cart"
       ],
       "evidence": [
-        "[llm] 所给代码中没有 ?token=\u0026cart= 测试参数注入的实现，也无法确认所有页面都支持深链。",
+        "[llm] 给出的源码中没有统一的深链解析或 ?token=\u0026cart= 状态注入逻辑可供核对。",
         "没有可确定性校验的锚点（需要 LLM 语义核对）"
       ]
     },
@@ -221,10 +232,10 @@
         "cart"
       ],
       "evidence": [
-        "[llm] 三端购物车上限常量实际均为 50，而非文档所写的 10。",
+        "[llm] 代码中上限为 Android 50、Harmony 50、iOS 99，而非文档所写的 10。",
         "代码中 `CartViewModel.MAX_CART_ITEMS` = 50（android），文档写的是 10",
         "代码中 `MAX_CART_ITEMS` = 50（harmony），文档写的是 10",
-        "代码中 `CartViewModel.maxCartItems` = 50（ios），文档写的是 10"
+        "代码中 `CartViewModel.maxCartItems` = 99（ios），文档写的是 10"
       ]
     },
     {
@@ -239,14 +250,16 @@
         "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.addToCart",
         "android://app/src/main/java/com/minishop/ui/products/ProductDetailScreen.kt#ProductDetailScreen",
         "harmony://entry/src/main/ets/common/Api.ets#Api.addToCart",
-        "harmony://entry/src/main/ets/pages/ProductDetailPage.ets#ProductDetailPage.build"
+        "harmony://entry/src/main/ets/pages/ProductDetailPage.ets#ProductDetailPage.build",
+        "ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.addItem",
+        "ios://MiniShop/Features/Products/ProductDetailView.swift#ProductDetailView.body"
       ],
       "route_ids": [
         "product_detail",
         "cart"
       ],
       "evidence": [
-        "[llm] 加入购物车按钮 testID 为 add_to_cart，最终调用 POST /api/cart。",
+        "[llm] 加入购物车调用 POST /api/cart，按钮 testID 为 add_to_cart。",
         "接口 `POST /api/cart` 存在（android, harmony, ios）",
         "testID `add_to_cart` 存在"
       ]
@@ -261,14 +274,16 @@
       "status": "verified",
       "anchors": [
         "android://app/src/main/java/com/minishop/ui/cart/CartScreen.kt#CartScreen",
+        "harmony://entry/src/main/ets/pages/CartPage.ets#CartBuilder",
         "harmony://entry/src/main/ets/pages/CartPage.ets#CartPage.build",
+        "ios://MiniShop/Features/Cart/CartView.swift#CartView",
         "ios://MiniShop/Features/Cart/CartView.swift#CartView.body"
       ],
       "route_ids": [
         "cart"
       ],
       "evidence": [
-        "[llm] 购物车页路由为 cart，结算按钮 testID 为 cart_checkout。",
+        "[llm] 购物车路由为 cart，结算按钮 testID 为 cart_checkout。",
         "路由 `cart` 存在",
         "testID `cart_checkout` 存在"
       ]
@@ -287,11 +302,11 @@
         "android://app/src/main/java/com/minishop/ui/order/OrderDetailScreen.kt#OrderDetailScreen"
       ],
       "route_ids": [
-        "order_detail",
-        "checkout"
+        "checkout",
+        "order_detail"
       ],
       "evidence": [
-        "[llm] 代码中的下单接口是 POST /api/orders，不存在 POST /api/order/create；订单详情路由 minishop://order/{id} 存在。",
+        "[llm] 下单接口实际为 POST /api/orders 而非 /api/order/create；订单详情深链 minishop://order/{id} 存在。",
         "接口 `POST /api/order/create` 在代码中不存在",
         "deeplink `minishop://order/{id}` 存在"
       ]
@@ -313,7 +328,7 @@
         "product_detail"
       ],
       "evidence": [
-        "[llm] 三端均通过 GET /api/products/{id} 获取商品详情。",
+        "[llm] 三端均调用 GET /api/products/{id} 获取商品详情。",
         "接口 `GET /api/products/{id}` 存在（android, harmony, ios）"
       ]
     },
@@ -334,7 +349,7 @@
         "login"
       ],
       "evidence": [
-        "[llm] 登录直接以 username + password 调用 POST /api/login，代码中没有 POST /api/sms/send 与短信验证码流程。",
+        "[llm] 登录仅使用用户名+密码调用 POST /api/login，代码中没有 /api/sms/send 或短信验证码流程。",
         "接口 `POST /api/sms/send` 在代码中不存在",
         "接口 `POST /api/login` 存在（android, harmony, ios）"
       ]
@@ -356,7 +371,7 @@
         "login"
       ],
       "evidence": [
-        "[llm] 登录页包含 login_username、login_password、login_submit 三个 testID。",
+        "[llm] 登录页含 login_username、login_password 输入框与 login_submit 按钮。",
         "testID `login_username` 存在",
         "testID `login_password` 存在",
         "testID `login_submit` 存在"
@@ -380,7 +395,7 @@
         "products"
       ],
       "evidence": [
-        "[llm] 登录成功后触发 onLoggedIn 跳转到 products 路由（minishop://products）。",
+        "[llm] products 路由对应深链 minishop://products，Android 登录成功后触发 onLoggedIn 跳转。",
         "deeplink `minishop://products` 存在"
       ]
     },
@@ -400,7 +415,7 @@
         "login"
       ],
       "evidence": [
-        "[llm] Android 与 iOS 的登录逻辑集中在 LoginViewModel.login（HarmonyOS 则在 Api.login 与页面中）。",
+        "[llm] Android 与 iOS 的登录逻辑均集中在 LoginViewModel.login。",
         "符号 `LoginViewModel.login` 存在（2 处）"
       ]
     },
@@ -420,7 +435,7 @@
         "login"
       ],
       "evidence": [
-        "[llm] 代码中不存在 SessionManager，token 实际由 TokenStore.save 持久化。",
+        "[llm] 代码中不存在 SessionManager，token 实际由 TokenStore.save 保存。",
         "符号 `SessionManager.saveToken()` 在代码中不存在（类型 `SessionManager` 也不存在）"
       ]
     },
@@ -441,7 +456,7 @@
         "cart"
       ],
       "evidence": [
-        "[llm] Android/iOS 的购物车状态在 CartViewModel，HarmonyOS 在 CartStore。",
+        "[llm] Android/iOS 购物车逻辑在 CartViewModel，Harmony 在 CartStore。",
         "符号 `CartViewModel` 存在（2 处）",
         "符号 `CartViewModel` 存在（2 处）",
         "符号 `CartStore` 存在（1 处）"
@@ -454,17 +469,17 @@
       "line": 4,
       "text": "三端共享上限常量，接口 `POST /api/cart`。",
       "style": "statement",
-      "status": "verified",
+      "status": "conflict",
       "anchors": [
-        "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.addToCart",
-        "harmony://entry/src/main/ets/common/Api.ets#Api.addToCart",
-        "ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.addItem"
+        "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.MAX_CART_ITEMS",
+        "harmony://entry/src/main/ets/common/CartStore.ets#MAX_CART_ITEMS",
+        "ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.maxCartItems"
       ],
       "route_ids": [
         "cart"
       ],
       "evidence": [
-        "[llm] 三端各自定义上限常量（取值同为 50）并均调用 POST /api/cart；“共享”指取值一致而非同一份代码。",
+        "[llm] 三端均调用 POST /api/cart，但上限常量各自定义且值不同（Android 50、Harmony 50、iOS 99），并非共享。",
         "接口 `POST /api/cart` 存在（android, harmony, ios）"
       ]
     },
@@ -479,14 +494,17 @@
       "anchors": [
         "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.addToCart",
         "android://app/src/main/java/com/minishop/ui/products/ProductDetailScreen.kt#ProductDetailScreen",
-        "harmony://entry/src/main/ets/common/Api.ets#Api.addToCart"
+        "harmony://entry/src/main/ets/common/Api.ets#Api.addToCart",
+        "harmony://entry/src/main/ets/pages/ProductDetailPage.ets#ProductDetailPage.build",
+        "ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.addItem",
+        "ios://MiniShop/Features/Products/ProductDetailView.swift#ProductDetailView.body"
       ],
       "route_ids": [
         "product_detail",
         "cart"
       ],
       "evidence": [
-        "[llm] 点击 add_to_cart 后 cart.addItem 调用 POST /api/cart。",
+        "[llm] 点击 add_to_cart 调用 addItem，进而请求 POST /api/cart。",
         "接口 `POST /api/cart` 存在（android, harmony, ios）",
         "testID `add_to_cart` 存在"
       ]
@@ -501,13 +519,14 @@
       "status": "verified",
       "anchors": [
         "android://app/src/main/java/com/minishop/ui/cart/CartScreen.kt#CartScreen",
-        "harmony://entry/src/main/ets/pages/CartPage.ets#CartPage.build"
+        "harmony://entry/src/main/ets/pages/CartPage.ets#CartPage.build",
+        "ios://MiniShop/Features/Cart/CartView.swift#CartView.body"
       ],
       "route_ids": [
         "cart"
       ],
       "evidence": [
-        "[llm] cart_checkout 按钮的 enabled 条件为购物车总数大于 0，空购物车时禁用。",
+        "[llm] cart_checkout 按钮在 total() 为 0 时 enabled=false。",
         "testID `cart_checkout` 存在"
       ]
     },
@@ -523,14 +542,16 @@
         "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.addToCart",
         "android://app/src/main/java/com/minishop/ui/products/ProductDetailScreen.kt#ProductDetailScreen",
         "harmony://entry/src/main/ets/common/Api.ets#Api.addToCart",
-        "harmony://entry/src/main/ets/pages/ProductDetailPage.ets#ProductDetailPage.build"
+        "harmony://entry/src/main/ets/pages/ProductDetailPage.ets#ProductDetailPage.build",
+        "ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.addItem",
+        "ios://MiniShop/Features/Products/ProductDetailView.swift#ProductDetailView.body"
       ],
       "route_ids": [
         "product_detail",
         "cart"
       ],
       "evidence": [
-        "[llm] 商品详情页的 add_to_cart 按钮通过 POST /api/cart 加入购物车。",
+        "[llm] 商品详情页 add_to_cart 按钮调用购物车 addItem 并请求 POST /api/cart。",
         "接口 `POST /api/cart` 存在（android, harmony, ios）",
         "testID `add_to_cart` 存在"
       ]
@@ -551,7 +572,7 @@
         "cart"
       ],
       "evidence": [
-        "[llm] MAX_CART_ITEMS 在代码中为 50，而非文档所写的 99。",
+        "[llm] Android 与 Harmony 的 MAX_CART_ITEMS 均为 50，而非 99（iOS maxCartItems 为 99）。",
         "代码中 `CartViewModel.MAX_CART_ITEMS` = 50（android），文档写的是 99",
         "代码中 `MAX_CART_ITEMS` = 50（harmony），文档写的是 99"
       ]
@@ -568,14 +589,16 @@
         "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.createOrder",
         "android://app/src/main/java/com/minishop/ui/order/OrderDetailScreen.kt#OrderDetailScreen",
         "harmony://entry/src/main/ets/common/Api.ets#Api.createOrder",
-        "harmony://entry/src/main/ets/pages/OrderDetailPage.ets#OrderDetailPage.build"
+        "harmony://entry/src/main/ets/pages/OrderDetailPage.ets#OrderDetailPage.build",
+        "ios://MiniShop/Features/Checkout/CheckoutView.swift#CheckoutView.placeOrder",
+        "ios://MiniShop/Features/Order/OrderDetailView.swift#OrderDetailView.body"
       ],
       "route_ids": [
         "checkout",
         "order_detail"
       ],
       "evidence": [
-        "[llm] 下单调用 POST /api/orders，订单详情页展示 order_status。",
+        "[llm] 结算调用 POST /api/orders，订单详情页展示 order_status。",
         "接口 `POST /api/orders` 存在（android, harmony, ios）",
         "testID `order_status` 存在"
       ]
@@ -592,7 +615,7 @@
         "checkout"
       ],
       "evidence": [
-        "[llm] 代码中不存在 POST /api/coupons/apply，也没有优惠券相关实现。",
+        "[llm] 代码中不存在 POST /api/coupons/apply 接口，也没有优惠券相关 UI。",
         "接口 `POST /api/coupons/apply` 在代码中不存在"
       ]
     },
@@ -613,7 +636,7 @@
         "cart"
       ],
       "evidence": [
-        "[llm] 三端均注册了 cart 路由，深链为 minishop://cart。",
+        "[llm] cart 路由在三端均注册深链 minishop://cart。",
         "deeplink `minishop://cart` 存在"
       ]
     }

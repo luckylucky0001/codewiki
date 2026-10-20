@@ -307,7 +307,7 @@ pages (4):
   pages/features/cart.md — 购物车（cart） [current] anchors=5
   pages/features/product_detail.md — 商品详情（product_detail） [current] anchors=5</code></pre>
 <h3>5.3 claude 模式</h3>
-<p>claude 模式用 <code>claude -p --model sonnet</code>，每次 compound 最多 2 个 LLM 任务，其余用 template，首次全量也用 template，以控制成本。所有步骤 verify 均通过。LLM 写出的页面带有三端对照表、失败处理差异和测试要点。例如结算页指出“iOS 的 <code>placeOrder</code> 用 <code>try?</code> 吞掉错误，失败时不跳转也没有提示”。购物车页发现了示例代码中的一个真实问题：<code>preload</code> 写入的 <code>pending</code> 列表从未被消费。CLI 会自动回滚写集之外的写入；集成测试用一个伪造的 LLM 写 <code>index.md</code>，验证这次写入被回滚。</p>
+<p>claude 模式用 <code>claude -p --model sonnet</code>，每次 compound 最多 2 个 LLM 任务，其余用 template，首次全量也用 template，以控制成本。所有步骤 verify 均通过，最终得到 24 个页面、356 个锚点。断言核对结果为 <b>verified 18 / conflict 8 / unverifiable 2</b>，比 template 多出 2 条语义冲突：一条是上面的 LOGIN-R2.2；另一条是 spec-kit <code>plan.md</code> 写的“三端共享上限常量”，LLM 给出的结论是“上限常量各自定义且值不同（Android 50、Harmony 50、iOS 99），并非共享”。LLM 写出的页面带有三端对照表、失败处理差异和测试要点。例如结算页指出“iOS 的 <code>placeOrder</code> 用 <code>try?</code> 吞掉错误，失败时不跳转也没有提示”。购物车页发现了示例代码中的一个真实问题：<code>preload</code> 写入的 <code>pending</code> 列表从未被消费。CLI 会自动回滚写集之外的写入；集成测试用一个伪造的 LLM 写 <code>index.md</code>，验证这次写入被回滚。</p>
 <h3>5.4 真实仓库：axios（只读）</h3>
 <table>
   <tr><th>指标</th><th>结果</th></tr>

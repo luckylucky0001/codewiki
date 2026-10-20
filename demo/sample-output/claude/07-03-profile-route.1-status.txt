@@ -1,4 +1,4 @@
-head f484520, last compound 95f7b7c2f5fb472da2f827e321679805c9be8e7d
+head ad4e3b0, last compound 56ad6811ddfc6d46ed83007a8eb203bbe7504ab5
 stale facts/android/routes.md (generated facts out of date)
 stale facts/android/symbols.md (generated facts out of date)
 stale facts/android/testids.md (generated facts out of date)
@@ -10,3 +10,5 @@ stale facts/ios/symbols.md (generated facts out of date)
 stale facts/ios/testids.md (generated facts out of date)
 stale facts/routes.json (generated facts out of date)
 stale facts/testids.json (generated facts out of date)
+stale pages/concepts/navigation.md (3 anchors: MiniShopNavHost, Routes, Route)
+stale pages/parity.md (generated facts out of date)

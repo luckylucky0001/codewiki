@@ -1,23 +1,28 @@
-compound 20261020T163411-e214322: base  → head e214322, mode full, llm template
+compound 20261020T170237-4e93a3f: base  → head 4e93a3f, mode full, llm template
 mode full — no compatible baseline graph (first compound or graph version change)
+changed_route_ids: [cart checkout login order_detail product_detail products]; changed_files: 42
 stats: symbols=214 changes=map[added:214] module_ratio=1.00 structural_ratio=1.00 hops=1 propagated=0
   t01-_conflicts recheck pages/_conflicts.md            write_set=[.kb/ingest/verdicts.json] reasons=[full_rebuild]
-  t02-features-cart create  pages/features/cart.md         write_set=[pages/features/cart.md] reasons=[full_rebuild]
-  t03-features-checkout create  pages/features/checkout.md     write_set=[pages/features/checkout.md] reasons=[full_rebuild]
-  t04-features-login create  pages/features/login.md        write_set=[pages/features/login.md] reasons=[full_rebuild]
-  t05-features-order_detail create  pages/features/order_detail.md write_set=[pages/features/order_detail.md] reasons=[full_rebuild]
-  t06-features-product_detail create  pages/features/product_detail.md write_set=[pages/features/product_detail.md] reasons=[full_rebuild]
-  t07-features-products create  pages/features/products.md     write_set=[pages/features/products.md] reasons=[full_rebuild]
-  t08-overview create  pages/overview.md              write_set=[pages/overview.md] reasons=[full_rebuild]
+  t02-concepts-navigation create  pages/concepts/navigation.md   write_set=[pages/concepts/navigation.md] reasons=[full_rebuild]
+  t03-concepts-shared-components create  pages/concepts/shared-components.md write_set=[pages/concepts/shared-components.md] reasons=[full_rebuild]
+  t04-features-cart create  pages/features/cart.md         write_set=[pages/features/cart.md] reasons=[full_rebuild]
+  t05-features-checkout create  pages/features/checkout.md     write_set=[pages/features/checkout.md] reasons=[full_rebuild]
+  t06-features-login create  pages/features/login.md        write_set=[pages/features/login.md] reasons=[full_rebuild]
+  t07-features-order_detail create  pages/features/order_detail.md write_set=[pages/features/order_detail.md] reasons=[full_rebuild]
+  t08-features-product_detail create  pages/features/product_detail.md write_set=[pages/features/product_detail.md] reasons=[full_rebuild]
+  t09-features-products create  pages/features/products.md     write_set=[pages/features/products.md] reasons=[full_rebuild]
+  t10-overview create  pages/overview.md              write_set=[pages/overview.md] reasons=[full_rebuild]
   task t01-_conflicts               ok       template 
-  task t02-features-cart            ok       template 
-  task t03-features-checkout        ok       template 
-  task t04-features-login           ok       template 
-  task t05-features-order_detail    ok       template 
-  task t06-features-product_detail  ok       template 
-  task t07-features-products        ok       template 
-  task t08-overview                 ok       template 
-changed files: 17
+  task t02-concepts-navigation      ok       template 
+  task t03-concepts-shared-components ok       template 
+  task t04-features-cart            ok       template 
+  task t05-features-checkout        ok       template 
+  task t06-features-login           ok       template 
+  task t07-features-order_detail    ok       template 
+  task t08-features-product_detail  ok       template 
+  task t09-features-products        ok       template 
+  task t10-overview                 ok       template 
+changed files: 19
   .kb/graph.json
   .kb/ingest/verdicts.json
   .kb/plan.json
@@ -28,6 +33,8 @@ changed files: 17
   llms.txt
   log.md
   pages/_conflicts.md
+  pages/concepts/navigation.md
+  pages/concepts/shared-components.md
   pages/features/cart.md
   pages/features/checkout.md
   pages/features/login.md
@@ -35,5 +42,5 @@ changed files: 17
   pages/features/product_detail.md
   pages/features/products.md
   pages/overview.md
-verify PASS: 20 pages, 288 anchors, 0 errors, 0 warnings
-published 17 changed file(s) to demo/output/<run>/repo/wiki
+verify PASS: 23 pages, 336 anchors, 0 errors, 0 warnings
+published 19 changed file(s) to demo/output/<run>/repo/wiki

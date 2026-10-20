@@ -1,9 +1,10 @@
-ingest 20261020T163307-d6b5ebe: base  → head d6b5ebe, mode ingest, llm cmd
+ingest 20261020T170142-28130b3: base  → head 28130b3, mode ingest, llm cmd
 mode ingest — check ingested documents against code
+changed_route_ids: [cart checkout login order_detail product_detail products]; changed_files: 42
 stats: symbols=214 changes=map[added:214] module_ratio=1.00 structural_ratio=1.00 hops=1 propagated=0
   t01-_conflicts create  pages/_conflicts.md            write_set=[.kb/ingest/verdicts.json] reasons=[full_rebuild]
   task t01-_conflicts               ok       cmd 
-changed files: 31
+changed files: 32
   .kb/ingest/verdicts.json
   .kb/plan.json
   .kb/update_record.json
@@ -27,6 +28,7 @@ changed files: 31
   llms.txt
   log.md
   pages/_conflicts.md
+  pages/parity.md
   raw/docs/.kiro/specs/login/requirements.md
   raw/docs/.kiro/steering/product.md
   raw/docs/docs/adr/0001-navigation.md
@@ -35,5 +37,5 @@ changed files: 31
   raw/docs/manifest.json
   raw/docs/specs/001-cart/plan.md
   raw/docs/specs/001-cart/spec.md
-verify PASS: 13 pages, 123 anchors, 0 errors, 0 warnings
-published 31 changed file(s) to demo/output/<run>/repo/wiki
+verify PASS: 14 pages, 166 anchors, 0 errors, 0 warnings
+published 32 changed file(s) to demo/output/<run>/repo/wiki

@@ -1,3 +1,5 @@
-kb compound: head=f484520 base=95f7b7c mode=incremental tasks=2 (anchors changed ∪ signature changes propagated along reference edges)
-  [ok] create   pages/features/profile.md          cmd 
-  [ok] update   pages/overview.md                  cmd 
+kb compound: head=ad4e3b0 base=56ad681 mode=incremental tasks=4 (anchors changed ∪ signature changes propagated along reference edges)
+  [ok] update   pages/concepts/navigation.md       cmd 
+  [ok] update   pages/concepts/shared-components.md cmd 
+  [ok] create   pages/features/profile.md          template 
+  [ok] update   pages/overview.md                  template 

@@ -8,6 +8,10 @@
 
 - [总览](pages/overview.md) — routes: `cart`, `checkout`, `login`, `order_detail`, `product_detail`, `products`, `profile`
 
+## 三端一致性 parity（生成）
+
+- [三端一致性（parity）](pages/parity.md)
+
 ## 功能 features
 
 - [购物车（cart）](pages/features/cart.md) — routes: `cart`
@@ -17,6 +21,11 @@
 - [商品详情（product_detail）](pages/features/product_detail.md) — routes: `product_detail`
 - [商品列表（products）](pages/features/products.md) — routes: `products`
 - [个人中心（profile）](pages/features/profile.md) — routes: `profile`
+
+## 概念 concepts
+
+- [导航与深链](pages/concepts/navigation.md)
+- [共享组件](pages/concepts/shared-components.md)
 
 ## 文档核对 conflicts
 

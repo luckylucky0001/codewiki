@@ -1,5 +1,6 @@
-head 71a86be, last compound e214322e3d20991b7f435ce10baebf6609e9006c
-stale facts/requirements.json (5 anchors: CartViewModel.MAX_CART_ITEMS, MAX_CART_ITEMS, CartViewModel.maxCartItems, …+2)
-stale pages/_conflicts.md (3 anchors: CartViewModel.MAX_CART_ITEMS, MAX_CART_ITEMS, CartViewModel.maxCartItems)
+head ad013ce, last compound 4e93a3f867ca04d292fd60fe042cce330ac0601b
+stale facts/requirements.json (4 anchors: CartViewModel.MAX_CART_ITEMS, MAX_CART_ITEMS, CartViewModel.MAX_CART_ITEMS, …+1)
+stale pages/_conflicts.md (2 anchors: CartViewModel.MAX_CART_ITEMS, MAX_CART_ITEMS)
 stale pages/features/cart.md (1 anchors: CartViewModel.MAX_CART_ITEMS)
 stale pages/features/product_detail.md (1 anchors: CartViewModel.MAX_CART_ITEMS)
+stale pages/parity.md (generated facts out of date)
