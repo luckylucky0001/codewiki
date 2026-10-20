@@ -477,3 +477,36 @@ func TestAgentsCommand(t *testing.T) {
 		t.Fatal("unknown agent must be a usage error")
 	}
 }
+
+// The task log keeps the agent's stdout (e.g. codex --json events) and its
+// stderr: both are copied concurrently, so the log buffer must be locked.
+// Before the fix the log of a real codex run held only the stderr warning.
+func TestAgentTaskLogKeepsStdoutAndStderr(t *testing.T) {
+	dir := repo(t)
+	run(t, dir, "init")
+	run(t, dir, "compound")
+	testutil.Git(t, dir, "add", "-A")
+	testutil.Git(t, dir, "commit", "-qm", "wiki")
+	commitChange(t, dir, "01-cart-limit")
+	fake := `cat >/dev/null; for i in $(seq 1 3000); do echo "{\"type\":\"item.completed\",\"n\":$i}"; echo "warn $i" >&2; done; echo '{"type":"turn.completed","usage":{"input_tokens":7,"output_tokens":1}}'`
+	code, v := runJSON(t, dir, "compound", "--agent", "codex", "--llm-cmd", fake, "--keep-work", "--fallback")
+	if code != 0 {
+		t.Fatal(v)
+	}
+	logs, _ := filepath.Glob(filepath.Join(dir, ".kb-work", "*", "tasks", "*.log"))
+	if len(logs) == 0 {
+		t.Fatal("no task logs")
+	}
+	for _, l := range logs {
+		b, _ := os.ReadFile(l)
+		s := string(b)
+		if strings.Count(s, `"type":"item.completed"`) != 3000 || strings.Count(s, "warn ") != 3000 || !strings.Contains(s, "turn.completed") {
+			t.Fatalf("%s: stdout %d/3000, stderr %d/3000", l, strings.Count(s, `"type":"item.completed"`), strings.Count(s, "warn "))
+		}
+	}
+	for _, tk := range v["result"].(map[string]any)["tasks"].([]any) {
+		if u, _ := tk.(map[string]any)["usage"].(map[string]any); u == nil || u["input_tokens"] != float64(7) {
+			t.Fatalf("usage: %v", tk)
+		}
+	}
+}

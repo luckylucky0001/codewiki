@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/luckylucky0001/codewiki/internal/config"
@@ -683,7 +684,10 @@ func (e *taskEnv) runCmd(t Task) ([]string, *agents.Usage, error) {
 	cmd := exec.CommandContext(ctx, "sh", "-c", cmdline)
 	cmd.Dir = e.staging
 	cmd.Stdin = strings.NewReader(prompt)
-	var out, stdout bytes.Buffer
+	// stdout and stderr are copied by two goroutines: the shared log buffer
+	// must be locked (bytes.Buffer is not safe for concurrent writes).
+	var out lockedBuffer
+	var stdout bytes.Buffer
 	cmd.Stdout, cmd.Stderr = io.MultiWriter(&out, &stdout), &out
 	env := os.Environ()
 	if e.o.KBPath != "" {
@@ -903,6 +907,24 @@ func advanceBaseline(wikiDir string, g *model.Graph, head, llm string) error {
 	}
 	writeJSON(filepath.Join(wikiDir, ".kb", "state.json"), State{LastSHA: head, GraphVersion: model.GraphVersion, PromptVersion: PromptVersion, LLM: llm, UpdatedAt: time.Now().UTC().Format(time.RFC3339)})
 	return nil
+}
+
+// lockedBuffer is a bytes.Buffer safe for concurrent writers.
+type lockedBuffer struct {
+	mu sync.Mutex
+	b  bytes.Buffer
+}
+
+func (l *lockedBuffer) Write(p []byte) (int, error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return l.b.Write(p)
+}
+
+func (l *lockedBuffer) Bytes() []byte {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return l.b.Bytes()
 }
 
 func usageNote(u *agents.Usage) string {
