@@ -199,16 +199,18 @@ var registry = map[string]*Adapter{
 	"gemini": {
 		Name: "gemini", Display: "Gemini CLI",
 		// gemini: stdin is the prompt, -p text is appended to it and forces
-		// headless mode; auto_edit approves file edits only.
+		// headless mode; auto_edit approves file edits only (no shell tool is
+		// offered headless); --skip-trust trusts the staging dir for this run
+		// only (an untrusted folder would downgrade the approval mode).
 		Argv: func(o BackendOpts) []string {
-			a := []string{"gemini", "--approval-mode", "auto_edit", "--output-format", "json"}
+			a := []string{"gemini", "--skip-trust", "--approval-mode", "auto_edit", "--output-format", "json"}
 			if o.Model != "" {
 				a = append(a, "--model", o.Model)
 			}
 			return append(a, "-p", "Complete the codewiki task described above. Do not ask questions.")
 		},
 		ParseUsage:   parseGemini,
-		BackendLevel: DocsOnly,
+		BackendLevel: MockModel,
 		Instructions: "GEMINI.md", SkillsDir: ".agents/skills",
 		MCP:         &MCPTarget{Path: ".gemini/settings.json", Format: "json-mcpServers"},
 		MCPHint:     "gemini mcp add codewiki kb mcp --root <repo>",
@@ -392,8 +394,9 @@ func parseCodex(out []byte) *Usage {
 	return &u
 }
 
-// parseGemini reads `gemini --output-format json`
-// ({"response":…, "stats":{"models":{"<id>":{"tokens":{"prompt","candidates","cached"}}}}}).
+// parseGemini reads `gemini --output-format json` (gemini-cli 0.65.0:
+// {"response":…, "stats":{"models":{"<id>":{"tokens":{"input","prompt","candidates","total","cached","thoughts","tool"}}}},
+// "error":{"message"}}); tokens are summed over models (main + router).
 func parseGemini(out []byte) *Usage {
 	var u Usage
 	var doc map[string]any
@@ -409,6 +412,11 @@ func parseGemini(out []byte) *Usage {
 		u.InputTokens += int(num(tk, "prompt"))
 		u.OutputTokens += int(num(tk, "candidates"))
 		u.CachedTokens += int(num(tk, "cached"))
+		u.ReasoningTokens += int(num(tk, "thoughts"))
+		u.Turns += int(num(sub(mv.(map[string]any), "api"), "totalRequests"))
+	}
+	if e, _ := sub(doc, "error")["message"].(string); e != "" {
+		u.Error = e
 	}
 	return &u
 }

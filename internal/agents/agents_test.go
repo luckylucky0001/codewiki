@@ -15,7 +15,7 @@ func TestBackendCommands(t *testing.T) {
 		{"claude", "haiku", []string{"claude -p", "--output-format json", "--model haiku"}},
 		{"codex", "", []string{"codex exec", "--sandbox workspace-write", `-c 'approval_policy="never"'`, "--skip-git-repo-check", "--json", " -"}},
 		{"codex", "gpt-5-codex", []string{"codex exec", "--model gpt-5-codex", " -"}},
-		{"gemini", "flash", []string{"gemini", "--approval-mode auto_edit", "--output-format json", "--model flash", "-p 'Complete the codewiki task"}},
+		{"gemini", "flash", []string{"gemini --skip-trust", "--approval-mode auto_edit", "--output-format json", "--model flash", "-p 'Complete the codewiki task"}},
 	}
 	for _, c := range cases {
 		a, err := Get(c.agent)

@@ -41,7 +41,7 @@ func TestResolveBackend(t *testing.T) {
 		{nil, nil, "template", "", "", false},
 		{[]string{"--llm", "template"}, withAgent, "template", "", "", false},
 		{[]string{"--agent", "codex"}, nil, "cmd", "codex exec --sandbox workspace-write", "codex", false},
-		{[]string{"--llm", "gemini"}, nil, "cmd", "gemini --approval-mode auto_edit", "gemini", false},
+		{[]string{"--llm", "gemini"}, nil, "cmd", "gemini --skip-trust --approval-mode auto_edit", "gemini", false},
 		{[]string{"--llm", "claude"}, nil, "cmd", "claude -p --permission-mode acceptEdits", "claude", false},
 		{[]string{"--llm", "claude"}, custom, "cmd", "my-llm --flag", "", false}, // legacy: customised llm.cmd wins
 		{[]string{"--llm", "cmd"}, custom, "cmd", "my-llm --flag", "", false},
@@ -126,7 +126,7 @@ func TestFakeAgentBackends(t *testing.T) {
 {"type":"turn.completed","usage":{"input_tokens":1234,"cached_input_tokens":1000,"output_tokens":56}}`, false,
 			[]string{"exec", "--sandbox", "workspace-write", "--skip-git-repo-check", "--json", "-"}, 1234},
 		{"gemini", `{"response":"done","stats":{"models":{"gemini-2.5-flash":{"tokens":{"prompt":777,"candidates":11}}}}}`, true,
-			[]string{"--approval-mode", "auto_edit", "--output-format", "json", "-p"}, 777},
+			[]string{"--skip-trust", "--approval-mode", "auto_edit", "--output-format", "json", "-p"}, 777},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			dir := repo(t)
