@@ -35,15 +35,21 @@ type BackendOpts struct {
 
 // Usage is what an agent reported about one run (zero values = not reported).
 type Usage struct {
-	InputTokens  int     `json:"input_tokens,omitempty"`
-	OutputTokens int     `json:"output_tokens,omitempty"`
-	CachedTokens int     `json:"cached_tokens,omitempty"`
-	CostUSD      float64 `json:"cost_usd,omitempty"`
-	Turns        int     `json:"turns,omitempty"`
+	InputTokens     int     `json:"input_tokens,omitempty"`
+	OutputTokens    int     `json:"output_tokens,omitempty"`
+	CachedTokens    int     `json:"cached_tokens,omitempty"`
+	ReasoningTokens int     `json:"reasoning_tokens,omitempty"`
+	CostUSD         float64 `json:"cost_usd,omitempty"`
+	Turns           int     `json:"turns,omitempty"`
+	// Error is the agent's own last fatal error (codex turn.failed / error
+	// events, claude is_error results), surfaced in the task error.
+	Error string `json:"error,omitempty"`
 }
 
 // Empty reports whether nothing was parsed.
-func (u *Usage) Empty() bool { return u == nil || *u == (Usage{}) }
+func (u *Usage) Empty() bool {
+	return u == nil || (u.InputTokens == 0 && u.OutputTokens == 0 && u.CachedTokens == 0 && u.ReasoningTokens == 0 && u.CostUSD == 0 && u.Turns == 0)
+}
 
 // Add accumulates v into u.
 func (u *Usage) Add(v *Usage) {
@@ -53,6 +59,7 @@ func (u *Usage) Add(v *Usage) {
 	u.InputTokens += v.InputTokens
 	u.OutputTokens += v.OutputTokens
 	u.CachedTokens += v.CachedTokens
+	u.ReasoningTokens += v.ReasoningTokens
 	u.CostUSD += v.CostUSD
 	u.Turns += v.Turns
 }
@@ -65,6 +72,9 @@ func (u *Usage) String() string {
 	s := fmt.Sprintf("(in %d / out %d tok", u.InputTokens, u.OutputTokens)
 	if u.CachedTokens > 0 {
 		s += fmt.Sprintf(", cached %d", u.CachedTokens)
+	}
+	if u.ReasoningTokens > 0 {
+		s += fmt.Sprintf(", reasoning %d", u.ReasoningTokens)
 	}
 	if u.CostUSD > 0 {
 		s += fmt.Sprintf(", $%.4f", u.CostUSD)
@@ -342,24 +352,41 @@ func parseClaude(out []byte) *Usage {
 			CostUSD:      num(m, "total_cost_usd"),
 			Turns:        int(num(m, "num_turns")),
 		}
+		if e, _ := m["is_error"].(bool); e {
+			u.Error, _ = m["result"].(string)
+			if u.Error == "" {
+				u.Error, _ = m["subtype"].(string)
+			}
+		}
 	}
 	return &u
 }
 
-// parseCodex sums usage over `codex exec --json` turn.completed events
-// ({"type":"turn.completed","usage":{"input_tokens","cached_input_tokens","output_tokens"}}).
-// Codex does not report cost.
+// parseCodex reads the `codex exec --json` JSONL stream (schema:
+// codex-rs/exec/src/exec_events.rs): usage is summed over turn.completed
+// events ({"usage":{"input_tokens","cached_input_tokens","output_tokens",
+// "reasoning_output_tokens"}}); the last turn.failed / top-level error message
+// is kept. Codex does not report cost.
 func parseCodex(out []byte) *Usage {
 	var u Usage
 	for _, m := range jsonLines(out) {
-		if m["type"] != "turn.completed" {
-			continue
+		switch m["type"] {
+		case "turn.completed":
+			us := sub(m, "usage")
+			u.InputTokens += int(num(us, "input_tokens"))
+			u.CachedTokens += int(num(us, "cached_input_tokens"))
+			u.OutputTokens += int(num(us, "output_tokens"))
+			u.ReasoningTokens += int(num(us, "reasoning_output_tokens"))
+			u.Turns++
+		case "turn.failed":
+			if e, _ := sub(m, "error")["message"].(string); e != "" {
+				u.Error = e
+			}
+		case "error":
+			if e, _ := m["message"].(string); e != "" {
+				u.Error = e
+			}
 		}
-		us := sub(m, "usage")
-		u.InputTokens += int(num(us, "input_tokens"))
-		u.CachedTokens += int(num(us, "cached_input_tokens"))
-		u.OutputTokens += int(num(us, "output_tokens"))
-		u.Turns++
 	}
 	return &u
 }

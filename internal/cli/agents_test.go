@@ -428,3 +428,25 @@ func TestMCPStdioClient(t *testing.T) {
 		t.Fatalf("kb_search: %v", content)
 	}
 }
+
+// Codex reads AGENTS.override.md instead of AGENTS.md and drops project docs
+// beyond 32 KiB (both verified with codex-cli 0.163.0 debug prompt-input):
+// kb install must say so instead of silently installing an invisible block.
+func TestInstallCodexAgentsMDWarnings(t *testing.T) {
+	dir := t.TempDir()
+	os.WriteFile(filepath.Join(dir, "AGENTS.override.md"), []byte("# local override\n"), 0o644)
+	os.WriteFile(filepath.Join(dir, "AGENTS.md"), []byte("# big\n\n"+strings.Repeat("lorem ipsum\n", 3000)), 0o644)
+	_, v := runJSON(t, dir, "install", "--agent", "codex", "--target", dir)
+	notes, _ := json.Marshal(v["notes"])
+	if !strings.Contains(string(notes), "AGENTS.override.md exists") || !strings.Contains(string(notes), "project_doc_max_bytes") {
+		t.Fatalf("missing codex warnings: %s", notes)
+	}
+	if b, _ := os.ReadFile(filepath.Join(dir, "AGENTS.override.md")); string(b) != "# local override\n" {
+		t.Fatal("override file must not be modified")
+	}
+	d2 := t.TempDir()
+	_, v = runJSON(t, d2, "install", "--agent", "codex", "--target", d2)
+	if n, _ := v["notes"].([]any); len(n) != 0 {
+		t.Fatalf("unexpected notes on a clean repo: %v", n)
+	}
+}

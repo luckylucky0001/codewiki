@@ -694,7 +694,7 @@ func (e *taskEnv) runCmd(t Task) ([]string, *agents.Usage, error) {
 	_ = os.WriteFile(filepath.Join(tdir, t.ID+".log"), out.Bytes(), 0o644)
 	var usage *agents.Usage
 	if e.o.ParseUsage != nil {
-		if u := e.o.ParseUsage(stdout.Bytes()); !u.Empty() {
+		if u := e.o.ParseUsage(stdout.Bytes()); u != nil && (!u.Empty() || u.Error != "") {
 			usage = u
 		}
 	}
@@ -718,7 +718,11 @@ func (e *taskEnv) runCmd(t Task) ([]string, *agents.Usage, error) {
 		_ = os.Remove(filepath.Join(e.staging, filepath.FromSlash(f)))
 	}
 	if runErr != nil {
-		return reverted, usage, fmt.Errorf("llm command failed: %v (see %s)", runErr, filepath.Join(tdir, t.ID+".log"))
+		agentErr := ""
+		if usage != nil && usage.Error != "" {
+			agentErr = ": " + usage.Error
+		}
+		return reverted, usage, fmt.Errorf("llm command failed: %v%s (see %s)", runErr, agentErr, filepath.Join(tdir, t.ID+".log"))
 	}
 	if t.Kind == "conflicts" {
 		return reverted, usage, e.mergeVerdicts(templ)

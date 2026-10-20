@@ -171,6 +171,9 @@ func installAgents(target string, ads []*agents.Adapter, o installOpts) ([]insta
 				return nil, nil, err
 			}
 			out = append(out, installAction{Agent: ad.Name, Kind: "instructions", Path: rel(ad.Instructions), Action: act})
+			if ad.Instructions == "AGENTS.md" && !o.dry {
+				notes = append(notes, codexAgentsMDChecks(target, p)...)
+			}
 		}
 		// skills
 		if o.skills && ad.SkillsDir != "" && !done["s:"+ad.SkillsDir] {
@@ -367,4 +370,27 @@ func hasTOMLTable(s, name string) bool {
 		}
 	}
 	return false
+}
+
+// codexProjectDocMaxBytes is Codex's default project_doc_max_bytes: AGENTS.md
+// content beyond it is silently dropped (verified with codex-cli 0.163.0
+// `codex debug prompt-input`).
+const codexProjectDocMaxBytes = 32 * 1024
+
+// codexAgentsMDChecks warns about the two ways Codex would not see the block:
+// an AGENTS.override.md next to AGENTS.md (it replaces AGENTS.md in that
+// directory) and a block that ends beyond project_doc_max_bytes.
+func codexAgentsMDChecks(target, agentsMD string) []string {
+	var notes []string
+	if _, err := os.Stat(filepath.Join(target, "AGENTS.override.md")); err == nil {
+		notes = append(notes, "AGENTS.override.md exists: Codex reads it INSTEAD of AGENTS.md in the repo root, so the codewiki block in AGENTS.md is ignored by Codex; copy the block into AGENTS.override.md or remove the override")
+	}
+	b, err := os.ReadFile(agentsMD)
+	if err != nil {
+		return notes
+	}
+	if end := strings.Index(string(b), agentsEnd); end >= 0 && end+len(agentsEnd) > codexProjectDocMaxBytes {
+		notes = append(notes, fmt.Sprintf("AGENTS.md is %d bytes and the codewiki block ends at byte %d: Codex truncates project docs at project_doc_max_bytes (default %d), so it would not see the block; move the block to the top of AGENTS.md or raise project_doc_max_bytes in ~/.codex/config.toml", len(b), end+len(agentsEnd), codexProjectDocMaxBytes))
+	}
+	return notes
 }

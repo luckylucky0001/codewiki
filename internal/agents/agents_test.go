@@ -1,6 +1,7 @@
 package agents
 
 import (
+	"os"
 	"strings"
 	"testing"
 )
@@ -122,5 +123,31 @@ func TestShellQuote(t *testing.T) {
 		if got := ShellQuote(in); got != want {
 			t.Fatalf("%q: %q want %q", in, got, want)
 		}
+	}
+}
+
+// A real `codex exec --json` stream (codex-cli 0.163.0, API unreachable):
+// no turn.completed, so no usage, but the fatal error is surfaced.
+func TestParseCodexRealStream(t *testing.T) {
+	b, err := os.ReadFile("testdata/codex-0.163.0-exec-json-network-error.jsonl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	u := parseCodex(b)
+	if !u.Empty() || !strings.Contains(u.Error, "Reconnecting") {
+		t.Fatalf("%+v", u)
+	}
+	ok := append(b, []byte(`{"type":"turn.completed","usage":{"input_tokens":10,"cached_input_tokens":2,"output_tokens":3,"reasoning_output_tokens":4}}`+"\n")...)
+	u = parseCodex(ok)
+	if u.InputTokens != 10 || u.ReasoningTokens != 4 || u.Turns != 1 || !strings.Contains(u.String(), "reasoning 4") {
+		t.Fatalf("%+v", u)
+	}
+	f := parseCodex([]byte(`{"type":"turn.failed","error":{"message":"quota exceeded"}}`))
+	if f.Error != "quota exceeded" {
+		t.Fatalf("%+v", f)
+	}
+	c := parseClaude([]byte(`{"type":"result","subtype":"error_max_turns","is_error":true,"total_cost_usd":0.01}`))
+	if c.Error != "error_max_turns" || c.CostUSD != 0.01 {
+		t.Fatalf("%+v", c)
 	}
 }
