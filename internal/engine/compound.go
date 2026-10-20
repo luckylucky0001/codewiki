@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/luckylucky0001/codewiki/internal/agents"
 	"io"
 	"io/fs"
 	"os"
@@ -32,6 +33,8 @@ type Options struct {
 	Cfg        *config.Config
 	LLM        string // "template" | "cmd"
 	LLMCmd     string
+	Agent      string                         // backend adapter name (informational; recorded per task)
+	ParseUsage func(out []byte) *agents.Usage // parses the agent's stdout for tokens/cost (optional)
 	Base       string
 	Full       bool
 	DryRun     bool
@@ -47,32 +50,36 @@ type Options struct {
 
 // TaskResult records the outcome of one task.
 type TaskResult struct {
-	ID       string   `json:"id"`
-	Page     string   `json:"page"`
-	Op       string   `json:"op"`
-	Writer   string   `json:"writer"`
-	Status   string   `json:"status"` // ok | failed | violation
-	Reverted []string `json:"reverted,omitempty"`
-	Error    string   `json:"error,omitempty"`
-	Millis   int64    `json:"millis"`
+	ID       string        `json:"id"`
+	Page     string        `json:"page"`
+	Op       string        `json:"op"`
+	Writer   string        `json:"writer"`
+	Agent    string        `json:"agent,omitempty"`
+	Status   string        `json:"status"` // ok | failed | violation
+	Reverted []string      `json:"reverted,omitempty"`
+	Error    string        `json:"error,omitempty"`
+	Millis   int64         `json:"millis"`
+	Usage    *agents.Usage `json:"usage,omitempty"`
 }
 
 // Result is the outcome of a run.
 type Result struct {
-	RunID     string       `json:"run_id"`
-	Kind      string       `json:"kind"`
-	Base      string       `json:"base"`
-	Head      string       `json:"head"`
-	Mode      string       `json:"mode"`
-	LLM       string       `json:"llm"`
-	Plan      *Plan        `json:"plan"`
-	Diff      *Diff        `json:"diff"`
-	Tasks     []TaskResult `json:"tasks"`
-	Verify    *wiki.Report `json:"verify,omitempty"`
-	Published bool         `json:"published"`
-	Changed   []string     `json:"changed"`
-	WorkDir   string       `json:"work_dir,omitempty"`
-	Message   string       `json:"message"`
+	RunID     string        `json:"run_id"`
+	Kind      string        `json:"kind"`
+	Base      string        `json:"base"`
+	Head      string        `json:"head"`
+	Mode      string        `json:"mode"`
+	LLM       string        `json:"llm"`
+	Agent     string        `json:"agent,omitempty"`
+	Plan      *Plan         `json:"plan"`
+	Diff      *Diff         `json:"diff"`
+	Tasks     []TaskResult  `json:"tasks"`
+	Usage     *agents.Usage `json:"usage,omitempty"` // summed over LLM tasks when the agent reports it
+	Verify    *wiki.Report  `json:"verify,omitempty"`
+	Published bool          `json:"published"`
+	Changed   []string      `json:"changed"`
+	WorkDir   string        `json:"work_dir,omitempty"`
+	Message   string        `json:"message"`
 }
 
 // State is .kb/state.json.
@@ -243,7 +250,7 @@ func Compound(o *Options) (*Result, error) {
 	if head == "" {
 		runID = time.Now().UTC().Format("20060102T150405") + "-nogit"
 	}
-	r := &Result{RunID: runID, Kind: o.Kind, Base: a.Diff.Base, Head: head, Mode: a.Plan.Mode, LLM: o.LLM, Plan: a.Plan, Diff: a.Diff, Tasks: []TaskResult{}, Changed: []string{}}
+	r := &Result{RunID: runID, Kind: o.Kind, Base: a.Diff.Base, Head: head, Mode: a.Plan.Mode, LLM: o.LLM, Agent: o.Agent, Plan: a.Plan, Diff: a.Diff, Tasks: []TaskResult{}, Changed: []string{}}
 	o.logf("kb %s: head=%s base=%s mode=%s tasks=%d (%s)", o.Kind, shortHead(head), short(a.Diff.Base), a.Plan.Mode, len(a.Plan.Tasks), a.Plan.Reason)
 	if o.DryRun {
 		r.Message = "dry-run: nothing written"
@@ -306,10 +313,17 @@ func Compound(o *Options) (*Result, error) {
 			o.logf("  task %s failed (%s); falling back to template writer", t.ID, tr.Error)
 			tr2 := env.run(t, "template")
 			tr2.Error = "fallback after: " + tr.Error
+			tr2.Usage = tr.Usage // tokens were spent on the failed attempt
 			tr = tr2
 		}
 		r.Tasks = append(r.Tasks, tr)
-		o.logf("  [%s] %-8s %-34s %s %s", tr.Status, t.Op, t.Page, tr.Writer, tr.Error)
+		if tr.Usage != nil {
+			if r.Usage == nil {
+				r.Usage = &agents.Usage{}
+			}
+			r.Usage.Add(tr.Usage)
+		}
+		o.logf("  [%s] %-8s %-34s %s %s%s", tr.Status, t.Op, t.Page, tr.Writer, tr.Error, usageNote(tr.Usage))
 	}
 	// conflicts page + requirements.json are rendered by the CLI from verdicts
 	if err := env.renderClaims(); err != nil {
@@ -523,7 +537,8 @@ func (e *taskEnv) run(t Task, writer string) TaskResult {
 	if writer == "template" {
 		err = e.runTemplate(t)
 	} else {
-		tr.Reverted, err = e.runCmd(t)
+		tr.Agent = e.o.Agent
+		tr.Reverted, tr.Usage, err = e.runCmd(t)
 		if err == nil && len(tr.Reverted) > 0 {
 			tr.Status = "violation"
 			tr.Error = "reverted writes outside write set: " + strings.Join(tr.Reverted, ", ")
@@ -638,7 +653,7 @@ func (e *taskEnv) renderClaims() error {
 	return wiki.WriteFileAtomic(filepath.Join(e.staging, "facts", "requirements.json"), facts.RequirementsJSON(reqs))
 }
 
-func (e *taskEnv) runCmd(t Task) ([]string, error) {
+func (e *taskEnv) runCmd(t Task) ([]string, *agents.Usage, error) {
 	cmdline := e.o.LLMCmd
 	if cmdline == "" {
 		cmdline = e.o.Cfg.LLM.Cmd
@@ -667,8 +682,8 @@ func (e *taskEnv) runCmd(t Task) ([]string, error) {
 	cmd := exec.CommandContext(ctx, "sh", "-c", cmdline)
 	cmd.Dir = e.staging
 	cmd.Stdin = strings.NewReader(prompt)
-	var out bytes.Buffer
-	cmd.Stdout, cmd.Stderr = &out, &out
+	var out, stdout bytes.Buffer
+	cmd.Stdout, cmd.Stderr = io.MultiWriter(&out, &stdout), &out
 	env := os.Environ()
 	if e.o.KBPath != "" {
 		env = append(env, "PATH="+filepath.Dir(e.o.KBPath)+string(os.PathListSeparator)+os.Getenv("PATH"))
@@ -677,6 +692,12 @@ func (e *taskEnv) runCmd(t Task) ([]string, error) {
 	cmd.Env = env
 	runErr := cmd.Run()
 	_ = os.WriteFile(filepath.Join(tdir, t.ID+".log"), out.Bytes(), 0o644)
+	var usage *agents.Usage
+	if e.o.ParseUsage != nil {
+		if u := e.o.ParseUsage(stdout.Bytes()); !u.Empty() {
+			usage = u
+		}
+	}
 	// enforce write set
 	after, _ := snapshot(e.staging)
 	allowed := map[string]bool{}
@@ -697,12 +718,12 @@ func (e *taskEnv) runCmd(t Task) ([]string, error) {
 		_ = os.Remove(filepath.Join(e.staging, filepath.FromSlash(f)))
 	}
 	if runErr != nil {
-		return reverted, fmt.Errorf("llm command failed: %v (see %s)", runErr, filepath.Join(tdir, t.ID+".log"))
+		return reverted, usage, fmt.Errorf("llm command failed: %v (see %s)", runErr, filepath.Join(tdir, t.ID+".log"))
 	}
 	if t.Kind == "conflicts" {
-		return reverted, e.mergeVerdicts(templ)
+		return reverted, usage, e.mergeVerdicts(templ)
 	}
-	return reverted, e.postProcess(t)
+	return reverted, usage, e.postProcess(t)
 }
 
 // postProcess normalizes the frontmatter written by the LLM: id/kind/routes
@@ -877,4 +898,11 @@ func advanceBaseline(wikiDir string, g *model.Graph, head, llm string) error {
 	}
 	writeJSON(filepath.Join(wikiDir, ".kb", "state.json"), State{LastSHA: head, GraphVersion: model.GraphVersion, PromptVersion: PromptVersion, LLM: llm, UpdatedAt: time.Now().UTC().Format(time.RFC3339)})
 	return nil
+}
+
+func usageNote(u *agents.Usage) string {
+	if u.Empty() {
+		return ""
+	}
+	return " " + u.String()
 }

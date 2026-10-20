@@ -3,6 +3,7 @@ package engine
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/luckylucky0001/codewiki/internal/agents"
 	"io"
 	"os"
 	"os/exec"
@@ -99,6 +100,8 @@ type EvalOptions struct {
 	GoldenPath string
 	LLM        string // template | cmd
 	LLMCmd     string
+	Agent      string
+	ParseUsage func([]byte) *agents.Usage
 	KBPath     string
 	Log        io.Writer
 	// ExtraDocs (kb eval --doc) are copied to docs/eval/<name> in the project
@@ -212,7 +215,7 @@ func RunEval(o EvalOptions) (*EvalReport, error) {
 		if kind == "ingest" {
 			llm = o.LLM
 		}
-		r, err := Compound(&Options{Cfg: cfg, LLM: llm, LLMCmd: o.LLMCmd, Kind: kind, IngestDocs: ingest, Log: logw, KBPath: o.KBPath, Fallback: true})
+		r, err := Compound(&Options{Cfg: cfg, LLM: llm, LLMCmd: o.LLMCmd, Agent: o.Agent, ParseUsage: o.ParseUsage, Kind: kind, IngestDocs: ingest, Log: logw, KBPath: o.KBPath, Fallback: true})
 		if err != nil {
 			return nil, err
 		}

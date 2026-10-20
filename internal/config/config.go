@@ -29,6 +29,8 @@ type Config struct {
 	Exclude   []string   `yaml:"exclude" json:"exclude"`
 	LLM       struct {
 		Cmd        string `yaml:"cmd" json:"cmd"`
+		Agent      string `yaml:"agent,omitempty" json:"agent,omitempty"` // claude | codex | gemini | generic: backend adapter used by --llm cmd (overrides cmd unless generic)
+		Model      string `yaml:"model,omitempty" json:"model,omitempty"` // optional model passed to the agent adapter
 		TimeoutSec int    `yaml:"timeout_sec" json:"timeout_sec"`
 	} `yaml:"llm" json:"llm"`
 	Plan struct {

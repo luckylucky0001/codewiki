@@ -37,7 +37,7 @@ func (e *taskEnv) buildPrompt(t Task, claims []Claim) string {
 	var b strings.Builder
 	g, f := e.a.Graph, e.a.Facts
 	fmt.Fprintf(&b, "# codewiki 任务 %s\n\n", t.ID)
-	b.WriteString("你是 codewiki 的 wiki 写作 agent（skill: kb-compound）。当前工作目录是 wiki 的 staging 副本。\n")
+	b.WriteString("你是 codewiki 的 wiki 写作 agent。当前工作目录是 wiki 的 staging 副本；用你自己的文件读写/编辑工具（或 shell）完成任务。\n")
 	b.WriteString("非交互模式：不要提问，直接完成任务，完成后用一句话汇报。\n\n")
 	b.WriteString(SafetyPreamble)
 	fmt.Fprintf(&b, "## 任务\n\n- op: `%s`\n- kind: `%s`\n- page: `%s`\n- head commit: `%s`\n", t.Op, t.Kind, t.Page, short(e.head))
@@ -135,7 +135,7 @@ func (e *taskEnv) buildPrompt(t Task, claims []Claim) string {
 			b.WriteString("## 确定性草稿（锚点正确；请改写为更有用的说明：职责、三端实现差异、数据流、测试要点）\n\n````markdown\n" + string(draft.Render()) + "\n````\n\n")
 		}
 	}
-	fmt.Fprintf(&b, "## 输出\n\n用 Write 工具把完整页面（frontmatter + 正文）写入 `%s`。建议结构：概述 → 路由与深链 → 三端实现对照（表格）→ 接口与数据流 → testID 与测试要点 → 相关页面。保持简洁（< 120 行）。\n", t.Page)
+	fmt.Fprintf(&b, "## 输出\n\n把完整页面（frontmatter + 正文）写入 `%s`。建议结构：概述 → 路由与深链 → 三端实现对照（表格）→ 接口与数据流 → testID 与测试要点 → 相关页面。保持简洁（< 120 行）。\n", t.Page)
 	return b.String()
 }
 
