@@ -297,13 +297,14 @@ status: current            # current | stale | outdated-doc
 <p>实测（<code>remote:</code> 输出）：seed 全量 9 个任务；01 增量；02 拿到锁时 master 已经是 03，因此一次追平（<code>e6cff74..1c373e4 (4 new commit(s))</code>）；03 输出 <code>already compounded</code>。每次都 verify PASS。</p>
 <p>最终 <b>remote master 与 wiki 的 last_sha 一致</b>。实现要点：用 <code>mkdir</code> 锁保证串行；拿到锁后读取分支的当前头，从 last_sha 开始增量；wiki 放在服务端目录（<code>--wiki-dir</code>），不回写 master，因此不会递归触发钩子。</p>
 <h3>5.7 Agent A/B 基准：有 wiki 与没有 wiki（<code>bench/agent-qa/</code>）</h3>
-<p>10 个答案可以用正则核对的 minishop 问题（例如三端购物车上限、结算接口、订单 deeplink、哪些旧文档过时、改登录要动哪些文件）。每题用 <code>claude -p --model haiku</code> 跑两组，每组 3 次：A 组是仓库 + wiki + kb skills，B 组是同一份源码树，只能用 grep 和读文件。</p>
+<p>同一组可以用正则核对的问题，用 <code>claude -p --model haiku</code> 分两组跑：A 组是仓库 + wiki + kb skills，B 组是同一份源码，只能用 grep 和读文件。minishop 上 10 题 × 3 次，A 和 B 都是 30/30，A 平均 9.0 turns、$0.25，B 平均 12.7 turns、$0.29。</p>
+<p>“三端不一致”这题 A 用 11 turns，B 用 39 turns；“过时文档”这题有了 <code>kb conflicts</code> 后降到 4.7 turns。Cases 上的查找题两组持平。</p>
 <table>
-  <tr><th>组</th><th>通过</th><th>平均 turns</th><th>平均输出 tokens</th><th>总费用</th><th>平均耗时</th></tr>
-  <tr><td>A：wiki + skills</td><td>30/30</td><td><b>9.0</b></td><td><b>4.5k</b></td><td><b>$0.25</b></td><td><b>30 s</b></td></tr>
-  <tr><td>B：只有源码</td><td>30/30</td><td>12.7</td><td>6.6k</td><td>$0.29</td><td>39 s</td></tr>
+  <tr><th>Cases · 5 道汇总题 × 2 次（最终代码）</th><th>通过</th><th>平均 turns</th><th>费用</th><th>耗时</th></tr>
+  <tr><td>A：wiki + AGENTS.md 指引块 + <code>kb routes</code> / <code>lint-tid --pages --top</code></td><td>10/10</td><td><b>10.0</b></td><td><b>$0.086</b></td><td>52 s</td></tr>
+  <tr><td>B：只有源码</td><td>9/10</td><td>14.0</td><td>$0.126</td><td>46 s</td></tr>
 </table>
-<p>结果如实写：minishop 上两组<b>准确率相同</b>，“三端不一致”这题 A 用 11 turns，B 用 39 turns；“过时文档”这题新增 <code>kb conflicts</code> 后降到 4.7 turns。Cases 上的查找题两组持平。5 道汇总题（标准答案从源码算出）：起初 A 从未调用 kb（A 17.6 turns，B 14.0 turns）。加上 AGENTS.md 指引块，再加上 <code>kb routes</code>、<code>kb lint-tid --pages / --top</code> 和 facts 缓存（<code>kb routes</code> 从 6.3 s 降到 0.28 s）后，G1–G4 上 A 用 <b>8.1 turns、$0.067</b>，B 用 14.8 turns、$0.095；G5 从 $0.32 降到 <b>$0.016</b>。所以 wiki 的价值取决于问题能否被一条命令覆盖，耗时上还没有优势。全部基准约 $1.76。</p>
+<p>A 组 turns 少 29%，费用少 32%，耗时慢 13%（第一次 kb 调用要生成缓存）。逐轮演进：只有 wiki 时 A 从未调用 kb，17.6 turns；加上指引块后 13.8 turns；加上汇总命令后，8/10 的运行调用了 kb。结论：wiki 的价值取决于问题能否被一条命令覆盖，并且要在 AGENTS.md 中写明具体动作。全部基准约 $1.85。</p>
 </section>
 
 <!-- ============ 6 ============ -->

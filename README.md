@@ -467,41 +467,58 @@ kb eval --doc my-old-spec.md --golden my-labels.yaml                    # 任意
 
 **大仓库变体（HarmonyOS Cases，1952 个 .ets 文件，5 题 × 2 次）**：A 10/10、平均 5.9 turns、$0.039；B 10/10、平均 5.9 turns、$0.040，**没有差别**。这些问题都能用一个唯一的字符串直接 grep 到答案，grep 在大仓库上也很快，A 组也几乎没用 wiki。所以“仓库越大 wiki 越有用”这个推测，这次**没有得到支持**。
 
-**大仓库 + 汇总类问题（第 7 轮，Cases，5 题 × 2 次）**：问题包括 router_map 总数和分布、dangling buildFunction、哪些页面设置了 testID、哪些文件发网络请求、最常用的 testID。标准答案直接从源码算出。结果：A **10/10**、17.6 turns、$0.149、51 s；B **9/10**、14.0 turns、$0.126、46 s。A 多对 1 次，但 turns 和费用更高，样本也小，**算不上可证明的优势**。关键在于，A 组 10 次运行里**没有一次调用 `kb` 或 skill**，只是 grep 时顺带搜到了 `wiki/` 下的文件。minishop 上的收益全部来自 agent 真正调用了 `kb parity` 或 `kb conflicts` 的题目。所以瓶颈在 **skill 的触发和命令的命名**：要有一个名字直接对应问题的命令，并在 skill 描述里写明。wiki 的内容本身不是问题。打分正则修正了两处（对两组同样适用），已披露。
+### 最终结果：大仓库 + 汇总类问题（HarmonyOS Cases，最终代码）
 
-**加上 AGENTS.md / CLAUDE.md 指引块后（第 8 轮，只重跑 A 组，5 题 × 2 次）**：`kb install-skills` 现在会写入 codewiki 指引块（见上方命令表）。结果如下：
+一共 5 道汇总题：
 
-- **A 组：10/10、平均 13.8 turns、$0.142、52 s。** 对比：之前的 A 组 10/10、17.6 turns、$0.149、51 s；B 组 9/10、14.0 turns、$0.126、46 s。
-- 行为变化很明显。工具调用中涉及 `wiki/` 的运行从 **2/10 增加到 8/10**，调用 `kb` 的运行从 **0/10 增加到 2/10**（G3 中调用了 `kb lint-tid`）。skill 仍然没有被触发。
-- 但结果上的收益有限：turns 比之前的 A 组少 22%，与 B 组持平；费用和耗时都没有优于 B。
-- 原因之一是，agent 想用 `ls`、`head`、`python` 读取 `wiki/facts/*.json`，但基准只允许 `Bash(kb:*)`，这些调用被拒绝了，agent 只能退回到 Read 和 Grep。
-- 结论：指引块能让 agent 注意到 wiki，这一点得到了验证。但要把注意力转化成更少的步骤，还需要两点：一是指引块直接写出“用 Read 打开 `wiki/facts/routes.json`”这类可执行的动作；二是让 `kb` 命令直接回答汇总问题（例如 `kb lint-tid --pages`）。原始数据见 `demo/sample-output/agent-bench-cases-agg/with-agents-block/`。
+- G1：router_map 的总数和按模块的分布；
+- G2：dangling buildFunction；
+- G3：哪些路由页面设置了 testID；
+- G4：哪些文件发起网络请求；
+- G5：最常用的 testID。
 
-**再加上汇总命令，并让指引块写明具体用哪个工具（第 9 轮，只重跑 A 组，5 题 × 2 次）**：新增了 `kb routes [--dangling]` 和 `kb lint-tid --pages`。指引块里改成写明“Bash: `kb routes`”“Read `wiki/facts/routes.json`”这样的具体动作，不再写 shell 管道。
+标准答案直接从源码算出（`bench/agent-qa/cases-groundtruth.py`），不依赖 kb。实验设置：haiku，每题每组 2 次，turn 上限 40。
 
-| A 组配置 | 通过 | 平均 turns（全部 / G1–G4） | 费用（全部 / G1–G4） | 平均耗时 | 调用 kb 的运行 |
+- **A 组**：最终代码，`kb install-skills` 写入了 AGENTS.md / CLAUDE.md 指引块，并提供 `kb routes`、`kb lint-tid --pages / --top`，查询带 facts 缓存。
+- **B 组**：同一份源码，只能用 Read / Glob / Grep。
+
+| | 通过 | 平均 turns | 总费用 | 平均耗时 | 调用 kb 的运行 |
 |---|---|---|---|---|---|
-| 第 7 轮：无指引块 | 10/10 | 17.6 / 17.0 | $0.149 / $0.115 | 51 s | 0/10 |
-| 第 8 轮：+ 指引块 | 10/10 | 13.8 / 13.1 | $0.142 / $0.114 | 52 s | 2/10 |
-| **第 9 轮：+ 汇总命令 + 具体动作** | **10/10** | **9.6 / 8.1** | $0.384 / **$0.067** | 57 s | **8/10** |
-| B 组（第 7 轮，只有源码） | 9/10 | 14.0 / 14.8 | $0.126 / $0.095 | 46 s | — |
+| **A：wiki + 指引块 + 汇总命令** | **10/10** | **10.0** | **$0.086** | 52 s | 8/10 |
+| B：只有源码 | 9/10 | 14.0 | $0.126 | 46 s | — |
 
-- **有专门命令的题目上，wiki 第一次明显胜出。** G1–G3 的每次运行都调用了 `kb routes`、`kb routes --dangling` 或 `kb lint-tid --pages`。G1–G4 平均 8.1 turns，B 组是 14.8，少了 45%；费用 $0.067，B 组是 $0.095。其中 G3 从 28 turns（第 7 轮 A）降到 6 turns。
-- **没有专门命令的题目上，费用反而失控。** G5（使用次数最多的 testID）没有对应的命令，agent 只能手动计数：大段的 Grep 输出，加上每次 1.2 万到 2 万个 thinking token，两次运行共花了 **$0.317**，把总费用推到 $0.384，是 B 组的 3 倍。耗时也没有改善：kb 命令每次都要加载扫描结果，所以 G1 平均 43 s，B 组是 31 s。
-- 结论：wiki 的价值取决于“问题 → 命令”的覆盖。命令覆盖到的汇总问题，步数大约减半；覆盖不到的问题，A 组不比 B 组好，甚至更贵。下一步是补上 `kb lint-tid --top`、`kb apis --by-file` 这类命令，以及常驻进程或缓存来减少每次加载的开销。原始数据见 `demo/sample-output/agent-bench-cases-agg/with-commands/`。
+逐题比较（A / B）：
 
-**第 10 轮：补上 G5 的命令，并给查询加缓存**。新增 `kb lint-tid --top N`。`kb routes` 和 `kb lint-tid` 现在先做一次“无变更检查”：对平台目录下所有文件的路径、大小和 mtime 求 hash；没有变化时，直接读 `wiki/.kb/cache/facts.json.gz`，不再重新扫描。在 Cases 上，`kb routes` 从 **6.3 s 降到 0.28 s**；新 clone 的第一次调用仍需约 6 s 来生成缓存。之后只对 A 组重跑 G1 和 G5，各 2 次：
+| 题目 | turns | 费用 |
+|---|---|---|
+| G1 | 9 / 14 | $0.013 / $0.019 |
+| G2 | 10 / 20 | $0.022 / $0.039 |
+| G3 | 8.5 / 20.5 | $0.015 / $0.027 |
+| G4（没有专门命令，grep 一次就够） | 4 / 4.5 | $0.010 / $0.009 |
+| G5 | 18.5 / 11 | $0.027 / $0.031 |
 
-| 题目 | 第 9 轮 A | **第 10 轮 A** | B（第 7 轮） |
-|---|---|---|---|
-| G1 路由汇总 | 7.5 turns / $0.013 / 43 s | **4 turns / $0.010** / 46 s | 14 turns / $0.019 / 31 s |
-| G5 最常用 testID | 15.5 turns / **$0.317** / 108 s | **7 turns / $0.016** / 68 s | 11 turns / $0.031 / 62 s |
+**结论如实写：**
 
-两题 4 次运行都调用了对应命令（`kb routes`、`kb lint-tid --top`），全部答对。G5 的费用从 $0.317 降到 $0.016，比 B 组低一半。**耗时没有改善**：每次运行都是新 clone，第一次 kb 调用要花约 6 s 生成缓存，剩下的时间主要是模型本身的延迟。结论不变：命令覆盖到的问题，wiki 在 turns 和费用上都明显优于 grep；在耗时上还没有优势。
+- 在这组汇总题上，A 组 turns 少 29%，费用少 32%，并且全部答对。有对应命令的 G1–G3 和 G5，每次运行都调用了该命令。
+- **耗时上 A 组慢 13%**。原因是每次运行都从新 clone 开始，第一次 kb 调用要约 6 s 生成 facts 缓存；其余时间主要是模型延迟。
+- G5 这次用了 18.5 turns，第 10 轮是 7 turns：命令都调用了，但 agent 之后又用 Grep 做了核对。这说明运行之间的波动不小，每组只有 10 次，结论要谨慎看待。
+- 结果的取得依赖三件事：一是问题有一条命令直接对应；二是 AGENTS.md / CLAUDE.md 里写明具体动作（只改 skill 描述没有用）；三是查询足够快。
 
-详见 bench/agent-qa/README.md。
+结果、指引块全文和 transcript 见 `demo/sample-output/agent-bench-cases-agg/final/`。
 
-打分正则有一处修正（接口路径前带 host 时匹配失败），已在文档中披露。方法、逐题结果和原始 transcript 见 [bench/agent-qa/README.md](bench/agent-qa/README.md) 和 `demo/sample-output/agent-bench/`。基准总花费 $0.75。
+<details><summary>附录：逐轮演进（A 组；B 组始终是第 7 轮的数据：9/10、14.0 turns、$0.126、46 s）</summary>
+
+| 轮次 | 改动 | 通过 | 平均 turns | 费用 | 调用 kb 的运行 |
+|---|---|---|---|---|---|
+| 7 | 只有 wiki 和 skills | 10/10 | 17.6 | $0.149 | 0/10 |
+| 8 | + AGENTS.md / CLAUDE.md 指引块 | 10/10 | 13.8 | $0.142 | 2/10 |
+| 9 | + `kb routes`、`kb lint-tid --pages`，指引块写明具体动作 | 10/10 | 9.6 | $0.384（G5 手动计数花了 $0.317） | 8/10 |
+| 10 | + `kb lint-tid --top`，查询加 facts 缓存（只跑了 G1、G5） | 4/4 | G1 4 / G5 7 | $0.025 | 4/4 |
+| **最终** | 以上全部，加上 parity 缓存 | **10/10** | **10.0** | **$0.086** | 8/10 |
+
+打分修正（第 7 轮，两组同样适用）：G3 的 `must_not` 正则误伤了“没有”；G5 的答案 13 和 14 都接受。修正前的结果在 `agent-bench-cases-agg/results.before-scoring-fix.md`。查找题的变体（第 6 轮）：两组都是 10/10、5.9 turns，没有差别。
+
+</details>
 
 ## 真实开源项目验证
 
