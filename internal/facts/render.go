@@ -95,6 +95,15 @@ func Render(f *model.Facts, g *model.Graph, platforms []string) map[string][]byt
 		if len(entries) > 0 {
 			b.WriteString("\n## Entry points\n\n" + strings.Join(entries, "\n") + "\n")
 		}
+		var edges []string
+		for _, e := range f.Navigation {
+			if e.Platform == p {
+				edges = append(edges, fmt.Sprintf("| `%s` | `%s` | %s | `%s` L%d |", e.From, e.To, e.Kind, e.File, e.Line))
+			}
+		}
+		if len(edges) > 0 {
+			b.WriteString("\n## Navigation edges\n\n| from | to | kind | source |\n|---|---|---|---|\n" + strings.Join(edges, "\n") + "\n")
+		}
 		out["facts/"+p+"/routes.md"] = []byte(b.String())
 
 		b.Reset()
