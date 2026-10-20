@@ -31,12 +31,12 @@ ArkTS 语法的上游 README 给出的真实工程无错解析率约为 94%。�
 
 ## 抽取结果与耗时
 
-| 项目 | 文件 | 符号 | 路由 | 深链 scheme | testID | API | 冷扫描 | 热扫描 |
+| 项目 | 文件 | 符号 | 路由 | 深链 scheme | testID | API（第 4 轮适配器后） | 冷扫描 | 热扫描 |
 |---|---|---|---|---|---|---|---|---|
-| nowinandroid | 311 | 1,748 | 5 | —（只有 https App Links） | 14 | 0 | 690 ms | 97 ms |
-| IceCubesApp | 432 | 6,058 | 28 | `icecubesapp` | 0 | 0 | 2,245 ms | 274 ms |
-| HarmonyOS-Cases | 2,267 | 20,141 | 88 | — | 1,437 | 5 | 9,105 ms | 853 ms |
-| app_samples（sparse） | 2,612 | 51,342 | 10 | — | 2,674 | 0 | 32,043 ms | 3,935 ms |
+| nowinandroid | 311 | 1,748 | 5 | —（只有 https App Links） | 14 | 4 | 690 ms | 97 ms |
+| IceCubesApp | 432 | 6,058 | 28 | `icecubesapp` | 0 | 78 | 2,245 ms | 274 ms |
+| HarmonyOS-Cases | 2,267 | 20,141 | 88 | — | 1,437 | 7 | 9,105 ms | 853 ms |
+| app_samples（sparse） | 2,612 | 51,342 | 10 | — | 2,674 | 1 | 32,043 ms | 3,935 ms |
 | arkTS_universal_starter | 80 | 863 | 0 | — | 1 | 0 | 399 ms | 33 ms |
 
 在 nowinandroid、IceCubesApp 和 HarmonyOS-Cases 上都跑了完整的 `kb compound`（template 模式），`kb verify` 均通过：
@@ -48,7 +48,23 @@ ArkTS 语法的上游 README 给出的真实工程无错解析率约为 94%。�
 
 几点说明：
 
-- **API 数量偏低是预期结果。** 抽取器只识别 Retrofit 注解、`send(.method, path:)` 和 `http.createHttp().request` 三种模式。nowinandroid 走 Retrofit 加一层自定义数据源，IceCubesApp 用自研的 `Endpoint` 枚举，所以这两个项目抽不出 API。参见“局限”。
+- **API 适配器（第 4 轮新增）**：
+
+  | 平台 | 已支持的写法 |
+  |---|---|
+  | Android | Retrofit（含相对路径 `@GET(value = "topics")`）、Ktor `client.get("/x")`、OkHttp `Request.Builder().url(…).post(…)` |
+  | iOS | `send(.post, path:)`、Alamofire `AF.request(url, method:)`、Moya `TargetType` 和自定义 `Endpoint` 枚举（`path` / `method` 的 switch，包括 Swift 5.9 的隐式 return；HTTP 方法按调用点 `client.post(endpoint: X.y)` 推断） |
+  | HarmonyOS | `http.createHttp().request`、`httpRequest.request`、`@ohos/axios`（`axios.get<T>(…)`、`axios({url, method})`）、RCP（`session.get/post`、`new rcp.Request(url, 'PUT')`） |
+
+  结果变化：
+  - nowinandroid：0 → 4，Retrofit 相对路径；
+  - IceCubesApp：0 → **78**，`Endpoint` 枚举 + 调用点方法，覆盖 GET / POST / PUT / PATCH / DELETE；
+  - HarmonyOS-Cases：5 → 7，并过滤了图片和媒体下载；
+  - app_samples：0 → 1。
+
+  每种写法都有最小片段测试（`internal/facts/apis_test.go`）。另外两个修复：
+  - 抽取器之前把 Kotlin 字符串里的 `"$BASE_URL/x"` 当作字面量，现在改为常量引用；
+  - ArkTS 的 `await x.get<T>(…)` 现在能正确识别接收者。
 - **app_samples 冷扫描慢的原因**：sparse 子集里有一些大的生成 TS/JS 文件，而且 5 万多个符号在引用解析阶段占了较多时间。热扫描只需 3.9 s。
 
 ## 验证中发现并修复的问题（均已加最小片段回归测试）

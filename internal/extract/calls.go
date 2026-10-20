@@ -1,6 +1,7 @@
 package extract
 
 import (
+	"regexp"
 	"strings"
 
 	sitter "github.com/tree-sitter/go-tree-sitter"
@@ -163,6 +164,9 @@ func (c *fileCtx) buildCall(n *sitter.Node) (Call, bool) {
 			call.CalleeText = call.CalleeText[len(call.CalleeText)-160:]
 		}
 	}
+	if calleeNode.Kind() == "await_expression" && calleeNode.NamedChildCount() > 0 {
+		calleeNode = calleeNode.NamedChild(calleeNode.NamedChildCount() - 1) // `await axios.get<T>(…)`
+	}
 	if call.Receiver == "" {
 		if obj := calleeNode.ChildByFieldName("object"); obj != nil {
 			call.Receiver = truncate(compact(c.text(obj)), 160)
@@ -290,6 +294,9 @@ func (c *fileCtx) evalParts(n *sitter.Node) []Part {
 			}
 		}
 		walk(n)
+		if c.spec.name == "kotlin" {
+			parts = splitKotlinTemplate(parts)
+		}
 		if len(parts) == 0 && n.NamedChildCount() == 0 && c.spec.name == "java" {
 			parts = appendLit(parts, strings.Trim(c.text(n), `"`))
 		}
@@ -359,4 +366,30 @@ func lastIdent(n *sitter.Node, src []byte) string {
 	}
 	walk(n)
 	return last
+}
+
+var ktTemplateRe = regexp.MustCompile(`\$([A-Za-z_][A-Za-z0-9_]*)`)
+
+// splitKotlinTemplate turns literal "$NAME" fragments (which the Kotlin grammar
+// leaves inside string_content) into references.
+func splitKotlinTemplate(parts []Part) []Part {
+	var out []Part
+	for _, p := range parts {
+		if p.Lit == "" || !strings.Contains(p.Lit, "$") {
+			out = append(out, p)
+			continue
+		}
+		last := 0
+		for _, m := range ktTemplateRe.FindAllStringSubmatchIndex(p.Lit, -1) {
+			if m[0] > last {
+				out = appendLit(out, p.Lit[last:m[0]])
+			}
+			out = append(out, Part{Ref: p.Lit[m[2]:m[3]]})
+			last = m[1]
+		}
+		if last < len(p.Lit) {
+			out = appendLit(out, p.Lit[last:])
+		}
+	}
+	return out
 }

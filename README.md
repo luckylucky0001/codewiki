@@ -166,9 +166,9 @@ wiki/
 
 | | 路由 / 页面 | 深链 | testID | 接口 |
 |---|---|---|---|---|
-| Android | Compose `composable(Routes.X)` / NavHost（解析 `const val`），入口 Screen；Manifest activity | Manifest intent-filter `<data android:scheme>` | `Modifier.testTag("x")` | Retrofit `@GET/@POST/...` |
-| iOS | `enum Route: String { case productDetail = "product/{id}" }` + `XxxView`；`navigationDestination` | Info.plist `CFBundleURLSchemes` | `.accessibilityIdentifier("x")` | `send(.post, path: "/api/...")` 类 URLSession 封装 |
-| HarmonyOS | `resources/base/profile/router_map.json`（name / pageSourceFile / buildFunction / data.pattern）、`main_pages.json` | `module.json5` skills `uris[].scheme` | `.id('x')`（含 ArkUI 链式属性） | `http.createHttp().request(BASE_URL + '/api/...', {method})` |
+| Android | Compose `composable(Routes.X)` / NavHost（解析 `const val`）、类型安全 `composable<T>` / Navigation 3 `entry<T>`；Manifest activity | Manifest intent-filter `<data android:scheme>` | `Modifier.testTag("x")` | Retrofit、Ktor `client.get`、OkHttp `Request.Builder().url` |
+| iOS | `enum Route: String { case productDetail = "product/{id}" }` + `XxxView`；`navigationDestination(for: X.self)` 关联值枚举 | Info.plist `CFBundleURLSchemes` | `.accessibilityIdentifier("x")` | `send(.post, path:)` 封装、Alamofire `AF.request`、Moya / `Endpoint` 枚举 |
+| HarmonyOS | `resources/base/profile/router_map.json`（name / pageSourceFile / buildFunction / data.pattern）、`main_pages.json` | `module.json5` skills `uris[].scheme` | `.id('x')`（含 ArkUI 链式属性） | `http.createHttp().request`、`@ohos/axios`、RCP `session.get` / `rcp.Request` |
 
 动态 testID（`"product_item_${p.id}"`）按字面前缀记录（`product_item_`）。字符串拼接、插值、常量引用都会静态求值（未知部分记为 `{name}`）。
 
@@ -420,12 +420,21 @@ template 模式出错的地方都是语义类断言：
 | ArkTS | 3858 | **100%**（语法补丁前 99.9%） | HarmonyOS-Cases/Cases、openharmony/applications_app_samples（sparse）、arkTS_universal_starter |
 | TS / JS | 1102 | 100% | 同上 |
 
-| 项目 | 符号 | 路由 | testID | 冷 / 热扫描 |
-|---|---|---|---|---|
-| nowinandroid | 1,748 | 5（Navigation 3 `entry<T>`） | 14 | 690 / 97 ms |
-| IceCubesApp | 6,058 | 28（`navigationDestination(for:)` 枚举） | 0 | 2,245 / 274 ms |
-| HarmonyOS-Cases | 20,141 | 88（router_map.json） | 1,437 | 9,105 / 853 ms |
-| app_samples | 51,342 | 10 | 2,674 | 32,043 / 3,935 ms |
+| 项目 | 符号 | 路由 | testID | API | 冷 / 热扫描 |
+|---|---|---|---|---|---|
+| nowinandroid | 1,748 | 5（Navigation 3 `entry<T>`） | 14 | 4（Retrofit 相对路径） | 690 / 97 ms |
+| IceCubesApp | 6,058 | 28（`navigationDestination(for:)` 枚举） | 0 | 78（`Endpoint` 枚举） | 2,245 / 274 ms |
+| HarmonyOS-Cases | 20,141 | 88（router_map.json） | 1,437 | 7 | 9,105 / 853 ms |
+| app_samples | 51,342 | 10 | 2,674 | 1 | 32,043 / 3,935 ms |
+
+API 抽取覆盖以下写法：
+
+- Android：Retrofit、Ktor、OkHttp；
+- iOS：URLSession 封装、Alamofire、Moya `TargetType` 与自定义 `Endpoint` 枚举；
+- HarmonyOS：`@kit.NetworkKit` http、`@ohos/axios`、RCP（Remote Communication Kit）；
+- JS/TS：axios。
+
+每种写法都有最小片段测试。
 
 验证中修复了 5 个问题，每个都配了最小片段回归测试：
 
