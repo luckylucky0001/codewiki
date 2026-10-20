@@ -100,7 +100,7 @@
   <div><b>20</b><span>kb 子命令（全部支持 --json）</span></div>
   <div><b>7</b><span>tree-sitter 语言：Kotlin/Java/Swift/ArkTS/JS/TS/TSX</span></div>
   <div><b>4</b><span>Agent Skills：compound / ingest / query / lint</span></div>
-  <div><b>69</b><span>Go 测试（单元 + 集成 + 评测 + 安全），vet / gofmt 干净</span></div>
+  <div><b>72</b><span>Go 测试（单元 + 集成 + 评测 + 安全），vet / gofmt 干净</span></div>
 </div>
 </section>
 
@@ -186,7 +186,7 @@
   <tr><td><code>kb status</code></td><td>列出 stale 页面及原因</td></tr>
   <tr><td><code>kb discover-docs</code></td><td>按 spec-kit、OpenSpec、Kiro、ADR、RFC、AGENTS.md、README、docs/ 的约定发现文档并分类</td></tr>
   <tr><td><code>kb ingest</code></td><td>把文档复制到 <code>raw/docs</code>，抽取断言（EARS、MUST/SHALL、FR-001、Kiro 编号），逐条判为 verified / conflict / unverifiable</td></tr>
-  <tr><td><code>kb search / get / context</code></td><td>检索 wiki；按 id 取页面；查询某个文件对应的页面、符号、路由、testID 和接口</td></tr>
+  <tr><td><code>kb search / get / context</code></td><td>检索 wiki；按 id 取页面；查询某个文件对应的页面、符号、路由、testID、接口，以及锚定在该文件中的文档需求（供测试生成使用）</td></tr>
   <tr><td><code>kb anchor</code></td><td>打印符号的当前 hash，LLM 写 frontmatter 时使用</td></tr>
   <tr><td><code>kb lint-tid / parity</code></td><td>testID 覆盖矩阵；功能 × 平台一致性矩阵和跨平台常量差异（生成 <code>pages/parity.md</code>）</td></tr>
   <tr><td><code>kb bench / eval</code></td><td>冷 / 热扫描基准；用人工标注的 golden set 评测断言核对与 plan 影响面（precision / recall）</td></tr>
@@ -264,13 +264,13 @@ status: current            # current | stale | outdated-doc
 <h2><span class="num">5</span>Demo 操作流程与评测</h2>
 <p><code>demo/run.sh</code> 用 <code>examples/minishop</code> 建一个临时 git 仓库。这是同一个电商 App 的三端实现，包含 6 条路由、11 类 testID、5 个接口。脚本依次执行 init → discover-docs → ingest → 首次 compound，然后把 3 个变更集以 <code>--no-ff</code> 合并到 master，每次合并后运行 status / diff / plan / compound / verify / parity，最后运行 <code>kb eval</code>。<code>DEMO_LLM=template</code> 约 1 分钟，结果可复现；<code>DEMO_LLM=claude</code> 使用真实的 <code>claude -p</code>。</p>
 <h3>5.1 文档发现与断言核对</h3>
-<p>共发现 9 份文档：spec-kit 的 <code>specs/001-cart/spec.md</code> 和 <code>plan.md</code>，Kiro 的 requirements 和 steering，ADR，3 份旧文档，以及 README（不参与 ingest）。从中抽取 33 条断言。三次合并后，template 模式结果为 <b>verified 24 / conflict 6 / unverifiable 3</b>，claude 模式结果为 <b>verified 23 / conflict 7 / unverifiable 3</b>（LOGIN-R2.2 等语义冲突在后续 template 重检中被保留，因为锚定的代码未变）。</p>
+<p>共发现 9 份文档：spec-kit 的 <code>specs/001-cart/spec.md</code> 和 <code>plan.md</code>，Kiro 的 requirements 和 steering，ADR，3 份旧文档，以及 README（不参与 ingest）。从中抽取 33 条断言。三次合并后，template 模式结果为 <b>verified 22 / conflict 10 / unverifiable 1</b>（第 4 轮为 24 / 6 / 3）。第 5 轮加入的值规则和行为规则，让 template 也能识别短信对话框、分页参数、<code>share_button</code>、共享常量这几类冲突。</p>
 <table>
   <tr><th>断言（来源）</th><th>结论与证据（以代码为准）</th></tr>
   <tr><td>登录使用短信验证码，<code>POST /api/sms/send</code>（旧文档）</td><td class="bad">conflict：代码中不存在该接口，只有 <code>POST /api/login</code></td></tr>
   <tr><td>购物车最多 10 件（<code>MAX_CART_ITEMS</code>）</td><td class="bad">conflict：android 与 harmony 为 50，ios 为 99</td></tr>
   <tr><td><b>FR-002</b>：购物车上限 99（spec-kit）</td><td class="bad">变更集 01 合并后，由 verified 变为 conflict</td></tr>
-  <tr><td><b>LOGIN-R2.2</b>：用户名为空时弹出短信验证对话框（Kiro）</td><td>template 判为 verified（依据只是 testID 存在）；<b>claude 判为 conflict</b>，理由是“只设置 invalid_credentials，没有短信对话框”</td></tr>
+  <tr><td><b>LOGIN-R2.2</b>：用户名为空时弹出短信验证对话框（Kiro）</td><td class="bad">conflict：代码中没有任何短信 / 验证码相关实现（第 4 轮 template 误判为 verified，只有 claude 能识别）</td></tr>
 </table>
 <h3>5.2 三次合并的增量结果（template 模式实测）</h3>
 <table>
@@ -280,36 +280,33 @@ status: current            # current | stale | outdated-doc
   <tr><td>02 ArkTS 改名并修改签名</td><td>renamed 1（<code>loadProducts→fetchProducts</code>，相似度 1.00），signature 1</td><td><code>product_detail, products</code></td><td>4 个任务</td></tr>
   <tr><td>03 三端新增 profile 路由</td><td>added 10</td><td><code>profile</code>（route_added）</td><td>4 个任务：create profile、overview、navigation、shared</td></tr>
 </table>
-<p>每一步 verify 都通过，最终得到 <b>24 个页面、372 个锚点</b>。<code>kb parity</code> 报告 <code>max_cart_items</code> 三端分别为 <code>50 / 99 / 50</code>。在修改 <code>BackButton</code> 的单测中，只有 shared-components 页被重新检查。</p>
+<p>每一步 verify 都通过，最终得到 <b>24 个页面、377 个锚点</b>。<code>kb parity</code> 报告 <code>max_cart_items</code> 三端分别为 <code>50 / 99 / 50</code>。在修改 <code>BackButton</code> 的单测中，只有 shared-components 页被重新检查。</p>
 <h3>5.3 评测：<code>kb eval</code>（人工标注 golden set）</h3>
 <p><code>examples/minishop-eval/golden.yaml</code> 包含 33 条人工标注的断言，以及每个变更集应当被重新检查的页面。<code>kb eval</code> 在临时仓库中回放 ingest、compound 和三次合并，然后计算 precision / recall。</p>
 <table>
-  <tr><th>指标</th><th>template</th><th>claude（sonnet，仅断言核对，1 次调用）</th></tr>
-  <tr><td>断言准确率</td><td>0.82</td><td><b>0.88</b></td></tr>
-  <tr><td>conflict precision / recall</td><td>1.00 / 0.56</td><td>1.00 / <b>0.78</b></td></tr>
-  <tr><td>verified precision / recall</td><td>0.88 / 0.92</td><td><b>0.96</b> / 0.92</td></tr>
-  <tr><td>plan 影响页面 precision / recall（micro）</td><td colspan="2">0.82 / <b>1.00</b>：没有漏检；多出的 2 页属于保守重检（<code>_conflicts</code>、<code>shared-components</code>）</td></tr>
+  <tr><th>指标</th><th>template 第 4 轮</th><th>template 第 5 轮</th><th>claude（sonnet，仅断言核对）</th></tr>
+  <tr><td>断言准确率</td><td>0.82</td><td><b>0.97</b></td><td>0.88</td></tr>
+  <tr><td>conflict precision / recall</td><td>1.00 / 0.56</td><td><b>1.00 / 1.00</b></td><td>1.00 / 0.78</td></tr>
+  <tr><td>verified precision / recall</td><td>0.88 / 0.92</td><td><b>1.00 / 0.96</b></td><td>0.96 / 0.92</td></tr>
+  <tr><td>plan 影响页面 precision / recall（micro）</td><td colspan="3">0.82 / <b>1.00</b>：没有漏检；多出的 2 页属于保守重检（<code>_conflicts</code>、<code>shared-components</code>）</td></tr>
 </table>
-<p>template 的错误集中在语义类断言上。例如“支持 page/size 分页”只因 API 存在就被判为 verified，<code>share_button</code> 没有被识别为不存在。claude 修正了其中的大部分。这组数字同时作为单测的回归下限。</p>
+<p>第 5 轮新增了 5 条保守的确定性规则：数量值（“最多 / 超时 / 重试 / 少于 N”与按领域词选出的常量比对）、明确说是 testID 却不存在、接口参数在调用处不存在、“共享常量”实际是各端各自声明、需求类断言提到的常见功能（短信、优惠券、分享等）在代码中完全没有。这些规则是看着漏判写的，所以 1.00 偏乐观。为了检验，另外写了 19 条单测断言，并在真实项目上复跑：axios 411 条、Cases 180 条、nowinandroid 22 条、IceCubesApp 22 条，<b>新增误报冲突为 0</b>。</p>
 <h3>5.4 真实 agent 使用 skills（<code>demo/skills-demo.sh</code>）</h3>
-<table>
-  <tr><th style="width:36%">问题（<code>claude -p --model haiku</code>）</th><th style="width:13%">skill</th><th>agent 的做法与结果</th></tr>
-  <tr><td>购物车上限三端分别是多少？引用出处</td><td>kb-query</td><td>调用 <code>kb search</code> 和 <code>kb parity --json</code>，用时 5 轮、$0.008。答出 50/99/50，给出 3 个符号 ID 以及 <code>CART-43567f</code>、<code>FR-002</code> 两处冲突</td></tr>
-  <tr><td>wiki 是否与代码一致、三端是否对齐</td><td>kb-lint</td><td>调用 <code>kb verify --json</code>、<code>lint-tid</code> 和 <code>parity</code>，用时 17 轮、$0.016。给出问题清单和建议，全程只读，<code>git status</code> 为空</td></tr>
-</table>
-<p>第一轮实测中，agent 有一次没有触发 skill，HarmonyOS 的值只能靠 grep 得到。据此给 kb-query / kb-lint 的 description 补充了跨平台取值类问法和 <code>kb parity</code>，修正后两个问题都在第一步触发了对应 skill。</p>
+<p>用 <code>claude -p --model haiku</code> 问两个问题。第一个问“购物车上限三端分别是多少”，agent 触发 kb-query，调用 <code>kb search</code> 和 <code>kb parity --json</code>，用了 5 轮、$0.008，答出 50 / 99 / 50，并附上符号 ID 和 2 条冲突。第二个问“wiki 是否与代码一致”，agent 触发 kb-lint，调用 <code>verify</code>、<code>lint-tid</code> 和 <code>parity</code>，用了 17 轮、$0.016，全程只读。第一轮实测时有一次没有触发 skill，之后补充了 skill 的 description。</p>
 <h3>5.5 claude 模式写页面</h3>
-<p>claude 模式下，每次 compound 最多给 2 个 LLM 任务（按价值排序），其余用 template；首次全量也用 template，以控制成本。最终 24 个页面、350 个锚点，所有步骤 verify 通过。LLM 写的页面有三端对照、失败处理差异和测试要点，还发现了示例代码中 <code>preload</code> 写入的 <code>pending</code> 从未被消费的问题。写集以外的写入会被自动回滚，有专门测试覆盖。</p>
+<p>每次 compound 最多给 2 个 LLM 任务（按价值排序），其余用 template。所有步骤 verify 通过。LLM 写的页面有三端对照和测试要点，还发现了 <code>preload</code> 写入的 <code>pending</code> 从未被消费的问题。写集以外的写入会被自动回滚。</p>
 <h3>5.6 不依赖 GitHub：每次 push 到 master 触发 compound（<code>demo/hook-demo.sh</code>）</h3>
 <p>先在本地建一个 bare 仓库作为“服务器”，用 <code>kb hook install --mode post-receive</code> 安装钩子。然后连续 push 三个 merge：先 push 01，0.8 s 后 push 02，再过 0.3 s push 03。demo 里用 <code>kb-slow</code> 模拟每次 3 s 的 LLM 耗时，让几次 push 在时间上重叠。</p>
+<p>实测（<code>remote:</code> 输出）：seed 全量 9 个任务；01 增量；02 拿到锁时 master 已经是 03，因此一次追平（<code>e6cff74..1c373e4 (4 new commit(s))</code>）；03 输出 <code>already compounded</code>。每次都 verify PASS。</p>
+<p>最终 <b>remote master 与 wiki 的 last_sha 一致</b>。实现要点：用 <code>mkdir</code> 锁保证串行；拿到锁后读取分支的当前头，从 last_sha 开始增量；wiki 放在服务端目录（<code>--wiki-dir</code>），不回写 master，因此不会递归触发钩子。</p>
+<h3>5.7 Agent A/B 基准：有 wiki 与没有 wiki（<code>bench/agent-qa/</code>）</h3>
+<p>10 个答案可以用正则核对的 minishop 问题（例如三端购物车上限、结算接口、订单 deeplink、哪些旧文档过时、改登录要动哪些文件）。每题用 <code>claude -p --model haiku</code> 跑两组，每组 3 次：A 组是仓库 + wiki + kb skills，B 组是同一份源码树，只能用 grep 和读文件。</p>
 <table>
-  <tr><th style="width:12%">push</th><th>pusher 终端中的 <code>remote:</code> 输出</th></tr>
-  <tr><td>seed</td><td><code>compound master none..bc26302</code>：full，9 个任务，verify PASS（22 页）</td></tr>
-  <tr><td>01</td><td><code>compound master 73660c8..e6cff74 (2 new commit(s))</code>：incremental，verify PASS</td></tr>
-  <tr><td>02</td><td>拿到锁时 master 已经是 03，因此一次追平：<code>e6cff74..1c373e4 (4 new commit(s))</code>，verify PASS（23 页 / 198 锚点）</td></tr>
-  <tr><td>03</td><td><code>master@1c373e4 already compounded (caught up by an earlier run)</code></td></tr>
+  <tr><th>组</th><th>通过</th><th>平均 turns</th><th>平均输出 tokens</th><th>总费用</th><th>平均耗时</th></tr>
+  <tr><td>A：wiki + skills</td><td>30/30</td><td><b>9.0</b></td><td><b>4.5k</b></td><td><b>$0.25</b></td><td><b>30 s</b></td></tr>
+  <tr><td>B：只有源码</td><td>30/30</td><td>12.7</td><td>6.6k</td><td>$0.29</td><td>39 s</td></tr>
 </table>
-<p>最终 <b>remote master 与 wiki 的 last_sha 一致</b>。钩子的实现要点：用 <code>mkdir</code> 原子锁保证串行；拿到锁后读取分支的<b>当前头</b>，从 <code>.kb/graph.json</code> 中的 last_sha 开始增量；wiki 放在服务端目录（<code>--wiki-dir</code>），不回写 master，因此不会产生非快进冲突，也不会递归触发钩子；没有符号变化的提交同样推进 last_sha。</p>
+<p>结果如实写：仓库只有 49 个文件，两组<b>准确率相同</b>。wiki 带来的是效率：turns 少 29%，耗时少 23%。差别最大的是“三端不一致”这题：A 11 turns / 43 s，B 39 turns / 111 s。“旧文档哪些过时”这题两组持平，因为 haiku 没有调用 skill 去读 <code>_conflicts.md</code>；改了 skill 描述后复测，仍然没有改善。打分正则有一处修正，已披露。总花费 $0.75。</p>
 </section>
 
 <!-- ============ 6 ============ -->
@@ -383,10 +380,10 @@ status: current            # current | stale | outdated-doc
 <h3>当前局限</h3>
 <ul>
   <li><b>cgo</b>：tree-sitter 语法为 C 代码，构建需要 C 编译器。Swift 语法会产生无害的编译警告，可用 <code>CGO_CFLAGS=-w</code> 屏蔽。</li>
-  <li><b>语法覆盖</b>：ArkUI 尾逗号已通过语法补丁修复；Swift 带属性的函数类型字面量（2 个文件）仍会解析失败。失败会记入 <code>parse_failures</code>，不会中断扫描。修改 vendored 语法后需要同时更新 <code>GrammarHash</code>，有测试强制检查。</li>
+  <li><b>语法覆盖</b>：ArkUI 尾逗号已通过语法补丁修复；Swift 有 2 个文件仍解析失败，写法是 <code>(@Sendable (T) -&gt; Void).self</code> 和 <code>if await x.y {</code>。第 5 轮复查过，上游 main <code>9e3b87f</code> 也没有修复，所以不升级。失败会记入 <code>parse_failures</code>，不会中断扫描。修改 vendored 语法后需要同时更新 <code>GrammarHash</code>，有测试强制检查。</li>
   <li><b>引用解析</b>：基于名称、作用域和 import，没有完整的类型推断，也不建立跨平台的边。</li>
   <li><b>facts 启发式</b>：API 抽取依赖适配器，目前覆盖 Retrofit / Ktor / OkHttp / Alamofire / Moya / Endpoint 枚举 / http / @ohos/axios / RCP / axios。完全自研、动态拼接 URL 的网络层仍识别不到；注入检测是基于规则的，属于纵深防御的一层，不能保证全部拦截。</li>
-  <li><b>断言核对</b>：template 模式对语义类断言的 recall 有限，conflict recall 为 0.56，需要 claude 模式补充；claude 单个任务约 30–60 s。</li>
+  <li><b>断言核对</b>：template 只判断可以确定性检查的部分（golden set 上 conflict recall 已到 1.00，但规则是针对这些漏判写的，样本也小）。流程和措辞上的语义仍需要 claude 模式，单个任务约 30–60 s。</li>
 </ul>
 <h3>路线图</h3>
 <table>

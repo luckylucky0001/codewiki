@@ -306,7 +306,7 @@ kb bench --root /path/to/repo --config cfg.yaml  # 真实仓库；缓存写到�
 
 LLM 的判定会写入 `requirements.json` 的 evidence，以 `[llm]` 开头。后续 template 重检时，如果该断言锚定的代码 hash 没有变化，就保留 LLM 的判定，不让确定性检查覆盖掉语义结论。
 
-template 模式做确定性检查：接口 method+path 对 `apis.json`、深链对 `routes.json`、testID、route id/pattern、符号名（含数值常量与文档数字比对）、文件名、代码字面量在符号体中检索。claude 模式做语义核对（例如“用户名为空时弹出短信验证对话框”——testID 存在但行为不存在 → conflict）。`_conflicts.md` 本身锚定所用证据符号，代码变化后会被自动重新核对（例如购物车上限 99→50 后 spec `FR-002` 由 verified 变为 conflict）。
+template 模式做确定性检查：接口 method+path 对 `apis.json`、深链对 `routes.json`、testID、route id/pattern、符号名（含数值常量与文档数字比对）、文件名、代码字面量在符号体中检索，以及第 5 轮加入的数量值、testID 不存在、接口参数、共享常量、功能关键词规则（见“评测”一节）。claude 模式做语义核对（例如“用户名为空时弹出短信验证对话框”——testID 存在但行为不存在 → conflict）。`_conflicts.md` 本身锚定所用证据符号，代码变化后会被自动重新核对（例如购物车上限 99→50 后 spec `FR-002` 由 verified 变为 conflict）。
 
 ## CI 接入
 
@@ -388,26 +388,46 @@ kb eval                       # template（确定性，也作为单测回归门�
 kb eval --llm claude          # 仅断言核对使用 LLM（1 次调用）；页面写作仍用 template
 ```
 
-| 指标 | template | claude（sonnet） |
+| 指标 | template（第 4 轮） | **template（第 5 轮，值/行为规则）** | claude（sonnet，第 4 轮） |
+|---|---|---|---|
+| 断言准确率（33 条） | 0.82 | **0.97** | 0.88 |
+| conflict precision / recall | 1.00 / 0.56 | **1.00 / 1.00** | 1.00 / 0.78 |
+| verified precision / recall | 0.88 / 0.92 | **1.00 / 0.96** | 0.96 / 0.92 |
+| plan 影响页面 precision / recall（micro，3 个变更集） | 0.82 / 1.00 | 0.82 / 1.00 | 同左（plan 是确定性的） |
+
+第 4 轮 template 漏掉的 4 条冲突和 2 条误判，第 5 轮用**保守的确定性规则**补上了（`internal/engine/valuecheck.go`）：
+
+| 规则 | 什么时候触发 | 例子 |
 |---|---|---|
-| 断言准确率（33 条） | 0.82 | **0.88** |
-| conflict precision / recall | 1.00 / 0.56 | 1.00 / **0.78** |
-| verified precision / recall | 0.88 / 0.92 | **0.96** / 0.92 |
-| plan 影响页面 precision / recall（micro，3 个变更集） | 0.82 / 1.00 | 同左（plan 是确定性的） |
+| 数量值 | 断言里有“最多 / 至多 / 不超过 / at most / up to N”“至少 / 少于 N”“超时 N 秒 / ms”“重试 N 次”，且没有点名常量。按断言中的领域词（购物车 → cart、密码 → password）挑出名字含 MAX/LIMIT/MIN/TIMEOUT/RETRY 的数值常量，逐个比对；超时会换算 s / ms。字面比较（`password.length < 6`）只能用来判 verified，不会用来判 conflict | “购物车最多 20 件” vs `MAX_CART_ITEMS=99` → conflict；“密码少于 6 位直接拒绝” → verified |
+| 不存在的 testID | 断言明确说 `x` 是 testID，项目有 testID facts，且 `x` 在代码里一次都没出现 | `share_button` → conflict |
+| 接口参数 | 断言里只有一个接口，并提到“参数 / param / query”；点名的参数在该接口的所有调用处都没有，也没有以 `'page'`、`page=` 的形式出现在任何代码里。提到“返回 / 字段 / return”时不触发 | “`GET /api/products` 支持 `page`、`size`” → conflict |
+| 共享常量 | 断言说“三端共享 / shared constant”，但同名常量在 ≥2 个平台各自声明 | “三端共享上限常量” → conflict（`MAX_CART_ITEMS` 三端各一份） |
+| 行为关键词 | 只看**需求类**断言（spec-kit / Kiro / EARS / MUST），并且项目有路由或 testID（是 app）。断言提到常见功能（短信 / 验证码、优惠券、分享、生物识别、扫码、推送、支付、第三方登录），而代码里（符号、函数体、接口路径、testID、路由）完全没有相关痕迹。否定句（MUST NOT、不、没有）不触发 | “空用户名时弹出 SMS 验证对话框” → conflict |
 
-template 模式出错的地方都是语义类断言：
+同时收紧了两处：`page`、`size` 这类 4 个字母以内的小写普通词，不再靠“代码里出现过”来判 verified 或产生锚点；deeplink 只核对 app 自己声明的 scheme（`devtools://` 这类调试 URL 不再判冲突）。
 
-- 把“空用户名弹出短信对话框”判为 verified，依据只是 testID 存在；
-- 把“支持 page/size 分页”判为 verified，依据只是 API 存在；
-- 把 `share_button` 判为 unverifiable，没有识别出它不存在；
-- 把“密码少于 6 位直接拒绝”判为 unverifiable。
+**会不会过拟合 golden set？** 这些规则是看着第 4 轮的漏判写出来的，所以 golden set 上的 1.00 偏乐观。为此另外做了两件事：
 
-这些正是 claude 模式要补的部分：claude 正确识别了“短信对话框”“分页参数”两条冲突，以及“密码少于 6 位直接拒绝”这条成立。它仍然漏掉的是 `share_button`（判为 unverifiable），以及“三端共享上限常量”（标注者认为三端各自定义、并不共享）。另外，claude 对“测试参数注入”类断言更保守，判为 unverifiable。plan 的 recall 为 1.0，即没有漏掉应该更新的页面。多出来的两页：
+- `valuecheck_test.go` 里有 19 条新写的断言，不来自 minishop 文档，其中 5 条专门检查“规则不应触发”的情况（否定句、运维手册里顺带提到的词、返回字段、没说是 testID 的词）；
+- 在 4 个真实项目上复跑，**没有新增任何误报冲突**：axios 411 条、HarmonyOS Cases 180 条、nowinandroid 22 条、IceCubesApp 22 条，conflict 都是 0，wiki 都能发布。axios 上有 28 条断言从 verified 降为 unverifiable，原因是它们之前只靠 `true`、`null` 这类词“出现在代码中”判为 verified，属于误判，降级是正确的。
 
-- `_conflicts.md`：断言锚点所在的类发生了变化；
-- `shared-components.md`：profile 页引入了新的共享符号。
+复跑时还发现并修复了两个旧问题：一是 `_conflicts.md` 原样引用文档里的相对链接，产生死链，导致 nowinandroid 的 wiki 无法发布；二是 verify 把带 `#` 片段的 https URL 当成了符号 ID（Cases）。
 
-两者都属于保守的重检。
+剩下的 1 条错误是 ADR 中的 `minishop://<pattern>`，这是一个占位符，template 模式无法验证，所以判为 unverifiable。claude 模式仍然有价值：它能处理流程和措辞上的语义，并能对“没有确定性证据”的断言给出判断。
+
+## Agent A/B 基准：wiki 对 agent 有多大帮助
+
+`bench/agent-qa/run.sh` 对同一组问题（10 个 minishop 问题，答案可以用正则核对）跑两组：A 组是仓库 + wiki + kb skills；B 组是同一份源码树，没有 wiki 和 skills，只能用 grep 和读文件。模型都是 `claude -p --model haiku`，每题每组跑 3 次。
+
+| | 通过 | 平均 turns | 平均输出 tokens | 总费用 | 平均耗时 |
+|---|---|---|---|---|---|
+| A：wiki + skills | 30/30 | **9.0** | **4.5k** | **$0.25** | **30 s** |
+| B：只有源码 | 30/30 | 12.7 | 6.6k | $0.29 | 39 s |
+
+结果如实写：minishop 很小（49 个文件），两组的**准确率相同**。wiki 带来的是**效率**：turns 少 29%，费用少 14%，耗时少 23%。差别最大的是“三端有哪些不一致”这题：A 11 turns / 43 s，B 39 turns / 111 s。“旧文档哪些过时”这题两组都约 25 turns，因为 haiku 没有调用 skill 去读 `_conflicts.md`；在 skill 描述里加提示后复测，也没有改善。A 组 30 次运行中，有 8 次完全没用到 wiki。
+
+打分正则有一处修正（接口路径前带 host 时匹配失败），已在文档中披露。方法、逐题结果和原始 transcript 见 [bench/agent-qa/README.md](bench/agent-qa/README.md) 和 `demo/sample-output/agent-bench/`。基准总花费 $0.75。
 
 ## 真实开源项目验证
 
@@ -495,7 +515,8 @@ codewiki 的 LLM 会读取不可信的内容：旧文档、第三方代码里的
 - Swift 语法来自 `alex-pinkus/tree-sitter-swift`（使用带生成文件的 tag 版本）；Kotlin 为 `tree-sitter-grammars/tree-sitter-kotlin` v1.1.0；Java/JS/TS 为官方语法。
 - 引用边为名称级解析，没有类型推断；跨平台不建立边。
 - template writer 产出的页面偏“结构化索引”，叙述质量需 claude 模式。
-- 断言核对的 template 模式只能判断“可确定性检查”的部分，语义类断言（行为、流程）需要 LLM。
+- 断言核对的 template 模式只判断可以确定性检查的部分（接口、深链、testID、符号、数值常量、参数、共享常量、常见功能关键词）。流程和措辞上的语义仍然需要 claude 模式。
+- Swift：IceCubesApp 中有 2 个文件解析出错，写法分别是 `(@Sendable (T) -> Void).self` 和 `if await x.y {`。上游 main（`9e3b87f`）仍未修复，详见 docs/validation.md。
 
 ## 参考
 

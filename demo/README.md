@@ -53,7 +53,7 @@ claude 模式下单个任务耗时约 30–60 秒。以 `DEMO_MAX_LLM_TASKS=2` �
 | 05 | 合并 `01-cart-limit` | 只改注释的变化是 no-op。android 和 harmony 的上限常量属于 body 变化（iOS 漏改，仍为 99），会重写 cart、product_detail、`_conflicts` 三页。spec `FR-002`（99）从 verified 变为 conflict；`kb parity` 报出 `max_cart_items` 三端为 50 / 99 / 50；`changed_route_ids` 为 `[cart, product_detail]` |
 | 06 | 合并 `02-arkts-api-rename` | diff 识别出 `Api.loadProducts → Api.fetchProducts`（renamed，similarity 1.00），以及 `CartStore.addItem` 的签名变化；products、product_detail 两页被更新 |
 | 07 | 合并 `03-profile-route` | facts 中新增 profile 路由；plan 生成 `create pages/features/profile.md`，并更新 overview、navigation、shared-components |
-| 90+ | `search` / `context` / `get` / `lint-tid` / `parity` / `eval` / `status` / `verify` | 查询、三端一致性、golden set 评测（accuracy 0.82）与门禁 |
+| 90+ | `search` / `context` / `get` / `lint-tid` / `parity` / `eval` / `status` / `verify` | 查询、三端一致性、golden set 评测（accuracy 0.97）与门禁 |
 
 每个变更集都会依次保存 6 个文件：`1-status`（合并后、compound 前哪些页面 stale）、`2-diff`、`3-plan.json`（含 `changed_route_ids` 与按价值排序的 `priority`）、`4-compound`、`5-verify`、`6-parity`。
 
@@ -103,3 +103,4 @@ cd demo/output/<ts>-template/repo
 | `demo/skills-demo.sh <demo-repo> [outdir]` | 先 `kb install-skills`，再用 `claude -p` 问两个问题，记录 transcript | go、git、jq、claude |
 | `demo/snapshot.sh <demo/output/run> <name>` | 把一次运行的结果整理到 `demo/sample-output/<name>`，去掉临时仓库 | — |
 | `kb eval` | 用 golden set 评测断言核对和 plan 影响面 | — |
+| `bench/agent-qa/run.sh <demo-repo> [outdir]` | Agent A/B 基准：同一组问题分别在“有 wiki + skills”和“只有源码”两种条件下跑 `claude -p --model haiku`，自动打分，统计 turns / tokens / 费用 / 耗时。结果见 `demo/sample-output/agent-bench/` | go、git、jq、claude |
