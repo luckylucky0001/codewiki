@@ -276,10 +276,10 @@ func Compound(o *Options) (*Result, error) {
 	_ = os.WriteFile(graphPath, gb, 0o644)
 	// tasks
 	env := &taskEnv{o: o, a: a, staging: staging, work: work, graphPath: graphPath, head: head}
-	for i, t := range a.Plan.Tasks {
+	for _, t := range a.Plan.Tasks {
 		writer := o.LLM
-		if o.MaxTasks > 0 && i >= o.MaxTasks && writer != "template" {
-			writer = "template"
+		if o.MaxTasks > 0 && t.Priority > o.MaxTasks && writer != "template" {
+			writer = "template" // over budget: lower-value task
 		}
 		tr := env.run(t, writer)
 		if tr.Status != "ok" && o.Fallback && writer != "template" {

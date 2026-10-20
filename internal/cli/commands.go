@@ -400,7 +400,7 @@ func printPlan(w io.Writer, p *engine.Plan) {
 		if len(rs) > 4 {
 			rs = append(rs[:4], fmt.Sprintf("…+%d", len(rs)-4))
 		}
-		fmt.Fprintf(w, "  %s %-7s %-30s write_set=%v reasons=[%s]\n", t.ID, t.Op, t.Page, t.WriteSet, strings.Join(rs, ", "))
+		fmt.Fprintf(w, "  %s %-7s %-30s p%d write_set=%v reasons=[%s]\n", t.ID, t.Op, t.Page, t.Priority, t.WriteSet, strings.Join(rs, ", "))
 	}
 }
 

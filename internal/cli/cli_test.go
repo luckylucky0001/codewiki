@@ -372,3 +372,33 @@ func TestMCPServer(t *testing.T) {
 		t.Fatal("unknown method must be a JSON-RPC error")
 	}
 }
+
+func TestMaxLLMTasksUsesPriority(t *testing.T) {
+	dir := repo(t)
+	run(t, dir, "init")
+	run(t, dir, "compound")
+	testutil.Git(t, dir, "add", "-A")
+	testutil.Git(t, dir, "commit", "-qm", "wiki")
+	commitChange(t, dir, "01-cart-limit")
+	// fake LLM that just restamps by copying the template output is not needed:
+	// a failing LLM command makes the LLM-written tasks visible via their status.
+	code, v := runJSON(t, dir, "compound", "--llm", "cmd", "--llm-cmd", "cat >/dev/null; exit 3", "--max-llm-tasks", "1", "--fallback")
+	if code != 0 {
+		t.Fatalf("compound: %d", code)
+	}
+	llm := 0
+	for _, tk := range v["result"].(map[string]any)["tasks"].([]any) {
+		m := tk.(map[string]any)
+		usedLLM := strings.Contains(fmt.Sprint(m["error"]), "fallback after")
+		if usedLLM {
+			llm++
+		}
+		isFeature := strings.HasPrefix(m["page"].(string), "pages/features/")
+		if usedLLM && !isFeature {
+			t.Fatalf("budget went to a non-feature task first: %v", m)
+		}
+	}
+	if llm != 1 {
+		t.Fatalf("exactly one task should use the LLM budget, got %d", llm)
+	}
+}

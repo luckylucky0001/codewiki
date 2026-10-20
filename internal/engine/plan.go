@@ -35,6 +35,8 @@ type Task struct {
 	WriteSet []string `json:"write_set"`
 	Reasons  []Reason `json:"reasons"`
 	Context  []string `json:"context"` // symbol ids whose bodies are given to the writer
+	// Priority is the task's rank for the LLM budget (1 = most valuable).
+	Priority int `json:"priority"`
 }
 
 // Plan is written to .kb/plan.json and drives the LLM stage.
@@ -352,6 +354,51 @@ func BuildPlan(in PlanInput) *Plan {
 	return p
 }
 
+// kindRank orders task kinds by value for the LLM budget.
+func kindRank(k string) int {
+	switch k {
+	case "feature":
+		return 0
+	case "flow":
+		return 1
+	case "concept":
+		return 2
+	}
+	return 3
+}
+
+// changedAnchors counts reasons that point at changed code.
+func changedAnchors(t Task) int {
+	n := 0
+	for _, r := range t.Reasons {
+		if strings.HasPrefix(r.Code, "anchor_") || r.Code == "signature_propagation" || r.Code == "route_added" {
+			n++
+		}
+	}
+	return n
+}
+
+// RankForLLM returns task indexes ordered by value: features > flows >
+// concepts > others, then by number of changed anchors, then by page path.
+// `--max-llm-tasks N` gives the LLM the first N; the rest use the template.
+func RankForLLM(tasks []Task) []int {
+	idx := make([]int, len(tasks))
+	for i := range idx {
+		idx[i] = i
+	}
+	sort.SliceStable(idx, func(a, b int) bool {
+		ta, tb := tasks[idx[a]], tasks[idx[b]]
+		if ka, kb := kindRank(ta.Kind), kindRank(tb.Kind); ka != kb {
+			return ka < kb
+		}
+		if ca, cb := changedAnchors(ta), changedAnchors(tb); ca != cb {
+			return ca > cb
+		}
+		return ta.Page < tb.Page
+	})
+	return idx
+}
+
 func finalize(p *Plan) {
 	sort.SliceStable(p.Tasks, func(i, j int) bool { return p.Tasks[i].Page < p.Tasks[j].Page })
 	for i := range p.Tasks {
@@ -361,6 +408,9 @@ func finalize(p *Plan) {
 		if t.Context == nil {
 			t.Context = []string{}
 		}
+	}
+	for rank, i := range RankForLLM(p.Tasks) {
+		p.Tasks[i].Priority = rank + 1
 	}
 }
 

@@ -373,3 +373,36 @@ func TestParityConstantDiff(t *testing.T) {
 		}
 	}
 }
+
+func TestRankForLLM(t *testing.T) {
+	r := func(codes ...string) []Reason {
+		var out []Reason
+		for _, c := range codes {
+			out = append(out, Reason{Code: c})
+		}
+		return out
+	}
+	tasks := []Task{
+		{Page: "pages/_conflicts.md", Kind: "conflicts", Reasons: r("anchor_body_changed", "anchor_body_changed", "anchor_body_changed")},
+		{Page: "pages/concepts/shared-components.md", Kind: "concept", Reasons: r("anchor_body_changed")},
+		{Page: "pages/features/a.md", Kind: "feature", Reasons: r("anchor_body_changed")},
+		{Page: "pages/features/b.md", Kind: "feature", Reasons: r("anchor_body_changed", "signature_propagation")},
+		{Page: "pages/flows/checkout.md", Kind: "flow", Reasons: r("anchor_body_changed")},
+		{Page: "pages/overview.md", Kind: "overview", Reasons: r("route_set_changed")},
+	}
+	var got []string
+	for _, i := range RankForLLM(tasks) {
+		got = append(got, tasks[i].Page)
+	}
+	want := "pages/features/b.md pages/features/a.md pages/flows/checkout.md pages/concepts/shared-components.md pages/_conflicts.md pages/overview.md"
+	if strings.Join(got, " ") != want {
+		t.Fatalf("rank:\n got %v\nwant %v", got, want)
+	}
+	p := &Plan{Tasks: tasks}
+	finalize(p)
+	for _, tk := range p.Tasks {
+		if tk.Page == "pages/features/b.md" && tk.Priority != 1 {
+			t.Fatalf("priority of b = %d", tk.Priority)
+		}
+	}
+}

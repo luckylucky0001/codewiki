@@ -309,7 +309,7 @@ template 模式做确定性检查：接口 method+path 对 `apis.json`、深链�
 模板：[`.github/workflows/compound.yml`](.github/workflows/compound.yml)，说明：[examples/ci/README.md](examples/ci/README.md)。
 
 - `on: push` 到 master/main；`concurrency` 串行且不取消；
-- 有 `ANTHROPIC_API_KEY` 用 claude，否则 template；`--max-llm-tasks` 控制成本、`--fallback` 兜底；
+- 有 `ANTHROPIC_API_KEY` 用 claude，否则 template；`--max-llm-tasks N` 控制成本：按价值排序（feature > flow > concept > 其他，同类按变化锚点数降序；`plan.json` 中的 `priority` 字段），前 N 个交给 LLM，其余用 template；`--fallback` 兜底；
 - `kb verify` 失败 → job 失败；wiki 变更以 `[skip ci]` 提交回仓库（或独立 wiki 仓库 / `kb` 分支）。
 
 ## 在 Claude Code 中使用 skills
