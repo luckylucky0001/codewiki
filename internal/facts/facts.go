@@ -182,6 +182,48 @@ func slugPattern(p string) string {
 	return strings.Join(segs, "_")
 }
 
+// findSymNear is findSym preferring the candidate that shares the longest
+// directory prefix with near: a multi-app repo (compose-samples has a
+// PlayerScreen in Jetcaster mobile, tv and wear) must anchor each NavHost on
+// its own module's screen.
+func (c *ctx) findSymNear(platform, name, near string, kinds ...string) *model.Symbol {
+	best := c.findSym(platform, name, kinds...)
+	if best == nil || len(c.byName[platform+"\x00"+name]) < 2 {
+		return best
+	}
+	bestScore := -1
+	for _, s := range c.byName[platform+"\x00"+name] {
+		ok := len(kinds) == 0
+		for _, k := range kinds {
+			if s.Kind == k {
+				ok = true
+			}
+		}
+		if !ok {
+			continue
+		}
+		score := commonPrefix(s.File, near) * 4
+		if !isTestPath(s.File) {
+			score += 2
+		}
+		if s.Parent == "" {
+			score++
+		}
+		if score > bestScore {
+			best, bestScore = s, score
+		}
+	}
+	return best
+}
+
+func commonPrefix(a, b string) int {
+	n := 0
+	for n < len(a) && n < len(b) && a[n] == b[n] {
+		n++
+	}
+	return n
+}
+
 func (c *ctx) findSym(platform, name string, kinds ...string) *model.Symbol {
 	var best *model.Symbol
 	bestScore := -1
@@ -241,22 +283,31 @@ func (c *ctx) sortedFiles() []string {
 // ---------- routes ----------
 
 func (c *ctx) routes() {
-	seen := map[string]bool{}
-	add := func(r model.Route) {
-		k := r.Platform + "|" + r.RouteID + "|" + r.Pattern
-		if seen[k] {
+	seen := map[string]int{} // key -> index in c.f.Routes
+	weak := map[int]bool{}   // routes anchored on the enclosing NavHost, not a screen
+	// site separates the same id + pattern registered in two modules
+	// (Jetcaster tv and wear both have "episode"); one site reported twice
+	// (Kotlin: call + trailing-lambda call) keeps the screen-anchored entry.
+	addAt := func(r model.Route, site string, resolved bool) {
+		k := r.Platform + "|" + r.RouteID + "|" + r.Pattern + "|" + site
+		if i, ok := seen[k]; ok {
+			if weak[i] && resolved {
+				c.f.Routes[i], weak[i] = r, false
+			}
 			return
 		}
-		seen[k] = true
+		seen[k] = len(c.f.Routes)
+		weak[len(c.f.Routes)] = !resolved
 		c.f.Routes = append(c.f.Routes, r)
 	}
+	add := func(r model.Route) { addAt(r, "", true) }
 	for _, file := range c.sortedFiles() {
 		fi := c.g.Files[file]
 		for _, call := range c.res.Calls[file] {
 			if fi.Lang == "kotlin" && len(call.TypeArgs) == 1 && (call.Callee == "composable" || call.Callee == "entry" || call.Callee == "dialog") {
 				// type-safe navigation (Navigation 2.8 composable<T>, Navigation 3 entry<T>)
 				if r, ok := c.typedRoute(fi.Platform, file, call); ok {
-					add(r)
+					addAt(r, file, r.Symbol != call.Enclosing)
 				}
 				continue
 			}
@@ -292,29 +343,83 @@ func (c *ctx) routes() {
 			sym, sfile := call.Enclosing, file
 			for _, in := range call.Inner {
 				if strings.HasSuffix(in, "Screen") {
-					if s := c.findSym(fi.Platform, in, "composable", "function"); s != nil {
+					if s := c.findSymNear(fi.Platform, in, file, "composable", "function"); s != nil {
 						sym, sfile = s.ID, s.File
 						break
 					}
 				}
 			}
-			add(model.Route{Platform: fi.Platform, RouteID: rid, Pattern: v.s, Deeplink: c.deeplink(fi.Platform, v.s), File: sfile, Symbol: sym})
+			addAt(model.Route{Platform: fi.Platform, RouteID: rid, Pattern: v.s, Deeplink: c.deeplink(fi.Platform, v.s), File: sfile, Symbol: sym}, file, sym != call.Enclosing)
 		}
 	}
 	// iOS: enums used as navigationDestination(for: X.self) and String-raw-value
 	// enums named *Route* (case productDetail = "product/{id}")
 	destEnums := map[string]bool{}
+	isEnum := func(platform, name string) bool { return c.findSym(platform, name, "enum") != nil }
 	for _, file := range c.sortedFiles() {
-		if c.g.Files[file].Lang != "swift" {
+		fi := c.g.Files[file]
+		if fi.Lang != "swift" {
 			continue
 		}
 		for _, call := range c.res.Calls[file] {
-			if call.Callee != "navigationDestination" {
-				continue
-			}
-			for _, a := range call.Args {
-				if a.Label == "for" && strings.HasSuffix(a.Text, ".self") {
-					destEnums[lastSeg(strings.TrimSuffix(a.Text, ".self"))] = true
+			switch call.Callee {
+			case "navigationDestination":
+				for _, a := range call.Args {
+					if a.Label != "for" || !strings.HasSuffix(a.Text, ".self") {
+						continue
+					}
+					t := strings.TrimSuffix(a.Text, ".self")
+					if isEnum(fi.Platform, lastSeg(t)) {
+						destEnums[lastSeg(t)] = true
+						continue
+					}
+					// navigationDestination(for: Order.ID.self) { id in OrderDetailView(id: id) }:
+					// a value type, not a route enum — one route named after the type,
+					// anchored on the view the closure builds
+					segs := strings.Split(t, ".")
+					base := segs[len(segs)-1]
+					if (base == "ID" || base == "Id") && len(segs) > 1 {
+						base = segs[len(segs)-2]
+					}
+					switch base {
+					case "", "String", "Int", "UUID", "AnyHashable", "Destination", "Route", "Routes", "Path", "Screen", "Page":
+						continue // a router's own wrapper type, not a screen
+					}
+					// only a closure that builds exactly one view is a single destination
+					// (a switch over a wrapper type builds many)
+					v := c.swiftView(fi.Platform, call.Inner)
+					if v == nil {
+						continue
+					}
+					add(model.Route{Platform: fi.Platform, RouteID: Snake(base), Pattern: Snake(base) + "/{" + lowerFirst(base) + "}", File: v.File, Symbol: v.ID})
+				}
+			case "NavigationLink":
+				for _, a := range call.Args {
+					switch a.Label {
+					case "value":
+						// NavigationLink(value: Panel.truck): Panel is a destination enum
+						if segs := strings.Split(strings.TrimPrefix(a.Text, "."), "."); len(segs) == 2 && isEnum(fi.Platform, segs[0]) {
+							destEnums[segs[0]] = true
+						}
+					case "destination":
+						// NavigationLink(destination: CountryDetailsView(country: c))
+						name, _, ok := strings.Cut(a.Text, "(")
+						if !ok || name == "" || !unicode.IsUpper([]rune(name)[0]) || strings.ContainsAny(name, ". ") {
+							continue
+						}
+						v := c.findSym(fi.Platform, name, "struct", "class")
+						if v == nil {
+							continue
+						}
+						rid := name
+						for _, suf := range []string{"View", "Screen", "ViewController"} {
+							if strings.HasSuffix(rid, suf) && len(rid) > len(suf) {
+								rid = strings.TrimSuffix(rid, suf)
+								break
+							}
+						}
+						add(model.Route{Platform: fi.Platform, RouteID: Snake(rid), Pattern: Snake(rid), File: v.File, Symbol: v.ID})
+					}
 				}
 			}
 		}
@@ -346,6 +451,31 @@ func (c *ctx) routes() {
 			sym, file = v.ID, v.File
 		}
 		add(model.Route{Platform: s.Platform, RouteID: rid, Pattern: s.Value, Deeplink: c.deeplink(s.Platform, s.Value), File: file, Symbol: sym})
+	}
+	// URL route tables: let allRoutes: [String: Handler] = ["/projects/:id": project, …]
+	// (kickstarter/ios-oss) or mapOf("/projects/:id" to ::project): each
+	// path key is a deep-link route anchored on its handler function.
+	for _, sym := range c.g.Symbols {
+		if (sym.Lang != "swift" && sym.Lang != "kotlin") || sym.Parent != "" || !reRouteTableName.MatchString(sym.Name) {
+			continue
+		}
+		switch sym.Kind {
+		case "property", "variable", "constant", "val", "var":
+		default:
+			continue
+		}
+		for _, m := range reRouteTableEntry.FindAllStringSubmatch(c.symbolSource(sym), -1) {
+			path, handler := strings.TrimPrefix(m[1], "/"), m[2]
+			if path == "" {
+				continue
+			}
+			pattern := reColonParam.ReplaceAllString(path, "{$1}")
+			r := model.Route{Platform: sym.Platform, RouteID: Snake(handler), Pattern: pattern, File: sym.File, Symbol: sym.ID}
+			if h := c.findSymNear(sym.Platform, handler, sym.File, "function", "method"); h != nil {
+				r.File, r.Symbol = h.File, h.ID
+			}
+			add(r)
+		}
 	}
 	// HarmonyOS router_map entries were collected in resources(); Navigation
 	// apps without a router_map resolve names in a navDestination builder, so
@@ -414,7 +544,7 @@ func (c *ctx) typedRoute(platform, file string, call extract.Call) (model.Route,
 	sym, sfile := call.Enclosing, file
 	for _, in := range call.Inner {
 		if strings.HasSuffix(in, "Screen") || strings.HasSuffix(in, "Route") {
-			if s := c.findSym(platform, in, "composable", "function"); s != nil {
+			if s := c.findSymNear(platform, in, file, "composable", "function"); s != nil {
 				sym, sfile = s.ID, s.File
 				break
 			}
@@ -449,6 +579,41 @@ func refRouteID(ref string) string {
 		}
 	}
 	return Snake(last)
+}
+
+var (
+	reRouteTableName  = regexp.MustCompile(`(?i)routes?$|routeTable$|routeMap$`)
+	reRouteTableEntry = regexp.MustCompile(`"(/[\w\-./:{}]*)"\s*(?::|to)\s*(?:::)?([A-Za-z_]\w*)`)
+	reColonParam      = regexp.MustCompile(`:([A-Za-z_]\w*)`)
+)
+
+// swiftView returns the single project view a navigationDestination closure
+// builds, or nil when it builds none or several.
+func (c *ctx) swiftView(platform string, inner []string) *model.Symbol {
+	var found *model.Symbol
+	for _, in := range inner {
+		if in == "" || !unicode.IsUpper([]rune(in)[0]) {
+			continue
+		}
+		v := c.findSym(platform, in, "struct", "class")
+		if v == nil || !(strings.HasSuffix(in, "View") || strings.HasSuffix(in, "Screen") || strings.HasSuffix(in, "Details") || strings.HasSuffix(in, "Detail")) {
+			continue
+		}
+		if found != nil && found.ID != v.ID {
+			return nil
+		}
+		found = v
+	}
+	return found
+}
+
+func lowerFirst(s string) string {
+	if s == "" {
+		return s
+	}
+	r := []rune(s)
+	r[0] = unicode.ToLower(r[0])
+	return string(r)
 }
 
 // caseParams turns "case accountDetail(id: String)" into "/{id}".

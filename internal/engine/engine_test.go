@@ -520,3 +520,25 @@ func TestConflictsPageBudget(t *testing.T) {
 		t.Fatalf("small doc sets stay fully listed:\n%s", small.Body)
 	}
 }
+
+// KMP (JetBrains/kotlinconf-app): a Compose Multiplatform screen in
+// commonMain is scanned under the android root but runs on iOS too.
+func TestParityKMPCommonMainIsShared(t *testing.T) {
+	f := &model.Facts{Routes: []model.Route{
+		{Platform: "android", RouteID: "schedule", File: "shared/src/commonMain/kotlin/Nav.kt"},
+		{Platform: "android", RouteID: "widget", File: "androidApp/src/main/kotlin/Widget.kt"},
+	}}
+	p := ComputeParity(&model.Graph{}, f, []string{"android", "ios"})
+	for _, r := range p.Features {
+		switch r.RouteID {
+		case "schedule":
+			if len(r.MissingRoute) != 0 {
+				t.Errorf("commonMain route reported missing: %+v", r)
+			}
+		case "widget":
+			if len(r.MissingRoute) != 1 || r.MissingRoute[0] != "ios" {
+				t.Errorf("android-only route must stay a gap: %+v", r)
+			}
+		}
+	}
+}

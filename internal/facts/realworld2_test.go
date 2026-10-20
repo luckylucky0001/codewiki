@@ -143,3 +143,103 @@ struct Index {
 		}
 	}
 }
+
+// apple/sample-food-truck, nalexn/clean-architecture-swiftui: SwiftUI
+// NavigationStack with value-type destinations, NavigationLink(value: Enum.case)
+// sidebars and NavigationLink(destination:).
+func TestSwiftUINavigationStackVariants(t *testing.T) {
+	dir := writeTree(t, map[string]string{
+		"Panel.swift": "enum Panel: Hashable {\n  case truck\n  case salesHistory\n}\n",
+		"Views.swift": `import SwiftUI
+struct TruckView: View { var body: some View { Text("t") } }
+struct SalesHistoryView: View { var body: some View { Text("s") } }
+struct OrderDetailView: View { var id: String; var body: some View { Text("o") } }
+struct CountryDetailsView: View { var body: some View { Text("c") } }
+struct Sidebar: View {
+  var body: some View {
+    List {
+      NavigationLink(value: Panel.truck) { Label("Truck", systemImage: "box.truck") }
+      NavigationLink(value: Panel.salesHistory) { Label("Sales", systemImage: "chart") }
+      NavigationLink(destination: CountryDetailsView()) { Text("c") }
+    }
+  }
+}
+struct OrdersView: View {
+  var body: some View {
+    NavigationStack {
+      List { Text("x") }
+        .navigationDestination(for: Order.ID.self) { id in
+          OrderDetailView(id: id)
+        }
+    }
+  }
+}
+`,
+	})
+	rm := routeMap(extractTree(t, dir, config.Platform{Name: "ios", Root: "."}))
+	want := map[string]string{"truck": "#TruckView", "sales_history": "#SalesHistoryView", "order": "#OrderDetailView", "country_details": "#CountryDetailsView"}
+	for rid, sym := range want {
+		if r, ok := rm[rid]; !ok || !strings.HasSuffix(r.Symbol, sym) {
+			t.Errorf("%s: %+v (all %v)", rid, r, rm)
+		}
+	}
+	if rm["order"].Pattern != "order/{order}" {
+		t.Errorf("order pattern: %+v", rm["order"])
+	}
+}
+
+// compose-samples: Jetcaster tv and wear both register "episode" and both
+// have an EpisodeScreen; each NavHost must keep its own route anchored on its
+// own module's screen.
+func TestSameRouteInTwoModules(t *testing.T) {
+	nav := func(pkg string) string {
+		return "package " + pkg + "\n\nobject Screen {\n    const val EPISODE = \"episode\"\n}\n\nfun NavGraphBuilder.app() {\n    composable(Screen.EPISODE) {\n        EpisodeScreen()\n    }\n}\n"
+	}
+	dir := writeTree(t, map[string]string{
+		"tv/src/main/java/a/App.kt":       nav("a"),
+		"tv/src/main/java/a/Episode.kt":   "package a\n\n@Composable\nfun EpisodeScreen() {}\n",
+		"wear/src/main/java/b/App.kt":     nav("b"),
+		"wear/src/main/java/b/Episode.kt": "package b\n\n@Composable\nfun EpisodeScreen() {}\n",
+	})
+	f := extractTree(t, dir, config.Platform{Name: "android", Root: "."})
+	got := map[string]bool{}
+	for _, r := range f.Routes {
+		if r.RouteID == "episode" {
+			got[r.Symbol] = true
+		}
+	}
+	if len(got) != 2 || !got["android://tv/src/main/java/a/Episode.kt#EpisodeScreen"] || !got["android://wear/src/main/java/b/Episode.kt#EpisodeScreen"] {
+		t.Fatalf("episode routes: %v (all %+v)", got, f.Routes)
+	}
+}
+
+// kickstarter/ios-oss: deep links are a [path: handler] table.
+func TestSwiftURLRouteTable(t *testing.T) {
+	dir := writeTree(t, map[string]string{
+		"Navigation.swift": `public enum Navigation {
+  case project(String)
+}
+
+private let allRoutes: [String: (RouteParams) -> Navigation?] = [
+  "/": emailClick,
+  "/projects/:creator_param/:project_param": project,
+  "/projects/:creator_param/:project_param/comments": projectComments,
+]
+
+private func emailClick(_ params: RouteParams) -> Navigation? { return nil }
+private func project(_ params: RouteParams) -> Navigation? { return nil }
+private func projectComments(_ params: RouteParams) -> Navigation? { return nil }
+`,
+	})
+	f := extractTree(t, dir, config.Platform{Name: "ios", Root: "."})
+	rm := routeMap(f)
+	if r := rm["project"]; r.Pattern != "projects/{creator_param}/{project_param}" || !strings.HasSuffix(r.Symbol, "#project") {
+		t.Errorf("project: %+v", r)
+	}
+	if r := rm["project_comments"]; !strings.HasSuffix(r.Symbol, "#projectComments") {
+		t.Errorf("project_comments: %+v (all %v)", r, rm)
+	}
+	if _, ok := rm["email_click"]; ok {
+		t.Errorf(`"/" is not a route: %v`, rm)
+	}
+}
