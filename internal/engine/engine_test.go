@@ -548,15 +548,18 @@ func TestFalseConflictFilters(t *testing.T) {
 	dir := t.TempDir()
 	os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("# Secrets\nFrameworks/native-secrets\nKsApi/Sources/KsApi/Secrets.swift\n"), 0o644)
 	os.MkdirAll(filepath.Join(dir, "Test Plans"), 0o755)
+	os.WriteFile(filepath.Join(dir, "setup.sh"), []byte("#!/bin/sh\n"), 0o755)
 	os.WriteFile(filepath.Join(dir, "Test Plans", "UITests.xctestplan"), []byte("{}"), 0o644)
 	g := &model.Graph{Symbols: []*model.Symbol{{ID: "android://a.kt#DefaultSessionRepository", Name: "DefaultSessionRepository", Qual: "DefaultSessionRepository", Kind: "class", File: "a.kt"}}}
 	k := &Checker{G: g, F: &model.Facts{}, Dir: dir}
 	cases := []struct{ src, text string }{
-		{"README.md", "copy `Frameworks/native-secrets/ios/Secrets.swift` into the package"},          // gitignored (kickstarter)
-		{"README.md", "runs each checked-in `UITests.xctestplan` configuration"},                      // file, not a type (wikipedia-ios)
-		{"CLAUDE.md", "Interface implementations: Prefix with `Default` (e.g., `DefaultRepository`)"}, // example name (DroidconKotlin)
-		{"docs/plans/archive/x.md", "Add `entry/src/main/ets/pages/NewPage.ets` for the new flow"},    // plan doc (NextE)
-		{"docs/research/compare.md", "EhViewer has pattern unlock in `SecurityScene.kt`"},             // research note about another app (NextE)
+		{"README.md", "copy `Frameworks/native-secrets/ios/Secrets.swift` into the package"},                       // gitignored (kickstarter)
+		{"README.md", "runs each checked-in `UITests.xctestplan` configuration"},                                   // file, not a type (wikipedia-ios)
+		{"CLAUDE.md", "Interface implementations: Prefix with `Default` (e.g., `DefaultRepository`)"},              // example name (DroidconKotlin)
+		{"docs/plans/archive/x.md", "Add `entry/src/main/ets/pages/NewPage.ets` for the new flow"},                 // plan doc (NextE)
+		{"README.md", "Execute the script with `./setup.sh` and complete the answers."},                            // ./ prefix (NetNewsWire)
+		{"CLAUDE.md", "Manual setup: Create `SharedXcodeSettings/DeveloperSettings.xcconfig` in parent directory"}, // file to create
+		{"docs/research/compare.md", "EhViewer has pattern unlock in `SecurityScene.kt`"},                          // research note about another app (NextE)
 	}
 	for _, c := range cases {
 		cl := &Claim{ID: "x", Source: c.src, Text: c.text}
