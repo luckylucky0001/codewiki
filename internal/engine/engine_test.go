@@ -571,3 +571,24 @@ func TestFalseConflictFilters(t *testing.T) {
 		t.Errorf("a missing, non-ignored file in a current doc is a real conflict: %+v", real)
 	}
 }
+
+// The compound baseline is stored gzipped; a wiki written by an older kb
+// (plain graph.json) still loads, and is replaced on the next write.
+func TestGraphBaselineGzipAndLegacy(t *testing.T) {
+	kb := t.TempDir()
+	g := &model.Graph{Version: model.GraphVersion, Symbols: []*model.Symbol{{ID: "android://a.kt#A", Name: "A"}}}
+	legacy, _ := json.Marshal(g)
+	os.WriteFile(filepath.Join(kb, "graph.json"), legacy, 0o644)
+	if lg, err := LoadGraph(filepath.Join(kb, "graph.json")); err != nil || lg.Get("android://a.kt#A") == nil {
+		t.Fatalf("legacy graph.json: %v", err)
+	}
+	if err := writeGraph(kb, g); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(kb, "graph.json")); !os.IsNotExist(err) {
+		t.Fatal("legacy graph.json must be removed")
+	}
+	if lg, err := LoadGraph(filepath.Join(kb, "graph.json")); err != nil || lg.Get("android://a.kt#A") == nil {
+		t.Fatalf("graph.json.gz: %v", err)
+	}
+}

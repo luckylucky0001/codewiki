@@ -22,7 +22,7 @@ wiki/
   raw/docs/          # 旧文档（只读、低可信）
   facts/<platform>/  # CLI 生成
   pages/...          # LLM 维护
-  .kb/graph.json     # 符号图快照（增量基准）
+  .kb/graph.json.gz  # 符号图快照（增量基准，gzip）
   .kb/state.json     # last_sha、模型/prompt 版本
   .kb/update_record.json
 ```
@@ -40,7 +40,7 @@ status: current   # current | stale | outdated-doc
 ## 3. Compound 流程（merge → master）
 
 1. `kb scan`：tree-sitter 抽三端符号 + 引用边 → 新符号图；解析失败文件记入 parse_failures。
-2. `kb diff`：与 `.kb/graph.json` 按符号 ID 比对 → unchanged / body / signature / added / deleted / renamed；注释、格式变化 = no-op；`--base <sha>` 兼容 squash。
+2. `kb diff`：与 `.kb/graph.json.gz` 按符号 ID 比对 → unchanged / body / signature / added / deleted / renamed；注释、格式变化 = no-op；`--base <sha>` 兼容 squash。
 3. `kb plan`：受影响页面 = 自身锚点变化 ∪ 签名变化沿引用边 k 跳；每任务附**可写集合**；>50% 模块或 >30% 结构变化 → 全量重建。
 4. LLM 执行：`claude -p` + `kb-compound` skill，写入 staging。
 5. `kb verify`：锚点 hash、符号存在、死链、孤儿页、index 覆盖。

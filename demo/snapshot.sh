@@ -12,7 +12,7 @@ for f in "$SRC"/*; do [ -f "$f" ] && cp "$f" "$DST/"; done
 rm -f "$DST"/*.exit
 find "$DST" -maxdepth 1 -name '*.stderr' -empty -delete
 cp -R "$SRC/repo/wiki" "$DST/wiki"
-rm -f "$DST/wiki/.kb/graph.json"
+rm -f "$DST/wiki/.kb/graph.json" "$DST/wiki/.kb/graph.json.gz"
 cp "$SRC/repo/codewiki.yaml" "$DST/"
 ABS="$(cd "$SRC" && pwd)"
 grep -rl "$ABS" "$DST" | while read -r f; do sed -i "s#$ABS#demo/output/<run>#g" "$f"; done
