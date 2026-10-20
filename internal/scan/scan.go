@@ -15,6 +15,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/luckylucky0001/codewiki/internal/config"
@@ -206,6 +207,9 @@ func ResolveRefs(g *model.Graph) {
 	byName := map[key][]*model.Symbol{}   // platform, name
 	byFile := map[key][]*model.Symbol{}   // file, name
 	byParent := map[key][]*model.Symbol{} // platform, parent name, name
+	byMember := map[key][]*model.Symbol{} // platform, name -> members (symbols with a parent)
+	parentName := map[*model.Symbol]string{}
+	g.Index()
 	fileScope := map[string]map[string]bool{}
 	projectPkgs := map[string]bool{}
 	imports := map[string]map[string]string{} // file -> name -> source
@@ -237,6 +241,8 @@ func ResolveRefs(g *model.Graph) {
 			if p := g.Get(s.Parent); p != nil {
 				k := key{s.Platform, p.Name, s.Name}
 				byParent[k] = append(byParent[k], s)
+				byMember[key{s.Platform, s.Name, ""}] = append(byMember[key{s.Platform, s.Name, ""}], s)
+				parentName[s] = p.Name
 			}
 		}
 		sc := fileScope[s.File]
@@ -308,7 +314,8 @@ func ResolveRefs(g *model.Graph) {
 
 	pass := func(s *model.Symbol, scope map[string]bool) []string {
 		self := func(c *model.Symbol) bool {
-			return c.ID == s.ID || c.ID == s.Parent || c.Parent == s.ID || strings.HasPrefix(s.ID, c.ID+".")
+			return c.ID == s.ID || c.ID == s.Parent || c.Parent == s.ID ||
+				(len(s.ID) > len(c.ID) && s.ID[len(c.ID)] == '.' && strings.HasPrefix(s.ID, c.ID)) // no c.ID+"." allocation
 		}
 		called := map[string]bool{}
 		for _, n := range s.CallNames {
@@ -316,6 +323,28 @@ func ResolveRefs(g *model.Graph) {
 		}
 		lang := langOf(s.File)
 		refs := map[string]bool{}
+		// Owner.member lookups below used to loop over every RefName for every
+		// RefName (and re-resolve its imports each time): O(R²) per symbol, and
+		// big classes (a Swift view model with 1,000+ names) dominated warm
+		// scans. The ref-name set and the owner set are now built once.
+		var refSet map[string]bool
+		var owners map[string]bool
+		ownerSet := func() map[string]bool {
+			if owners == nil {
+				owners = map[string]bool{}
+				for _, pn := range s.RefNames {
+					if imp, ok := resolveImport(s, pn); ok {
+						for _, o := range imp {
+							owners[o.ID] = true
+						}
+					}
+					for _, o := range byFile[key{s.File, pn, ""}] {
+						owners[o.ID] = true
+					}
+				}
+			}
+			return owners
+		}
 		for _, n := range s.RefNames {
 			var pick []*model.Symbol
 			for _, c := range byFile[key{s.File, n, ""}] {
@@ -338,23 +367,31 @@ func ResolveRefs(g *model.Graph) {
 			}
 			if len(pick) == 0 {
 				var preferred []*model.Symbol
-				for _, pn := range s.RefNames {
-					owners := map[string]bool{}
-					if imp, ok := resolveImport(s, pn); ok {
-						for _, o := range imp {
-							owners[o.ID] = true
+				consider := func(c *model.Symbol) {
+					if self(c) {
+						return
+					}
+					pick = append(pick, c)
+					if ownerSet()[c.Parent] {
+						preferred = append(preferred, c)
+					}
+				}
+				if members := byMember[key{s.Platform, n, ""}]; len(members) <= len(s.RefNames) {
+					if refSet == nil {
+						refSet = make(map[string]bool, len(s.RefNames))
+						for _, pn := range s.RefNames {
+							refSet[pn] = true
 						}
 					}
-					for _, o := range byFile[key{s.File, pn, ""}] {
-						owners[o.ID] = true
-					}
-					for _, c := range byParent[key{s.Platform, pn, n}] {
-						if self(c) {
-							continue
+					for _, c := range members {
+						if refSet[parentName[c]] {
+							consider(c)
 						}
-						pick = append(pick, c)
-						if owners[c.Parent] {
-							preferred = append(preferred, c)
+					}
+				} else {
+					for _, pn := range s.RefNames {
+						for _, c := range byParent[key{s.Platform, pn, n}] {
+							consider(c)
 						}
 					}
 				}
@@ -431,11 +468,14 @@ func ResolveRefs(g *model.Graph) {
 	}
 	// pass 1: file scope; pass 2: widen the scope with the type names used by
 	// the referenced properties (vm -> CartViewModel, service -> ApiService)
+	// Both passes only read the shared indexes; symbols are resolved in
+	// parallel (each worker writes its own slots).
 	first := make([][]string, len(g.Symbols))
-	for i, s := range g.Symbols {
-		first[i] = pass(s, map[string]bool{})
-	}
-	for i, s := range g.Symbols {
+	parallel(len(g.Symbols), func(i int) {
+		first[i] = pass(g.Symbols[i], map[string]bool{})
+	})
+	parallel(len(g.Symbols), func(i int) {
+		s := g.Symbols[i]
 		scope := map[string]bool{}
 		for _, r := range first[i] {
 			if rs := g.Get(r); rs != nil {
@@ -449,7 +489,34 @@ func ResolveRefs(g *model.Graph) {
 		if len(s.Refs) == 0 {
 			s.Refs = nil
 		}
+	})
+}
+
+// parallel runs f(0..n-1) on GOMAXPROCS workers.
+func parallel(n int, f func(i int)) {
+	workers := min(runtime.GOMAXPROCS(0), n)
+	if workers <= 1 {
+		for i := 0; i < n; i++ {
+			f(i)
+		}
+		return
 	}
+	var next atomic.Int64
+	var wg sync.WaitGroup
+	for w := 0; w < workers; w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for {
+				i := int(next.Add(1)) - 1
+				if i >= n {
+					return
+				}
+				f(i)
+			}
+		}()
+	}
+	wg.Wait()
 }
 
 func containsStr(xs []string, x string) bool {

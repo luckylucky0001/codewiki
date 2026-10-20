@@ -1,13 +1,16 @@
 package scan
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/luckylucky0001/codewiki/internal/config"
 	"github.com/luckylucky0001/codewiki/internal/extract"
+	"github.com/luckylucky0001/codewiki/internal/model"
 )
 
 func TestMatchGlob(t *testing.T) {
@@ -245,5 +248,30 @@ func TestOverlappingPlatformRootsScanOnce(t *testing.T) {
 	}
 	if n != 1 || r.Graph.Files["shared/src/commonMain/kotlin/Repo.kt"].Platform != "android" {
 		t.Fatalf("ContentView symbols = %d, want 1; files=%v", n, r.Graph.Files)
+	}
+}
+
+// A symbol that references thousands of names (a big Swift view model in
+// kickstarter/ios-oss) made the Owner.member lookup O(R²) and dominated warm
+// scans (13 s -> 2.3 s on ios-oss after the fix). 4,000 ref names must resolve
+// in well under a second.
+func TestResolveRefsManyRefNamesScales(t *testing.T) {
+	g := &model.Graph{Files: map[string]model.FileInfo{"a.swift": {Platform: "ios", Lang: "swift"}, "big.swift": {Platform: "ios", Lang: "swift"}}}
+	big := &model.Symbol{ID: "ios://big.swift#Big", Name: "Big", Kind: "class", Platform: "ios", File: "big.swift"}
+	const n = 2000
+	for i := 0; i < n; i++ {
+		c := &model.Symbol{ID: fmt.Sprintf("ios://a.swift#C%d", i), Name: fmt.Sprintf("C%d", i), Kind: "class", Platform: "ios", File: "a.swift"}
+		m := &model.Symbol{ID: c.ID + fmt.Sprintf(".m%d", i), Name: fmt.Sprintf("m%d", i), Kind: "method", Platform: "ios", File: "a.swift", Parent: c.ID}
+		g.Symbols = append(g.Symbols, c, m)
+		big.RefNames = append(big.RefNames, c.Name, m.Name)
+	}
+	g.Symbols = append(g.Symbols, big)
+	start := time.Now()
+	ResolveRefs(g)
+	if d := time.Since(start); d > 1500*time.Millisecond {
+		t.Fatalf("ResolveRefs took %v", d)
+	}
+	if len(big.Refs) != 2*n {
+		t.Fatalf("Big refs = %d, want %d", len(big.Refs), 2*n)
 	}
 }
