@@ -620,3 +620,32 @@ func TestDocImportedExternalNames(t *testing.T) {
 		t.Fatalf("doc imports: %v", m)
 	}
 }
+
+// A route that disappears (kickstarter: a base view controller stopped being
+// a screen) must not produce a feature task without a route id — the
+// template writer emitted pages/features/.md and verify refused to publish.
+func TestPlanRemovedRouteFeaturePage(t *testing.T) {
+	cfg, dir := withChange(t)
+	g, f := scanDir(t, cfg, dir)
+	pages := pagesFor(g, f)
+	f2 := *f
+	f2.Routes = nil
+	for _, r := range f.Routes {
+		if r.RouteID != "cart" {
+			f2.Routes = append(f2.Routes, r)
+		}
+	}
+	p := BuildPlan(PlanInput{Cfg: cfg, Diff: DiffGraphs(g, g), Old: g, Cur: g, Facts: &f2, Pages: pages})
+	found := false
+	for _, tk := range p.Tasks {
+		if tk.Kind == "feature" && tk.RouteID == "" {
+			t.Fatalf("feature task without route: %+v", tk)
+		}
+		if tk.Page == FeaturePage("cart") {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("removed route's page must be refreshed: %+v", p.Tasks)
+	}
+}

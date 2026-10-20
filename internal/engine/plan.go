@@ -319,7 +319,15 @@ func BuildPlan(in PlanInput) *Plan {
 					ctx = append(ctx, a.Sym)
 				}
 			}
-			add(Task{Op: OpUpdate, Kind: pg.Front.Kind, Page: pg.Path, Title: pg.Front.Title, WriteSet: []string{pg.Path}, Reasons: reasons, Context: ctx})
+			kind := pg.Front.Kind
+			if kind == "feature" {
+				// a feature page whose route disappeared: there is no route to
+				// regenerate it from (the template writer used to emit
+				// pages/features/.md and verify refused to publish); refresh its
+				// surviving anchors instead
+				kind = "feature-removed"
+			}
+			add(Task{Op: OpUpdate, Kind: kind, Page: pg.Path, Title: pg.Front.Title, WriteSet: []string{pg.Path}, Reasons: reasons, Context: ctx})
 		}
 	}
 	// new routes -> new feature pages; route set change -> overview
