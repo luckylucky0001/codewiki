@@ -97,10 +97,10 @@
 </table>
 <h3>交付物一览</h3>
 <div class="kpi">
-  <div><b>22</b><span>kb 子命令（全部支持 --json）</span></div>
+  <div><b>24</b><span>kb 子命令（全部支持 --json）</span></div>
   <div><b>7</b><span>tree-sitter 语言：Kotlin/Java/Swift/ArkTS/JS/TS/TSX</span></div>
   <div><b>4</b><span>Agent Skills：compound / ingest / query / lint</span></div>
-  <div><b>77</b><span>Go 测试（单元 + 集成 + 评测 + 安全），vet / gofmt 干净</span></div>
+  <div><b>109</b><span>Go 测试函数（单元、集成、评测、安全、真实 agent CLI），vet / gofmt 均无告警</span></div>
 </div>
 </section>
 
@@ -189,7 +189,7 @@
   <tr><td><code>kb conflicts</code></td><td><b>哪些文档过时</b>：与代码矛盾的断言，附 <code>文件:行号</code>、代码证据和修改建议（MCP：<code>kb_conflicts</code>）</td></tr>
   <tr><td><code>kb routes / lint-tid / parity</code></td><td>按模块汇总路由并列出 dangling buildFunction；testID 覆盖矩阵（<code>--pages</code>：哪些页面设置了 testID；<code>--top</code>：最常用的 testID）；功能 × 平台一致性和跨平台常量差异</td></tr>
   <tr><td><code>kb bench / eval</code></td><td>冷 / 热扫描基准；用人工标注的 golden set 评测断言核对与 plan 影响面（precision / recall）</td></tr>
-  <tr><td><code>kb mcp / anchor / install-skills</code></td><td>stdio MCP server（7 个工具）；打印符号当前 hash；安装 4 个 skill，并在 AGENTS.md / CLAUDE.md 中写入幂等的 codewiki 指引块</td></tr>
+  <tr><td><code>kb mcp / anchor / install / agents</code></td><td>stdio MCP server（7 个工具）；打印符号当前 hash；按 agent 安装 skill、指引块和 MCP 注册，可重复执行（<code>install-skills</code> 为别名）；列出 agent 支持矩阵</td></tr>
   <tr><td><code>kb hook install</code></td><td>安装 git 钩子：<code>post-receive</code>（服务端 push 到 master 时 compound；有锁串行，能追平进度）/ <code>post-merge</code>（客户端）。配合全局参数 <code>--wiki-dir</code></td></tr>
 </table>
 <h3>三端 facts 来源</h3>
