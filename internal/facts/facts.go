@@ -503,10 +503,16 @@ func (c *ctx) routes() {
 			}
 			known[fi.Platform+"|"+v.s] = true
 			r := model.Route{Platform: fi.Platform, RouteID: v.s, Pattern: v.s}
-			for _, cand := range []string{v.s, v.s + "Page", v.s + "View", Pascal(v.s), Pascal(v.s) + "Page"} {
-				if sym := c.findSym(fi.Platform, cand, "component", "struct", "class"); sym != nil {
-					r.Symbol, r.File = sym.ID, sym.File
-					break
+			// an ArkUI component wins over a same-named model class
+			// (NextE: 'CommentTranslationSettings' is both a settings class and,
+			// with a Page suffix, the destination component)
+		resolve:
+			for _, kinds := range [][]string{{"component"}, {"struct", "class"}} {
+				for _, cand := range []string{v.s, v.s + "Page", v.s + "View", Pascal(v.s), Pascal(v.s) + "Page"} {
+					if sym := c.findSym(fi.Platform, cand, kinds...); sym != nil {
+						r.Symbol, r.File = sym.ID, sym.File
+						break resolve
+					}
 				}
 			}
 			if r.Symbol == "" {
