@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/luckylucky0001/codewiki/internal/config"
 	"github.com/luckylucky0001/codewiki/internal/model"
 	"github.com/luckylucky0001/codewiki/internal/wiki"
 )
@@ -102,7 +103,7 @@ var skipDirs = map[string]bool{".git": true, "node_modules": true, "dist": true,
 
 // DiscoverDocs walks root and classifies documentation files.
 func DiscoverDocs(root string, exclude []string) (*DocsManifest, error) {
-	abs, err := filepath.Abs(root)
+	abs, err := config.AbsRoot(root)
 	if err != nil {
 		return nil, err
 	}

@@ -182,7 +182,7 @@ func ScanRepo(cfg *config.Config) (*Result, error) {
 // under the platform roots — sources and the manifests / router_map / json5
 // files the fact extractors read. No file contents are read.
 func TreeStamp(cfg *config.Config) (string, error) {
-	abs, err := filepath.Abs(cfg.Root)
+	abs, err := config.AbsRoot(cfg.Root)
 	if err != nil {
 		return "", err
 	}

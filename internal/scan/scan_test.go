@@ -275,3 +275,25 @@ func TestResolveRefsManyRefNamesScales(t *testing.T) {
 		t.Fatalf("Big refs = %d, want %d", len(big.Refs), 2*n)
 	}
 }
+
+// `kb --root <symlink>`: filepath.WalkDir does not descend into a symlinked
+// root, so a repo reached through a symlink used to scan zero files silently.
+func TestScanThroughSymlinkedRoot(t *testing.T) {
+	real := t.TempDir()
+	os.MkdirAll(filepath.Join(real, "a"), 0o755)
+	os.WriteFile(filepath.Join(real, "a", "A.kt"), []byte("package a\n\nclass A\n"), 0o644)
+	link := filepath.Join(t.TempDir(), "repo")
+	if err := os.Symlink(real, link); err != nil {
+		t.Skip("symlinks unsupported:", err)
+	}
+	cfg := config.Default()
+	cfg.Root = link
+	cfg.Platforms = []config.Platform{{Name: "android", Root: "."}}
+	res, err := Scan(cfg, link)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res.Graph.Files) != 1 {
+		t.Fatalf("files through symlinked root: %v", res.Graph.Files)
+	}
+}

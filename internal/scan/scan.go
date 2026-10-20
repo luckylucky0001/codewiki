@@ -67,7 +67,7 @@ func Scan(cfg *config.Config, dir string) (*Result, error) {
 // ScanWith parses the source tree at dir with options.
 func ScanWith(cfg *config.Config, dir string, opt Options) (*Result, error) {
 	start := time.Now()
-	abs, err := filepath.Abs(dir)
+	abs, err := config.AbsRoot(dir)
 	if err != nil {
 		return nil, err
 	}
