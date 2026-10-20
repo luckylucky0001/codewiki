@@ -214,13 +214,13 @@ func (k *Checker) symbolText(s *model.Symbol) string {
 
 var reFileName = regexp.MustCompile(`^[\w./-]+\.(json5?|ets|kt|kts|java|swift|xml|plist|md|ya?ml|js|ts|gradle|m|mm|h|xctestplan|xcconfig|storyboard|xib|entitlements|strings|sh|rb|py|toml|properties)$`)
 
-// historicalDoc: plans / proposals describe a future state and archived /
-// completed docs a past one; neither can be "outdated" against today's code
+// historicalDoc: plans / proposals describe a future state, archived /
+// completed docs a past one and research notes other projects or tools; neither can be "outdated" against today's code
 // (NextE: 171 of 183 conflicts came from docs/plans/**).
 func historicalDoc(src string) bool {
 	for _, seg := range strings.Split(strings.ToLower(src), "/") {
 		switch seg {
-		case "plans", "plan", "proposals", "rfcs", "archive", "archived", "completed", "deprecated", "history":
+		case "plans", "plan", "proposals", "rfcs", "archive", "archived", "completed", "deprecated", "history", "research":
 			return true
 		}
 	}
