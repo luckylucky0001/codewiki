@@ -584,13 +584,15 @@ kb eval --doc my-old-spec.md --golden my-labels.yaml                    # 任意
 | architecture-components-samples | 1,841 | 19（nav-graph XML，19/19） | 0.6 / 0.09 s | 52 MB |
 | element-x-android | 22,161 | 176（Appyx，176/179） | 11.0 / 1.7 s | 667 MB |
 | kotlinconf-app（KMP） | 1,442 | 25（25/25，parity 0 假缺口） | 0.6 / 0.07 s | 51 MB |
-| IceCubesApp | 6,058 | 42 | 1.9 / 0.22 s | 98 MB |
-| kickstarter/ios-oss | 37,731 | 48（URL 路由表 39/39） | 13.9 / 2.2 s | 524 MB |
+| IceCubesApp | 6,058 | 44 | 1.9 / 0.22 s | 109 MB |
+| kickstarter/ios-oss | 37,731 | 124（URL 路由表 39/39，UIKit 屏幕 76） | 13.9 / 2.2 s | 567 MB |
+| wikipedia-ios | 31,452 | 157（UIKit 屏幕，28 条导航边） | 12.4 / 1.8 s | 542 MB |
+| NetNewsWire | 12,528 | 31（UIKit / AppKit 屏幕） | 4.0 / 0.40 s | 186 MB |
 | HarmonyOS-Cases | 20,141 | 191 | 6.3 / 0.9 s | 377 MB |
 | app_samples | 51,342 | 416 | 18.3 / 3.2 s | 886 MB |
 | NextE | 19,921 | 58（页面 51/51） | 8.1 / 1.0 s | 386 MB |
 
-第 7 轮验证中修复了 22 个问题，每个都配了最小片段回归测试，主要包括：
+第 7 轮验证中修复了 24 个问题，每个都配了最小片段回归测试，主要包括：
 
 - **路由召回**：
   - nav-graph XML；
@@ -598,6 +600,7 @@ kb eval --doc my-old-spec.md --golden my-labels.yaml                    # 任意
   - Appyx `NavTarget`；
   - SwiftUI 值类型 destination、`NavigationLink(value:/destination:)`；
   - URL 路由表；
+  - UIKit / AppKit 视图控制器作为屏幕，以及 push / present / segue 导航边（`facts: {uikit: false}` 可关闭）；
   - HarmonyOS `$profile:` 路由表、main_pages、`pushPathByName`、`NavDestination` 组件；
   - KMP commonMain 在 parity 中视为全平台共享。
 - **规模**：
@@ -613,7 +616,13 @@ kb eval --doc my-old-spec.md --golden my-labels.yaml                    # 任意
   - 升级 kb 后缓存的 facts 自动失效。
 - **假冲突**：新增 17 个仓库的冲突从 191 个降到 6 个（假冲突 187 → 3）。剩下的假冲突是条件句和构建产物。axios 原有 8 个假冲突，来自外部包类名 `MockAdapter`，现在为 0。
 
-目前**不支持** UIKit / AppKit 导航（NetNewsWire、wikipedia-ios）和自定义导航框架（DroidconKotlin），也不解析 Objective-C。这些仓库的符号、testID、API 和文档核对仍然可用。
+目前的局限：
+
+- 自定义导航框架（DroidconKotlin）不支持；
+- Objective-C 不解析；
+- UIKit 屏幕中约 17% 是嵌入式子控制器；
+- UIKit 导航边只覆盖直接类型和局部赋值；
+- URL handler 中的深链没有实现。
 
 ## 安全
 

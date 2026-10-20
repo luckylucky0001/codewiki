@@ -64,12 +64,12 @@
 | element-x-android | Kotlin | 4,355 | 98.6% | 22,161 | 176 | 176/179 | 0 | 2 | 11.0 / 1.7 s | 11.6 s | 667 MB | 181 / 2.8 KB | PASS | 103 / 0 |
 | kotlinconf-app（KMP） | Kotlin 261 + Swift 2 | 263 | 95.1% | 1,442 | 25 | 25/25 | 0 | 25 | 0.6 / 0.07 s | 0.8 s | 51 MB | 30 / 3.1 KB | PASS | 22 / 0 |
 | DroidconKotlin（KMP） | Kotlin 202 + Swift 7 | 209 | 99.0% | 1,066 | 0 | 不支持 | 0 | 0 | 0.4 / 0.05 s | 0.5 s | 41 MB | 5 / 0.9 KB | PASS | 14 / 0 |
-| IceCubesApp | Swift | 432 | 99.5% | 6,058 | 42 | 28 + 14 | 0 | 78 | 1.9 / 0.22 s | 3.9 s | 98 MB | 47 / 4.6 KB | PASS | 22 / 0 |
+| IceCubesApp | Swift | 432 | 99.5% | 6,058 | 44 | 28 + 14 + 2 个 UIKit | 0 | 78 | 1.9 / 0.22 s | 2.7 s | 109 MB | 49 / 4.7 KB | PASS | 22 / 0 |
 | sample-food-truck | Swift | 82 | 97.6% | 1,180 | 10 | 10/11 | 0 | 0 | 0.5 / 0.06 s | 0.5 s | 33 MB | 15 / 1.5 KB | PASS | 4 / 1（0） |
 | clean-architecture-swiftui | Swift | 63 | 90.5% | 788 | 1 | 1/2 | 0 | 0 | 0.25 / 0.03 s | 0.3 s | 26 MB | 6 / 0.8 KB | PASS | 2 / 0 |
-| NetNewsWire | Swift（另有 10 个 .m 未解析） | 728 | 97.9% | 12,528 | 0 | 不支持（UIKit/AppKit） | 0 | 8 | 4.3 / 0.44 s | 4.5 s | 178 MB | 5 / 0.7 KB | PASS | 13 / 0 |
-| kickstarter/ios-oss | Swift | 2,080 | 92.5% | 37,731 | 48 | 深链 39/39，另 7 条 | 0 | 19 | 13.9 / 2.2 s | 15.1 s | 524 MB | 43 / 3.7 KB | PASS | 6 / 0 |
-| wikipedia-ios | Swift（另有 208 个 .m 未解析） | 1,449 | 98.3% | 31,452 | 0 | 不支持（UIKit 协调器） | 28 | 1 | 12.4 / 1.8 s | 11.6 s | 520 MB | 5 / 0.7 KB | PASS | 150 / 1（0） |
+| NetNewsWire | Swift（另有 10 个 .m 未解析） | 728 | 97.9% | 12,528 | 31（UIKit/AppKit 屏幕，4 条边） | 抽样 10/10 | 0 | 8 | 4.0 / 0.40 s | 4.5 s | 186 MB | 36 / 3.6 KB | PASS | 13 / 0 |
+| kickstarter/ios-oss | Swift | 2,080 | 92.5% | 37,731 | 124（深链 41 + UIKit 76 + SwiftUI 7；49 条边） | 深链 39/39，UIKit 抽样 8/10 | 0 | 19 | 13.9 / 2.2 s | 21.1 s | 567 MB | 113 / 10.0 KB | PASS | 6 / 0 |
+| wikipedia-ios | Swift（另有 208 个 .m 未解析） | 1,449 | 98.3% | 31,452 | 157（UIKit 屏幕，28 条边） | 抽样 9/10 | 28 | 1 | 12.4 / 1.8 s | 14.3 s | 542 MB | 162 / 1.4 KB（分层） | PASS | 150 / 1（0） |
 | HarmonyOS-Cases | ArkTS 1,952 + TS 314 | 2,267 | 100% | 20,141 | 191 | 抽查 15/15 | 1,437 | 7 | 6.3 / 0.9 s | 7.0 s | 377 MB | 193 / 1.3 KB（分层） | PASS | 180 / 0 |
 | app_samples（sparse） | ArkTS 1,828 + TS/JS 784 | 2,612 | 100% | 51,342 | 416 | 抽查 12/12 | 2,674 | 1 | 18.3 / 3.2 s | 20.1 s | 886 MB | 421 / 4.1 KB（分层） | PASS | 67 / 0 |
 | agc 模板（sparse） | ArkTS 2,286 + TS 149 | 2,437 | 99.5% | 18,460 | 252 | router_map 143/143 | 34 | 8 | 7.0 / 1.0 s | 7.7 s | 353 MB | 166 / 3.3 KB（分层） | PASS | 2 / 0 |
@@ -117,8 +117,9 @@
 | IceCubesApp | 28 个 `RouterDestination` case，加 14 个 `NavigationLink(destination:)` 设置页 | 42 | — |
 | sample-food-truck | 9 个 `Panel` case、订单详情、甜甜圈详情 | 10 | 甜甜圈详情的 `navigationDestination` 闭包会构造多个视图，按规则不猜 |
 | clean-architecture-swiftui | 国家详情、邻国详情 | 1 | `NavigationLink(destination: self.neighbourDetailsView(...))` 是方法调用 |
-| kickstarter/ios-oss | `allRoutes` 路由表中的 39 条 URL（不含 `/`） | 39，另有 7 个 SwiftUI 筛选页 | UIKit `ViewController` 跳转不支持 |
-| NetNewsWire / wikipedia-ios | UIKit / AppKit 协调器、storyboard | 0 | 不支持 |
+| kickstarter/ios-oss | `allRoutes` 路由表中的 39 条 URL（不含 `/`）；随机 10 个 `*ViewController` 类 | 深链 39；UIKit 8/10（全部 77 个中识别 75 个） | 未识别的 2 个是有意排除的：`RootTabBarViewController` 是容器，`WebViewController` 是被多个类继承的基类 |
+| NetNewsWire | 随机 10 个 `*ViewController` 类 | 10/10（全部 31 个中识别 30 个） | — |
+| wikipedia-ios | 随机 10 个 `*ViewController` 类 | 9/10（全部 147 个中识别 134 个） | 未识别的类是共享基类（`WMFScrollViewController`），或者父类定义在 Objective-C 中 |
 | NextE | 51 个 `NavDestination` / `HdsNavDestination` 页面组件 | 51 个页面文件都有路由锚定（共 58 条路由；其中 `LayoutSettingsPage` 锚在它承载的 `ColumnDensity` 目的地上） | — |
 | SweetVideo | 24 个 `NavDestination` 页面 | 24 | — |
 | fishpi-harmony | `$profile:route_map` 中 10 条，加 1 个 NavDestination 页 | 11 | — |
@@ -356,6 +357,35 @@
 - 修复：解析前，把这类声明行中最后一个 `}` 前的空格改成 `;`。字节偏移和行号都不变。
 - 效果：最小片段从解析失败变为 0 失败。23 个仓库中原有的 78 个 Kotlin 失败属于其他写法（Kotlin 2.x when 守卫等），数量不变。
 
+**23. UIKit / AppKit 屏幕与导航边**（NetNewsWire、wikipedia-ios、kickstarter）
+
+- 问题：UIKit / AppKit 应用 0 路由，wiki 只有 5 页。
+- 修复：
+  - **屏幕**：项目类的父类链能到达 `UIViewController`、`UITableViewController`、`UICollectionViewController`、`UIHostingController`、`UIPageViewController` 或 `NSViewController`，就识别为屏幕。泛型参数子句也能处理。
+  - **不算屏幕**：容器（导航、Tab、Split、Alert、Search 等）、`Base*` / `Abstract*`、被 2 个及以上项目控制器继承的共享基类、测试文件、预览文件。
+  - **边**（`facts/ios/routes.md` 中的“Navigation edges”）：
+    - `pushViewController` / `present` / `show` 的参数是直接类型、参数中嵌套的类型（`UINavigationController(rootViewController: X())`），或同一函数里的 `let vc = X…` / `let vc: X`；
+    - `performSegue(withIdentifier:)` 通过 storyboard 的 `<segue identifier destination>` 映射，有歧义的 id 丢弃；
+    - `instantiateViewController(withIdentifier:)` 通过 `storyboardIdentifier` 映射。
+  - **开关**：默认开启；在 codewiki.yaml 中写 `facts: {uikit: false}` 可关闭。
+- 效果：
+
+  | 项目 | 路由 | 边 |
+  |---|---|---|
+  | NetNewsWire | 0 → 31 | 4 |
+  | wikipedia-ios | 0 → 157 | 28 |
+  | kickstarter | 48 → 124 | 49 |
+  | IceCubesApp | 42 → 44 | — |
+
+  - 召回：随机抽 10 个 `*ViewController` 类，NetNewsWire 10/10、wikipedia 9/10、kickstarter 8/10。未识别的都是有意排除的基类或容器，或者父类在 Objective-C 中。
+  - 精度：每仓库随机抽 10 个屏幕，25/30 是完整屏幕，其余为嵌入式子控制器。
+  - 抽查 12 条边，都与源码中的赋值一致，例如 `let thanksVC = ThanksViewController.configured(…)` → push。
+
+**24. 路由消失后的功能页**
+
+- 问题：增量 compound 时，如果某条路由消失（例如某个基类不再算作屏幕），它的功能页会被规划成没有 route id 的 feature 任务。模板写入器随后生成 `pages/features/.md`，verify 拒绝发布。
+- 修复：这类页面改为刷新仍然存在的锚点。
+
 ## 规模
 
 同机、同一时间段，对比修复前（`77c830b`）和修复后的 `kb bench`：
@@ -408,7 +438,11 @@
 
 ## 不支持 / 局限
 
-- **UIKit / AppKit 导航**：`pushViewController`、storyboard segue、协调器都不产出路由。NetNewsWire、wikipedia-ios 以及 kickstarter 的大部分屏幕属于这种情况。这些仓库的 wiki 只有总览、parity、conflicts 几页，但符号、testID、API 和文档核对仍然可用。
+- **UIKit / AppKit（#23）的精度**：
+  - 从 3 个仓库各随机抽 10 个屏幕，其中 5 个（约 17%）是嵌入式子控制器，而不是完整屏幕。例子：NetNewsWire 的 `NNW3OpenPanelAccessoryViewController`、`NothingInspectorViewController`；wikipedia 的 `PageHistoryComparisonSelectionViewController`、`WelcomeAnimationViewController`；kickstarter 的 `PagedContainerViewController`。
+  - 边只覆盖直接类型或同函数内的局部赋值。通过协调器方法、工厂函数或属性间接跳转的情况不覆盖。目前识别出的边数：NetNewsWire 4 条、wikipedia 28 条、kickstarter 49 条。
+  - 父类定义在 Objective-C 中的控制器识别不到。
+  - URL handler（`application(_:open:)`、`scene(_:openURLContexts:)`）中的深链没有实现。原因是 NetNewsWire 和 wikipedia 的 handler 都不使用字面量路径：前者按 scheme 前缀和 `WidgetDeepLink` 枚举判断，后者转交给 `NSUserActivity`。kickstarter 的深链来自路由表（#11）。
 - **自定义导航框架**：DroidconKotlin 的 `NavigationController`、Decompose、Voyager 等不识别。目前支持的导航写法：
   - Navigation 2.8 / 3；
   - nav-graph XML；
