@@ -124,7 +124,7 @@ docs:
 | `kb lint-tid [--strict]` | testID 覆盖矩阵：路由 × tid × 平台 |
 | `kb parity [--strict]` | 功能 × 平台一致性矩阵：路由 / testID / 可达接口是否齐全，以及同名常量的跨平台取值差异；同时生成 `pages/parity.md` |
 | `kb routes [--dangling]` | 所有路由按模块汇总（router_map / NavHost / Route 枚举），给出总数；`--dangling` 列出 buildFunction 找不到实现的条目 |
-| `kb lint-tid --pages` | 哪些路由页面在源文件里设置了 testID（`--json` 给出完整清单） |
+| `kb lint-tid --pages` / `--top N` | 哪些路由页面在源文件里设置了 testID（`--json` 给出完整清单）；使用次数最多的 N 个 testID 及其次数 |
 | `kb install-skills <repo> [--no-agents-md]` | 把 skills 安装到 `<repo>/.claude/skills/`。同时在 `AGENTS.md` 和 `CLAUDE.md` 中写入或更新一段 `<!-- codewiki:begin -->…<!-- codewiki:end -->` 指引块，把各类问题映射到对应命令：路由/深链 → facts、testID → `kb lint-tid`、三端差异 → `kb parity`、过时文档 → `kb conflicts`、改文件前 → `kb context`。重复运行结果不变，块外内容保持原样 |
 | `kb bench [--synthetic N]` | 冷/热扫描基准（合成仓库或 `--root` 指定的真实仓库） |
 | `kb eval [--llm …]` | 用人工标注的 golden set 评测断言核对与 plan 影响面（precision/recall） |
@@ -489,6 +489,15 @@ kb eval --doc my-old-spec.md --golden my-labels.yaml                    # 任意
 - **有专门命令的题目上，wiki 第一次明显胜出。** G1–G3 的每次运行都调用了 `kb routes`、`kb routes --dangling` 或 `kb lint-tid --pages`。G1–G4 平均 8.1 turns，B 组是 14.8，少了 45%；费用 $0.067，B 组是 $0.095。其中 G3 从 28 turns（第 7 轮 A）降到 6 turns。
 - **没有专门命令的题目上，费用反而失控。** G5（使用次数最多的 testID）没有对应的命令，agent 只能手动计数：大段的 Grep 输出，加上每次 1.2 万到 2 万个 thinking token，两次运行共花了 **$0.317**，把总费用推到 $0.384，是 B 组的 3 倍。耗时也没有改善：kb 命令每次都要加载扫描结果，所以 G1 平均 43 s，B 组是 31 s。
 - 结论：wiki 的价值取决于“问题 → 命令”的覆盖。命令覆盖到的汇总问题，步数大约减半；覆盖不到的问题，A 组不比 B 组好，甚至更贵。下一步是补上 `kb lint-tid --top`、`kb apis --by-file` 这类命令，以及常驻进程或缓存来减少每次加载的开销。原始数据见 `demo/sample-output/agent-bench-cases-agg/with-commands/`。
+
+**第 10 轮：补上 G5 的命令，并给查询加缓存**。新增 `kb lint-tid --top N`。`kb routes` 和 `kb lint-tid` 现在先做一次“无变更检查”：对平台目录下所有文件的路径、大小和 mtime 求 hash；没有变化时，直接读 `wiki/.kb/cache/facts.json.gz`，不再重新扫描。在 Cases 上，`kb routes` 从 **6.3 s 降到 0.28 s**；新 clone 的第一次调用仍需约 6 s 来生成缓存。之后只对 A 组重跑 G1 和 G5，各 2 次：
+
+| 题目 | 第 9 轮 A | **第 10 轮 A** | B（第 7 轮） |
+|---|---|---|---|
+| G1 路由汇总 | 7.5 turns / $0.013 / 43 s | **4 turns / $0.010** / 46 s | 14 turns / $0.019 / 31 s |
+| G5 最常用 testID | 15.5 turns / **$0.317** / 108 s | **7 turns / $0.016** / 68 s | 11 turns / $0.031 / 62 s |
+
+两题 4 次运行都调用了对应命令（`kb routes`、`kb lint-tid --top`），全部答对。G5 的费用从 $0.317 降到 $0.016，比 B 组低一半。**耗时没有改善**：每次运行都是新 clone，第一次 kb 调用要花约 6 s 生成缓存，剩下的时间主要是模型本身的延迟。结论不变：命令覆盖到的问题，wiki 在 turns 和费用上都明显优于 grep；在耗时上还没有优势。
 
 详见 bench/agent-qa/README.md。
 

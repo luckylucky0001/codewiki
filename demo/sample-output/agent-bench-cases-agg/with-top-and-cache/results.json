@@ -1,0 +1,69 @@
+{
+  "model": "haiku",
+  "results": [
+    {
+      "variant": "A",
+      "id": "G1-route-totals",
+      "rep": 1,
+      "pass": true,
+      "hits": 3,
+      "total": 3,
+      "must_not_hits": 0,
+      "missed": "",
+      "turns": 4,
+      "cost": 0.005344840000000001,
+      "ms": 48635,
+      "in": 163302,
+      "out": 2250,
+      "error": false
+    },
+    {
+      "variant": "A",
+      "id": "G5-top-testid",
+      "rep": 1,
+      "pass": true,
+      "hits": 2,
+      "total": 2,
+      "must_not_hits": 0,
+      "missed": "",
+      "turns": 5,
+      "cost": 0.00644176,
+      "ms": 63471,
+      "in": 165897,
+      "out": 3747,
+      "error": false
+    },
+    {
+      "variant": "A",
+      "id": "G1-route-totals",
+      "rep": 2,
+      "pass": true,
+      "hits": 3,
+      "total": 3,
+      "must_not_hits": 0,
+      "missed": "",
+      "turns": 4,
+      "cost": 0.004378600000000001,
+      "ms": 43919,
+      "in": 121514,
+      "out": 1305,
+      "error": false
+    },
+    {
+      "variant": "A",
+      "id": "G5-top-testid",
+      "rep": 2,
+      "pass": true,
+      "hits": 2,
+      "total": 2,
+      "must_not_hits": 0,
+      "missed": "",
+      "turns": 9,
+      "cost": 0.00921246,
+      "ms": 73457,
+      "in": 300162,
+      "out": 5451,
+      "error": false
+    }
+  ]
+}
