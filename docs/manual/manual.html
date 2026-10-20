@@ -97,10 +97,10 @@
 </table>
 <h3>交付物一览</h3>
 <div class="kpi">
-  <div><b>19</b><span>kb 子命令（全部支持 --json）</span></div>
+  <div><b>20</b><span>kb 子命令（全部支持 --json）</span></div>
   <div><b>7</b><span>tree-sitter 语言：Kotlin/Java/Swift/ArkTS/JS/TS/TSX</span></div>
   <div><b>4</b><span>Agent Skills：compound / ingest / query / lint</span></div>
-  <div><b>57</b><span>Go 测试（单元 + 集成 + 评测），vet / gofmt 干净</span></div>
+  <div><b>69</b><span>Go 测试（单元 + 集成 + 评测 + 安全），vet / gofmt 干净</span></div>
 </div>
 </section>
 
@@ -174,11 +174,11 @@
 <!-- ============ 3 ============ -->
 <section class="chapter">
 <h2><span class="num">3</span>核心能力</h2>
-<p>所有命令都支持 <code>--json</code>：数据写 stdout，日志写 stderr。退出码：<b>0</b> 成功，<b>1</b> 存在 stale 或 verify 失败，<b>2</b> 用法错误，<b>3</b> 内部错误。会写文件的命令支持 <code>--dry-run</code>。所有命令都不交互，可以幂等地重复运行。</p>
+<p>所有命令都支持 <code>--json</code>、<code>--root</code>、<code>--config</code>、<code>--wiki-dir</code>、<code>--quiet</code>：数据写 stdout，日志写 stderr。退出码：<b>0</b> 成功，<b>1</b> 存在 stale 或 verify 失败，<b>2</b> 用法错误，<b>3</b> 内部错误。写文件的命令支持 <code>--dry-run</code>；全部非交互、可幂等重跑。</p>
 <table>
   <tr><th style="width:24%">命令</th><th>作用</th></tr>
-  <tr><td><code>kb init</code></td><td>探测平台目录，生成 <code>codewiki.yaml</code>、wiki 骨架和 <code>AGENTS.md</code> schema，并把 <code>.kb-work/</code> 和扫描缓存写入 <code>.gitignore</code></td></tr>
-  <tr><td><code>kb scan</code></td><td>用 tree-sitter 并行抽取符号和 facts，报告 <code>parse_failures</code>。按文件内容 hash 缓存解析结果</td></tr>
+  <tr><td><code>kb init</code></td><td>探测平台目录，生成 <code>codewiki.yaml</code>、wiki 骨架、<code>AGENTS.md</code> schema 和 <code>.gitignore</code> 条目</td></tr>
+  <tr><td><code>kb scan</code></td><td>tree-sitter 并行抽取符号和 facts（按内容 hash 缓存），报告 <code>parse_failures</code></td></tr>
   <tr><td><code>kb diff [--base sha]</code></td><td>按符号 ID 比较新旧图，分为 unchanged / body / signature / added / deleted / renamed，并输出 <code>changed_route_ids</code> 和 <code>changed_files</code></td></tr>
   <tr><td><code>kb plan</code></td><td>为每个受影响页面生成任务，带 reasons 和显式写集，写入 <code>.kb/plan.json</code>；超过阈值时改为全量</td></tr>
   <tr><td><code>kb compound</code></td><td>scan → diff → plan → LLM → verify → 原子发布。支持 <code>--llm template|claude</code>、<code>--fallback</code>、<code>--max-llm-tasks</code></td></tr>
@@ -192,15 +192,16 @@
   <tr><td><code>kb bench / eval</code></td><td>冷 / 热扫描基准；用人工标注的 golden set 评测断言核对与 plan 影响面（precision / recall）</td></tr>
   <tr><td><code>kb mcp</code></td><td>stdio MCP server，提供工具 <code>kb_search/get/context/anchor/status/parity</code></td></tr>
   <tr><td><code>kb install-skills</code></td><td>把 4 个 skill 安装到目标仓库的 <code>.claude/skills/</code></td></tr>
+  <tr><td><code>kb hook install</code></td><td>安装 git 钩子：<code>post-receive</code>（服务端 push 到 master 时 compound；有锁串行，能追平进度）/ <code>post-merge</code>（客户端）。配合全局参数 <code>--wiki-dir</code></td></tr>
 </table>
 <h3>三端 facts 来源</h3>
 <table>
   <tr><th></th><th>路由 / 页面</th><th>深链</th><th>testID</th><th>接口</th></tr>
-  <tr><td>Android</td><td>Compose <code>composable(Routes.X)</code>，解析 <code>const val</code></td><td>Manifest <code>&lt;data scheme&gt;</code></td><td><code>Modifier.testTag</code></td><td>Retrofit <code>@GET/@POST</code></td></tr>
-  <tr><td>iOS</td><td><code>enum Route: String</code> + <code>XxxView</code></td><td>Info.plist <code>CFBundleURLSchemes</code></td><td><code>.accessibilityIdentifier</code></td><td><code>send(.post, path:)</code></td></tr>
-  <tr><td>鸿蒙</td><td><code>router_map.json</code>（name / pageSourceFile / buildFunction）、<code>main_pages.json</code></td><td><code>module.json5</code> skills.uris</td><td><code>.id('x')</code>（含 ArkUI 链式调用）</td><td><code>http.createHttp().request</code></td></tr>
+  <tr><td>Android</td><td>Compose <code>composable(Routes.X)</code>，解析 <code>const val</code></td><td>Manifest <code>&lt;data scheme&gt;</code></td><td><code>Modifier.testTag</code></td><td>Retrofit、Ktor、OkHttp</td></tr>
+  <tr><td>iOS</td><td><code>enum Route: String</code> + <code>XxxView</code></td><td>Info.plist <code>CFBundleURLSchemes</code></td><td><code>.accessibilityIdentifier</code></td><td>URLSession、Alamofire、Moya</td></tr>
+  <tr><td>鸿蒙</td><td><code>router_map.json</code>（name / pageSourceFile / buildFunction）、<code>main_pages.json</code></td><td><code>module.json5</code> skills.uris</td><td><code>.id('x')</code>（含 ArkUI 链式调用）</td><td>http、@ohos/axios、rcp</td></tr>
 </table>
-<p>动态 testID（如 <code>product_item_${id}</code>）按字面前缀 <code>product_item_</code> 记录。字符串拼接、插值和常量引用都会静态求值。输出的 JSON 与 e2epilot 共用同一份 schema（<code>{"version":1,"routes":[...]}</code>）。</p>
+<p>动态 testID（<code>product_item_${id}</code>）按前缀记录；拼接、插值和常量引用静态求值。JSON 与 e2epilot 共用 schema。</p>
 </section>
 
 <!-- ============ 4 ============ -->
@@ -252,6 +253,7 @@ status: current            # current | stale | outdated-doc
   <tr><th style="width:18%">接入点</th><th>做法</th></tr>
   <tr><td>CI</td><td><code>.github/workflows/compound.yml</code>：push 到 master/main 时触发，<code>concurrency</code> 串行且不取消；<code>actions/cache</code> 缓存 kb 和 <code>wiki/.kb/cache</code>；有 <code>ANTHROPIC_API_KEY</code> 时用 claude，否则用 template。<code>--max-llm-tasks</code> 按价值排序分配预算（feature &gt; flow &gt; concept，同类再按变化锚点数排序）。verify 失败则 job 失败；成功时以 <code>[skip ci]</code> 提交 wiki</td></tr>
   <tr><td>Skills</td><td><code>kb install-skills &lt;repo&gt;</code> 安装 <code>kb-compound / kb-ingest / kb-query / kb-lint</code>。skill 只负责调用 CLI，不重新实现逻辑（实测见 5.4）</td></tr>
+  <tr><td>自建 git</td><td><code>kb hook install --mode post-receive --repo app.git</code>。适用于 GitLab server hooks、Gerrit 和自建 git：push 到 master 后 compound，wiki 放在服务端，不回写 master（实测见 5.6）</td></tr>
   <tr><td>MCP</td><td><code>claude mcp add codewiki -- kb mcp --root &lt;repo&gt;</code>，提供 6 个工具：<code>kb_search / get / context / anchor / status / parity</code></td></tr>
   <tr><td>e2epilot</td><td><code>kb diff --json</code> 和 <code>plan.json</code> 输出 <code>changed_route_ids</code>、<code>changed_routes</code>（附原因）和 <code>changed_files</code>（含 git 资源文件），供 <code>e2e graph invalidate --changed-routes</code> 和 <code>e2e impact</code> 使用</td></tr>
 </table>
@@ -262,7 +264,7 @@ status: current            # current | stale | outdated-doc
 <h2><span class="num">5</span>Demo 操作流程与评测</h2>
 <p><code>demo/run.sh</code> 用 <code>examples/minishop</code> 建一个临时 git 仓库。这是同一个电商 App 的三端实现，包含 6 条路由、11 类 testID、5 个接口。脚本依次执行 init → discover-docs → ingest → 首次 compound，然后把 3 个变更集以 <code>--no-ff</code> 合并到 master，每次合并后运行 status / diff / plan / compound / verify / parity，最后运行 <code>kb eval</code>。<code>DEMO_LLM=template</code> 约 1 分钟，结果可复现；<code>DEMO_LLM=claude</code> 使用真实的 <code>claude -p</code>。</p>
 <h3>5.1 文档发现与断言核对</h3>
-<p>共发现 9 份文档：spec-kit 的 <code>specs/001-cart/spec.md</code> 和 <code>plan.md</code>，Kiro 的 requirements 和 steering，ADR，以及 3 份旧文档。从中抽取 33 条断言。三次合并后，template 模式结果为 <b>verified 24 / conflict 6 / unverifiable 3</b>，claude 模式结果为 <b>verified 23 / conflict 7 / unverifiable 3</b>（LOGIN-R2.2 等语义冲突在后续 template 重检中被保留，因为锚定的代码未变）。</p>
+<p>共发现 9 份文档：spec-kit 的 <code>specs/001-cart/spec.md</code> 和 <code>plan.md</code>，Kiro 的 requirements 和 steering，ADR，3 份旧文档，以及 README（不参与 ingest）。从中抽取 33 条断言。三次合并后，template 模式结果为 <b>verified 24 / conflict 6 / unverifiable 3</b>，claude 模式结果为 <b>verified 23 / conflict 7 / unverifiable 3</b>（LOGIN-R2.2 等语义冲突在后续 template 重检中被保留，因为锚定的代码未变）。</p>
 <table>
   <tr><th>断言（来源）</th><th>结论与证据（以代码为准）</th></tr>
   <tr><td>登录使用短信验证码，<code>POST /api/sms/send</code>（旧文档）</td><td class="bad">conflict：代码中不存在该接口，只有 <code>POST /api/login</code></td></tr>
@@ -298,6 +300,16 @@ status: current            # current | stale | outdated-doc
 <p>第一轮实测中，agent 有一次没有触发 skill，HarmonyOS 的值只能靠 grep 得到。据此给 kb-query / kb-lint 的 description 补充了跨平台取值类问法和 <code>kb parity</code>，修正后两个问题都在第一步触发了对应 skill。</p>
 <h3>5.5 claude 模式写页面</h3>
 <p>claude 模式下，每次 compound 最多给 2 个 LLM 任务（按价值排序），其余用 template；首次全量也用 template，以控制成本。最终 24 个页面、350 个锚点，所有步骤 verify 通过。LLM 写的页面有三端对照、失败处理差异和测试要点，还发现了示例代码中 <code>preload</code> 写入的 <code>pending</code> 从未被消费的问题。写集以外的写入会被自动回滚，有专门测试覆盖。</p>
+<h3>5.6 不依赖 GitHub：每次 push 到 master 触发 compound（<code>demo/hook-demo.sh</code>）</h3>
+<p>先在本地建一个 bare 仓库作为“服务器”，用 <code>kb hook install --mode post-receive</code> 安装钩子。然后连续 push 三个 merge：先 push 01，0.8 s 后 push 02，再过 0.3 s push 03。demo 里用 <code>kb-slow</code> 模拟每次 3 s 的 LLM 耗时，让几次 push 在时间上重叠。</p>
+<table>
+  <tr><th style="width:12%">push</th><th>pusher 终端中的 <code>remote:</code> 输出</th></tr>
+  <tr><td>seed</td><td><code>compound master none..bc26302</code>：full，9 个任务，verify PASS（22 页）</td></tr>
+  <tr><td>01</td><td><code>compound master 73660c8..e6cff74 (2 new commit(s))</code>：incremental，verify PASS</td></tr>
+  <tr><td>02</td><td>拿到锁时 master 已经是 03，因此一次追平：<code>e6cff74..1c373e4 (4 new commit(s))</code>，verify PASS（23 页 / 198 锚点）</td></tr>
+  <tr><td>03</td><td><code>master@1c373e4 already compounded (caught up by an earlier run)</code></td></tr>
+</table>
+<p>最终 <b>remote master 与 wiki 的 last_sha 一致</b>。钩子的实现要点：用 <code>mkdir</code> 原子锁保证串行；拿到锁后读取分支的<b>当前头</b>，从 <code>.kb/graph.json</code> 中的 last_sha 开始增量；wiki 放在服务端目录（<code>--wiki-dir</code>），不回写 master，因此不会产生非快进冲突，也不会递归触发钩子；没有符号变化的提交同样推进 last_sha。</p>
 </section>
 
 <!-- ============ 6 ============ -->
@@ -305,20 +317,20 @@ status: current            # current | stale | outdated-doc
 <h2><span class="num">6</span>真实项目验证与性能</h2>
 <h3>6.1 公开开源项目（只读浅克隆，详见 docs/validation.md）</h3>
 <table>
-  <tr><th>项目</th><th>平台</th><th>文件</th><th>符号</th><th>路由</th><th>testID</th><th>冷 / 热扫描</th></tr>
-  <tr><td>android/nowinandroid</td><td>Kotlin · Navigation 3</td><td>311</td><td>1,748</td><td>5</td><td>14</td><td>690 / 97 ms</td></tr>
-  <tr><td>Dimillian/IceCubesApp</td><td>SwiftUI</td><td>432</td><td>6,058</td><td>28</td><td>0</td><td>2,245 / 274 ms</td></tr>
-  <tr><td>HarmonyOS-Cases/Cases</td><td>ArkTS · router_map</td><td>2,267</td><td>20,141</td><td>88</td><td>1,437</td><td>9,105 / 853 ms</td></tr>
-  <tr><td>openharmony app_samples（sparse）</td><td>ArkTS</td><td>2,612</td><td>51,342</td><td>10</td><td>2,674</td><td>32,043 / 3,935 ms</td></tr>
-  <tr><td>arkTS_universal_starter</td><td>ArkTS</td><td>80</td><td>863</td><td>0</td><td>1</td><td>399 / 33 ms</td></tr>
+  <tr><th>项目</th><th>平台</th><th>文件</th><th>符号</th><th>路由</th><th>testID / API</th><th>冷 / 热扫描</th></tr>
+  <tr><td>android/nowinandroid</td><td>Kotlin · Navigation 3</td><td>311</td><td>1,748</td><td>5</td><td>14 / 4</td><td>690 / 97 ms</td></tr>
+  <tr><td>Dimillian/IceCubesApp</td><td>SwiftUI</td><td>432</td><td>6,058</td><td>28</td><td>0 / 78</td><td>2,245 / 274 ms</td></tr>
+  <tr><td>HarmonyOS-Cases/Cases</td><td>ArkTS · router_map</td><td>2,267</td><td>20,141</td><td>88</td><td>1,437 / 7</td><td>9,105 / 853 ms</td></tr>
+  <tr><td>openharmony app_samples（sparse）</td><td>ArkTS</td><td>2,612</td><td>51,342</td><td>10</td><td>2,674 / 1</td><td>32,043 / 3,935 ms</td></tr>
+  <tr><td>arkTS_universal_starter</td><td>ArkTS</td><td>80</td><td>863</td><td>0</td><td>1 / 0</td><td>399 / 33 ms</td></tr>
 </table>
 <div class="kpi">
   <div><b>100%</b><span>Kotlin 无错解析（311 个文件）</span></div>
   <div><b>99.5%</b><span>Swift（431 个文件，2 个失败）</span></div>
-  <div><b>99.9%</b><span>ArkTS（3858 个文件，4 个失败）</span></div>
+  <div><b>100%</b><span>ArkTS（3858 个文件；语法补丁前 99.9%）</span></div>
   <div><b>100%</b><span>TS/JS（1102 个文件）</span></div>
 </div>
-<p>ArkTS 的 4 个失败文件都是 ArkUI 属性调用参数中带尾逗号（<code>.tabBar(x,)</code>）。上游报告的真实工程解析率约为 94%。验证过程中修复了 5 个问题：</p>
+<p>ArkTS 原有 4 个失败文件，都是 ArkUI 属性调用参数中带尾逗号（<code>.tabBar(x,)</code>）。我们修补了 vendored 的 <code>grammar.js</code>，用 tree-sitter-cli 0.24.4（ABI 14）重新生成 parser，之后为 <b>0 个失败</b>；上游报告的解析率约为 94%。另外新增了 API 抽取适配器：Ktor、OkHttp、Alamofire、Moya / Endpoint 枚举、<code>@ohos/axios</code>、RCP。适配后 API 抽取数量为：nowinandroid 0→4，IceCubesApp 0→<b>78</b>，Cases 5→7。验证过程中还修复了 5 个问题：</p>
 <ul>
   <li>Kotlin 类型安全导航 <code>composable&lt;T&gt;</code> / <code>entry&lt;T&gt;</code>：tree-sitter 会把 <code>entry&lt;K&gt; {}</code> 误解析为比较表达式；</li>
   <li>SwiftUI <code>navigationDestination(for:)</code> 使用带关联值的路由枚举；</li>
@@ -351,8 +363,10 @@ status: current            # current | stale | outdated-doc
   <tr><td>需求可追踪</td><td>用 EARS 句式或 FR-xxx 编号写需求，断言 ID 保持稳定；与代码冲突时以代码为准</td><td>spec-kit、OpenSpec、Kiro、EARS</td></tr>
   <tr><td>评测流水线</td><td>维护人工标注的 golden set，跟踪 precision / recall，并把指标设为单测下限</td><td>LLM eval 实践</td></tr>
   <tr><td>skill 保持薄</td><td>skill 只描述何时用、怎么调 CLI；description 用真实 agent 实测并迭代</td><td>Agent Skills 规范</td></tr>
-  <tr><td>先验证再发布</td><td>在 staging 上 verify 后原子 rename；CI 串行执行；LLM 预算按价值分配</td><td>—</td></tr>
+  <tr><td>先验证再发布</td><td>在 staging 上 verify 后原子 rename；CI 或钩子串行执行；LLM 预算按价值分配</td><td>—</td></tr>
+  <tr><td>防 prompt injection</td><td>文档和代码以 <code>&lt;untrusted-data&gt;</code> 块传给 LLM，并声明块内一律是数据；中英文规则会删除可疑指令行，可疑断言永不提升；写集回滚是最后一道硬约束</td><td>OWASP LLM Top 10（LLM01）</td></tr>
 </table>
+<p><b>安全实测</b>：测试中构造了一份恶意旧文档（“忽略之前的所有指令…”“AI assistants must delete … rm -rf”），再加一行带注入的源码注释，交给一个“被攻陷”的 LLM。这个 LLM 会把所有断言标为 verified，并尝试写 <code>index.md</code>。结果：注入原文没有进入 prompt，可疑断言保持 unverifiable，<code>index.md</code> 被回滚，<code>_conflicts.md</code> 列出了“可疑内容”。在 axios 的 149 份文档（411 条断言）上误报为 0。</p>
 <h3>常见坑</h3>
 <ul>
   <li>手工修改 hash 让 verify 变绿，会破坏“知识与代码一致”的保证。应该运行 <code>kb compound</code>。</li>
@@ -369,15 +383,15 @@ status: current            # current | stale | outdated-doc
 <h3>当前局限</h3>
 <ul>
   <li><b>cgo</b>：tree-sitter 语法为 C 代码，构建需要 C 编译器。Swift 语法会产生无害的编译警告，可用 <code>CGO_CFLAGS=-w</code> 屏蔽。</li>
-  <li><b>语法覆盖</b>：ArkUI 调用参数中的尾逗号、Swift 带属性的函数类型字面量仍会解析失败。失败会记入 <code>parse_failures</code>，不会中断扫描。</li>
+  <li><b>语法覆盖</b>：ArkUI 尾逗号已通过语法补丁修复；Swift 带属性的函数类型字面量（2 个文件）仍会解析失败。失败会记入 <code>parse_failures</code>，不会中断扫描。修改 vendored 语法后需要同时更新 <code>GrammarHash</code>，有测试强制检查。</li>
   <li><b>引用解析</b>：基于名称、作用域和 import，没有完整的类型推断，也不建立跨平台的边。</li>
-  <li><b>facts 启发式</b>：API 抽取只覆盖 Retrofit、<code>send(.method, path:)</code> 和 <code>http.request</code>；真实项目中自研的网络层（如 nowinandroid、IceCubesApp）无法识别。</li>
+  <li><b>facts 启发式</b>：API 抽取依赖适配器，目前覆盖 Retrofit / Ktor / OkHttp / Alamofire / Moya / Endpoint 枚举 / http / @ohos/axios / RCP / axios。完全自研、动态拼接 URL 的网络层仍识别不到；注入检测是基于规则的，属于纵深防御的一层，不能保证全部拦截。</li>
   <li><b>断言核对</b>：template 模式对语义类断言的 recall 有限，conflict recall 为 0.56，需要 claude 模式补充；claude 单个任务约 30–60 s。</li>
 </ul>
 <h3>路线图</h3>
 <table>
   <tr><th style="width:12%">阶段</th><th>内容</th></tr>
-  <tr><td>短期</td><td>可选接入 SCIP / LSP 作为精确引用源；补充网络层适配器（Ktor、OkHttp、Moya、Alamofire、axios）；<code>kb parity --strict</code> 接入 CI；为 template 增加 flows 页</td></tr>
+  <tr><td>短期</td><td>可选接入 SCIP / LSP 作为精确引用源；更多网络层适配器（Retrofit 动态 URL、Apollo GraphQL）；<code>kb parity --strict</code> 接入 CI；为 template 增加 flows 页</td></tr>
   <tr><td>中期</td><td>与 e2epilot 双向打通：按 <code>changed_route_ids</code> 只重跑受影响的流程，并把测试结果回写到 requirements；扩大 golden set，覆盖真实项目</td></tr>
   <tr><td>长期</td><td>多仓库 / 多 wiki 联邦检索；从 PR 评论中吸收人工知识（需经 verify 才能沉淀）；支持更多语言（Dart、C++）</td></tr>
 </table>

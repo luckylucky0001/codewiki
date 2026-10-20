@@ -103,7 +103,7 @@ docs:
 
 ## 命令参考
 
-所有命令：`--json`（stdout 输出 JSON）、`--root`、`--config`、`--wiki-dir`（wiki 放在仓库外）、`--quiet`；数据 → stdout，日志 → stderr；退出码 **0** 成功、**1** stale/verify 失败、**2** 用法错误、**3** 内部错误；写入类命令支持 `--dry-run`；从不交互；重复运行幂等（无变化时 compound 为 `noop`，不写 log）。
+所有命令：`--json`（stdout 输出 JSON）、`--root`、`--config`、`--wiki-dir`（wiki 放在仓库外）、`--quiet`；数据 → stdout，日志 → stderr；退出码 **0** 成功、**1** stale/verify 失败、**2** 用法错误、**3** 内部错误；写入类命令支持 `--dry-run`；从不交互；重复运行幂等：无变化时 compound 为 `noop`，不改页面、不写 log，只把 `last_sha` 推进到 HEAD。
 
 | 命令 | 作用 |
 |---|---|
