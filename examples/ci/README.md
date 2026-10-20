@@ -7,7 +7,8 @@
 |---|---|
 | 串行 | `concurrency.group: codewiki-compound-<ref>` + `cancel-in-progress: false`；积压时下一次运行从 `wiki/.kb/state.json` 的 `last_sha`（实际是 `.kb/graph.json` 快照）一次追到 HEAD |
 | squash / rebase | 基线是符号图快照而不是 commit 链，因此 squash 不影响；也可显式 `kb diff --base <sha>` |
-| 无 key 的 CI | 没有 `ANTHROPIC_API_KEY` 时自动使用 `--llm template`（确定性、零成本），页面锚点同样可验证 |
+| 选择写作器 | 按以下顺序选择：有 `ANTHROPIC_API_KEY` 时用 `--agent claude`；否则有 `OPENAI_API_KEY` 时用 `--agent codex`（先执行 `codex login --with-api-key`）；也可以用仓库变量 `KB_AGENT` 强制指定。见 [docs/agents.md](../../docs/agents.md) |
+| 无 key 的 CI | 两个 key 都没有时自动使用 `--llm template`，结果确定、零成本，页面锚点同样可以验证 |
 | 成本控制 | `--max-llm-tasks N`：超过 N 的任务改用 template；`--fallback`：LLM 失败时回退 template |
 | 门禁 | `kb verify` 退出码 1 → job 失败；`kb compound` 自身在 staging 上 verify 失败时不会发布 |
 | 防循环 | `paths-ignore: wiki/**` + 提交信息带 `[skip ci]` |

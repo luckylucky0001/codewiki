@@ -44,7 +44,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}   # optional; absent → template writer
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}   # optional → --agent claude
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}         # optional → --agent codex (when no Anthropic key)
+      KB_AGENT: ${{ vars.KB_AGENT }}                        # optional override: claude | codex | gemini | template
     steps:
       - uses: actions/checkout@v4
         with:
@@ -82,21 +84,41 @@ jobs:
           if [ -f cmd/kb/main.go ]; then go build -o ~/go/bin/kb ./cmd/kb
           else go install github.com/luckylucky0001/codewiki/cmd/kb@${KB_VERSION}; fi
 
-      - name: Install Claude Code (only when an API key is configured)
-        if: steps.cfg.outputs.present == 'true' && env.ANTHROPIC_API_KEY != ''
+      - name: Pick the writer (docs/agents.md)
+        if: steps.cfg.outputs.present == 'true'
+        id: agent
+        run: |
+          A="${KB_AGENT}"
+          if [ -z "$A" ]; then
+            if [ -n "${ANTHROPIC_API_KEY}" ]; then A=claude
+            elif [ -n "${OPENAI_API_KEY}" ]; then A=codex
+            else A=template; fi
+          fi
+          echo "agent=$A" >> "$GITHUB_OUTPUT"
+
+      - name: Install Claude Code
+        if: steps.cfg.outputs.present == 'true' && steps.agent.outputs.agent == 'claude'
         run: npm install -g @anthropic-ai/claude-code
+
+      - name: Install + log in Codex CLI
+        if: steps.cfg.outputs.present == 'true' && steps.agent.outputs.agent == 'codex'
+        run: |
+          npm install -g @openai/codex@0.163.0
+          printenv OPENAI_API_KEY | codex login --with-api-key
 
       - name: kb compound
         if: steps.cfg.outputs.present == 'true'
         id: compound
         run: |
           set -o pipefail
-          LLM=template
-          if [ -n "${ANTHROPIC_API_KEY}" ]; then LLM=claude; fi
+          WRITER="--llm template"
+          A="${{ steps.agent.outputs.agent }}"
+          if [ "$A" != template ]; then WRITER="--agent $A"; fi
           FULL=""
           if [ "${{ inputs.full }}" = "true" ]; then FULL="--full"; fi
-          kb compound --llm "$LLM" --fallback --max-llm-tasks "$KB_MAX_LLM_TASKS" $FULL --keep-work --json > compound.json
+          kb compound $WRITER --fallback --max-llm-tasks "$KB_MAX_LLM_TASKS" $FULL --keep-work --json > compound.json
           jq -r '.result.message' compound.json
+          jq -c '.result.usage // empty' compound.json   # tokens / cost reported by the agent
 
       - name: kb verify (gate)
         if: steps.cfg.outputs.present == 'true'

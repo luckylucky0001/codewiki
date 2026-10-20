@@ -110,6 +110,8 @@ platforms:                       # 平台名会成为符号 ID 的 scheme
   #   include: ["lib/**/*.js"]
 exclude: ["**/build/**", "**/node_modules/**", "**/Pods/**", "**/oh_modules/**"]
 llm:
+  # agent: codex                 # claude | codex | gemini：--llm cmd 使用该适配器（见 docs/agents.md）
+  # model: gpt-5-codex
   cmd: claude -p --permission-mode acceptEdits --allowedTools "Read,Write,Edit,Glob,Grep,Bash(kb anchor:*),Bash(kb get:*),Bash(kb search:*)" --output-format text
   timeout_sec: 600
 plan:
@@ -132,7 +134,7 @@ docs:
 | `kb scan [--out graph.json] [--symbols]` | tree-sitter 抽取符号与 facts，报告 `parse_failures` |
 | `kb diff [--base <sha>]` | 与上次 compound 的符号图（或 `--base` 版本）按符号 ID 比对：unchanged / body / signature / added / deleted / renamed（含 body 相似度） |
 | `kb plan [--base] [--full] [--dry-run]` | 受影响页面 = 自身锚点变化 ∪ 签名变化沿引用边 k 跳传播 ∪ 新路由；每个任务带显式 write set；超阈值全量重建；写 `wiki/.kb/plan.json` |
-| `kb compound [--llm template\|claude\|cmd] [--llm-cmd ...] [--fallback] [--max-llm-tasks N] [--full] [--dry-run] [--keep-work]` | scan→diff→plan→LLM→verify→原子发布；更新 `.kb/state.json`（last_sha）、`.kb/update_record.json`、追加 `log.md` |
+| `kb compound [--llm template\|cmd] [--agent claude\|codex\|gemini] [--model m] [--llm-cmd ...] [--fallback] [--max-llm-tasks N] [--full] [--dry-run] [--keep-work]` | scan→diff→plan→LLM→verify→原子发布；更新 `.kb/state.json`（last_sha）、`.kb/update_record.json`、追加 `log.md` |
 | `kb verify [--fix-index]` | 锚点 hash 匹配 HEAD、正文提到的符号存在、无死链、无孤儿页、index 覆盖、facts 与重新抽取一致、requirements 锚点新鲜 |
 | `kb status` | 列出 stale 页面（exit 1 表示存在） |
 | `kb discover-docs [--out f]` | 按业界约定发现并分类文档（spec/design/tasks/adr/agent-guide/readme/doc），记录 path + hash |
@@ -147,6 +149,8 @@ docs:
 | `kb routes [--dangling]` | 所有路由按模块汇总（router_map / NavHost / Route 枚举），给出总数；`--dangling` 列出 buildFunction 找不到实现的条目 |
 | `kb lint-tid --pages` / `--top N` | 哪些路由页面在源文件里设置了 testID（`--json` 给出完整清单）；使用次数最多的 N 个 testID 及其次数 |
 | `kb install-skills <repo> [--no-agents-md]` | 把 skills 安装到 `<repo>/.claude/skills/`。同时在 `AGENTS.md` 和 `CLAUDE.md` 中写入或更新一段 `<!-- codewiki:begin -->…<!-- codewiki:end -->` 指引块，把各类问题映射到对应命令：路由/深链 → facts、testID → `kb lint-tid`、三端差异 → `kb parity`、过时文档 → `kb conflicts`、改文件前 → `kb context`。重复运行结果不变，块外内容保持原样 |
+| `kb install --agent claude,codex,gemini,cursor,copilot\|all [--target repo] [--mcp] [--dry-run]` | 让各 agent 用上 wiki：写入各自的指令文件块、skills 和 MCP 注册（JSON/TOML 安全合并），可重复运行。见 [docs/agents.md](docs/agents.md) |
+| `kb agents [name]` | 支持矩阵：每个 agent 的后端命令行、消费者文件、验证等级 |
 | `kb bench [--synthetic N]` | 冷/热扫描基准（合成仓库或 `--root` 指定的真实仓库） |
 | `kb eval [--llm …]` | 用人工标注的 golden set 评测断言核对与 plan 影响面（precision/recall） |
 | `kb hook install --mode post-receive\|post-merge [--repo <git dir>]` | 安装 git 钩子：服务端 push 到 master 或客户端 merge 后自动 compound（串行 + 追平） |
@@ -391,6 +395,26 @@ agent 用的命令是 `kb parity`、`kb verify --json` 和 `kb lint-tid`，给�
 ```bash
 claude mcp add codewiki -- kb mcp --root /path/to/app-repo
 ```
+
+## 多 Agent 支持
+
+除了 Claude Code，wiki 也可以给 Codex、Gemini CLI、Cursor、Copilot 和任何支持 AGENTS.md 的 agent 使用。`kb compound`、`kb ingest`、`kb eval` 的写作和核对步骤也可以交给 Codex 或 Gemini 完成。
+
+```bash
+kb install --agent all --mcp      # CLAUDE.md / AGENTS.md / GEMINI.md / .cursor/rules / copilot-instructions + skills + MCP
+kb compound --agent codex         # 或 claude、gemini；--llm-cmd 仍可作为逃生口
+kb agents                         # 支持矩阵和实际执行的命令行
+```
+
+写集合守卫和不可信数据包裹由 kb 自己执行，对所有 agent 都一样。
+
+各项的验证程度：
+
+- Claude：实跑。
+- Codex 和 Gemini：真实 CLI 二进制配合 mock 模型 API 端到端运行，包括 Codex 的 `debug prompt-input` 和 `mcp list` 核对。
+- Cursor 和 Copilot：只依据文档。
+
+支持矩阵、CI 示例和安全说明见 [docs/agents.md](docs/agents.md)，调研来源见 [docs/agents-research.md](docs/agents-research.md)。
 
 ## 真实仓库案例：axios（JavaScript）
 
