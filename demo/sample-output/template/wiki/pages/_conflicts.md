@@ -21,8 +21,6 @@ sources:
     hash: 0cc2ef4b4d87270da9c0d1c4190a5204f22d91b75fc765e6bf1143d689a38c4d
   - sym: android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.MAX_CART_ITEMS
     hash: c874d1a813b4bf8aa6817442999368d7da32979bf689f785a5cea94c2ca423bb
-  - sym: android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.total
-    hash: 83e05d402203fec9ac172c0203a32fc1bcccf25f2f905b17212c5d2bd4742856
   - sym: android://app/src/main/java/com/minishop/ui/checkout/CheckoutScreen.kt#CheckoutScreen
     hash: 1940402765a35c64188391d26cfe364248f8ccbf9b3cd29e06a3b2d7e30a77a1
   - sym: android://app/src/main/java/com/minishop/ui/components/MiniShopTopBar.kt#MiniShopTopBar
@@ -65,6 +63,8 @@ sources:
     hash: 5a1d54114941c42a8701183cc11595cb235188aff64cd444c3721a8fdf996486
   - sym: harmony://entry/src/main/ets/pages/LoginPage.ets#LoginPage.build
     hash: 8ec8756bc0a9562d2af5fbc26b1364b178df3365b8430d06becc3287917b3f8d
+  - sym: harmony://entry/src/main/ets/pages/LoginPage.ets#LoginPage.onSubmit
+    hash: db69ad016a1c4ec545413f899b5ba8e37866be783227f74f25db110da6e3a9b9
   - sym: harmony://entry/src/main/ets/pages/OrderDetailPage.ets#OrderDetailBuilder
     hash: 1388863401ec47f4917f8e81d5d03c44ff9151ea68eb590d9897718048f1f3ee
   - sym: harmony://entry/src/main/ets/pages/OrderDetailPage.ets#OrderDetailPage.build
@@ -121,7 +121,7 @@ sources:
     hash: 19364be6e63ee5d8f917f567b981834d91e24c5d6a119d578912f788e44f0cb6
   - sym: ios://MiniShop/Networking/APIClient.swift#TokenStore.save
     hash: f0e91ef8b002ef95a2de1eb4665dd1fd8d0906cb506a4adebb688455f571984a
-source_commit: dac9f37
+source_commit: 92c67bc
 status: current
 ---
 # 文档核对：冲突与已验证断言
@@ -130,12 +130,14 @@ status: current
 
 | 状态 | 数量 |
 |---|---|
-| conflict（与代码冲突） | 6 |
-| verified（有代码锚点） | 24 |
-| unverifiable（无证据，不提升为知识） | 3 |
+| conflict（与代码冲突） | 10 |
+| verified（有代码锚点） | 22 |
+| unverifiable（无证据，不提升为知识） | 1 |
 
 ## 冲突 conflicts（文档已过时，以代码为准）
 
+- **LOGIN-R2.2** （[.kiro/specs/login/requirements.md](../raw/docs/.kiro/specs/login/requirements.md) L26）WHEN the user taps `login_submit` with an empty username THEN the system SHALL show an SMS verification dialog.
+  - 证据：testID `login_submit` 存在；文档要求「短信 / 验证码」相关行为，但代码中没有任何相关实现（符号、接口、testID、路由均未出现）
 - **CART-43567f** （[docs/legacy/cart.md](../raw/docs/docs/legacy/cart.md) L3）购物车最多 10 件商品（常量 `MAX_CART_ITEMS`，iOS 为 `maxCartItems`）。
   - 证据：代码中 `CartViewModel.MAX_CART_ITEMS` = 50（android），文档写的是 10；代码中 `MAX_CART_ITEMS` = 50（harmony），文档写的是 10；代码中 `CartViewModel.maxCartItems` = 99（ios），文档写的是 10
 - **CART-7d3eb7** （[docs/legacy/cart.md](../raw/docs/docs/legacy/cart.md) L6）下单接口为 `POST /api/order/create`，成功后进入订单详情 `minishop://order/{id}`。
@@ -144,21 +146,27 @@ status: current
   - 证据：接口 `POST /api/sms/send` 在代码中不存在；接口 `POST /api/login` 存在（android, harmony, ios）
 - **LOGIN-e5f114** （[docs/legacy/login.md](../raw/docs/docs/legacy/login.md) L7）会话 token 由 `SessionManager.saveToken()` 持久化。
   - 证据：符号 `SessionManager.saveToken()` 在代码中不存在（类型 `SessionManager` 也不存在）
+- **PRODUCTS-f83d5a** （[docs/legacy/products.md](../raw/docs/docs/legacy/products.md) L4）商品列表接口为 `GET /api/products`，支持 `page` 与 `size` 分页参数。
+  - 证据：接口 `GET /api/products` 存在（android, harmony, ios）；接口 `/api/products` 的调用处（android, harmony, ios）没有参数 `page`；接口 `/api/products` 的调用处（android, harmony, ios）没有参数 `size`
+- **PRODUCTS-d3d40e** （[docs/legacy/products.md](../raw/docs/docs/legacy/products.md) L5）商品详情页右上角有分享按钮（testID `share_button`）。
+  - 证据：文档称 `share_button` 是 testID，但三端代码中都没有它
+- **PLAN-3e24ef** （[specs/001-cart/plan.md](../raw/docs/specs/001-cart/plan.md) L4）三端共享上限常量，接口 `POST /api/cart`。
+  - 证据：接口 `POST /api/cart` 存在（android, harmony, ios）；文档说常量是共享的，但各平台分别定义：MAX_CART_ITEMS=50（android）, MAX_CART_ITEMS=50（harmony）, maxCartItems=99（ios）
 - **FR-002** （[specs/001-cart/spec.md](../raw/docs/specs/001-cart/spec.md) L22）The cart MUST hold at most 99 items (`MAX_CART_ITEMS`).
   - 证据：代码中 `CartViewModel.MAX_CART_ITEMS` = 50（android），文档写的是 99；代码中 `MAX_CART_ITEMS` = 50（harmony），文档写的是 99
 - **FR-004** （[specs/001-cart/spec.md](../raw/docs/specs/001-cart/spec.md) L24）Users MUST be able to apply a coupon code at checkout (`POST /api/coupons/apply`).
-  - 证据：接口 `POST /api/coupons/apply` 在代码中不存在
+  - 证据：接口 `POST /api/coupons/apply` 在代码中不存在；文档要求「优惠券」相关行为，但代码中没有任何相关实现（符号、接口、testID、路由均未出现）
 
 ## 已验证 verified
 
 - **LOGIN-R1.1** （[.kiro/specs/login/requirements.md](../raw/docs/.kiro/specs/login/requirements.md) L15）WHEN the user submits valid credentials THEN the system SHALL call `POST /api/login` and navigate to `products`.
   - 证据：接口 `POST /api/login` 存在（android, harmony, ios）；路由 `products` 存在
+- **LOGIN-R1.2** （[.kiro/specs/login/requirements.md](../raw/docs/.kiro/specs/login/requirements.md) L16）WHEN the password is shorter than 6 characters THEN the system SHALL reject the login without calling the backend.
+  - 证据：「shorter than 6」对应代码中的比较 `length<6`（android://app/src/main/java/com/minishop/ui/login/LoginViewModel.kt#LoginViewModel.login）；「shorter than 6」对应代码中的比较 `length<6`（harmony://entry/src/main/ets/pages/LoginPage.ets#LoginPage.onSubmit）；「shorter than 6」对应代码中的比较 `count>=6`（ios://MiniShop/Features/Login/LoginViewModel.swift#LoginViewModel.login）
 - **LOGIN-R1.3** （[.kiro/specs/login/requirements.md](../raw/docs/.kiro/specs/login/requirements.md) L17）WHEN login succeeds THEN the system SHALL persist the token via `TokenStore.save`.
   - 证据：符号 `TokenStore.save` 存在（3 处）
 - **LOGIN-R2.1** （[.kiro/specs/login/requirements.md](../raw/docs/.kiro/specs/login/requirements.md) L25）WHEN the app is opened with `minishop://login?token=<t>` THEN the system SHALL store the token before rendering.
   - 证据：deeplink `minishop://login` 存在
-- **LOGIN-R2.2** （[.kiro/specs/login/requirements.md](../raw/docs/.kiro/specs/login/requirements.md) L26）WHEN the user taps `login_submit` with an empty username THEN the system SHALL show an SMS verification dialog.
-  - 证据：testID `login_submit` 存在
 - **PRODUCT-4d19f5** （[.kiro/steering/product.md](../raw/docs/.kiro/steering/product.md) L4）All platforms MUST expose identical testIDs such as `nav_back` and `product_list`.
   - 证据：testID `nav_back` 存在；testID `product_list` 存在
 - **0001-NAVIGATION-5c8d9b** （[docs/adr/0001-navigation.md](../raw/docs/docs/adr/0001-navigation.md) L7）三端使用同一套 route pattern：`login`、`products`、`product/{id}`、`cart`、`checkout`、`order/{id}`。
@@ -179,16 +187,12 @@ status: current
   - 证据：符号 `LoginViewModel.login` 存在（2 处）
 - **PRODUCTS-9035af** （[docs/legacy/products.md](../raw/docs/docs/legacy/products.md) L3）商品列表 testID 为 `product_list`，单个商品为 `product_item_<id>`。
   - 证据：testID `product_list` 存在；testID `product_item_<id>` 存在
-- **PRODUCTS-f83d5a** （[docs/legacy/products.md](../raw/docs/docs/legacy/products.md) L4）商品列表接口为 `GET /api/products`，支持 `page` 与 `size` 分页参数。
-  - 证据：接口 `GET /api/products` 存在（android, harmony, ios）；`size` 出现在代码中（android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.total）
 - **PRODUCTS-c697e6** （[docs/legacy/products.md](../raw/docs/docs/legacy/products.md) L6）下单成功后，订单状态展示在 `order_status` 上。
   - 证据：testID `order_status` 存在
 - **PRODUCTS-dfb70a** （[docs/legacy/products.md](../raw/docs/docs/legacy/products.md) L7）下单接口返回 `orderId` 与 `status` 字段。
   - 证据：符号 `orderId` 存在（1 处）；符号 `status` 存在（1 处）
 - **PLAN-404208** （[specs/001-cart/plan.md](../raw/docs/specs/001-cart/plan.md) L3）Android: `CartViewModel` (Compose + ViewModel)；iOS: `CartViewModel` (ObservableObject)；HarmonyOS: `CartStore`。
   - 证据：符号 `CartViewModel` 存在（2 处）；符号 `CartViewModel` 存在（2 处）；符号 `CartStore` 存在（1 处）
-- **PLAN-3e24ef** （[specs/001-cart/plan.md](../raw/docs/specs/001-cart/plan.md) L4）三端共享上限常量，接口 `POST /api/cart`。
-  - 证据：接口 `POST /api/cart` 存在（android, harmony, ios）
 - **001-CART-SPEC-503548** （[specs/001-cart/spec.md](../raw/docs/specs/001-cart/spec.md) L14）WHEN the user taps `add_to_cart` on product detail THE SYSTEM SHALL call `POST /api/cart`.
   - 证据：接口 `POST /api/cart` 存在（android, harmony, ios）；testID `add_to_cart` 存在
 - **001-CART-SPEC-4d53d3** （[specs/001-cart/spec.md](../raw/docs/specs/001-cart/spec.md) L15）WHEN the cart is empty THE SYSTEM SHALL disable `cart_checkout`.
@@ -202,9 +206,5 @@ status: current
 
 ## 无法验证 unverifiable
 
-- **LOGIN-R1.2** （[.kiro/specs/login/requirements.md](../raw/docs/.kiro/specs/login/requirements.md) L16）WHEN the password is shorter than 6 characters THEN the system SHALL reject the login without calling the backend.
-  - 证据：没有可确定性校验的锚点（需要 LLM 语义核对）
 - **0001-NAVIGATION-ad00b5** （[docs/adr/0001-navigation.md](../raw/docs/docs/adr/0001-navigation.md) L9）所有页面 MUST 支持 `minishop://<pattern>` 深链，并支持测试参数 `?token=<t>&cart=<sku,sku>` 注入状态。
   - 证据：没有可确定性校验的锚点（需要 LLM 语义核对）
-- **PRODUCTS-d3d40e** （[docs/legacy/products.md](../raw/docs/docs/legacy/products.md) L5）商品详情页右上角有分享按钮（testID `share_button`）。
-  - 证据：`share_button` 在代码中找不到（无法确定性判断）；没有可确定性校验的锚点（需要 LLM 语义核对）

@@ -1,6 +1,6 @@
 file android/app/src/main/java/com/minishop/ui/cart/CartViewModel.kt
 pages (3):
-  pages/_conflicts.md — 文档核对（冲突与已验证断言） [current] anchors=3
+  pages/_conflicts.md — 文档核对（冲突与已验证断言） [current] anchors=2
   pages/features/cart.md — 购物车（cart） [current] anchors=6
   pages/features/product_detail.md — 商品详情（product_detail） [current] anchors=6
 symbols (7):
@@ -11,3 +11,8 @@ symbols (7):
   L24   property   android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.pending
   L26   function   android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.preload
   L20   function   android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.total
+requirements (4, quoted from docs):
+  [verified] PLAN-404208 — Android: `CartViewModel` (Compose + ViewModel)；iOS: `CartViewModel` (ObservableObject)；HarmonyOS: `CartStore`。 (specs/001-cart/plan.md)
+  [conflict] CART-43567f — 购物车最多 10 件商品（常量 `MAX_CART_ITEMS`，iOS 为 `maxCartItems`）。 (docs/legacy/cart.md)
+  [conflict] FR-002 — The cart MUST hold at most 99 items (`MAX_CART_ITEMS`). (specs/001-cart/spec.md)
+  [conflict] PLAN-3e24ef — 三端共享上限常量，接口 `POST /api/cart`。 (specs/001-cart/plan.md)

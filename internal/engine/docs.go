@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -275,7 +276,7 @@ func RenderConflicts(claims []Claim, g *model.Graph, commit string) (*wiki.Page,
 					continue
 				}
 				ev := strings.Join(c.Evidence, "；")
-				rows = append(rows, fmt.Sprintf("- **%s** （[%s](../%s) L%d）%s\n  - 证据：%s", c.ID, s, c.Raw, c.Line, c.Text, ev))
+				rows = append(rows, fmt.Sprintf("- **%s** （[%s](../%s) L%d）%s\n  - 证据：%s", c.ID, s, c.Raw, c.Line, inertLinks(c.Text), ev))
 			}
 		}
 		fmt.Fprintf(&b, "\n## %s\n\n", title)
@@ -305,4 +306,14 @@ func RenderConflicts(claims []Claim, g *model.Graph, commit string) (*wiki.Page,
 		page.Front.Sources = append(page.Front.Sources, model.Anchor{Sym: id, Hash: g.Get(id).Hash})
 	}
 	return page, reqs
+}
+
+var reMdLink = regexp.MustCompile(`!?\[([^\]]*)\]\(([^)\s]+)[^)]*\)`)
+
+// inertLinks turns markdown links quoted from a source document into plain
+// text. Their targets are relative to the original document, not to the wiki
+// page, so keeping them would create dead links (and verify would refuse to
+// publish); a quoted doc must also not be able to inject links into the wiki.
+func inertLinks(s string) string {
+	return reMdLink.ReplaceAllString(s, "$1（`$2`）")
 }

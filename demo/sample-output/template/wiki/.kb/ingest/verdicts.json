@@ -33,12 +33,19 @@
       "line": 16,
       "text": "WHEN the password is shorter than 6 characters THEN the system SHALL reject the login without calling the backend.",
       "style": "kiro",
-      "status": "unverifiable",
+      "status": "verified",
+      "anchors": [
+        "android://app/src/main/java/com/minishop/ui/login/LoginViewModel.kt#LoginViewModel.login",
+        "harmony://entry/src/main/ets/pages/LoginPage.ets#LoginPage.onSubmit",
+        "ios://MiniShop/Features/Login/LoginViewModel.swift#LoginViewModel.login"
+      ],
       "route_ids": [
         "login"
       ],
       "evidence": [
-        "没有可确定性校验的锚点（需要 LLM 语义核对）"
+        "「shorter than 6」对应代码中的比较 `length\u003c6`（android://app/src/main/java/com/minishop/ui/login/LoginViewModel.kt#LoginViewModel.login）",
+        "「shorter than 6」对应代码中的比较 `length\u003c6`（harmony://entry/src/main/ets/pages/LoginPage.ets#LoginPage.onSubmit）",
+        "「shorter than 6」对应代码中的比较 `count\u003e=6`（ios://MiniShop/Features/Login/LoginViewModel.swift#LoginViewModel.login）"
       ]
     },
     {
@@ -88,7 +95,7 @@
       "line": 26,
       "text": "WHEN the user taps `login_submit` with an empty username THEN the system SHALL show an SMS verification dialog.",
       "style": "kiro",
-      "status": "verified",
+      "status": "conflict",
       "anchors": [
         "android://app/src/main/java/com/minishop/ui/login/LoginScreen.kt#LoginScreen",
         "harmony://entry/src/main/ets/pages/LoginPage.ets#LoginPage.build",
@@ -98,7 +105,8 @@
         "login"
       ],
       "evidence": [
-        "testID `login_submit` 存在"
+        "testID `login_submit` 存在",
+        "文档要求「短信 / 验证码」相关行为，但代码中没有任何相关实现（符号、接口、testID、路由均未出现）"
       ]
     },
     {
@@ -435,10 +443,9 @@
       "line": 4,
       "text": "商品列表接口为 `GET /api/products`，支持 `page` 与 `size` 分页参数。",
       "style": "statement",
-      "status": "verified",
+      "status": "conflict",
       "anchors": [
         "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.listProducts",
-        "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.total",
         "harmony://entry/src/main/ets/common/Api.ets#Api.fetchProducts",
         "ios://MiniShop/Features/Products/ProductsViewModel.swift#ProductsViewModel.loadProducts"
       ],
@@ -447,7 +454,8 @@
       ],
       "evidence": [
         "接口 `GET /api/products` 存在（android, harmony, ios）",
-        "`size` 出现在代码中（android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.total）"
+        "接口 `/api/products` 的调用处（android, harmony, ios）没有参数 `page`",
+        "接口 `/api/products` 的调用处（android, harmony, ios）没有参数 `size`"
       ]
     },
     {
@@ -457,10 +465,9 @@
       "line": 5,
       "text": "商品详情页右上角有分享按钮（testID `share_button`）。",
       "style": "statement",
-      "status": "unverifiable",
+      "status": "conflict",
       "evidence": [
-        "`share_button` 在代码中找不到（无法确定性判断）",
-        "没有可确定性校验的锚点（需要 LLM 语义核对）"
+        "文档称 `share_button` 是 testID，但三端代码中都没有它"
       ]
     },
     {
@@ -526,17 +533,21 @@
       "line": 4,
       "text": "三端共享上限常量，接口 `POST /api/cart`。",
       "style": "statement",
-      "status": "verified",
+      "status": "conflict",
       "anchors": [
         "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.addToCart",
+        "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.MAX_CART_ITEMS",
         "harmony://entry/src/main/ets/common/Api.ets#Api.addToCart",
-        "ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.addItem"
+        "harmony://entry/src/main/ets/common/CartStore.ets#MAX_CART_ITEMS",
+        "ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.addItem",
+        "ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.maxCartItems"
       ],
       "route_ids": [
         "cart"
       ],
       "evidence": [
-        "接口 `POST /api/cart` 存在（android, harmony, ios）"
+        "接口 `POST /api/cart` 存在（android, harmony, ios）",
+        "文档说常量是共享的，但各平台分别定义：MAX_CART_ITEMS=50（android）, MAX_CART_ITEMS=50（harmony）, maxCartItems=99（ios）"
       ]
     },
     {
@@ -665,7 +676,8 @@
         "checkout"
       ],
       "evidence": [
-        "接口 `POST /api/coupons/apply` 在代码中不存在"
+        "接口 `POST /api/coupons/apply` 在代码中不存在",
+        "文档要求「优惠券」相关行为，但代码中没有任何相关实现（符号、接口、testID、路由均未出现）"
       ]
     },
     {

@@ -140,6 +140,8 @@ type Checker struct {
 	F     *model.Facts
 	Dir   string // scanned source dir (for literal search)
 	norms map[string]string
+	// codeHits caches behaviour-concept lookups (see valuecheck.go).
+	codeHits map[string]bool
 }
 
 func normAPIPath(p string) string {
@@ -234,6 +236,7 @@ func (k *Checker) Check(c *Claim) {
 	routes := map[string]bool{}
 	var evidence []string
 	conflict, verified := false, false
+	numericChecked := false
 	text := c.Text
 	addRouteForSym := func(id string) {
 		s := k.G.Get(id)
@@ -339,7 +342,10 @@ func (k *Checker) Check(c *Claim) {
 			syms := k.findSymbols(span)
 			if len(syms) == 0 {
 				name := strings.TrimSuffix(span, "()")
-				if hit := k.tokenSearch(name); hit != "" {
+				// Short plain words (`page`, `size`, `id`) match unrelated code
+				// (`items.size`); they are not evidence and must not anchor.
+				generic := len(name) < 5 && strings.ToLower(name) == name && !strings.ContainsAny(name, "_.")
+				if hit := k.tokenSearch(name); hit != "" && !generic {
 					// not a declared symbol (config key, error code, property…) but used in code
 					verified = true
 					anchors[hit] = true
@@ -350,6 +356,9 @@ func (k *Checker) Check(c *Claim) {
 				if first := strings.SplitN(name, ".", 2)[0]; strings.Contains(name, ".") && isPascal(first) && !builtinTypes[first] && k.tokenSearch(first) == "" && len(k.findSymbols(first)) == 0 {
 					conflict = true
 					evidence = append(evidence, fmt.Sprintf("符号 `%s` 在代码中不存在（类型 `%s` 也不存在）", span, first))
+				} else if k.missingTestID(text, span) {
+					conflict = true
+					evidence = append(evidence, fmt.Sprintf("文档称 `%s` 是 testID，但三端代码中都没有它", span))
 				} else if looksLikeCodeIdent(span) {
 					evidence = append(evidence, fmt.Sprintf("`%s` 在代码中找不到（无法确定性判断）", span))
 				}
@@ -361,7 +370,7 @@ func (k *Checker) Check(c *Claim) {
 				addRouteForSym(s.ID)
 				if s.Value != "" && len(nums) > 0 {
 					if _, err := strconv.Atoi(s.Value); err == nil {
-						valueChecked = true
+						valueChecked, numericChecked = true, true
 						if containsStr(nums, s.Value) {
 							evidence = append(evidence, fmt.Sprintf("`%s` = %s（%s）与文档一致", s.Qual, s.Value, s.Platform))
 						} else {
@@ -407,6 +416,14 @@ func (k *Checker) Check(c *Claim) {
 	for _, r := range k.F.Routes {
 		if len(r.RouteID) > 3 && regexp.MustCompile(`\b`+regexp.QuoteMeta(r.RouteID)+`\b`).MatchString(text) {
 			routes[r.RouteID] = true
+		}
+	}
+	if r := k.valueRules(c, numericChecked); r.conflict || r.verified {
+		conflict = conflict || r.conflict
+		verified = verified || r.verified
+		evidence = append(evidence, r.evidence...)
+		for _, a := range r.anchors {
+			anchors[a] = true
 		}
 	}
 	switch {

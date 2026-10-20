@@ -47,7 +47,7 @@ sources:
     hash: 22a33fb48918bb7a97d40a7a2512460d93468171f49d23bf8ab8e6fce77fd574
   - sym: ios://MiniShop/Networking/APIClient.swift#Product.title
     hash: be0eb9a3cabfe19db23b6287518ceb5b1fd2513d7ed2f9e89878c29f277bfcc5
-source_commit: dac9f37
+source_commit: 92c67bc
 status: current
 ---
 # 商品列表（products）

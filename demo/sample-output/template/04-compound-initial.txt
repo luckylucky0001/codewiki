@@ -1,4 +1,4 @@
-compound 20261020T173203-3cb7c04: base  → head 3cb7c04, mode full, llm template
+compound 20261020T184305-9e741c8: base  → head 9e741c8, mode full, llm template
 mode full — no compatible baseline graph (first compound or graph version change)
 changed_route_ids: [cart checkout login order_detail product_detail products]; changed_files: 42
 stats: symbols=214 changes=map[added:214] module_ratio=1.00 structural_ratio=1.00 hops=1 propagated=0
@@ -40,5 +40,5 @@ changed files: 17
   pages/features/product_detail.md
   pages/features/products.md
   pages/overview.md
-verify PASS: 23 pages, 353 anchors, 0 errors, 0 warnings
+verify PASS: 23 pages, 358 anchors, 0 errors, 0 warnings
 published 17 changed file(s) to demo/output/<run>/repo/wiki

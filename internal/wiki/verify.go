@@ -94,6 +94,9 @@ func Verify(wikiDir string, g *model.Graph, opt VerifyOptions) *Report {
 			}
 		}
 		for _, m := range symMention.FindAllStringSubmatch(p.Body, -1) {
+			if isWebURL(m[1]) {
+				continue // a quoted documentation URL with a #fragment, not a symbol id
+			}
 			if g.Get(m[1]) == nil {
 				r.Errors = append(r.Errors, Issue{Code: "E_SYMBOL_UNKNOWN", Page: p.Path, Sym: m[1], Detail: "page mentions a symbol id that does not exist"})
 			}
@@ -199,4 +202,13 @@ func FixIndex(wikiDir string) error {
 		return err
 	}
 	return WriteFileAtomic(filepath.Join(wikiDir, "llms.txt"), RenderLLMSTxt(pages))
+}
+
+func isWebURL(s string) bool {
+	for _, p := range []string{"http://", "https://", "ftp://", "file://"} {
+		if strings.HasPrefix(s, p) {
+			return true
+		}
+	}
+	return false
 }

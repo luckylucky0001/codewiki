@@ -45,13 +45,28 @@
       "id": "LOGIN-R1.2",
       "source": ".kiro/specs/login/requirements.md",
       "text": "WHEN the password is shorter than 6 characters THEN the system SHALL reject the login without calling the backend.",
-      "status": "unverifiable",
-      "anchors": [],
+      "status": "verified",
+      "anchors": [
+        {
+          "sym": "android://app/src/main/java/com/minishop/ui/login/LoginViewModel.kt#LoginViewModel.login",
+          "hash": "95656a4f2c6e87d65125d80b8512d39d72353bab4897e6fe1a3b5c23a3b76270"
+        },
+        {
+          "sym": "harmony://entry/src/main/ets/pages/LoginPage.ets#LoginPage.onSubmit",
+          "hash": "db69ad016a1c4ec545413f899b5ba8e37866be783227f74f25db110da6e3a9b9"
+        },
+        {
+          "sym": "ios://MiniShop/Features/Login/LoginViewModel.swift#LoginViewModel.login",
+          "hash": "c7a114bae2e4a6dd1df9f051017b9ec3966962fecbe46f60d258cb0c33f36ed8"
+        }
+      ],
       "route_ids": [
         "login"
       ],
       "evidence": [
-        "没有可确定性校验的锚点（需要 LLM 语义核对）"
+        "「shorter than 6」对应代码中的比较 `length\u003c6`（android://app/src/main/java/com/minishop/ui/login/LoginViewModel.kt#LoginViewModel.login）",
+        "「shorter than 6」对应代码中的比较 `length\u003c6`（harmony://entry/src/main/ets/pages/LoginPage.ets#LoginPage.onSubmit）",
+        "「shorter than 6」对应代码中的比较 `count\u003e=6`（ios://MiniShop/Features/Login/LoginViewModel.swift#LoginViewModel.login）"
       ]
     },
     {
@@ -110,7 +125,7 @@
       "id": "LOGIN-R2.2",
       "source": ".kiro/specs/login/requirements.md",
       "text": "WHEN the user taps `login_submit` with an empty username THEN the system SHALL show an SMS verification dialog.",
-      "status": "verified",
+      "status": "conflict",
       "anchors": [
         {
           "sym": "android://app/src/main/java/com/minishop/ui/login/LoginScreen.kt#LoginScreen",
@@ -129,7 +144,8 @@
         "login"
       ],
       "evidence": [
-        "testID `login_submit` 存在"
+        "testID `login_submit` 存在",
+        "文档要求「短信 / 验证码」相关行为，但代码中没有任何相关实现（符号、接口、testID、路由均未出现）"
       ]
     },
     {
@@ -599,15 +615,11 @@
       "id": "PRODUCTS-f83d5a",
       "source": "docs/legacy/products.md",
       "text": "商品列表接口为 `GET /api/products`，支持 `page` 与 `size` 分页参数。",
-      "status": "verified",
+      "status": "conflict",
       "anchors": [
         {
           "sym": "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.listProducts",
           "hash": "811ab70ffe53f90e955509d706154fc4ac2a5a73f93d1085bec1db580e8dfe1c"
-        },
-        {
-          "sym": "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.total",
-          "hash": "83e05d402203fec9ac172c0203a32fc1bcccf25f2f905b17212c5d2bd4742856"
         },
         {
           "sym": "harmony://entry/src/main/ets/common/Api.ets#Api.fetchProducts",
@@ -623,19 +635,19 @@
       ],
       "evidence": [
         "接口 `GET /api/products` 存在（android, harmony, ios）",
-        "`size` 出现在代码中（android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.total）"
+        "接口 `/api/products` 的调用处（android, harmony, ios）没有参数 `page`",
+        "接口 `/api/products` 的调用处（android, harmony, ios）没有参数 `size`"
       ]
     },
     {
       "id": "PRODUCTS-d3d40e",
       "source": "docs/legacy/products.md",
       "text": "商品详情页右上角有分享按钮（testID `share_button`）。",
-      "status": "unverifiable",
+      "status": "conflict",
       "anchors": [],
       "route_ids": [],
       "evidence": [
-        "`share_button` 在代码中找不到（无法确定性判断）",
-        "没有可确定性校验的锚点（需要 LLM 语义核对）"
+        "文档称 `share_button` 是 testID，但三端代码中都没有它"
       ]
     },
     {
@@ -715,26 +727,39 @@
       "id": "PLAN-3e24ef",
       "source": "specs/001-cart/plan.md",
       "text": "三端共享上限常量，接口 `POST /api/cart`。",
-      "status": "verified",
+      "status": "conflict",
       "anchors": [
         {
           "sym": "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService.addToCart",
           "hash": "04fc4a76c52c7def97e7e7e8c75b25f3609ef967500beb8ffe9b5b493a46ad02"
         },
         {
+          "sym": "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.MAX_CART_ITEMS",
+          "hash": "c874d1a813b4bf8aa6817442999368d7da32979bf689f785a5cea94c2ca423bb"
+        },
+        {
           "sym": "harmony://entry/src/main/ets/common/Api.ets#Api.addToCart",
           "hash": "2ba9b9e96f64cd43188e28c0cb0ce068718daeb724decbed662b193352e8d65e"
         },
         {
+          "sym": "harmony://entry/src/main/ets/common/CartStore.ets#MAX_CART_ITEMS",
+          "hash": "6e9d5bcb94a54206cacbef1ca2eef4a96f65e32eaf10437f6257dc231ce1ce0c"
+        },
+        {
           "sym": "ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.addItem",
           "hash": "88c93466d1e406c1684b1237c4f216e37932aa5f2b8974f54189fa78f10a2d09"
+        },
+        {
+          "sym": "ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.maxCartItems",
+          "hash": "ffaf69f8eb9681951eecc75a6643019d4a9398418f99a0ff562c39656344542e"
         }
       ],
       "route_ids": [
         "cart"
       ],
       "evidence": [
-        "接口 `POST /api/cart` 存在（android, harmony, ios）"
+        "接口 `POST /api/cart` 存在（android, harmony, ios）",
+        "文档说常量是共享的，但各平台分别定义：MAX_CART_ITEMS=50（android）, MAX_CART_ITEMS=50（harmony）, maxCartItems=99（ios）"
       ]
     },
     {
@@ -915,7 +940,8 @@
         "checkout"
       ],
       "evidence": [
-        "接口 `POST /api/coupons/apply` 在代码中不存在"
+        "接口 `POST /api/coupons/apply` 在代码中不存在",
+        "文档要求「优惠券」相关行为，但代码中没有任何相关实现（符号、接口、testID、路由均未出现）"
       ]
     },
     {

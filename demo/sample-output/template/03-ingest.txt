@@ -1,4 +1,4 @@
-ingest 20261020T173202-1f8afde: base  → head 1f8afde, mode ingest, llm template
+ingest 20261020T184304-6231381: base  → head 6231381, mode ingest, llm template
 mode ingest — check ingested documents against code
 changed_route_ids: [cart checkout login order_detail product_detail products]; changed_files: 42
 stats: symbols=214 changes=map[added:214] module_ratio=1.00 structural_ratio=1.00 hops=1 propagated=0
@@ -38,5 +38,5 @@ changed files: 33
   raw/docs/manifest.json
   raw/docs/specs/001-cart/plan.md
   raw/docs/specs/001-cart/spec.md
-verify PASS: 14 pages, 174 anchors, 0 errors, 0 warnings
+verify PASS: 14 pages, 179 anchors, 0 errors, 0 warnings
 published 33 changed file(s) to demo/output/<run>/repo/wiki

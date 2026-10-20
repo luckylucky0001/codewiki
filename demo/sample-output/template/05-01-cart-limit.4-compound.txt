@@ -1,4 +1,4 @@
-compound 20261020T173204-47c975a: base 3cb7c04 → head 47c975a, mode incremental, llm template
+compound 20261020T184306-78223e2: base 9e741c8 → head 78223e2, mode incremental, llm template
 mode incremental — anchors changed ∪ signature changes propagated along reference edges
 changed_route_ids: [cart product_detail]; changed_files: 4
 stats: symbols=214 changes=map[body:2 unchanged:212] module_ratio=0.10 structural_ratio=0.00 hops=1 propagated=0
@@ -20,5 +20,5 @@ changed files: 11
   pages/features/cart.md
   pages/features/product_detail.md
   pages/parity.md
-verify PASS: 23 pages, 353 anchors, 0 errors, 0 warnings
+verify PASS: 23 pages, 358 anchors, 0 errors, 0 warnings
 published 11 changed file(s) to demo/output/<run>/repo/wiki

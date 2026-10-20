@@ -1,4 +1,4 @@
-compound 20261020T173204-dac9f37: base 47c975a → head dac9f37, mode incremental, llm template
+compound 20261020T184307-92c67bc: base 78223e2 → head 92c67bc, mode incremental, llm template
 mode incremental — anchors changed ∪ signature changes propagated along reference edges
 changed_route_ids: [product_detail products]; changed_files: 4
 stats: symbols=214 changes=map[body:4 renamed:1 signature:1 unchanged:208] module_ratio=0.10 structural_ratio=0.01 hops=1 propagated=2
@@ -24,5 +24,5 @@ changed files: 13
   pages/concepts/shared-components.md
   pages/features/product_detail.md
   pages/features/products.md
-verify PASS: 23 pages, 353 anchors, 0 errors, 0 warnings
+verify PASS: 23 pages, 358 anchors, 0 errors, 0 warnings
 published 13 changed file(s) to demo/output/<run>/repo/wiki

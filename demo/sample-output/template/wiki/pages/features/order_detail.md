@@ -17,7 +17,7 @@ sources:
     hash: 0926b072cacce7ce5cb5717540bad6ae6c29803a4e253f3ba5edc566a61b2a24
   - sym: ios://MiniShop/Features/Order/OrderDetailView.swift#OrderDetailView.id
     hash: 22a33fb48918bb7a97d40a7a2512460d93468171f49d23bf8ab8e6fce77fd574
-source_commit: 3cb7c04
+source_commit: 9e741c8
 status: current
 ---
 # 订单详情（order_detail）

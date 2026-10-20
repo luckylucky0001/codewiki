@@ -1,13 +1,8 @@
-claim verification (template, 33 labelled): accuracy 0.82
-  verified      precision 0.88 recall 0.92 f1 0.90 (tp 22 fp 3 fn 2)
-  conflict      precision 1.00 recall 0.56 f1 0.72 (tp 5 fp 0 fn 4)
-  unverifiable  precision 0.00 recall 0.00 f1 0.00 (tp 0 fp 3 fn 0)
-  ✗ LOGIN-R1.2             expected verified     got unverifiable password < 6 rejected before the API call (Kotlin length<6, Swift count>=6 guard, ArkTS length<6)
-  ✗ LOGIN-R2.2             expected conflict     got verified     no SMS dialog anywhere; empty username just fails validation
+claim verification (template, 33 labelled): accuracy 0.97
+  verified      precision 1.00 recall 0.96 f1 0.98 (tp 23 fp 0 fn 1)
+  conflict      precision 1.00 recall 1.00 f1 1.00 (tp 9 fp 0 fn 0)
+  unverifiable  precision 0.00 recall 0.00 f1 0.00 (tp 0 fp 1 fn 0)
   ✗ 0001-NAVIGATION-ad00b5 expected verified     got unverifiable all platforms accept minishop://<pattern>?token&cart
-  ✗ PLAN-3e24ef            expected conflict     got verified     each platform defines its own limit constant; nothing is shared
-  ✗ PRODUCTS-f83d5a        expected conflict     got verified     GET /api/products takes no page/size parameters
-  ✗ PRODUCTS-d3d40e        expected conflict     got unverifiable no share button / share_button testID
 plan impact: micro precision 0.82 recall 1.00 f1 0.90
   01-cart-limit          precision 1.00 recall 1.00 missed [] extra []
   02-arkts-api-rename    precision 0.75 recall 1.00 missed [] extra [pages/_conflicts.md]

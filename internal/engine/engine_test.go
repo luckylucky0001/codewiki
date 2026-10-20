@@ -246,7 +246,7 @@ func TestClaimsExtractionAndCheck(t *testing.T) {
 		byID[claims[i].ID] = &claims[i]
 	}
 	want := map[string]string{"FR-001": ClaimVerified, "FR-002": ClaimVerified, "FR-003": ClaimVerified, "FR-004": ClaimConflict, "FR-005": ClaimVerified,
-		"LOGIN-R1.1": ClaimVerified, "LOGIN-R1.2": ClaimUnverifiable, "LOGIN-R2.1": ClaimVerified}
+		"LOGIN-R1.1": ClaimVerified, "LOGIN-R1.2": ClaimVerified, "LOGIN-R2.1": ClaimVerified, "LOGIN-R2.2": ClaimConflict}
 	for id, st := range want {
 		c := byID[id]
 		if c == nil {

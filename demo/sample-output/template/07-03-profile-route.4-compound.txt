@@ -1,4 +1,4 @@
-compound 20261020T173205-d36d971: base dac9f37 → head d36d971, mode incremental, llm template
+compound 20261020T184309-8527147: base 92c67bc → head 8527147, mode incremental, llm template
 mode incremental — anchors changed ∪ signature changes propagated along reference edges
 changed_route_ids: [profile]; changed_files: 8
 stats: symbols=224 changes=map[added:10 body:4 unchanged:210] module_ratio=0.22 structural_ratio=0.04 hops=1 propagated=0
@@ -34,5 +34,5 @@ changed files: 23
   pages/features/profile.md
   pages/overview.md
   pages/parity.md
-verify PASS: 24 pages, 372 anchors, 0 errors, 0 warnings
+verify PASS: 24 pages, 377 anchors, 0 errors, 0 warnings
 published 23 changed file(s) to demo/output/<run>/repo/wiki

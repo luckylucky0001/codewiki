@@ -51,7 +51,7 @@ sources:
     hash: 10ec028d43c7dd167b9a8947e75e6cc9b4156869852986128bb1a7e723ea14e4
   - sym: ios://MiniShop/Networking/APIClient.swift#CartResponse.count
     hash: 7ccd9948ba99f0e16f94e88d2a0b4cd26c8a16dcf86de7f21b9f6d77eb857118
-source_commit: 47c975a
+source_commit: "78223e2"
 status: current
 ---
 # 购物车（cart）

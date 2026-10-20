@@ -82,7 +82,7 @@ sources:
     hash: 0fbe631d08afe24b8d26ee6911bafb84fad369e681ecfe0c1308b7d0b484d8a2
   - sym: ios://MiniShop/Navigation/Route.swift#Route.profile
     hash: b4eeb3dba90bf3318c66b05247e35a69b93faa580f5dccccb1aa35bc61f0d6dd
-source_commit: d36d971
+source_commit: "8527147"
 status: current
 ---
 # 导航与深链

@@ -6,11 +6,11 @@ append-only；格式：`## [YYYY-MM-DD] op | subject`
 
 - platforms: 3
 
-## [2026-10-20] ingest | 1f8afde ingest, 1 task(s), 30 file(s) changed
+## [2026-10-20] ingest | 6231381 ingest, 1 task(s), 30 file(s) changed
 
 - create `pages/_conflicts.md` (template, ok)
 
-## [2026-10-20] compound | 3cb7c04 full, 10 task(s), 12 file(s) changed
+## [2026-10-20] compound | 9e741c8 full, 10 task(s), 12 file(s) changed
 
 - recheck `pages/_conflicts.md` (template, ok)
 - create `pages/concepts/navigation.md` (template, ok)
@@ -23,20 +23,20 @@ append-only；格式：`## [YYYY-MM-DD] op | subject`
 - create `pages/features/products.md` (template, ok)
 - create `pages/overview.md` (template, ok)
 
-## [2026-10-20] compound | 47c975a incremental, 3 task(s), 6 file(s) changed
+## [2026-10-20] compound | 78223e2 incremental, 3 task(s), 6 file(s) changed
 
 - recheck `pages/_conflicts.md` (template, ok)
 - update `pages/features/cart.md` (template, ok)
 - update `pages/features/product_detail.md` (template, ok)
 
-## [2026-10-20] compound | dac9f37 incremental, 4 task(s), 8 file(s) changed
+## [2026-10-20] compound | 92c67bc incremental, 4 task(s), 8 file(s) changed
 
 - recheck `pages/_conflicts.md` (template, ok)
 - update `pages/concepts/shared-components.md` (template, ok)
 - update `pages/features/product_detail.md` (template, ok)
 - update `pages/features/products.md` (template, ok)
 
-## [2026-10-20] compound | d36d971 incremental, 4 task(s), 18 file(s) changed
+## [2026-10-20] compound | 8527147 incremental, 4 task(s), 18 file(s) changed
 
 - update `pages/concepts/navigation.md` (template, ok)
 - update `pages/concepts/shared-components.md` (template, ok)

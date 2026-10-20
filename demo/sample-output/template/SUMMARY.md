@@ -1,7 +1,7 @@
 # codewiki demo summary
 
 - mode: `template` (bootstrap writer: `template`)
-- date (UTC): 20261020T173200Z
+- date (UTC): 20261020T184301Z
 - repo: `demo/output/<run>/repo` (temp git repo, branch master)
 - kb: `kb 0.1.0`
 
@@ -9,10 +9,12 @@
 
 Discovered docs: 9 (adr=1, agent-guide=1, design=1, doc=3, readme=1, spec=2)
 
-Claims: conflict=6, unverifiable=3, verified=24
+Claims: conflict=10, unverifiable=1, verified=22
 
 Conflicts (code wins):
 
+- **LOGIN-R2.2** (.kiro/specs/login/requirements.md): WHEN the user taps `login_submit` with an empty username THEN the system SHALL show an SMS verification dialog.
+  - testID `login_submit` 存在; 文档要求「短信 / 验证码」相关行为，但代码中没有任何相关实现（符号、接口、testID、路由均未出现）
 - **CART-43567f** (docs/legacy/cart.md): 购物车最多 10 件商品（常量 `MAX_CART_ITEMS`，iOS 为 `maxCartItems`）。
   - 代码中 `CartViewModel.MAX_CART_ITEMS` = 50（android），文档写的是 10; 代码中 `MAX_CART_ITEMS` = 50（harmony），文档写的是 10; 代码中 `CartViewModel.maxCartItems` = 99（ios），文档写的是 10
 - **CART-7d3eb7** (docs/legacy/cart.md): 下单接口为 `POST /api/order/create`，成功后进入订单详情 `minishop://order/{id}`。
@@ -21,10 +23,16 @@ Conflicts (code wins):
   - 接口 `POST /api/sms/send` 在代码中不存在; 接口 `POST /api/login` 存在（android, harmony, ios）
 - **LOGIN-e5f114** (docs/legacy/login.md): 会话 token 由 `SessionManager.saveToken()` 持久化。
   - 符号 `SessionManager.saveToken()` 在代码中不存在（类型 `SessionManager` 也不存在）
+- **PRODUCTS-f83d5a** (docs/legacy/products.md): 商品列表接口为 `GET /api/products`，支持 `page` 与 `size` 分页参数。
+  - 接口 `GET /api/products` 存在（android, harmony, ios）; 接口 `/api/products` 的调用处（android, harmony, ios）没有参数 `page`; 接口 `/api/products` 的调用处（android, harmony, ios）没有参数 `size`
+- **PRODUCTS-d3d40e** (docs/legacy/products.md): 商品详情页右上角有分享按钮（testID `share_button`）。
+  - 文档称 `share_button` 是 testID，但三端代码中都没有它
+- **PLAN-3e24ef** (specs/001-cart/plan.md): 三端共享上限常量，接口 `POST /api/cart`。
+  - 接口 `POST /api/cart` 存在（android, harmony, ios）; 文档说常量是共享的，但各平台分别定义：MAX_CART_ITEMS=50（android）, MAX_CART_ITEMS=50（harmony）, maxCartItems=99（ios）
 - **FR-002** (specs/001-cart/spec.md): The cart MUST hold at most 99 items (`MAX_CART_ITEMS`).
   - 代码中 `CartViewModel.MAX_CART_ITEMS` = 50（android），文档写的是 99; 代码中 `MAX_CART_ITEMS` = 50（harmony），文档写的是 99
 - **FR-004** (specs/001-cart/spec.md): Users MUST be able to apply a coupon code at checkout (`POST /api/coupons/apply`).
-  - 接口 `POST /api/coupons/apply` 在代码中不存在
+  - 接口 `POST /api/coupons/apply` 在代码中不存在; 文档要求「优惠券」相关行为，但代码中没有任何相关实现（符号、接口、testID、路由均未出现）
 
 ## Compounds
 
@@ -38,13 +46,13 @@ Conflicts (code wins):
 ### 05-01-cart-limit
 
 ```
-diff: base 3cb7c04 → head 47c975a
+diff: base 9e741c8 → head 78223e2
 diff:   unchanged  212
 diff:   body       2
 diff:   signature  0
 diff:   added      0
 diff:   deleted    0
-status(before): stale facts/requirements.json (4 anchors: CartViewModel.MAX_CART_ITEMS, MAX_CART_ITEMS, CartViewModel.MAX_CART_ITEMS, …+1)
+status(before): stale facts/requirements.json (6 anchors: CartViewModel.MAX_CART_ITEMS, MAX_CART_ITEMS, CartViewModel.MAX_CART_ITEMS, …+3)
 status(before): stale pages/_conflicts.md (2 anchors: CartViewModel.MAX_CART_ITEMS, MAX_CART_ITEMS)
 status(before): stale pages/features/cart.md (1 anchors: CartViewModel.MAX_CART_ITEMS)
 status(before): stale pages/features/product_detail.md (1 anchors: CartViewModel.MAX_CART_ITEMS)
@@ -55,13 +63,13 @@ status(before): stale pages/parity.md (generated facts out of date)
   task t01-_conflicts               ok       template 
   task t02-features-cart            ok       template 
   task t03-features-product_detail  ok       template 
-verify PASS: 23 pages, 353 anchors, 0 errors, 0 warnings
+verify PASS: 23 pages, 358 anchors, 0 errors, 0 warnings
 ```
 
 ### 06-02-arkts-api-rename
 
 ```
-diff: base 47c975a → head dac9f37
+diff: base 78223e2 → head 92c67bc
 diff:   unchanged  208
 diff:   body       4
 diff:   signature  1
@@ -82,13 +90,13 @@ status(before): stale pages/features/products.md (2 anchors: Api.loadProducts, P
   task t02-concepts-shared-components ok       template 
   task t03-features-product_detail  ok       template 
   task t04-features-products        ok       template 
-verify PASS: 23 pages, 353 anchors, 0 errors, 0 warnings
+verify PASS: 23 pages, 358 anchors, 0 errors, 0 warnings
 ```
 
 ### 07-03-profile-route
 
 ```
-diff: base dac9f37 → head d36d971
+diff: base 92c67bc → head 8527147
 diff:   unchanged  210
 diff:   body       4
 diff:   signature  0
@@ -115,7 +123,7 @@ status(before): stale pages/parity.md (generated facts out of date)
   task t02-concepts-shared-components ok       template 
   task t03-features-profile         ok       template 
   task t04-overview                 ok       template 
-verify PASS: 24 pages, 372 anchors, 0 errors, 0 warnings
+verify PASS: 24 pages, 377 anchors, 0 errors, 0 warnings
 ```
 
 ## Parity（三端一致性）
@@ -127,10 +135,10 @@ Gaps after the last merge: 1; constants that differ across platforms:
 ## Eval（golden set，template）
 
 ```
-claim verification (template, 33 labelled): accuracy 0.82
-  verified      precision 0.88 recall 0.92 f1 0.90 (tp 22 fp 3 fn 2)
-  conflict      precision 1.00 recall 0.56 f1 0.72 (tp 5 fp 0 fn 4)
-  unverifiable  precision 0.00 recall 0.00 f1 0.00 (tp 0 fp 3 fn 0)
+claim verification (template, 33 labelled): accuracy 0.97
+  verified      precision 1.00 recall 0.96 f1 0.98 (tp 23 fp 0 fn 1)
+  conflict      precision 1.00 recall 1.00 f1 1.00 (tp 9 fp 0 fn 0)
+  unverifiable  precision 0.00 recall 0.00 f1 0.00 (tp 0 fp 1 fn 0)
 plan impact: micro precision 0.82 recall 1.00 f1 0.90
 ```
 
@@ -148,7 +156,7 @@ plan impact: micro precision 0.82 recall 1.00 f1 0.90
 ```
 file android/app/src/main/java/com/minishop/ui/cart/CartViewModel.kt
 pages (3):
-  pages/_conflicts.md — 文档核对（冲突与已验证断言） [current] anchors=3
+  pages/_conflicts.md — 文档核对（冲突与已验证断言） [current] anchors=2
   pages/features/cart.md — 购物车（cart） [current] anchors=6
   pages/features/product_detail.md — 商品详情（product_detail） [current] anchors=6
 symbols (7):
@@ -160,6 +168,6 @@ symbols (7):
   L26   function   android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.preload
 ```
 
-Final verify: PASS — 24 pages, 372 anchors.
+Final verify: PASS — 24 pages, 377 anchors.
 
-Files: see `template-final/` (numbered by step); the final wiki is in `repo/wiki/`.
+Files: see `gate-demo/` (numbered by step); the final wiki is in `repo/wiki/`.
