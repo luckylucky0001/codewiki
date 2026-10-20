@@ -226,3 +226,24 @@ func TestCacheRejectsOtherExtractorVersion(t *testing.T) {
 		t.Fatal("cache written by another extractor build must be ignored")
 	}
 }
+
+// KMP repo (kotlinconf-app, DroidconKotlin): android "." overlaps ios
+// "iosApp"; each file must be scanned once, under the most specific root.
+func TestOverlappingPlatformRootsScanOnce(t *testing.T) {
+	r := scanTree(t, []config.Platform{{Name: "android", Root: "."}, {Name: "ios", Root: "iosApp"}}, map[string]string{
+		"shared/src/commonMain/kotlin/Repo.kt": "class Repo",
+		"iosApp/iosApp/ContentView.swift":      "struct ContentView {}",
+	})
+	if got := r.Graph.Files["iosApp/iosApp/ContentView.swift"].Platform; got != "ios" {
+		t.Fatalf("swift file platform = %q, want ios", got)
+	}
+	n := 0
+	for _, s := range r.Graph.Symbols {
+		if s.Name == "ContentView" {
+			n++
+		}
+	}
+	if n != 1 || r.Graph.Files["shared/src/commonMain/kotlin/Repo.kt"].Platform != "android" {
+		t.Fatalf("ContentView symbols = %d, want 1; files=%v", n, r.Graph.Files)
+	}
+}

@@ -93,7 +93,7 @@ func ScanWith(cfg *config.Config, dir string, opt Options) (*Result, error) {
 				return nil
 			}
 			lang := extract.LangForPath(path)
-			if lang == "" || matchAny(excl, rel) {
+			if lang == "" || matchAny(excl, rel) || cfg.Shadowed(p, rel) {
 				return nil
 			}
 			prel, _ := filepath.Rel(proot, path)

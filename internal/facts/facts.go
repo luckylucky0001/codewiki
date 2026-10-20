@@ -449,6 +449,9 @@ func (c *ctx) resources(p config.Platform) {
 		}
 		rel, _ := filepath.Rel(c.res.Dir, path)
 		rel = filepath.ToSlash(rel)
+		if c.cfg.Shadowed(p, rel) {
+			return nil
+		}
 		switch d.Name() {
 		case "AndroidManifest.xml":
 			c.manifest(p.Name, path, rel)
