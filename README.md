@@ -48,15 +48,35 @@ flowchart LR
 
 ```bash
 go install github.com/luckylucky0001/codewiki/cmd/kb@latest
-# 或从 checkout 构建
-git clone https://github.com/luckylucky0001/codewiki && cd codewiki && go build -o kb ./cmd/kb
+# 或从 checkout 安装（装到 $(go env GOPATH)/bin，确保该目录在 PATH 中）
+git clone https://github.com/luckylucky0001/codewiki && cd codewiki && go install ./cmd/kb
+# 或者只构建二进制，再自行放进 PATH：go build -o ~/bin/kb ./cmd/kb
 ```
+
+下面的命令都直接调用 `kb`，所以它必须在 PATH 中。
+
+**git 是可选的。** 不在 git 仓库里时，`kb init / scan / ingest / compound / verify / context` 同样可以运行，输出中的 head 显示为 `(no git)`。但增量 compound（与上次的 `last_sha` 比较）、`kb diff --base`、`kb hook` 和 `kb eval` 需要 git。
 
 ArkTS 语法以源码形式 vendored 在模块内部（`internal/grammars/arkts`，含 MIT LICENSE 与 VENDORED.md），`go.mod` 不含任何 `replace`，因此远程 `go install …@latest` 可用。
 
 提示：Swift 语法的 C 代码在编译时会打印 `TOKEN_COUNT redefined` 警告，无害；可用 `CGO_CFLAGS="-O2 -w"` 静默。
 
 ## 快速开始
+
+**先在自带的示例上试一下**（三端 MiniShop，约 1 分钟）：
+
+```bash
+cp -r examples/minishop /tmp/ms && cd /tmp/ms
+git init -q && git add -A && git -c user.name=me -c user.email=me@example.com commit -qm init   # 可选，见上
+kb init
+kb ingest --manifest <(kb discover-docs --json)
+kb compound && kb verify
+kb conflicts                                                       # 哪些文档过时
+kb context android/app/src/main/java/com/minishop/ui/cart/CartViewModel.kt
+kb parity
+```
+
+**在你自己的仓库上：**
 
 ```bash
 cd your-monorepo                 # 含 android/ ios/ harmony/
@@ -66,7 +86,8 @@ kb ingest --manifest /tmp/docs.json --kinds spec,design,adr,agent-guide,doc   # 
 kb compound                      # 首次：全量；之后：增量（默认 template 写作器，离线确定性）
 kb compound --llm claude         # 使用真实 LLM（claude -p）写页面
 kb verify                        # CI 门禁：exit 0 = wiki 与 HEAD 一致
-kb search "购物车 上限"; kb get features/cart; kb context android/.../CartViewModel.kt
+kb search "购物车 上限"; kb get features/cart
+kb context android/app/src/main/java/com/minishop/ui/cart/CartViewModel.kt   # 路径必须是仓库内被扫描到的文件，否则 exit 2
 ```
 
 完整演示：`demo/run.sh`（见 [demo/README.md](demo/README.md)）。PDF 手册：[docs/codewiki-manual.pdf](docs/codewiki-manual.pdf)（源文件 `docs/manual/manual.html`，`docs/build-pdf.sh` 构建）。
@@ -129,7 +150,7 @@ docs:
 | `kb bench [--synthetic N]` | 冷/热扫描基准（合成仓库或 `--root` 指定的真实仓库） |
 | `kb eval [--llm …]` | 用人工标注的 golden set 评测断言核对与 plan 影响面（precision/recall） |
 | `kb hook install --mode post-receive\|post-merge [--repo <git dir>]` | 安装 git 钩子：服务端 push 到 master 或客户端 merge 后自动 compound（串行 + 追平） |
-| `kb mcp` | stdio MCP server（JSON-RPC 2.0），工具：`kb_search`、`kb_get`、`kb_context`、`kb_anchor`、`kb_status`、`kb_parity` |
+| `kb mcp` | stdio MCP server（JSON-RPC 2.0），工具：`kb_search`、`kb_get`、`kb_context`、`kb_anchor`、`kb_status`、`kb_parity`、`kb_conflicts` |
 
 ## Wiki 布局
 

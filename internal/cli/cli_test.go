@@ -594,10 +594,15 @@ func TestContextIncludesRequirements(t *testing.T) {
 	if _, ok := got["PRODUCTS-f83d5a"]; ok {
 		t.Fatalf("products pagination claim must not anchor into the cart view model: %v", got["PRODUCTS-f83d5a"])
 	}
-	// a file without anchored claims (profile does not exist at the base state) returns [], not null
-	_, v = runJSON(t, dir, "context", "android/app/src/main/java/com/minishop/ui/profile/ProfileScreen.kt")
-	if r, ok := v["requirements"].([]any); !ok || r == nil {
+	// a scanned file without anchored claims returns [], not null
+	_, v = runJSON(t, dir, "context", "android/app/src/main/java/com/minishop/data/Models.kt")
+	if r, ok := v["requirements"].([]any); !ok || r == nil || len(r) != 0 {
 		t.Fatalf("requirements should be [] for a file without claims: %v", v["requirements"])
+	}
+	// a path that is not in the scan (profile does not exist at the base state) is a usage error
+	code, _, errOut := run(t, dir, "context", "android/app/src/main/java/com/minishop/ui/profile/ProfileScreen.kt")
+	if code != ExitUsage || !strings.Contains(errOut, "file not found in scan") {
+		t.Fatalf("missing path: exit %d, stderr %q", code, errOut)
 	}
 	// text mode lists them too
 	_, out, _ := run(t, dir, "context", "android/app/src/main/java/com/minishop/ui/cart/CartViewModel.kt")

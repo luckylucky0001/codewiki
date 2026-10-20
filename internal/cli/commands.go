@@ -361,7 +361,18 @@ func cmdScan(a *app, fs *flag.FlagSet, _ []string) int {
 	return ExitOK
 }
 
+// shortHead prints HEAD; git is optional, so empty means "(no git)".
+func shortHead(s string) string {
+	if s == "" {
+		return "(no git)"
+	}
+	return short(s)
+}
+
 func short(s string) string {
+	if s == "" {
+		return "(none)"
+	}
 	if len(s) > 7 {
 		return s[:7]
 	}
@@ -399,7 +410,7 @@ func cmdDiff(a *app, fs *flag.FlagSet, _ []string) int {
 	}
 	d := an.Diff
 	a.emit(d, func(w io.Writer) {
-		fmt.Fprintf(w, "base %s → head %s", short(d.Base), short(d.Head))
+		fmt.Fprintf(w, "base %s → head %s", short(d.Base), shortHead(d.Head))
 		if d.Incompatible {
 			fmt.Fprint(w, " (no baseline: everything is added)")
 		}
@@ -514,7 +525,7 @@ func (a *app) reportRun(r *engine.Result) int {
 	ok := r.Verify == nil || r.Verify.OK
 	out := map[string]any{"ok": ok, "result": r}
 	a.emit(out, func(w io.Writer) {
-		fmt.Fprintf(w, "%s %s: base %s → head %s, mode %s, llm %s\n", r.Kind, r.RunID, short(r.Base), short(r.Head), r.Mode, r.LLM)
+		fmt.Fprintf(w, "%s %s: base %s → head %s, mode %s, llm %s\n", r.Kind, r.RunID, short(r.Base), shortHead(r.Head), r.Mode, r.LLM)
 		printPlan(w, r.Plan)
 		for _, t := range r.Tasks {
 			fmt.Fprintf(w, "  task %-28s %-8s %s %s\n", t.ID, t.Status, t.Writer, t.Error)
@@ -637,7 +648,8 @@ func cmdStatus(a *app, fs *flag.FlagSet, _ []string) int {
 	}
 	head := engine.GitHead(cfg.Root)
 	a.emit(map[string]any{"ok": len(out) == 0, "head": head, "state": st, "stale": out}, func(w io.Writer) {
-		fmt.Fprintf(w, "head %s, last compound %v\n", short(head), st["last_sha"])
+		last, _ := st["last_sha"].(string)
+		fmt.Fprintf(w, "head %s, last compound %s\n", shortHead(head), short(last))
 		if len(out) == 0 {
 			fmt.Fprintln(w, "all pages current")
 		}
@@ -962,6 +974,9 @@ func cmdContext(a *app, fs *flag.FlagSet, args []string) int {
 			apis = append(apis, x)
 		}
 	}
+	if len(syms) == 0 && len(routes) == 0 && len(tids) == 0 && len(apis) == 0 && !scannedFile(g, rel) {
+		return a.fail(ExitUsage, fmt.Errorf("file not found in scan: %s (give a repo-relative path of a scanned source file, e.g. one listed by `kb scan`)", rel))
+	}
 	reqs := requirementsFor(cfg.WikiPath(), inFile)
 	out := map[string]any{"file": rel, "pages": refs, "symbols": syms, "routes": routes, "testids": tids, "apis": apis,
 		"requirements":      reqs,
@@ -1129,6 +1144,20 @@ func requirementsFor(wikiDir string, inFile map[string]bool) []contextRequiremen
 		return out[i].ID < out[j].ID
 	})
 	return out
+}
+
+// scannedFile reports whether rel (a file or a directory prefix) is part of the scan.
+func scannedFile(g *model.Graph, rel string) bool {
+	if _, ok := g.Files[rel]; ok {
+		return true
+	}
+	dir := strings.TrimSuffix(rel, "/") + "/"
+	for f := range g.Files {
+		if strings.HasPrefix(f, dir) {
+			return true
+		}
+	}
+	return false
 }
 
 func readFacts(wikiDir string, f *model.Facts) {

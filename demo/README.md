@@ -51,7 +51,7 @@ claude 模式下单个任务耗时约 30–60 秒。以 `DEMO_MAX_LLM_TASKS=2` �
 | 03 | `kb ingest --manifest …` | 抽取 33 条断言，逐条判为 verified、conflict 或 unverifiable，结果写入 `pages/_conflicts.md` 和 `facts/requirements.json` |
 | 04 | `kb compound` | 首次运行没有基线，走全量（full），共 10 个任务：6 个功能页、总览页、navigation 和 shared-components 两个概念页、`_conflicts`；另外生成 `parity.md`；verify 通过后发布 |
 | 05 | 合并 `01-cart-limit` | 只改注释的变化是 no-op。android 和 harmony 的上限常量属于 body 变化（iOS 漏改，仍为 99），会重写 cart、product_detail、`_conflicts` 三页。spec `FR-002`（99）从 verified 变为 conflict；`kb parity` 报出 `max_cart_items` 三端为 50 / 99 / 50；`changed_route_ids` 为 `[cart, product_detail]` |
-| 06 | 合并 `02-arkts-api-rename` | diff 识别出 `Api.loadProducts → Api.fetchProducts`（renamed，similarity 1.00），以及 `CartStore.addItem` 的签名变化；products、product_detail 两页被更新 |
+| 06 | 合并 `02-arkts-api-rename` | diff 识别出 `Api.loadProducts → Api.fetchProducts`（renamed，similarity 1.00），以及 `CartStore.addItem` 的签名变化。共 4 个任务：更新 products、product_detail、shared-components 三页，并重检 `_conflicts`（其断言锚点涉及被改名的符号）。verify 通过：23 页、358 个锚点 |
 | 07 | 合并 `03-profile-route` | facts 中新增 profile 路由；plan 生成 `create pages/features/profile.md`，并更新 overview、navigation、shared-components |
 | 90+ | `search` / `context` / `get` / `lint-tid` / `parity` / `eval` / `status` / `verify` | 查询、三端一致性、golden set 评测（accuracy 0.97）与门禁 |
 

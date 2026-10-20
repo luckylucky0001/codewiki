@@ -100,10 +100,21 @@ func GitHead(root string) string {
 }
 
 func short(sha string) string {
+	if sha == "" {
+		return "(none)"
+	}
 	if len(sha) > 7 {
 		return sha[:7]
 	}
 	return sha
+}
+
+// shortHead is short() for HEAD: git is optional, so an empty HEAD means "no git".
+func shortHead(sha string) string {
+	if sha == "" {
+		return "(no git)"
+	}
+	return short(sha)
 }
 
 // ScanRevision extracts <sha> into a temp dir and scans it.
@@ -229,8 +240,11 @@ func Compound(o *Options) (*Result, error) {
 	}
 	head := a.Graph.Commit
 	runID := time.Now().UTC().Format("20060102T150405") + "-" + short(head)
+	if head == "" {
+		runID = time.Now().UTC().Format("20060102T150405") + "-nogit"
+	}
 	r := &Result{RunID: runID, Kind: o.Kind, Base: a.Diff.Base, Head: head, Mode: a.Plan.Mode, LLM: o.LLM, Plan: a.Plan, Diff: a.Diff, Tasks: []TaskResult{}, Changed: []string{}}
-	o.logf("kb %s: head=%s base=%s mode=%s tasks=%d (%s)", o.Kind, short(head), short(a.Diff.Base), a.Plan.Mode, len(a.Plan.Tasks), a.Plan.Reason)
+	o.logf("kb %s: head=%s base=%s mode=%s tasks=%d (%s)", o.Kind, shortHead(head), short(a.Diff.Base), a.Plan.Mode, len(a.Plan.Tasks), a.Plan.Reason)
 	if o.DryRun {
 		r.Message = "dry-run: nothing written"
 		return r, nil

@@ -215,7 +215,11 @@ func (a *app) cmdUsage(c *command, fs *flag.FlagSet) {
 		}
 	}
 	fmt.Fprintln(w, "\nFlags:")
+	global := map[string]bool{"json": true, "root": true, "config": true, "wiki-dir": true, "quiet": true}
 	fs.VisitAll(func(f *flag.Flag) {
+		if global[f.Name] {
+			return
+		}
 		def := ""
 		if f.DefValue != "" && f.DefValue != "false" {
 			def = fmt.Sprintf(" (default %q)", f.DefValue)
