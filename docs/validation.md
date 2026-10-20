@@ -79,7 +79,7 @@
 | Wechat_HarmonyOS | ArkTS | 38 | 97.4% | 257 | 4 | 4/4 | 3 | 0 | 0.14 / 0.01 s | 0.2 s | 22 MB | 9 / 1.2 KB | PASS | 0 / 0 |
 | open_neteasy_cloud | ArkTS | 18 | 100% | 782 | 3 | 3/3 | 0 | 0 | 0.7 / 0.02 s | 0.7 s | 34 MB | 8 / 1.1 KB | PASS | 0 / 0 |
 | arkTS_universal_starter | ArkTS | 80 | 100% | 863 | 17 | 17/17 | 1 | 0 | 0.4 / 0.03 s | 0.4 s | 31 MB | 22 / 2.3 KB | PASS | 27 / 0 |
-| axios | JS 194 + TS 29 | 243 | 100% | 1,009 | — | — | — | 105 | 0.9 / 0.06 s | 0.8 s | 55 MB | 5 / 0.7 KB | PASS | 411 / 8（8） |
+| axios | JS 194 + TS 29 | 243 | 100% | 1,009 | — | — | — | 105 | 0.9 / 0.06 s | 0.8 s | 55 MB | 5 / 0.7 KB | PASS | 411 / 0 |
 
 注：
 
@@ -144,7 +144,7 @@
   - “存在时的根 `package.json`”，是条件句；
   - HAP 包内的 `module.json`，是构建产物；
   - 一句“不超过 12 字符”被拿去和无关的 `MAX_LLM_*` 常量比较。
-- **axios 的 8 个冲突**属于同一类假冲突：`MockAdapter` 来自外部包 axios-mock-adapter。英、中、法、西 4 种语言的文档里各有 2 条。
+- **axios**：修复 #21 之前有 8 个冲突，属于同一类假冲突：`MockAdapter` 来自外部包 axios-mock-adapter，英、中、法、西 4 种语言的文档里各有 2 条。修复后为 0。
 - NextE 有 3,351 条断言，修复后冲突率为 0.12%，其中假冲突占 0.09%。
 
 ## 调优记录（第 7 轮）
@@ -343,6 +343,12 @@
   - 去掉 `./` 前缀再查找。
 - 效果：新仓库的冲突 191 → 6（假冲突 187 → 3）；NetNewsWire 5 → 0。
 
+**21. 外部包中的类名**（axios）
+
+- 问题：文档示例代码 `import MockAdapter from "axios-mock-adapter"` 中导入的 `MockAdapter` 在本仓库找不到，被判为冲突。
+- 修复：文档自己的示例代码从外部包导入的名字（ES import / require），不判冲突。从本仓库 package.json 包名导入的名字仍然核对。
+- 效果：axios 8 → 0。
+
 ## 规模
 
 同机、同一时间段，对比修复前（`77c830b`）和修复后的 `kb bench`：
@@ -407,7 +413,7 @@
 - **KMP**：commonMain 的代码按 android 根扫描，在 parity 中视为全平台共享。iosMain / androidMain 的平台差异只按文件所在的根来区分。
 - **解析**：Objective-C 不解析。Kotlin 2.x 新语法、Swift 自定义运算符、ArkTS 的 `Repeat.each` 嵌套组合会导致解析失败，详见上一节。
 - **假冲突**：以下情况仍会被判为冲突：
-  - 外部依赖中的类名，例如 axios 的 `MockAdapter`；
+  - 外部依赖中的类名，但文档里没有写出 import 语句的情况（#21 只覆盖文档示例代码中 import 过的名字）；
   - 条件句，例如“存在时的 `package.json`”；
   - 构建产物中的文件，例如 HAP 里的 `module.json`。
 

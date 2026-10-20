@@ -590,7 +590,7 @@ kb eval --doc my-old-spec.md --golden my-labels.yaml                    # 任意
 | app_samples | 51,342 | 416 | 18.3 / 3.2 s | 886 MB |
 | NextE | 19,921 | 66（页面 51/51） | 8.1 / 1.0 s | 386 MB |
 
-第 7 轮验证中修复了 20 个问题，每个都配了最小片段回归测试，主要包括：
+第 7 轮验证中修复了 21 个问题，每个都配了最小片段回归测试，主要包括：
 
 - **路由召回**：
   - nav-graph XML；
@@ -611,7 +611,7 @@ kb eval --doc my-old-spec.md --golden my-labels.yaml                    # 任意
   - 符号链接根；
   - 每个 wiki 一把 compound 锁；
   - 升级 kb 后缓存的 facts 自动失效。
-- **假冲突**：新增 17 个仓库的冲突从 191 个降到 6 个（假冲突 187 → 3）。剩下的假冲突是条件句和构建产物；axios 的 8 个来自外部包类名 `MockAdapter`。
+- **假冲突**：新增 17 个仓库的冲突从 191 个降到 6 个（假冲突 187 → 3）。剩下的假冲突是条件句和构建产物。axios 原有 8 个假冲突，来自外部包类名 `MockAdapter`，现在为 0。
 
 目前**不支持** UIKit / AppKit 导航（NetNewsWire、wikipedia-ios）和自定义导航框架（DroidconKotlin），也不解析 Objective-C。这些仓库的符号、testID、API 和文档核对仍然可用。
 
