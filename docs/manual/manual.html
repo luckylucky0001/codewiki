@@ -269,7 +269,8 @@ status: current            # current | stale | outdated-doc
   <li>Codex 0.163.0 和 Gemini 0.65.0 的真实二进制通过本地 mock 模型 API 跑通了 <code>kb compound</code>：页面写入成功，越界文件被回滚，用量从各自的 JSON 事件中解析。</li>
   <li><code>codex debug prompt-input</code> 确认模型能看到 AGENTS.md 块和 4 个 skill。</li>
   <li><code>kb install</code> 会提示 Codex 的两个坑：<code>AGENTS.override.md</code> 会取代 AGENTS.md，超过 32 KiB 的部分会被截断。</li>
-  <li>真实 Claude（haiku）：<code>kb compound --agent claude</code> 完成 2 个任务，$0.032，verify 通过。安装后的 3 个问答都首选 kb：<code>kb parity</code>、<code>kb routes</code> 加 <code>lint-tid --pages</code>，以及只开放 MCP 时的 <code>kb_search</code> 加 <code>kb_get</code>。</li>
+  <li>真实 Claude（haiku）：<code>kb compound --agent claude</code> 完成 2 个任务，花费 $0.032；<code>kb ingest --agent claude</code> 用 1 个任务、花费 $0.0075，找出 2 处文档冲突。安装后的问答首选 kb 命令，只开放 MCP 时也能完成。</li>
+  <li>A/B 对比 <code>--agent claude</code> 与 <code>--agent all</code>（18 次运行）：两组都没有读取其他 agent 的文件，首个动作相同，花费相同。</li>
 </ul>
 </section>
 
