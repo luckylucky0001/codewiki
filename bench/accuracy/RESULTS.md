@@ -172,3 +172,129 @@ come from that work.
   exactly one app scheme. Class-named screens never get a derived link.
 * The extractor fingerprint now covers `src/facts`, so facts query caches and scan caches are
   invalidated whenever the facts code changes.
+
+## Claims round (src/engine/claims.ts, src/engine/valuecheck.ts)
+
+**Method.** Each label's `text` is matched to the `requirements.json` claims (similarity ≥ 0.35).
+Numbers come from the template checker, with no LLM involved.
+
+**How the final numbers were produced.** `bin/claims.mjs` re-extracts and re-checks claims on the
+`run.sh` outputs, using a clean build of HEAD `209ef45`. A full `run.sh` pipeline at `23cd73d` gave
+the same coverage and 56.9% / 8 conflicts, which shows the fast runner matches `kb ingest`.
+
+| metric | Go / TS before | TS claims round | Δ |
+|---|---|---|---|
+| claim coverage (labels matched) | 23.7% (38/160) | **73.8% (118/160)** | +80 |
+| accuracy on matched | 47.4% | **81.4%** | |
+| accuracy overall (unmatched counted wrong) | 11.3% | **60.0%** | |
+| conflict recall | 0/18 | **9/18** | +9 |
+| verified → conflict (false conflicts on labelled claims) | 0 | 1 | NNW: a broken `rss-in-json/README.md` link in a sentence labelled verified |
+
+Confusion on matched claims:
+* verified→verified: 85
+* verified→unverifiable: 12
+* conflict→conflict: 9
+* conflict→verified: 7
+* unverifiable→unverifiable: 2
+* unverifiable→verified: 2
+* verified→conflict: 1
+
+**Guards:**
+* `kb eval` on `examples/minishop-eval/golden.yaml`: 0.97 → 0.97.
+* `kb eval` on the held-out set `examples/minishop-eval/heldout/golden-heldout.yaml`: 0.81 → 0.81.
+* No status changes on either set.
+* Minishop goldens (`requirements.json`, `_conflicts.md`) are unchanged.
+* axios (`/home/user/axios`, read-only, 160 markdown docs):
+  * claims 600 → 2,719
+  * conflicts 0 → **0**
+  * verified 326 → 1,629
+
+**Per repo.** Columns: matched / labelled, accuracy overall, conflict recall, extracted claims.
+
+| repo | matched | acc(all) | conflicts | claims extracted |
+|---|---|---|---|---|
+| AntennaPod | 10/10 | 90% | n/a | 135 |
+| fishpi-harmony | 2/10 | 20% | 1/1 | 3 |
+| HarmonyOS-Cases | 9/10 | 60% | 0/3 | 4769 |
+| kotlinconf-app | 6/10 | 50% | n/a | 62 |
+| NetNewsWire | 9/10 | 80% | n/a | 92 |
+| compose-samples | 10/10 | 80% | 1/3 | 129 |
+| sunflower | 3/10 | 30% | n/a | 23 |
+| tivi | 8/10 | 50% | n/a | 23 |
+| element-x-android | 9/10 | 60% | 1/1 | 574 |
+| NextE | 9/10 | 70% | 0/1 | 3712 |
+| kickstarter ios-oss | 7/10 | 50% | 2/4 | 34 |
+| mastodon-ios | 2/10 | 20% | 0/1 | 44 |
+| nowinandroid | 8/10 | 60% | 1/1 | 142 |
+| isowords | 7/10 | 50% | 1/1 | 44 |
+| KaMPKit | 10/10 | 100% | n/a | 200 |
+| wikipedia-ios | 9/10 | 90% | 2/2 | 438 |
+
+### What changed
+
+**Extraction.** Ordinary prose in READMEs, agent guides (AGENTS/CLAUDE/…) and `docs/` becomes
+`style: prose` claims. Specs, ADRs, plans, archives and changelogs are excluded. The rules:
+* Wrapped paragraphs are joined, then split into sentences.
+* A sentence is kept only when it names something checkable:
+  * a link, backticks or a path
+  * a CamelCase identifier
+  * a count of modules, targets, screenshots, screens or stores
+  * "uses / heavy use of / built on X"
+  * a command (`./gradlew`, `make`, `bash x.sh`)
+  * a "Name – purpose" list item
+* List items take their list's lead-in. Bare lead-ins are dropped.
+* The existing styles (spec-kit, Kiro, EARS, MUST, statement) and their ids are unchanged.
+
+**Checks (`proseRules` in valuecheck.ts).** Conflicts require hard evidence:
+* **Stale paths.** These must exist; a missing one is a conflict:
+  * relative markdown links (resolved from the doc; a path that exists elsewhere in the repo still counts)
+  * own-repo GitHub `blob|tree/<branch>/path` links
+  * plain multi-segment paths whose first directory exists at the root
+  * backticked Xcode breadcrumbs (`Sources > WMFData > Services`)
+* **Never stale:**
+  * pinned commit or tag links (they may still verify)
+  * absolute or `~` paths, build outputs, gitignored files
+  * placeholders (`foo`, `your-…`, `vX.Y.Z`, `path.test.js`)
+  * files the reader is told to create, copy or add
+* **Counts.** "N modules/targets" is compared with SwiftPM targets (all and non-test), Gradle includes and HarmonyOS `build-profile` modules. "N screenshots" is compared with snapshot PNGs. A count must match exactly, or within ±20% when qualified ("nearly", "about"). "N stores:" followed by a list is checked against the sibling `*Store` properties of the type that declares the listed names; it is a conflict only if every candidate type disagrees.
+* **Dependencies.**
+  * A library-repo link or "heavy use of / depends on / relies on X" is a conflict when X is absent from build/lock files, imports and file names.
+  * "uses X", "X – purpose" and "X is a … library" only ever verify.
+  * A stop list covers languages, platforms and architecture words (MVVM, Node.js, …).
+* **"Never use `a.b.C`".** Conflict when a file still imports it, verified otherwise.
+* **Verify-only evidence:**
+  * Makefile targets
+  * `./gradlew :module` directories
+  * Gradle module paths (`:ui:i18n`)
+  * identifiers found in code: CamelCase, UPPER_SNAKE, dotted members, annotations
+* **Prose never conflicts on:**
+  * the old missing-name rules (`X does not exist`)
+  * the quantity, constant and behaviour rules
+  * a bare file name without a directory
+
+  Descriptive prose names things too loosely for these rules.
+
+### Remaining claim misses
+
+* **Docs not discovered (engine `discover-docs`, not in this round's scope):**
+  * mastodon `Documentation/How-it-works.md` and `Setup.md`: 8 labels
+  * fishpi's Chinese feature bullets
+* **Semantic conflicts no deterministic rule can see:**
+  * Cases: `harInit` replaced by `@AppRouter`; a decorator in a different file
+  * compose-samples: `MainActivity` without WindowSizeClass; Jetsurvey (link to a PR)
+  * NextE: feature dependency rule
+  * mastodon: AutoLayout → SwiftUI
+* **Sentence split.** The kickstarter `Library/ViewModels` stale link is detected, but it lands in the sentence after the one the label matches.
+* **Unverifiable stays unverifiable.** About 12 verified labels hold product or external facts (Play Store link, Trakt.tv, EditorConfig wrap width) with no code anchor.
+
+### Over-fitting and noise
+
+* As in the extraction round, the rules were written while looking at these labels.
+  * The held-out minishop set and axios moved by 0 statuses and 0 conflicts. That is the only out-of-sample evidence.
+  * The coordinator's new blind repos are the real test.
+* **Volume.** Prose claims multiply `requirements.json`: Cases 180 → 4,769, NextE 3,351 → 3,712, axios 600 → 2,719. `_conflicts.md` stays capped by its row limits.
+  * Conflicts emitted over all 16 repos: about 70. Spot checks: most are genuinely broken doc links or paths, e.g. Cases `../feature/imageviewer/...ImageContentView.ets`, `app/src/main/baseline-prof.txt`, `Localizable.xcstrings`. A few are debatable (a link that is broken while the sentence itself is true).
+* **Heuristic word lists:**
+  * placeholder names
+  * dependency stop words
+  * the "create / copy / add" context that suppresses stale-path conflicts
