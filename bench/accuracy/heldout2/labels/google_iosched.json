@@ -1,0 +1,345 @@
+{
+ "repo": "google/iosched",
+ "url": "https://github.com/google/iosched",
+ "commit": "738e1e008096fad5f36612325275e80c33dbe436",
+ "platform_roots": {
+  "android": [
+   "mobile",
+   "shared",
+   "ar"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "android",
+   "route_id": "navigation_schedule",
+   "symbol": "ScheduleTwoPaneFragment",
+   "file": "mobile/src/main/java/com/google/samples/apps/iosched/ui/schedule/ScheduleTwoPaneFragment.kt",
+   "kind": "nav-graph-fragment",
+   "aliases": [
+    "ScheduleTwoPaneFragment"
+   ],
+   "graph": "mobile/src/main/res/navigation/nav_graph.xml"
+  },
+  {
+   "platform": "android",
+   "route_id": "navigation_info",
+   "symbol": "InfoFragment",
+   "file": "mobile/src/main/java/com/google/samples/apps/iosched/ui/info/InfoFragment.kt",
+   "kind": "nav-graph-fragment",
+   "aliases": [
+    "InfoFragment"
+   ],
+   "graph": "mobile/src/main/res/navigation/nav_graph.xml"
+  },
+  {
+   "platform": "android",
+   "route_id": "navigation_agenda",
+   "symbol": "AgendaFragment",
+   "file": "mobile/src/main/java/com/google/samples/apps/iosched/ui/agenda/AgendaFragment.kt",
+   "kind": "nav-graph-fragment",
+   "aliases": [
+    "AgendaFragment"
+   ],
+   "graph": "mobile/src/main/res/navigation/nav_graph.xml"
+  },
+  {
+   "platform": "android",
+   "route_id": "navigation_settings",
+   "symbol": "SettingsFragment",
+   "file": "mobile/src/main/java/com/google/samples/apps/iosched/ui/settings/SettingsFragment.kt",
+   "kind": "nav-graph-fragment",
+   "aliases": [
+    "SettingsFragment"
+   ],
+   "graph": "mobile/src/main/res/navigation/nav_graph.xml"
+  },
+  {
+   "platform": "android",
+   "route_id": "navigation_feed",
+   "symbol": "FeedFragment",
+   "file": "mobile/src/main/java/com/google/samples/apps/iosched/ui/feed/FeedFragment.kt",
+   "kind": "nav-graph-fragment",
+   "aliases": [
+    "FeedFragment"
+   ],
+   "graph": "mobile/src/main/res/navigation/nav_graph.xml"
+  },
+  {
+   "platform": "android",
+   "route_id": "navigation_map",
+   "symbol": "MapFragment",
+   "file": "mobile/src/main/java/com/google/samples/apps/iosched/ui/map/MapFragment.kt",
+   "kind": "nav-graph-fragment",
+   "aliases": [
+    "MapFragment"
+   ],
+   "graph": "mobile/src/main/res/navigation/nav_graph.xml",
+   "note": "MapFragment also used for navigation_map_sublevel"
+  },
+  {
+   "platform": "android",
+   "route_id": "navigation_codelabs",
+   "symbol": "CodelabsFragment",
+   "file": "mobile/src/main/java/com/google/samples/apps/iosched/ui/codelabs/CodelabsFragment.kt",
+   "kind": "nav-graph-fragment",
+   "aliases": [
+    "CodelabsFragment"
+   ],
+   "graph": "mobile/src/main/res/navigation/nav_graph.xml"
+  },
+  {
+   "platform": "android",
+   "route_id": "navigation_no_network_ar",
+   "symbol": "NoNetworkConnectionFragment",
+   "file": "mobile/src/main/java/com/google/samples/apps/iosched/ui/ar/NoNetworkConnectionFragment.kt",
+   "kind": "nav-graph-fragment",
+   "aliases": [
+    "NoNetworkConnectionFragment"
+   ],
+   "graph": "mobile/src/main/res/navigation/nav_graph.xml"
+  },
+  {
+   "platform": "android",
+   "route_id": "navigation_phone_does_not_support_arcore",
+   "symbol": "ArCoreNotSupportedFragment",
+   "file": "mobile/src/main/java/com/google/samples/apps/iosched/ui/ar/ArCoreNotSupportedFragment.kt",
+   "kind": "nav-graph-fragment",
+   "aliases": [
+    "ArCoreNotSupportedFragment"
+   ],
+   "graph": "mobile/src/main/res/navigation/nav_graph.xml"
+  },
+  {
+   "platform": "android",
+   "route_id": "announcements_fragment",
+   "symbol": "AnnouncementsFragment",
+   "file": "mobile/src/main/java/com/google/samples/apps/iosched/ui/feed/AnnouncementsFragment.kt",
+   "kind": "nav-graph-fragment",
+   "aliases": [
+    "AnnouncementsFragment"
+   ],
+   "graph": "mobile/src/main/res/navigation/nav_graph.xml"
+  },
+  {
+   "platform": "android",
+   "route_id": "navigation_session_detail",
+   "symbol": "SessionDetailFragment",
+   "file": "mobile/src/main/java/com/google/samples/apps/iosched/ui/sessiondetail/SessionDetailFragment.kt",
+   "kind": "nav-graph-fragment",
+   "aliases": [
+    "SessionDetailFragment"
+   ],
+   "graph": "mobile/src/main/res/navigation/schedule_detail.xml"
+  },
+  {
+   "platform": "android",
+   "route_id": "navigation_speaker_detail",
+   "symbol": "SpeakerFragment",
+   "file": "mobile/src/main/java/com/google/samples/apps/iosched/ui/speaker/SpeakerFragment.kt",
+   "kind": "nav-graph-fragment",
+   "aliases": [
+    "SpeakerFragment"
+   ],
+   "graph": "mobile/src/main/res/navigation/schedule_detail.xml"
+  },
+  {
+   "platform": "android",
+   "route_id": "navigation_schedule_list",
+   "symbol": "ScheduleFragment",
+   "file": "mobile/src/main/java/com/google/samples/apps/iosched/ui/schedule/ScheduleFragment.kt",
+   "kind": "nav-graph-fragment",
+   "aliases": [
+    "ScheduleFragment"
+   ],
+   "graph": "mobile/src/main/res/navigation/schedule_list.xml"
+  },
+  {
+   "platform": "android",
+   "route_id": "navigation_schedule_search",
+   "symbol": "SearchFragment",
+   "file": "mobile/src/main/java/com/google/samples/apps/iosched/ui/search/SearchFragment.kt",
+   "kind": "nav-graph-fragment",
+   "aliases": [
+    "SearchFragment"
+   ],
+   "graph": "mobile/src/main/res/navigation/schedule_list.xml"
+  },
+  {
+   "platform": "android",
+   "route_id": "LauncherActivity",
+   "symbol": "LauncherActivity",
+   "file": "mobile/src/main/java/com/google/samples/apps/iosched/ui/LauncherActivity.kt",
+   "kind": "activity",
+   "optional": true,
+   "note": "launcher trampoline, routes to Main/Onboarding"
+  },
+  {
+   "platform": "android",
+   "route_id": "MainActivity",
+   "symbol": "MainActivity",
+   "file": "mobile/src/main/java/com/google/samples/apps/iosched/ui/MainActivity.kt",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "OnboardingActivity",
+   "symbol": "OnboardingActivity",
+   "file": "mobile/src/main/java/com/google/samples/apps/iosched/ui/onboarding/OnboardingActivity.kt",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "ArActivity",
+   "symbol": "ArActivity",
+   "file": "ar/src/main/java/com/google/samples/apps/iosched/ar/ArActivity.kt",
+   "kind": "activity",
+   "optional": true,
+   "note": "AR module activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "SignInDialogFragment",
+   "symbol": "SignInDialogFragment",
+   "file": "mobile/src/main/java/com/google/samples/apps/iosched/ui/signin/SignInDialogFragment.kt",
+   "kind": "dialog",
+   "optional": true
+  },
+  {
+   "platform": "android",
+   "route_id": "ThemeSettingDialogFragment",
+   "symbol": "ThemeSettingDialogFragment",
+   "file": "mobile/src/main/java/com/google/samples/apps/iosched/ui/settings/ThemeSettingDialogFragment.kt",
+   "kind": "dialog",
+   "optional": true
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "android",
+   "symbol": "navigation_placeholder",
+   "file": "mobile/src/main/res/navigation/schedule_detail.xml",
+   "reason": "placeholder destination androidx.fragment.app.Fragment (empty detail pane)"
+  },
+  {
+   "platform": "android",
+   "symbol": "navigation_map_sublevel",
+   "file": "mobile/src/main/res/navigation/nav_graph.xml",
+   "reason": "second destination id reusing MapFragment (not a distinct screen)",
+   "borderline": true
+  },
+  {
+   "platform": "android",
+   "symbol": "to_session_detail",
+   "file": "mobile/src/main/res/navigation/nav_graph.xml",
+   "reason": "<action> id, not a destination"
+  },
+  {
+   "platform": "android",
+   "symbol": "nav_graph",
+   "file": "mobile/src/main/res/navigation/nav_graph.xml",
+   "reason": "graph id"
+  },
+  {
+   "platform": "android",
+   "symbol": "CountdownView",
+   "file": "mobile/src/main/java/com/google/samples/apps/iosched/widget/CountdownView.kt",
+   "reason": "custom View widget"
+  }
+ ],
+ "deeplinks": [
+  {
+   "platform": "android",
+   "scheme": "iosched",
+   "host": "sessions",
+   "path": "",
+   "file": "mobile/src/main/AndroidManifest.xml",
+   "source": "LauncherActivity intent-filter"
+  }
+ ],
+ "testids": [
+  {
+   "platform": "android",
+   "tid": "session_detail_title",
+   "file": "mobile/src/main/res/layout/item_session_info.xml",
+   "line": 56,
+   "kind": "resource-id",
+   "alt_files": [
+    "mobile/src/androidTest/java/com/google/samples/apps/iosched/tests/ui/SessionDetailTest.kt"
+   ]
+  },
+  {
+   "platform": "android",
+   "tid": "session_detail_recycler_view",
+   "file": "mobile/src/main/res/layout/fragment_session_detail.xml",
+   "line": 47,
+   "kind": "resource-id"
+  },
+  {
+   "platform": "android",
+   "tid": "speaker_item_name",
+   "file": "mobile/src/main/res/layout/item_speaker.xml",
+   "line": 59,
+   "kind": "resource-id"
+  },
+  {
+   "platform": "android",
+   "tid": "filter_sheet",
+   "file": "mobile/src/main/res/layout/fragment_filters.xml",
+   "line": 35,
+   "kind": "resource-id",
+   "alt_files": [
+    "mobile/src/main/res/layout/fragment_search.xml"
+   ]
+  },
+  {
+   "platform": "android",
+   "tid": "recyclerview_schedule",
+   "file": "mobile/src/main/res/layout/fragment_schedule.xml",
+   "line": 92,
+   "kind": "resource-id"
+  },
+  {
+   "platform": "android",
+   "tid": "filter_label",
+   "file": "mobile/src/main/res/layout/item_filter_chip_selectable.xml",
+   "line": 34,
+   "kind": "resource-id",
+   "alt_files": [
+    "mobile/src/main/res/layout/item_filter_chip_closeable.xml"
+   ]
+  }
+ ],
+ "apis": [
+  {
+   "method": "GET",
+   "path": "/v0/b/io2019-festivus-prod/o/sessions.json",
+   "file": "shared/build.gradle.kts",
+   "optional": true,
+   "note": "BuildConfig.CONFERENCE_DATA_URL used in ConferenceDataDownloader (OkHttp)",
+   "alt_files": [
+    "shared/src/main/java/com/google/samples/apps/iosched/shared/data/ConferenceDataDownloader.kt"
+   ]
+  },
+  {
+   "method": "ANY",
+   "path": "/_ah/api/registration/v1/register",
+   "file": "shared/build.gradle.kts",
+   "optional": true,
+   "note": "BuildConfig.REGISTRATION_ENDPOINT_URL, OkHttp Request.Builder (GET default)",
+   "alt_files": [
+    "shared/src/main/java/com/google/samples/apps/iosched/shared/data/signin/AuthenticatedUserRegistration.kt"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "{base}/{x}/{z}/{x}/{y}.png",
+   "file": "mobile/src/main/java/com/google/samples/apps/iosched/ui/map/MapTileProvider.kt",
+   "dynamic": true,
+   "expect": false,
+   "note": "String.format map tile URL"
+  }
+ ],
+ "claims": [],
+ "notes": "Navigation XML graphs (nav_graph, schedule_detail, schedule_list); route_id = destination @id (declared with @id/ not @+id/, ids defined in ids.xml), symbol/aliases = fragment class. Only deep link: iosched://sessions (no <deepLink> in graphs). testIDs = resource ids actually used by Espresso androidTest (no Compose testTag). Note: tests also reference filter_fab/recyclerview_filter/filter_description_tags/clear_filters_shortcut which no longer exist in res (stale) -> not labelled. Data is mostly Firestore; HTTP only via BuildConfig URLs (optional)."
+}

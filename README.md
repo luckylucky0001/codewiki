@@ -15,7 +15,7 @@
 | 事实抽取准确率 | 见下 | 见下 |
 | 热扫描（HarmonyOS-Cases） | Go 约 1.1 s | 约 1.15 s（`kb scan` 整个进程）：并行引用解析，加上引用 / facts / call sites 三层缓存 |
 
-**事实抽取准确率（训练集数字）**：数字来自 `bench/accuracy/`，16 个人工标注仓库，详见 [bench/accuracy/RESULTS.md](bench/accuracy/RESULTS.md)。抽取规则是对着这批仓库调出来的，所以这些是**训练集上的数字**，存在过拟合风险。独立留出集的评测另行进行，结果会单独补充。
+**事实抽取准确率（训练集数字）**：数字来自 `bench/accuracy/`，16 个人工标注仓库，详见 [bench/accuracy/RESULTS.md](bench/accuracy/RESULTS.md)。抽取规则是对着这批仓库调出来的，所以这些是**训练集上的数字**，存在过拟合风险。泛化结果看下面的"盲测"表。
 
 | 指标 | Go `go-final` | TS v2 |
 |---|---|---|
@@ -24,6 +24,21 @@
 | deeplinks recall | 4.8% | 92.4% |
 | testIDs recall | 55.6% | 95.8% |
 | APIs recall | 18.1% | 96.2% |
+
+**泛化（盲测）**：另外做了两套独立的盲标集，标注时不看抽取器代码，打分脚本是统一过的 `score-harmonized.mjs`，材料在 `bench/accuracy/heldout2/` 和 `heldout3/`。
+
+- heldout2：10 个新仓库。B 列是第一次盲测的成绩。之后又按 B 漏掉的条目所属的**类别**补了通用规则，得到 D，所以 D 在 heldout2 上**已不算盲测**。
+- heldout3：4 个新仓库（ReadYou、MovieSwiftUI、Shopping-By-KMP、HarmonyStudy），从没参与过任何调优，D 在这套集上是**真盲测**。这 4 个仓库几乎没有深链和 testID，所以 heldout3 只衡量 routes、APIs 和误报。
+
+| 指标 | 训练集（D） | heldout2 盲测（B） | heldout2 调整后（D，非盲） | **heldout3 盲测（D）** | heldout3 Go 基线 |
+|---|---|---|---|---|---|
+| routes recall | 98.6% | 85.3% | 90.9% | **48.4%** | 42.2% |
+| not_screen FP | 7.0% | 12.2% | 8.2% | **13.3%** | 0% |
+| deeplinks recall | 92.4% | 100% | 100% | n/a | n/a |
+| testIDs recall | 95.8% | 59.5% | 94.6% | n/a | n/a |
+| APIs recall | 96.2% | 33.3% | 38.1% | **19.7%** | 16.7% |
+
+**结论**：规则抽取遇到没见过的写法，效果会明显下降，heldout3 上整类条目整体漏掉。漏掉的包括 Navigation 3 的 `NavKey` 路由、有具名路由时被忽略的 `main_pages`、Ktor 调用、自封装的 ArkTS HTTP 工具，以及 OkHttp 模板 URL。训练集上的高分不能当成通用准确率。改进方向有三条：一是给规则加一层由 LLM 提议、再用锚点证据核对的兜底（`kb facts suggest`，见下）；二是持续扩充盲测集；三是每接入一个新仓库，先跑一遍盲测，再动手补规则。
 
 v2 的验证材料：
 

@@ -1,0 +1,290 @@
+{
+ "repo": "Dimillian/MovieSwiftUI",
+ "url": "https://github.com/Dimillian/MovieSwiftUI",
+ "commit": "72eb4ae7117fbf893be533c9a277c47a7287d87e",
+ "platform_roots": {
+  "ios": [
+   "MovieSwift"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "ios",
+   "route_id": "MoviesHome",
+   "symbol": "MoviesHome",
+   "file": "MovieSwift/MovieSwift/views/components/moviesHome/MoviesHome.swift",
+   "kind": "swiftui-tab",
+   "note": "TabbarView tab .movies"
+  },
+  {
+   "platform": "ios",
+   "route_id": "DiscoverView",
+   "symbol": "DiscoverView",
+   "file": "MovieSwift/MovieSwift/views/components/discover/DiscoverView.swift",
+   "kind": "swiftui-tab"
+  },
+  {
+   "platform": "ios",
+   "route_id": "FanClubHome",
+   "symbol": "FanClubHome",
+   "file": "MovieSwift/MovieSwift/views/components/fan club/FanClubHome.swift",
+   "kind": "swiftui-tab"
+  },
+  {
+   "platform": "ios",
+   "route_id": "MyLists",
+   "symbol": "MyLists",
+   "file": "MovieSwift/MovieSwift/views/components/myLists/MyLists.swift",
+   "kind": "swiftui-tab"
+  },
+  {
+   "platform": "ios",
+   "route_id": "MovieDetail",
+   "symbol": "MovieDetail",
+   "file": "MovieSwift/MovieSwift/views/components/movieDetail/MovieDetail.swift",
+   "kind": "swiftui-destination",
+   "note": "NavigationLink(destination: MovieDetail(movieId:)) from many lists"
+  },
+  {
+   "platform": "ios",
+   "route_id": "PeopleDetail",
+   "symbol": "PeopleDetail",
+   "file": "MovieSwift/MovieSwift/views/components/peopleDetail/PeopleDetail.swift",
+   "kind": "swiftui-destination"
+  },
+  {
+   "platform": "ios",
+   "route_id": "MoviesGenreList",
+   "symbol": "MoviesGenreList",
+   "file": "MovieSwift/MovieSwift/views/components/moviesList/MoviesGenreList.swift",
+   "kind": "swiftui-destination"
+  },
+  {
+   "platform": "ios",
+   "route_id": "MovieKeywordList",
+   "symbol": "MovieKeywordList",
+   "file": "MovieSwift/MovieSwift/views/components/moviesList/MovieKeywordList.swift",
+   "kind": "swiftui-destination"
+  },
+  {
+   "platform": "ios",
+   "route_id": "MovieReviews",
+   "symbol": "MovieReviews",
+   "file": "MovieSwift/MovieSwift/views/components/movieDetail/reviews/MovieReviews.swift",
+   "kind": "swiftui-destination"
+  },
+  {
+   "platform": "ios",
+   "route_id": "CustomListDetail",
+   "symbol": "CustomListDetail",
+   "file": "MovieSwift/MovieSwift/views/components/custom list/CustomListDetail.swift",
+   "kind": "swiftui-destination"
+  },
+  {
+   "platform": "ios",
+   "route_id": "GenresList",
+   "symbol": "GenresList",
+   "file": "MovieSwift/MovieSwift/views/components/genres/GenresList.swift",
+   "kind": "swiftui-destination",
+   "optional": true,
+   "note": "embedded as a page of MoviesHome TabView(PageTabViewStyle) and OutlineMenu .genres (SplitView)"
+  },
+  {
+   "platform": "ios",
+   "route_id": "MoviesList",
+   "symbol": "MoviesList",
+   "file": "MovieSwift/MovieSwift/views/components/moviesList/base/MoviesList.swift",
+   "kind": "swiftui-destination",
+   "note": "NavigationLink(destination: MoviesList(movies:...)) in MoviesHomeGrid"
+  },
+  {
+   "platform": "ios",
+   "route_id": "SettingsForm",
+   "symbol": "SettingsForm",
+   "file": "MovieSwift/MovieSwift/views/components/settings/SettingsForm.swift",
+   "kind": "swiftui-sheet",
+   "note": ".sheet from MoviesHome"
+  },
+  {
+   "platform": "ios",
+   "route_id": "CustomListForm",
+   "symbol": "CustomListForm",
+   "file": "MovieSwift/MovieSwift/views/components/custom list/CustomListForm.swift",
+   "kind": "swiftui-sheet",
+   "note": ".sheet from MyLists/MovieDetail/CustomListDetail"
+  },
+  {
+   "platform": "ios",
+   "route_id": "DiscoverFilterForm",
+   "symbol": "DiscoverFilterForm",
+   "file": "MovieSwift/MovieSwift/views/components/discover/DiscoverFilterForm.swift",
+   "kind": "swiftui-sheet"
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "ios",
+   "symbol": "MoviesCrewList",
+   "file": "MovieSwift/MovieSwift/views/components/moviesList/MoviesCrewList.swift",
+   "reason": "View-suffixless list struct only instantiated in its own PreviewProvider (dead)",
+   "borderline": true
+  },
+  {
+   "platform": "ios",
+   "symbol": "TabbarView",
+   "file": "MovieSwift/MovieSwift/views/components/home/HomeView.swift",
+   "reason": "tab container (root shell), not a destination",
+   "borderline": true
+  },
+  {
+   "platform": "ios",
+   "symbol": "MovieCrosslineRow",
+   "file": "MovieSwift/MovieSwift/views/components/movieDetail/rows/MovieCrosslineRow.swift",
+   "reason": "row component inside MovieDetail"
+  },
+  {
+   "platform": "ios",
+   "symbol": "PeopleDetailHeaderRow",
+   "file": "MovieSwift/MovieSwift/views/components/peopleDetail/rows/PeopleDetailHeaderRow.swift",
+   "reason": "row component"
+  },
+  {
+   "platform": "ios",
+   "symbol": "DraggableCover",
+   "file": "MovieSwift/MovieSwift/views/components/discover/DraggableCover.swift",
+   "reason": "gesture card component"
+  },
+  {
+   "platform": "ios",
+   "symbol": "BottomMenu",
+   "file": "MovieSwift/MovieSwift/views/components/bottomMenu/BottomMenu.swift",
+   "reason": "generic bottom sheet container component"
+  }
+ ],
+ "deeplinks": [],
+ "testids": [],
+ "apis": [
+  {
+   "method": "GET",
+   "path": "movie/popular",
+   "file": "MovieSwift/Packages/Backend/Sources/Backend/services/APIService.swift",
+   "note": "enum Endpoint.path(); baseURL.appendingPathComponent"
+  },
+  {
+   "method": "GET",
+   "path": "person/popular",
+   "file": "MovieSwift/Packages/Backend/Sources/Backend/services/APIService.swift",
+   "note": "enum Endpoint.path(); baseURL.appendingPathComponent"
+  },
+  {
+   "method": "GET",
+   "path": "movie/top_rated",
+   "file": "MovieSwift/Packages/Backend/Sources/Backend/services/APIService.swift",
+   "note": "enum Endpoint.path(); baseURL.appendingPathComponent"
+  },
+  {
+   "method": "GET",
+   "path": "movie/upcoming",
+   "file": "MovieSwift/Packages/Backend/Sources/Backend/services/APIService.swift",
+   "note": "enum Endpoint.path(); baseURL.appendingPathComponent"
+  },
+  {
+   "method": "GET",
+   "path": "movie/now_playing",
+   "file": "MovieSwift/Packages/Backend/Sources/Backend/services/APIService.swift",
+   "note": "enum Endpoint.path(); baseURL.appendingPathComponent"
+  },
+  {
+   "method": "GET",
+   "path": "trending/movie/day",
+   "file": "MovieSwift/Packages/Backend/Sources/Backend/services/APIService.swift",
+   "note": "enum Endpoint.path(); baseURL.appendingPathComponent"
+  },
+  {
+   "method": "GET",
+   "path": "movie/{movie}",
+   "file": "MovieSwift/Packages/Backend/Sources/Backend/services/APIService.swift",
+   "note": "enum Endpoint.path(); baseURL.appendingPathComponent"
+  },
+  {
+   "method": "GET",
+   "path": "movie/{movie}/videos",
+   "file": "MovieSwift/Packages/Backend/Sources/Backend/services/APIService.swift",
+   "note": "enum Endpoint.path(); baseURL.appendingPathComponent"
+  },
+  {
+   "method": "GET",
+   "path": "person/{person}",
+   "file": "MovieSwift/Packages/Backend/Sources/Backend/services/APIService.swift",
+   "note": "enum Endpoint.path(); baseURL.appendingPathComponent"
+  },
+  {
+   "method": "GET",
+   "path": "movie/{movie}/credits",
+   "file": "MovieSwift/Packages/Backend/Sources/Backend/services/APIService.swift",
+   "note": "enum Endpoint.path(); baseURL.appendingPathComponent"
+  },
+  {
+   "method": "GET",
+   "path": "movie/{movie}/reviews",
+   "file": "MovieSwift/Packages/Backend/Sources/Backend/services/APIService.swift",
+   "note": "enum Endpoint.path(); baseURL.appendingPathComponent"
+  },
+  {
+   "method": "GET",
+   "path": "movie/{movie}/recommendations",
+   "file": "MovieSwift/Packages/Backend/Sources/Backend/services/APIService.swift",
+   "note": "enum Endpoint.path(); baseURL.appendingPathComponent"
+  },
+  {
+   "method": "GET",
+   "path": "movie/{movie}/similar",
+   "file": "MovieSwift/Packages/Backend/Sources/Backend/services/APIService.swift",
+   "note": "enum Endpoint.path(); baseURL.appendingPathComponent"
+  },
+  {
+   "method": "GET",
+   "path": "person/{person}/movie_credits",
+   "file": "MovieSwift/Packages/Backend/Sources/Backend/services/APIService.swift",
+   "note": "enum Endpoint.path(); baseURL.appendingPathComponent"
+  },
+  {
+   "method": "GET",
+   "path": "person/{person}/images",
+   "file": "MovieSwift/Packages/Backend/Sources/Backend/services/APIService.swift",
+   "note": "enum Endpoint.path(); baseURL.appendingPathComponent"
+  },
+  {
+   "method": "GET",
+   "path": "search/movie",
+   "file": "MovieSwift/Packages/Backend/Sources/Backend/services/APIService.swift",
+   "note": "enum Endpoint.path(); baseURL.appendingPathComponent"
+  },
+  {
+   "method": "GET",
+   "path": "search/keyword",
+   "file": "MovieSwift/Packages/Backend/Sources/Backend/services/APIService.swift",
+   "note": "enum Endpoint.path(); baseURL.appendingPathComponent"
+  },
+  {
+   "method": "GET",
+   "path": "search/person",
+   "file": "MovieSwift/Packages/Backend/Sources/Backend/services/APIService.swift",
+   "note": "enum Endpoint.path(); baseURL.appendingPathComponent"
+  },
+  {
+   "method": "GET",
+   "path": "genre/movie/list",
+   "file": "MovieSwift/Packages/Backend/Sources/Backend/services/APIService.swift",
+   "note": "enum Endpoint.path(); baseURL.appendingPathComponent"
+  },
+  {
+   "method": "GET",
+   "path": "discover/movie",
+   "file": "MovieSwift/Packages/Backend/Sources/Backend/services/APIService.swift",
+   "note": "enum Endpoint.path(); baseURL.appendingPathComponent"
+  }
+ ],
+ "claims": [],
+ "notes": "SwiftUI + Redux-like flux. Navigation: TabView tabs (TabbarView) + NavigationLink(destination:) + .sheet forms; route_id = View struct. iPad/mac SplitView sidebar (optional GenresList). TMDB API: enum Endpoint with path() switch returning literals and \"movie/\\(String(movie))\" interpolations; single GET. No accessibilityIdentifier, no URL schemes. MovieSwiftTV target not labelled."
+}

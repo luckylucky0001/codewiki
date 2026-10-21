@@ -1,0 +1,362 @@
+{
+ "repo": "Ashinch/ReadYou",
+ "url": "https://github.com/Ashinch/ReadYou",
+ "commit": "d2b979ccad9a3e54b9499929a9dc2824578b0fd9",
+ "platform_roots": {
+  "android": [
+   "app"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "android",
+   "route_id": "Route.Startup",
+   "symbol": "Route.Startup",
+   "file": "app/src/main/java/me/ash/reader/ui/page/nav3/key/NavKey.kt",
+   "kind": "nav3-navkey",
+   "screen_fn": "StartupPage",
+   "screen_file": "app/src/main/java/me/ash/reader/ui/page/startup/StartupPage.kt",
+   "alt_files": [
+    "app/src/main/java/me/ash/reader/ui/page/startup/StartupPage.kt"
+   ]
+  },
+  {
+   "platform": "android",
+   "route_id": "Route.Feeds",
+   "symbol": "Route.Feeds",
+   "file": "app/src/main/java/me/ash/reader/ui/page/nav3/key/NavKey.kt",
+   "kind": "nav3-navkey",
+   "screen_fn": "FeedsPage",
+   "screen_file": "app/src/main/java/me/ash/reader/ui/page/home/feeds/FeedsPage.kt",
+   "alt_files": [
+    "app/src/main/java/me/ash/reader/ui/page/home/feeds/FeedsPage.kt"
+   ]
+  },
+  {
+   "platform": "android",
+   "route_id": "Route.Reading",
+   "symbol": "Route.Reading",
+   "file": "app/src/main/java/me/ash/reader/ui/page/nav3/key/NavKey.kt",
+   "kind": "nav3-navkey",
+   "screen_fn": "ArticleListReaderPage",
+   "screen_file": "app/src/main/java/me/ash/reader/ui/page/adaptive/ArticleListReadingPage.kt",
+   "alt_files": [
+    "app/src/main/java/me/ash/reader/ui/page/adaptive/ArticleListReadingPage.kt"
+   ],
+   "note": "data class Reading(articleId) ; entry composes ArticleListReaderPage (file name differs: ArticleListReadingPage.kt); old ReadingPage call commented out"
+  },
+  {
+   "platform": "android",
+   "route_id": "Route.Settings",
+   "symbol": "Route.Settings",
+   "file": "app/src/main/java/me/ash/reader/ui/page/nav3/key/NavKey.kt",
+   "kind": "nav3-navkey",
+   "screen_fn": "SettingsPage",
+   "screen_file": "app/src/main/java/me/ash/reader/ui/page/settings/SettingsPage.kt",
+   "alt_files": [
+    "app/src/main/java/me/ash/reader/ui/page/settings/SettingsPage.kt"
+   ]
+  },
+  {
+   "platform": "android",
+   "route_id": "Route.Accounts",
+   "symbol": "Route.Accounts",
+   "file": "app/src/main/java/me/ash/reader/ui/page/nav3/key/NavKey.kt",
+   "kind": "nav3-navkey",
+   "screen_fn": "AccountsPage",
+   "screen_file": "app/src/main/java/me/ash/reader/ui/page/settings/accounts/AccountsPage.kt",
+   "alt_files": [
+    "app/src/main/java/me/ash/reader/ui/page/settings/accounts/AccountsPage.kt"
+   ]
+  },
+  {
+   "platform": "android",
+   "route_id": "Route.AccountDetails",
+   "symbol": "Route.AccountDetails",
+   "file": "app/src/main/java/me/ash/reader/ui/page/nav3/key/NavKey.kt",
+   "kind": "nav3-navkey",
+   "screen_fn": "AccountDetailsPage",
+   "screen_file": "app/src/main/java/me/ash/reader/ui/page/settings/accounts/AccountDetailsPage.kt",
+   "alt_files": [
+    "app/src/main/java/me/ash/reader/ui/page/settings/accounts/AccountDetailsPage.kt"
+   ],
+   "note": "data class with accountId"
+  },
+  {
+   "platform": "android",
+   "route_id": "Route.AddAccounts",
+   "symbol": "Route.AddAccounts",
+   "file": "app/src/main/java/me/ash/reader/ui/page/nav3/key/NavKey.kt",
+   "kind": "nav3-navkey",
+   "screen_fn": "AddAccountsPage",
+   "screen_file": "app/src/main/java/me/ash/reader/ui/page/settings/accounts/AddAccountsPage.kt",
+   "alt_files": [
+    "app/src/main/java/me/ash/reader/ui/page/settings/accounts/AddAccountsPage.kt"
+   ]
+  },
+  {
+   "platform": "android",
+   "route_id": "Route.ColorAndStyle",
+   "symbol": "Route.ColorAndStyle",
+   "file": "app/src/main/java/me/ash/reader/ui/page/nav3/key/NavKey.kt",
+   "kind": "nav3-navkey",
+   "screen_fn": "ColorAndStylePage",
+   "screen_file": "app/src/main/java/me/ash/reader/ui/page/settings/color/ColorAndStylePage.kt",
+   "alt_files": [
+    "app/src/main/java/me/ash/reader/ui/page/settings/color/ColorAndStylePage.kt"
+   ]
+  },
+  {
+   "platform": "android",
+   "route_id": "Route.DarkTheme",
+   "symbol": "Route.DarkTheme",
+   "file": "app/src/main/java/me/ash/reader/ui/page/nav3/key/NavKey.kt",
+   "kind": "nav3-navkey",
+   "screen_fn": "DarkThemePage",
+   "screen_file": "app/src/main/java/me/ash/reader/ui/page/settings/color/DarkThemePage.kt",
+   "alt_files": [
+    "app/src/main/java/me/ash/reader/ui/page/settings/color/DarkThemePage.kt"
+   ]
+  },
+  {
+   "platform": "android",
+   "route_id": "Route.ReadingPageStyle",
+   "symbol": "Route.ReadingPageStyle",
+   "file": "app/src/main/java/me/ash/reader/ui/page/nav3/key/NavKey.kt",
+   "kind": "nav3-navkey",
+   "screen_fn": "ReadingStylePage",
+   "screen_file": "app/src/main/java/me/ash/reader/ui/page/settings/color/reading/ReadingStylePage.kt",
+   "alt_files": [
+    "app/src/main/java/me/ash/reader/ui/page/settings/color/reading/ReadingStylePage.kt"
+   ]
+  },
+  {
+   "platform": "android",
+   "route_id": "Route.ReadingBoldCharacters",
+   "symbol": "Route.ReadingBoldCharacters",
+   "file": "app/src/main/java/me/ash/reader/ui/page/nav3/key/NavKey.kt",
+   "kind": "nav3-navkey",
+   "screen_fn": "BoldCharactersPage",
+   "screen_file": "app/src/main/java/me/ash/reader/ui/page/settings/color/reading/BoldCharactersPage.kt",
+   "alt_files": [
+    "app/src/main/java/me/ash/reader/ui/page/settings/color/reading/BoldCharactersPage.kt"
+   ]
+  },
+  {
+   "platform": "android",
+   "route_id": "Route.Interaction",
+   "symbol": "Route.Interaction",
+   "file": "app/src/main/java/me/ash/reader/ui/page/nav3/key/NavKey.kt",
+   "kind": "nav3-navkey",
+   "screen_fn": "InteractionPage",
+   "screen_file": "app/src/main/java/me/ash/reader/ui/page/settings/interaction/InteractionPage.kt",
+   "alt_files": [
+    "app/src/main/java/me/ash/reader/ui/page/settings/interaction/InteractionPage.kt"
+   ]
+  },
+  {
+   "platform": "android",
+   "route_id": "Route.Languages",
+   "symbol": "Route.Languages",
+   "file": "app/src/main/java/me/ash/reader/ui/page/nav3/key/NavKey.kt",
+   "kind": "nav3-navkey",
+   "screen_fn": "LanguagesPage",
+   "screen_file": "app/src/main/java/me/ash/reader/ui/page/settings/languages/LanguagesPage.kt",
+   "alt_files": [
+    "app/src/main/java/me/ash/reader/ui/page/settings/languages/LanguagesPage.kt"
+   ]
+  },
+  {
+   "platform": "android",
+   "route_id": "Route.Troubleshooting",
+   "symbol": "Route.Troubleshooting",
+   "file": "app/src/main/java/me/ash/reader/ui/page/nav3/key/NavKey.kt",
+   "kind": "nav3-navkey",
+   "screen_fn": "TroubleshootingPage",
+   "screen_file": "app/src/main/java/me/ash/reader/ui/page/settings/troubleshooting/TroubleshootingPage.kt",
+   "alt_files": [
+    "app/src/main/java/me/ash/reader/ui/page/settings/troubleshooting/TroubleshootingPage.kt"
+   ]
+  },
+  {
+   "platform": "android",
+   "route_id": "Route.TipsAndSupport",
+   "symbol": "Route.TipsAndSupport",
+   "file": "app/src/main/java/me/ash/reader/ui/page/nav3/key/NavKey.kt",
+   "kind": "nav3-navkey",
+   "screen_fn": "TipsAndSupportPage",
+   "screen_file": "app/src/main/java/me/ash/reader/ui/page/settings/tips/TipsAndSupportPage.kt",
+   "alt_files": [
+    "app/src/main/java/me/ash/reader/ui/page/settings/tips/TipsAndSupportPage.kt"
+   ]
+  },
+  {
+   "platform": "android",
+   "route_id": "Route.LicenseList",
+   "symbol": "Route.LicenseList",
+   "file": "app/src/main/java/me/ash/reader/ui/page/nav3/key/NavKey.kt",
+   "kind": "nav3-navkey",
+   "screen_fn": "LicenseListPage",
+   "screen_file": "app/src/main/java/me/ash/reader/ui/page/settings/tips/LicenseListPage.kt",
+   "alt_files": [
+    "app/src/main/java/me/ash/reader/ui/page/settings/tips/LicenseListPage.kt"
+   ]
+  },
+  {
+   "platform": "android",
+   "route_id": "MainActivity",
+   "symbol": "MainActivity",
+   "file": "app/src/main/java/me/ash/reader/infrastructure/android/MainActivity.kt",
+   "kind": "activity",
+   "optional": true,
+   "note": "single host activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "WidgetConfigActivity",
+   "symbol": "WidgetConfigActivity",
+   "file": "app/src/main/java/me/ash/reader/ui/widget/WidgetConfigActivity.kt",
+   "kind": "activity",
+   "optional": true
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "android",
+   "symbol": "RouteName",
+   "file": "app/src/main/java/me/ash/reader/ui/page/common/RouteName.kt",
+   "reason": "legacy string route constants (STARTUP/FEEDS/...) no longer referenced anywhere; Nav3 Route keys replaced them",
+   "borderline": true
+  },
+  {
+   "platform": "android",
+   "symbol": "FlowPage",
+   "file": "app/src/main/java/me/ash/reader/ui/page/home/flow/FlowPage.kt",
+   "reason": "Route.Flow is commented out; FlowPage only embedded inside ArticleListReaderPage",
+   "borderline": true
+  },
+  {
+   "platform": "android",
+   "symbol": "AddFeverAccountDialog",
+   "file": "app/src/main/java/me/ash/reader/ui/page/settings/accounts/addition/AddFeverAccountDialog.kt",
+   "reason": "dialog, not a route"
+  },
+  {
+   "platform": "android",
+   "symbol": "ArticleListWidgetReceiver",
+   "file": "app/src/main/java/me/ash/reader/ui/widget/ArticleListWidget.kt",
+   "reason": "AppWidget receiver"
+  },
+  {
+   "platform": "android",
+   "symbol": "animatedComposable",
+   "file": "app/src/main/java/me/ash/reader/ui/ext/NavGraphBuilderExt.kt",
+   "reason": "helper extension, unused nav-compose wrapper"
+  }
+ ],
+ "deeplinks": [
+  {
+   "platform": "android",
+   "scheme": "http",
+   "host": "*",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "intent-filter VIEW mimeType rss/atom",
+   "optional": true,
+   "note": "MIME-driven feed subscribe; host=*"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "*",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "intent-filter VIEW mimeType rss/atom",
+   "optional": true
+  }
+ ],
+ "testids": [],
+ "apis": [
+  {
+   "method": "POST",
+   "path": "accounts/ClientLogin",
+   "file": "app/src/main/java/me/ash/reader/infrastructure/rss/provider/greader/GoogleReaderAPI.kt",
+   "note": "\"${serverUrl}accounts/ClientLogin\""
+  },
+  {
+   "method": "GET",
+   "path": "reader/api/0/token",
+   "file": "app/src/main/java/me/ash/reader/infrastructure/rss/provider/greader/GoogleReaderAPI.kt"
+  },
+  {
+   "method": "GET",
+   "path": "reader/api/0/user-info",
+   "file": "app/src/main/java/me/ash/reader/infrastructure/rss/provider/greader/GoogleReaderAPI.kt",
+   "note": "OkHttp \"$serverUrl$query?output=json\""
+  },
+  {
+   "method": "GET",
+   "path": "reader/api/0/subscription/list",
+   "file": "app/src/main/java/me/ash/reader/infrastructure/rss/provider/greader/GoogleReaderAPI.kt",
+   "note": "OkHttp \"$serverUrl$query?output=json\""
+  },
+  {
+   "method": "GET",
+   "path": "reader/api/0/stream/items/ids",
+   "file": "app/src/main/java/me/ash/reader/infrastructure/rss/provider/greader/GoogleReaderAPI.kt",
+   "note": "OkHttp \"$serverUrl$query?output=json\""
+  },
+  {
+   "method": "POST",
+   "path": "reader/api/0/stream/items/contents",
+   "file": "app/src/main/java/me/ash/reader/infrastructure/rss/provider/greader/GoogleReaderAPI.kt",
+   "note": "OkHttp \"$serverUrl$query?output=json\""
+  },
+  {
+   "method": "POST",
+   "path": "reader/api/0/subscription/quickadd",
+   "file": "app/src/main/java/me/ash/reader/infrastructure/rss/provider/greader/GoogleReaderAPI.kt",
+   "note": "OkHttp \"$serverUrl$query?output=json\""
+  },
+  {
+   "method": "POST",
+   "path": "reader/api/0/edit-tag",
+   "file": "app/src/main/java/me/ash/reader/infrastructure/rss/provider/greader/GoogleReaderAPI.kt",
+   "note": "OkHttp \"$serverUrl$query?output=json\""
+  },
+  {
+   "method": "POST",
+   "path": "reader/api/0/disable-tag",
+   "file": "app/src/main/java/me/ash/reader/infrastructure/rss/provider/greader/GoogleReaderAPI.kt",
+   "note": "OkHttp \"$serverUrl$query?output=json\""
+  },
+  {
+   "method": "POST",
+   "path": "reader/api/0/rename-tag",
+   "file": "app/src/main/java/me/ash/reader/infrastructure/rss/provider/greader/GoogleReaderAPI.kt",
+   "note": "OkHttp \"$serverUrl$query?output=json\""
+  },
+  {
+   "method": "POST",
+   "path": "reader/api/0/subscription/edit",
+   "file": "app/src/main/java/me/ash/reader/infrastructure/rss/provider/greader/GoogleReaderAPI.kt",
+   "note": "OkHttp \"$serverUrl$query?output=json\""
+  },
+  {
+   "method": "POST",
+   "path": "reader/api/0/mark-all-as-read",
+   "file": "app/src/main/java/me/ash/reader/infrastructure/rss/provider/greader/GoogleReaderAPI.kt",
+   "note": "OkHttp \"$serverUrl$query?output=json\""
+  },
+  {
+   "method": "GET",
+   "path": "{url}",
+   "file": "app/src/main/java/me/ash/reader/infrastructure/net/NetworkDataSource.kt",
+   "dynamic": true,
+   "expect": false,
+   "note": "Retrofit @GET @Url getReleaseLatest/downloadFile"
+  }
+ ],
+ "claims": [],
+ "notes": "Compose Navigation 3: sealed interface Route : NavKey (NavKey.kt) + when(key) entryProvider in AppEntry.kt; route_id = Route.<Case>, screen_fn = Page composable. RouteName.kt string constants are stale (negative). No testTag. APIs: GoogleReader/FreshRSS via raw OkHttp string concat; Fever single endpoint \"$serverUrl?api=&$query\" (query-string only, not labelled); Retrofit only with @Url."
+}

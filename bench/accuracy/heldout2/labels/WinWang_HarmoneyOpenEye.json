@@ -1,0 +1,242 @@
+{
+ "repo": "WinWang/HarmoneyOpenEye",
+ "url": "https://github.com/WinWang/HarmoneyOpenEye",
+ "commit": "57f0542795336009aa0d46fd9fa5b07facc2ae87",
+ "platform_roots": {
+  "harmony": [
+   "entry"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "harmony",
+   "route_id": "pages/SplashPage",
+   "symbol": "SplashPage",
+   "file": "entry/src/main/ets/pages/SplashPage.ets",
+   "kind": "main_pages",
+   "struct": "SplashPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/MainPage",
+   "symbol": "MainPage",
+   "file": "entry/src/main/ets/pages/MainPage.ets",
+   "kind": "main_pages",
+   "struct": "MainPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/container/ContainerPage",
+   "symbol": "ContainerPage",
+   "file": "entry/src/main/ets/pages/container/ContainerPage.ets",
+   "kind": "main_pages",
+   "struct": "ContainerPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/commonDetail/DetailPage",
+   "symbol": "DetailPage",
+   "file": "entry/src/main/ets/pages/commonDetail/DetailPage.ets",
+   "kind": "main_pages",
+   "struct": "DetailPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/topicDetail/TopicDetailPage",
+   "symbol": "TopicDetailPage",
+   "file": "entry/src/main/ets/pages/topicDetail/TopicDetailPage.ets",
+   "kind": "main_pages",
+   "struct": "TopicDetailPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/categoryDetail/CategoryDetailPage",
+   "symbol": "CategoryDetailPage",
+   "file": "entry/src/main/ets/pages/categoryDetail/CategoryDetailPage.ets",
+   "kind": "main_pages",
+   "struct": "CategoryDetailPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/test/TestPage",
+   "symbol": "TestPage",
+   "file": "entry/src/main/ets/pages/test/TestPage.ets",
+   "kind": "main_pages",
+   "struct": "TestPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/hot/CoordinatePage",
+   "symbol": "CoordinatePage",
+   "file": "entry/src/main/ets/pages/hot/CoordinatePage.ets",
+   "kind": "main_pages",
+   "struct": "CoordinatePage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/test/TestHorizontalPage",
+   "symbol": "TestHorizontalPage",
+   "file": "entry/src/main/ets/pages/test/TestHorizontalPage.ets",
+   "kind": "main_pages",
+   "struct": "TestHorizontalPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/test/TestHorizontalPage2",
+   "symbol": "TestHorizontalPage2",
+   "file": "entry/src/main/ets/pages/test/TestHorizontalPage2.ets",
+   "kind": "main_pages",
+   "struct": "TestHorizontalPage2"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "HomePage",
+   "symbol": "HomePage",
+   "file": "entry/src/main/ets/pages/home/HomePage.ets",
+   "kind": "tab-page",
+   "optional": true,
+   "note": "Tabs child of MainPage, not routable"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "FindPage",
+   "symbol": "FindPage",
+   "file": "entry/src/main/ets/pages/find/FindPage.ets",
+   "kind": "tab-page",
+   "optional": true
+  },
+  {
+   "platform": "harmony",
+   "route_id": "HotPage",
+   "symbol": "HotPage",
+   "file": "entry/src/main/ets/pages/hot/HotPage.ets",
+   "kind": "tab-page",
+   "optional": true
+  },
+  {
+   "platform": "harmony",
+   "route_id": "MinePage",
+   "symbol": "MinePage",
+   "file": "entry/src/main/ets/pages/mine/MinePage.ets",
+   "kind": "tab-page",
+   "optional": true
+  },
+  {
+   "platform": "harmony",
+   "route_id": "FocusPage",
+   "symbol": "FocusPage",
+   "file": "entry/src/main/ets/pages/find/focus/FocusPage.ets",
+   "kind": "tab-page",
+   "optional": true,
+   "note": "also embedded in ContainerPage(containerType=focus)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "TopicPage",
+   "symbol": "TopicPage",
+   "file": "entry/src/main/ets/pages/find/topic/TopicPage.ets",
+   "kind": "tab-page",
+   "optional": true
+  },
+  {
+   "platform": "harmony",
+   "route_id": "RankPage",
+   "symbol": "RankPage",
+   "file": "entry/src/main/ets/pages/hot/rank/RankPage.ets",
+   "kind": "tab-page",
+   "optional": true
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "harmony",
+   "symbol": "CategoryPage",
+   "file": "entry/src/main/ets/pages/find/category/CategoryPage.ets",
+   "reason": "RoutePath.CategoryPage=\"pages/CategoryPage\" is a stale constant (not in main_pages, file lives elsewhere); component is only a Tabs/Container child",
+   "borderline": true
+  },
+  {
+   "platform": "harmony",
+   "symbol": "HomeListItemComponent",
+   "file": "entry/src/main/ets/pages/home/component/HomeListItemComponent.ets",
+   "reason": "list item component"
+  },
+  {
+   "platform": "harmony",
+   "symbol": "FocusItemComponent",
+   "file": "entry/src/main/ets/pages/find/focus/component/FocusItemComponent.ets",
+   "reason": "list item component"
+  },
+  {
+   "platform": "harmony",
+   "symbol": "VideoBottomComponent",
+   "file": "entry/src/main/ets/pages/commonDetail/component/VideoBottomComponent.ets",
+   "reason": "sub-component of DetailPage"
+  },
+  {
+   "platform": "harmony",
+   "symbol": "CommonTopBar",
+   "file": "entry/src/main/ets/views/CommonTopBar.ets",
+   "reason": "shared view"
+  },
+  {
+   "platform": "harmony",
+   "symbol": "RoutePath",
+   "file": "entry/src/main/ets/route/RoutePath.ets",
+   "reason": "route constant table, not a page"
+  }
+ ],
+ "deeplinks": [],
+ "testids": [],
+ "apis": [
+  {
+   "method": "GET",
+   "path": "api/v2/feed",
+   "file": "entry/src/main/ets/http/apiService.ets"
+  },
+  {
+   "method": "GET",
+   "path": "api/v4/tabs/follow",
+   "file": "entry/src/main/ets/http/apiService.ets"
+  },
+  {
+   "method": "GET",
+   "path": "api/v4/categories",
+   "file": "entry/src/main/ets/http/apiService.ets"
+  },
+  {
+   "method": "GET",
+   "path": "api/v3/specialTopics",
+   "file": "entry/src/main/ets/http/apiService.ets"
+  },
+  {
+   "method": "GET",
+   "path": "api/v4/rankList/videos",
+   "file": "entry/src/main/ets/http/apiService.ets"
+  },
+  {
+   "method": "GET",
+   "path": "api/v3/lightTopics/internal/{id}",
+   "file": "entry/src/main/ets/http/apiService.ets",
+   "note": "baseUrl + \"...\" + id concatenation"
+  },
+  {
+   "method": "GET",
+   "path": "api/v4/video/related",
+   "file": "entry/src/main/ets/http/apiService.ets"
+  },
+  {
+   "method": "GET",
+   "path": "api/v4/categories/videoList",
+   "file": "entry/src/main/ets/http/apiService.ets"
+  },
+  {
+   "method": "GET",
+   "path": "banner/json",
+   "file": "entry/src/main/ets/http/apiService.ets",
+   "note": "wanAndroidUrl + \"/banner/json\" (double slash)"
+  }
+ ],
+ "claims": [],
+ "notes": "API9 style router.pushUrl via wrapper Router.push(RoutePath.X); route_id = main_pages path. Tab children optional. No .id() testIDs, no skills.uris deep links (only entity.system.home). APIs: string concat baseUrl+\"api/...\" with axios/http wrappers (get<T>({url}))."
+}

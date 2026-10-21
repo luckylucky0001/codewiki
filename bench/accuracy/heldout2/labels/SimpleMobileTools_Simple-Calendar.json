@@ -1,0 +1,252 @@
+{
+ "repo": "SimpleMobileTools/Simple-Calendar",
+ "url": "https://github.com/SimpleMobileTools/Simple-Calendar",
+ "commit": "599985c678bd786e024dbd421cfe1708656eea45",
+ "platform_roots": {
+  "android": [
+   "app"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "android",
+   "route_id": "SplashActivity",
+   "symbol": "SplashActivity",
+   "file": "app/src/main/kotlin/com/simplemobiletools/calendar/pro/activities/SplashActivity.kt",
+   "kind": "activity",
+   "optional": true,
+   "note": "launcher splash"
+  },
+  {
+   "platform": "android",
+   "route_id": "MainActivity",
+   "symbol": "MainActivity",
+   "file": "app/src/main/kotlin/com/simplemobiletools/calendar/pro/activities/MainActivity.kt",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "EventActivity",
+   "symbol": "EventActivity",
+   "file": "app/src/main/kotlin/com/simplemobiletools/calendar/pro/activities/EventActivity.kt",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "TaskActivity",
+   "symbol": "TaskActivity",
+   "file": "app/src/main/kotlin/com/simplemobiletools/calendar/pro/activities/TaskActivity.kt",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "SelectTimeZoneActivity",
+   "symbol": "SelectTimeZoneActivity",
+   "file": "app/src/main/kotlin/com/simplemobiletools/calendar/pro/activities/SelectTimeZoneActivity.kt",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "SettingsActivity",
+   "symbol": "SettingsActivity",
+   "file": "app/src/main/kotlin/com/simplemobiletools/calendar/pro/activities/SettingsActivity.kt",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "ManageEventTypesActivity",
+   "symbol": "ManageEventTypesActivity",
+   "file": "app/src/main/kotlin/com/simplemobiletools/calendar/pro/activities/ManageEventTypesActivity.kt",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "SnoozeReminderActivity",
+   "symbol": "SnoozeReminderActivity",
+   "file": "app/src/main/kotlin/com/simplemobiletools/calendar/pro/activities/SnoozeReminderActivity.kt",
+   "kind": "activity",
+   "optional": true,
+   "note": "dialog-themed"
+  },
+  {
+   "platform": "android",
+   "route_id": "EventTypePickerActivity",
+   "symbol": "EventTypePickerActivity",
+   "file": "app/src/main/kotlin/com/simplemobiletools/calendar/pro/activities/EventTypePickerActivity.kt",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "WidgetMonthlyConfigureActivity",
+   "symbol": "WidgetMonthlyConfigureActivity",
+   "file": "app/src/main/kotlin/com/simplemobiletools/calendar/pro/activities/WidgetMonthlyConfigureActivity.kt",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "WidgetListConfigureActivity",
+   "symbol": "WidgetListConfigureActivity",
+   "file": "app/src/main/kotlin/com/simplemobiletools/calendar/pro/activities/WidgetListConfigureActivity.kt",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "WidgetDateConfigureActivity",
+   "symbol": "WidgetDateConfigureActivity",
+   "file": "app/src/main/kotlin/com/simplemobiletools/calendar/pro/activities/WidgetDateConfigureActivity.kt",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "AboutActivity",
+   "symbol": "AboutActivity",
+   "file": "app/src/main/AndroidManifest.xml",
+   "kind": "activity",
+   "optional": true,
+   "note": "declared in manifest, class lives in external commons library (not in repo)"
+  },
+  {
+   "platform": "android",
+   "route_id": "CustomizationActivity",
+   "symbol": "CustomizationActivity",
+   "file": "app/src/main/AndroidManifest.xml",
+   "kind": "activity",
+   "optional": true,
+   "note": "external commons library"
+  },
+  {
+   "platform": "android",
+   "route_id": "MonthFragmentsHolder",
+   "symbol": "MonthFragmentsHolder",
+   "file": "app/src/main/kotlin/com/simplemobiletools/calendar/pro/fragments/MonthFragmentsHolder.kt",
+   "kind": "fragment",
+   "note": "view mode switched in MainActivity"
+  },
+  {
+   "platform": "android",
+   "route_id": "WeekFragmentsHolder",
+   "symbol": "WeekFragmentsHolder",
+   "file": "app/src/main/kotlin/com/simplemobiletools/calendar/pro/fragments/WeekFragmentsHolder.kt",
+   "kind": "fragment"
+  },
+  {
+   "platform": "android",
+   "route_id": "DayFragmentsHolder",
+   "symbol": "DayFragmentsHolder",
+   "file": "app/src/main/kotlin/com/simplemobiletools/calendar/pro/fragments/DayFragmentsHolder.kt",
+   "kind": "fragment"
+  },
+  {
+   "platform": "android",
+   "route_id": "YearFragmentsHolder",
+   "symbol": "YearFragmentsHolder",
+   "file": "app/src/main/kotlin/com/simplemobiletools/calendar/pro/fragments/YearFragmentsHolder.kt",
+   "kind": "fragment"
+  },
+  {
+   "platform": "android",
+   "route_id": "MonthDayFragmentsHolder",
+   "symbol": "MonthDayFragmentsHolder",
+   "file": "app/src/main/kotlin/com/simplemobiletools/calendar/pro/fragments/MonthDayFragmentsHolder.kt",
+   "kind": "fragment"
+  },
+  {
+   "platform": "android",
+   "route_id": "EventListFragment",
+   "symbol": "EventListFragment",
+   "file": "app/src/main/kotlin/com/simplemobiletools/calendar/pro/fragments/EventListFragment.kt",
+   "kind": "fragment"
+  },
+  {
+   "platform": "android",
+   "route_id": "MonthFragment",
+   "symbol": "MonthFragment",
+   "file": "app/src/main/kotlin/com/simplemobiletools/calendar/pro/fragments/MonthFragment.kt",
+   "kind": "fragment",
+   "optional": true,
+   "note": "ViewPager page inside MonthFragmentsHolder"
+  },
+  {
+   "platform": "android",
+   "route_id": "DayFragment",
+   "symbol": "DayFragment",
+   "file": "app/src/main/kotlin/com/simplemobiletools/calendar/pro/fragments/DayFragment.kt",
+   "kind": "fragment",
+   "optional": true
+  },
+  {
+   "platform": "android",
+   "route_id": "WeekFragment",
+   "symbol": "WeekFragment",
+   "file": "app/src/main/kotlin/com/simplemobiletools/calendar/pro/fragments/WeekFragment.kt",
+   "kind": "fragment",
+   "optional": true
+  },
+  {
+   "platform": "android",
+   "route_id": "YearFragment",
+   "symbol": "YearFragment",
+   "file": "app/src/main/kotlin/com/simplemobiletools/calendar/pro/fragments/YearFragment.kt",
+   "kind": "fragment",
+   "optional": true
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "android",
+   "symbol": "SimpleActivity",
+   "file": "app/src/main/kotlin/com/simplemobiletools/calendar/pro/activities/SimpleActivity.kt",
+   "reason": "base activity class"
+  },
+  {
+   "platform": "android",
+   "symbol": "MyFragmentHolder",
+   "file": "app/src/main/kotlin/com/simplemobiletools/calendar/pro/fragments/MyFragmentHolder.kt",
+   "reason": "abstract base fragment"
+  },
+  {
+   "platform": "android",
+   "symbol": "SplashActivity.Red",
+   "file": "app/src/main/AndroidManifest.xml",
+   "reason": "<activity-alias> launcher icon color"
+  },
+  {
+   "platform": "android",
+   "symbol": "MyWidgetMonthlyProvider",
+   "file": "app/src/main/kotlin/com/simplemobiletools/calendar/pro/helpers/MyWidgetMonthlyProvider.kt",
+   "reason": "AppWidgetProvider receiver"
+  },
+  {
+   "platform": "android",
+   "symbol": "CalDAVUpdateListener",
+   "file": "app/src/main/kotlin/com/simplemobiletools/calendar/pro/jobs/CalDAVUpdateListener.kt",
+   "reason": "JobService"
+  }
+ ],
+ "deeplinks": [
+  {
+   "platform": "android",
+   "scheme": "content",
+   "host": "",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "MainActivity intent-filter@63",
+   "optional": true,
+   "note": "mime text/calendar ics import"
+  },
+  {
+   "platform": "android",
+   "scheme": "content",
+   "host": "com.android.calendar",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "MainActivity intent-filter@74",
+   "optional": true,
+   "note": "mime time/epoch (system calendar VIEW)"
+  }
+ ],
+ "testids": [],
+ "apis": [],
+ "claims": [],
+ "notes": "Classic Activity app; view modes are FragmentHolder fragments swapped inside MainActivity, ViewPager pages optional. Many <activity-alias> (SplashActivity.<Color>) for icon colors -> negatives. AboutActivity/CustomizationActivity declared with FQCN from external commons lib (no source in repo, optional). Only MIME-driven intent-filters (optional) -> deep-link FP probe. No testTags (contentDescription only), no HTTP APIs (CalDAV via ContentProvider) -> API FP probe."
+}
