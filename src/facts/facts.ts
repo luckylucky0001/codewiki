@@ -1532,9 +1532,10 @@ class Ctx {
   }
 
   resolveVC(platform: string, call: Call, screens: Map<string, Symbol>): string {
-    const arg = trimSpace(call.args![0]!.text).replace(/[!?]+$/, '');
+    let arg = trimSpace(call.args![0]!.text).replace(/[!?]+$/, '');
     const to = soleScreen(platform, arg, screens);
     if (to) return to;
+    arg = trimPrefix(arg, 'self.');
     if (!reIdent.test(arg)) return '';
     const fn = getSym(this.g, call.enclosing);
     if (!fn) return '';
@@ -1542,6 +1543,14 @@ class Ctx {
       if (m[1] === arg) {
         const t = soleScreen(platform, (m[2] ?? '') + ' ' + m[3], screens);
         if (t) return t;
+      }
+    }
+    // a stored property of the enclosing type (`let autoComplete = AutoCompleteViewController()`)
+    for (let p = fn.parent ? getSym(this.g, fn.parent) : undefined; p; p = p.parent ? getSym(this.g, p.parent) : undefined) {
+      const prop = this.g.symbols.find((x) => x.parent === p!.id && x.name === arg && x.kind === 'property');
+      if (prop) {
+        const head = this.symbolSource(prop).split('\n')[0] ?? prop.signature;
+        return soleScreen(platform, head.replace(/^[^:=]*/, ''), screens);
       }
     }
     return '';
