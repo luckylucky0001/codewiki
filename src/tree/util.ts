@@ -90,6 +90,7 @@ export function commonDir(files: string[]): string {
 
 export function kebab(s: string): string {
   return s
+    .replace(/iOS/g, 'Ios')
     .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
     .replace(/([A-Z]+)([A-Z][a-z])/g, '$1-$2')
     .toLowerCase()

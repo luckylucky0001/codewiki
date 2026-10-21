@@ -9,7 +9,7 @@ export { parseJSON5, parseOpenStep } from './build/parse.js';
 export { layer, heuristicModuleDir, type Layering, type LayerModule, type LayerProject } from './layer.js';
 export { buildCoreGraph, selectCore, pageRank, edgeKey, type CoreGraph } from './cluster/symgraph.js';
 export { leiden, makeGraph, modularity, type WGraph } from './cluster/leiden.js';
-export { partitionModule, clusterId, membersHash, matchPrev, defaultSlug, type PrevCluster } from './cluster/cluster.js';
+export { partitionModule, clusterId, membersHash, matchPrev, defaultSlug, slugCandidates, type PrevCluster } from './cluster/cluster.js';
 export {
   buildTree,
   prepare,

@@ -3,7 +3,7 @@ import type { ModuleTree, TreeConfig, TreeInput, TreeNode, Importance, Graph } f
 import { ClusterAlgo, TreeVersion, defaultTreeConfig } from './types.js';
 import { layer, type LayerModule, type Layering } from './layer.js';
 import { buildCoreGraph, pageRank, WeightsLabel, type CoreGraph } from './cluster/symgraph.js';
-import { clusterId, defaultSlug, humanize, matchPrev, membersHash, partitionModule, type PrevCluster } from './cluster/cluster.js';
+import { clusterId, slugCandidates, humanize, matchPrev, membersHash, partitionModule, type PrevCluster } from './cluster/cluster.js';
 import { cmp, globRe, kebab, sha256, stableJSON, uniqSorted } from './util.js';
 
 export function resolveConfig(c?: Partial<TreeConfig>): TreeConfig {
@@ -101,14 +101,17 @@ export function clusterHolder(ctx: BuildContext, holder: TreeNode, m: LayerModul
   // inherited / pinned slugs reserve first so new clusters never steal them
   const order = groups.map((_, i) => i).sort((a, b) => Number(match.has(b) || !!groups[b]!.pin) - Number(match.has(a) || !!groups[a]!.pin) || a - b);
   const slugs: string[] = [];
+  // a directory name shared by several clusters is not distinctive → use type names for those
+  const cand = groups.map((g) => slugCandidates(g.core, cg, m.roots, pr));
+  const dirCount = new Map<string, number>();
+  for (const c of cand) if (c.dir) dirCount.set(c.dir, (dirCount.get(c.dir) ?? 0) + 1);
   for (const i of order) {
     const g = groups[i]!;
     const p = match.get(i);
-    let slug = g.pin ? kebab(g.pin) : p?.slug ?? defaultSlug(g.core, cg, m.roots, pr);
+    const c = cand[i]!;
+    let slug = g.pin ? kebab(g.pin) : p?.slug ?? (c.dir && dirCount.get(c.dir) === 1 ? c.dir : c.type);
+    if (usedSlug.has(slug) && !g.pin && !p && slug !== c.type && !usedSlug.has(c.type)) slug = c.type;
     if (usedSlug.has(slug)) {
-      const top = g.core.reduce((a, b) => ((pr.get(b) ?? 0) > (pr.get(a) ?? 0) + 1e-15 ? b : a));
-      const alt = kebab(slug + '-' + (cg.sym.get(top)?.name ?? ''));
-      slug = alt && !usedSlug.has(alt) ? alt : slug;
       let k = 2;
       const base = slug;
       while (usedSlug.has(slug)) slug = `${base}-${k++}`;

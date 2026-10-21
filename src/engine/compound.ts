@@ -21,6 +21,12 @@ import { ParityPage, computeParity, renderParity } from './parity.js';
 import { platformsOf, templateConcept, templateFeature, templateOverview } from './template.js';
 import { buildPrompt } from './prompt.js';
 import { short, shortHead } from './graphutil.js';
+import { type DocEntry, allClaims, copyDocs, loadRawManifest, renderConflicts } from './docs.js';
+import { Checker, ClaimConflict, ClaimUnverifiable, ClaimVerified, claimJSON, type Claim } from './claims.js';
+import { requirementsJSON } from '../facts/render.js';
+import { conflictsPrompt } from './prompt.js';
+import { scanInjection } from './safety.js';
+import type { Requirement } from '../model.js';
 
 export const PromptVersion = '2026-10-20.1';
 
@@ -39,6 +45,7 @@ export interface Options {
   date?: string;
   kbPath?: string;
   keep?: boolean;
+  ingestDocs?: DocEntry[];
 }
 
 export interface TaskResult {
@@ -146,12 +153,7 @@ function mergeGitChanges(root: string, base: string, head: string, wikiDir: stri
 
 /** Whether raw/docs holds ingested documents. */
 export function hasRawDocs(wikiDir: string): boolean {
-  try {
-    const m = JSON.parse(fs.readFileSync(path.join(wikiDir, 'raw', 'manifest.json'), 'utf8'));
-    return Array.isArray(m.docs) && m.docs.length > 0;
-  } catch {
-    return false;
-  }
+  return loadRawManifest(wikiDir).docs.length > 0;
 }
 
 export async function analyze(o: Options): Promise<Analysis> {
@@ -167,7 +169,7 @@ export async function analyze(o: Options): Promise<Analysis> {
   diff.changed_files = mergeGitChanges(cfg.root, diff.base, res.graph.commit ?? '', cfg.wiki_dir, diff.changed_files);
   const oldG = old ?? { version: 0, symbols: [], files: {}, parse_failures: [] };
   const [pages] = loadPages(wikiPath(cfg));
-  const plan = buildPlan({ cfg, diff, old: oldG, cur: res.graph, facts, pages, forceFull: !!o.full, hasDocs: hasRawDocs(wikiPath(cfg)) });
+  const plan = buildPlan({ cfg, diff, old: oldG, cur: res.graph, facts, pages, forceFull: !!o.full, hasDocs: hasRawDocs(wikiPath(cfg)) || (o.ingestDocs?.length ?? 0) > 0 });
   if (o.kind === 'ingest') {
     let keep = plan.tasks.filter((t) => t.kind === 'conflicts');
     if (!keep.length) keep = [{ id: 't01-_conflicts', op: OpRecheck, kind: 'conflicts', page: ConflictsPage, title: '文档核对', write_set: [VerdictsFile], reasons: [{ code: 'ingest' }], context: [], priority: 0 }];
@@ -293,7 +295,32 @@ export function verifyRequirements(wikiDir: string, g: Graph, rep: Report): void
   }
 }
 
+function loadRequirements(wikiDir: string): Requirement[] {
+  try {
+    return (JSON.parse(fs.readFileSync(path.join(wikiDir, 'facts', 'requirements.json'), 'utf8')).requirements as Requirement[]) ?? [];
+  } catch {
+    return [];
+  }
+}
+
+function llmEvidence(llm: string[] | undefined, templ: string[] | undefined): string {
+  const known = new Set((templ ?? []).map((t) => t.trim()));
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const e of llm ?? []) {
+    for (let part of e.split(/[；;]/)) {
+      part = part.trim();
+      while (part.startsWith('[llm]')) part = part.slice(5).trim();
+      if (!part || known.has(part) || seen.has(part)) continue;
+      seen.add(part);
+      out.push(part);
+    }
+  }
+  return out.join('；');
+}
+
 class TaskEnv {
+  claims: Claim[] | null = null;
   constructor(public o: Options, public a: Analysis, public staging: string, public work: string, public graphPath: string, public head: string) {}
 
   platforms(): string[] {
@@ -338,7 +365,9 @@ class TaskEnv {
         if (t.page === NavigationPage || t.page === SharedPage) return this.writePage(templateConcept(g, f, t.page, c));
         return this.restamp(t);
       case 'conflicts':
-        throw new Error('document checking (kb ingest) is not available in this build yet');
+        this.claims = this.templateClaims();
+        writeJSON(path.join(this.staging, VerdictsFile), { version: 1, claims: this.claims.map(claimJSON) });
+        return;
       default:
         return this.restamp(t);
     }
@@ -359,9 +388,72 @@ class TaskEnv {
     this.writePage(pg);
   }
 
+  templateClaims(): Claim[] {
+    const claims = allClaims(this.staging);
+    const ck = new Checker(this.a.graph, this.a.facts, this.a.scan.dir);
+    const prev = new Map(loadRequirements(this.staging).map((r) => [r.id, r]));
+    for (const c of claims) {
+      ck.check(c);
+      const p = prev.get(c.id);
+      if (p && p.evidence?.length && p.evidence[0]!.startsWith('[llm]') && p.anchors?.length && p.text === c.text) {
+        let fresh = true;
+        const ids: string[] = [];
+        for (const a of p.anchors) {
+          const s = getSym(this.a.graph, a.sym);
+          if (!s || s.hash !== a.hash) {
+            fresh = false;
+            break;
+          }
+          ids.push(a.sym);
+        }
+        if (fresh) {
+          c.status = p.status;
+          c.evidence = p.evidence;
+          c.anchors = ids;
+          if (p.route_ids?.length) c.route_ids = p.route_ids;
+        }
+      }
+    }
+    return claims;
+  }
+
+  renderClaims(): void {
+    if (!this.claims) return;
+    const [pg, reqs] = renderConflicts(this.claims, this.a.graph, short(this.head));
+    this.writePage(pg);
+    writeFileAtomic(path.join(this.staging, 'facts', 'requirements.json'), requirementsJSON(reqs));
+  }
+
+  mergeVerdicts(templ: Claim[]): void {
+    let v: { claims?: Claim[] };
+    try {
+      v = JSON.parse(fs.readFileSync(path.join(this.staging, VerdictsFile), 'utf8'));
+    } catch (e) {
+      throw new Error((e as NodeJS.ErrnoException).code === 'ENOENT' ? `LLM did not write ${VerdictsFile}` : `invalid ${VerdictsFile}: ${(e as Error).message}`);
+    }
+    const byID = new Map((v.claims ?? []).map((c) => [c.id, c]));
+    for (const t of templ) {
+      const c = byID.get(t.id);
+      if (!c || t.suspicious) continue;
+      if (![ClaimVerified, ClaimConflict, ClaimUnverifiable].includes(c.status ?? '')) continue;
+      const anchors = (c.anchors ?? []).filter((a) => getSym(this.a.graph, a));
+      let status = c.status!;
+      if (status === ClaimVerified && !anchors.length && !t.anchors?.length) status = ClaimUnverifiable;
+      t.status = status;
+      if (anchors.length) t.anchors = anchors;
+      const ev = llmEvidence(c.evidence, t.evidence);
+      if (ev) t.evidence = ['[llm] ' + ev, ...(t.evidence ?? [])];
+      if (c.route_ids?.length) t.route_ids = c.route_ids;
+    }
+    this.claims = templ;
+    writeJSON(path.join(this.staging, VerdictsFile), { version: 1, claims: templ.map(claimJSON) });
+  }
+
   runCmd(t: Task): string[] {
     const cmdline = this.o.llmCmd || this.o.cfg.llm.cmd;
-    const prompt = buildPrompt({ g: this.a.graph, f: this.a.facts, srcDir: this.a.scan.dir, staging: this.staging, head: this.head, platforms: this.platforms() }, t);
+    const templ = t.kind === 'conflicts' ? this.templateClaims() : [];
+    const pctx = { g: this.a.graph, f: this.a.facts, srcDir: this.a.scan.dir, staging: this.staging, head: this.head, platforms: this.platforms() };
+    const prompt = t.kind === 'conflicts' ? conflictsPrompt(pctx, t, templ) : buildPrompt(pctx, t);
     const tdir = path.join(this.work, 'tasks');
     fs.mkdirSync(tdir, { recursive: true });
     fs.writeFileSync(path.join(tdir, t.id + '.prompt.md'), prompt);
@@ -396,7 +488,8 @@ class TaskEnv {
       const why = r.error ? r.error.message : `exit status ${r.status}`;
       throw Object.assign(new Error(`llm command failed: ${why} (see ${path.join(tdir, t.id + '.log')})`), { reverted });
     }
-    this.postProcess(t);
+    if (t.kind === 'conflicts') this.mergeVerdicts(templ);
+    else this.postProcess(t);
     return reverted;
   }
 
@@ -467,6 +560,14 @@ export async function compound(o: Options): Promise<Result> {
     if (fs.existsSync(wikiDir)) copyDir(wikiDir, staging);
     else initWiki(staging, false);
     const before = snapshot(staging);
+    if (o.ingestDocs?.length) {
+      const docs = copyDocs(cfg.root, staging, o.ingestDocs);
+      log(`ingested ${docs.length} document(s) into raw/docs`);
+      for (const d of docs) {
+        const b = fs.readFileSync(path.join(staging, d.raw!), 'utf8');
+        for (const f of scanInjection(b)) log(`  ⚠ ${d.path} L${f.line}: suspected prompt injection (${f.pattern}): ${f.text}`);
+      }
+    }
     const expected = expectedFacts(cfg, a.graph, a.facts);
     for (const [rel, b] of expected) writeFileAtomic(path.join(staging, rel), b);
     const graphPath = path.join(work, 'graph.json');
@@ -485,6 +586,7 @@ export async function compound(o: Options): Promise<Result> {
       r.tasks.push(tr);
       log(`  [${tr.status}] ${t.op.padEnd(8)} ${t.page.padEnd(34)} ${tr.writer} ${tr.error ?? ''}`);
     }
+    env.renderClaims();
     fixIndex(staging);
     r.changed = changedFiles(before, snapshot(staging));
     if (r.changed.length === 0 && o.kind === 'compound' && a.plan.mode === 'noop') {

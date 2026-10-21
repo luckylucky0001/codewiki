@@ -52,10 +52,12 @@ function inherits(sig: string, name: string): boolean {
 }
 
 export function buildCoreGraph(graph: Graph, fileModule: Map<string, string>, facts?: Facts | null): CoreGraph {
+  // canonical order: results (incl. floating-point weight sums) never depend on scanner output order
+  const symbols = graph.symbols.slice().sort((a, b) => cmp(a.id, b.id) || a.start_line - b.start_line || cmp(a.kind, b.kind) || cmp(a.hash, b.hash));
   const byId = new Map<string, GraphSymbol>();
-  for (const s of graph.symbols) byId.set(s.id, s);
+  for (const s of symbols) byId.set(s.id, s);
   const tops = new Map<string, GraphSymbol[]>(); // module → top-level symbols
-  for (const s of graph.symbols) {
+  for (const s of symbols) {
     if (s.parent) continue;
     const m = fileModule.get(s.file);
     if (!m) continue;
@@ -115,7 +117,7 @@ export function buildCoreGraph(graph: Graph, fileModule: Map<string, string>, fa
     }
     return undefined;
   };
-  for (const s of graph.symbols) ownerOf(s.id);
+  for (const s of symbols) ownerOf(s.id);
 
   const edges = new Map<string, number>();
   const add = (a: string, b: string, w: number) => {
@@ -124,11 +126,11 @@ export function buildCoreGraph(graph: Graph, fileModule: Map<string, string>, fa
     edges.set(k, (edges.get(k) ?? 0) + w);
   };
   // reference / inheritance edges
-  for (const s of graph.symbols) {
+  for (const s of symbols) {
     if (!s.refs?.length) continue;
     const a = owner.get(s.id);
     if (!a) continue;
-    for (const r of s.refs) {
+    for (const r of s.refs.slice().sort(cmp)) {
       const b = owner.get(r);
       if (!b || b === a) continue;
       const t = byId.get(r);
@@ -175,7 +177,8 @@ export function buildCoreGraph(graph: Graph, fileModule: Map<string, string>, fa
   // route ownership + navigation edges between route pages
   const routes = new Map<string, string[]>();
   const routeOwner = new Map<string, string>();
-  for (const r of facts?.routes ?? []) {
+  const routeList = (facts?.routes ?? []).slice().sort((a, b) => cmp(a.route_id, b.route_id) || cmp(a.symbol, b.symbol));
+  for (const r of routeList) {
     const o = owner.get(r.symbol);
     if (!o) continue;
     routeOwner.set(r.route_id, o);
@@ -184,7 +187,7 @@ export function buildCoreGraph(graph: Graph, fileModule: Map<string, string>, fa
     if (!xs.includes(r.route_id)) xs.push(r.route_id);
   }
   for (const xs of routes.values()) xs.sort(cmp);
-  for (const e of facts?.navigation ?? []) {
+  for (const e of (facts?.navigation ?? []).slice().sort((a, b) => cmp(a.from, b.from) || cmp(a.to, b.to))) {
     const a = routeOwner.get(e.from);
     const b = routeOwner.get(e.to);
     if (a && b) add(a, b, W_ROUTE);

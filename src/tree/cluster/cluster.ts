@@ -164,20 +164,32 @@ const GENERIC = new Set([
   'src', 'main', 'java', 'kotlin', 'swift', 'ets', 'sources', 'source', 'lib', 'impl', 'internal', 'api', 'com', 'org', 'io', 'net', 'app', 'common', 'core', 'ui', 'view', 'views', 'pages', 'components', 'model', 'models', 'util', 'utils', 'kotlinmultiplatform', 'commonmain', 'androidmain', 'iosmain', 'debug', 'release', 'test', 'tests', 'androidtest',
 ]);
 
-/** Deterministic default slug: distinctive common directory, else the highest-PageRank type name. */
-export function defaultSlug(core: string[], cg: CoreGraph, moduleRoots: string[], pr: Map<string, number>): string {
+/** Candidate default slugs: a distinctive common directory (if any) and the highest-PageRank type name. */
+export function slugCandidates(core: string[], cg: CoreGraph, moduleRoots: string[], pr: Map<string, number>): { dir?: string; type: string } {
   const files = core.map((c) => cg.coreFile.get(c)!);
   const cd = commonDir(files);
   const rootLen = Math.max(0, ...moduleRoots.filter((r) => cd === r || cd.startsWith(r + '/') || r === '').map((r) => r.length));
   const rel = cd.slice(rootLen).split('/').filter(Boolean);
   const last = rel[rel.length - 1];
+  let dir: string | undefined;
   if (last && !GENERIC.has(last.toLowerCase())) {
     const s = kebab(last);
-    if (s && !GENERIC.has(s)) return s;
+    if (s && !GENERIC.has(s)) dir = s;
   }
-  let top = core[0]!;
-  for (const c of core) if ((pr.get(c) ?? 0) > (pr.get(top) ?? 0) + 1e-15) top = c;
-  return kebab(cg.sym.get(top)?.name ?? 'cluster') || 'cluster';
+  // prefer types over functions for the name
+  let top: string | undefined;
+  for (const c of core) {
+    const isType = !['function', 'composable', 'method', 'func'].includes(cg.sym.get(c)?.kind ?? '');
+    const t = top === undefined ? undefined : !['function', 'composable', 'method', 'func'].includes(cg.sym.get(top)?.kind ?? '');
+    if (top === undefined || (isType && !t) || (isType === t && (pr.get(c) ?? 0) > (pr.get(top) ?? 0) + 1e-15)) top = c;
+  }
+  return { dir, type: kebab(cg.sym.get(top!)?.name ?? 'cluster') || 'cluster' };
+}
+
+/** Deterministic default slug: distinctive common directory, else the highest-PageRank type name. */
+export function defaultSlug(core: string[], cg: CoreGraph, moduleRoots: string[], pr: Map<string, number>): string {
+  const c = slugCandidates(core, cg, moduleRoots, pr);
+  return c.dir ?? c.type;
 }
 
 export function humanize(slug: string): string {
