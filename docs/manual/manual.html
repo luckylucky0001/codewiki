@@ -366,6 +366,7 @@ depth 3; L0 1 · L1 2 · L2 2 · L3 9</code></pre>
   <tr><td>APIs recall</td><td>19.7%</td><td><b>39.4%</b></td></tr>
   <tr><td>not_screen FP</td><td>13.3%</td><td>13.3%</td></tr>
 </table>
+<p>后续补充（非盲测）：审核之后加了 5 条通用核对规则，LLM 写入条目的精确率从 78.3% 升到 97.9%，召回不变。另外让 Ktor URL builder 能解析常量（<code>encodedPath += CONST</code>），heldout3 仅规则的 APIs 从 19.7% 升到 <b>50.0%</b>，KMP 仓库的 API 不再是 0。</p>
 <p><b>断言（claims）</b>：从 README / docs 正文里抽取可核对的说法，并做确定性检查，包括失效路径、数量、依赖和导入。训练集上，断言覆盖率从 23.7% 升到 <b>73.8%</b>（118/160），冲突召回从 0/18 升到 <b>9/18</b>。这两个都是<b>训练集数字</b>。</p>
 </section>
 
