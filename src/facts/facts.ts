@@ -13,6 +13,89 @@ import { walkDir } from '../scan/scan.js';
 import { cmpStr, cut, trimChars, trimPrefix, trimSuffix, trimSpace } from '../util/go.js';
 import { xmlTokens } from './xml.js';
 
+/** A deep link declared by the app (manifest intent-filter, plist URL scheme, applinks entitlement,
+ * module.json5 skills.uris, nav-graph deepLink or an in-code URL route table). */
+export interface DeepLink {
+  platform: string;
+  scheme: string;
+  host: string;
+  path: string;
+  file: string;
+  source: string;
+  route_id?: string;
+}
+
+/** Route plus the schema-compatible additions: `name` (bare type / page name) and declared `deeplinks`. */
+export type RouteX = Route & { name?: string; deeplinks?: string[] };
+
+/** Facts plus the declared deep links (written to facts/deeplinks.json). */
+export type FactsX = Facts & { deeplinks?: DeepLink[] };
+
+export function linkString(d: { scheme: string; host: string; path: string }): string {
+  if (!d.scheme) return d.path;
+  return d.scheme + '://' + d.host + d.path;
+}
+
+/** Supertype names (last segment, generics and constructor args stripped) of a class-like symbol. */
+export function supertypes(s: { lang: string; signature: string }): string[] {
+  const sig = s.signature;
+  // cut the declaration head at the first '{' outside parentheses (annotations may hold braces)
+  let depth = 0, end = sig.length;
+  for (let i = 0; i < sig.length; i++) {
+    const c = sig[i];
+    if (c === '(' || c === '[') depth++;
+    else if (c === ')' || c === ']') depth--;
+    else if (c === '{' && depth === 0) {
+      end = i;
+      break;
+    }
+  }
+  const head = sig.slice(0, end);
+  const out: string[] = [];
+  const push = (t: string) => {
+    t = t.replace(/<[^]*$/, '').replace(/\(.*$/s, '').trim();
+    const m = /([A-Za-z_][\w.]*)\s*$/.exec(t);
+    if (m) out.push(lastSeg(m[1]!));
+  };
+  if (s.lang === 'java' || s.lang === 'arkts' || s.lang === 'typescript' || s.lang === 'javascript') {
+    const m = /\bextends\s+([\w.]+)/.exec(head);
+    if (m) out.push(lastSeg(m[1]!));
+    const im = /\bimplements\s+([^]+)$/.exec(head);
+    if (im) for (const t of splitTop(im[1]!)) push(t);
+    return out;
+  }
+  // kotlin / swift: types after the first ':' at depth 0 (skipping annotation args / primary constructor)
+  depth = 0;
+  for (let i = 0; i < head.length; i++) {
+    const c = head[i];
+    if (c === '(' || c === '<' || c === '[') depth++;
+    else if (c === ')' || c === '>' || c === ']') depth--;
+    else if (c === ':' && depth === 0) {
+      let rest = head.slice(i + 1);
+      const w = rest.search(/\bwhere\b/);
+      if (w >= 0) rest = rest.slice(0, w);
+      for (const t of splitTop(rest)) push(t);
+      break;
+    }
+  }
+  return out;
+}
+
+function splitTop(s: string): string[] {
+  const out: string[] = [];
+  let depth = 0, cur = '';
+  for (const c of s) {
+    if (c === '(' || c === '<' || c === '[') depth++;
+    else if (c === ')' || c === '>' || c === ']') depth--;
+    if (c === ',' && depth === 0) {
+      out.push(cur);
+      cur = '';
+    } else cur += c;
+  }
+  if (cur.trim()) out.push(cur);
+  return out;
+}
+
 interface StrVal {
   s: string;
   dynamic: boolean;
@@ -158,7 +241,9 @@ const vcContainers = new Set([
 const reIdent = /^[a-z_]\w*$/;
 const reLocalAssign = /\b(?:let|var)\s+(\w+)\s*(?::\s*([^=\n]+?))?\s*=\s*([^\n]+)/gm;
 const reTypeName = /\b[A-Z]\w*/g;
-const reChildName = /(Accessory|Cell)(View)?Controller$/;
+// child / embedded controllers by name: accessory & cell controllers and context-menu / peek previews
+// (name heuristic: a last resort, used only when nothing navigates to the controller)
+const reChildName = /(Accessory|Cell|Preview)(View)?Controller$/;
 
 export function superclassOf(sig: string): string {
   let head = sig;
@@ -221,6 +306,11 @@ class Ctx {
   byName = new Map<string, Symbol[]>();
   f: Facts;
   mainPageIDs = new Map<string, string>();
+  declared = new Set<string>();
+  noDerive = new WeakSet<Route>();
+  classes: Map<string, Symbol> | null = null;
+  subs: Map<string, number> | null = null;
+  activities: { platform: string; name: string; file: string; links: DeepLink[] }[] = [];
   topByFile: Map<string, Symbol[]> | null = null;
   g: Graph;
   private files: string[] | null = null;
@@ -478,7 +568,9 @@ class Ctx {
         const p = trimPrefix(m[1]!, '/'), handler = m[2]!;
         if (!p) continue;
         const pattern = p.replace(reColonParam, '{$1}');
-        const r = R(sym.platform, snake(handler), pattern, sym.file, sym.id);
+        const r: RouteX = R(sym.platform, snake(handler), pattern, sym.file, sym.id);
+        r.deeplinks = ['/' + p];
+        this.declare({ platform: sym.platform, scheme: '', host: '', path: '/' + p, file: sym.file, source: 'route-table', route_id: r.route_id });
         const h = this.findSymNear(sym.platform, handler, sym.file, 'function', 'method');
         if (h) {
           r.file = h.file;
@@ -514,8 +606,12 @@ class Ctx {
         add(r);
       }
     }
+    // Appyx: when leaf nodes are declared (@ContributesNode) they are the pages (screenRoutes); the
+    // flow-level NavTargets (placeholders, loading states, sub-flows) are then not emitted as routes
+    const appyxLeaves = new Set<string>();
+    for (const s of this.g.symbols) if (s.lang === 'kotlin' && s.signature.includes('@ContributesNode')) appyxLeaves.add(s.platform);
     for (const sym of this.g.symbols) {
-      if (sym.lang !== 'kotlin' || !sym.parent || (sym.kind !== 'class' && sym.kind !== 'object')) continue;
+      if (sym.lang !== 'kotlin' || !sym.parent || (sym.kind !== 'class' && sym.kind !== 'object') || appyxLeaves.has(sym.platform)) continue;
       const nt = getSym(this.g, sym.parent);
       if (!nt || nt.name !== 'NavTarget' || nt.kind !== 'interface' || !nt.signature.includes('sealed')) continue;
       let flow = '';
@@ -554,6 +650,225 @@ class Ctx {
     }
   }
 
+  // ---------- class-based screens (activities, fragments, Circuit, Appyx, SwiftUI, AppKit, ArkTS decorators) ----------
+
+  classIndex(): Map<string, Symbol> {
+    if (this.classes) return this.classes;
+    const m = new Map<string, Symbol>();
+    for (const s of this.g.symbols) {
+      if (!['class', 'object', 'interface', 'struct', 'protocol', 'enum'].includes(s.kind)) continue;
+      const k = s.platform + '|' + s.name;
+      const prev = m.get(k);
+      if (!prev || (isTestPath(prev.file) && !isTestPath(s.file)) || (prev.parent && !s.parent && !isTestPath(s.file))) m.set(k, s);
+    }
+    this.classes = m;
+    return m;
+  }
+
+  /** Does `name` (a class on `platform`) inherit, directly or transitively, from one of `bases`? */
+  inherits(platform: string, name: string, bases: Set<string>, depth = 0, seen = new Set<string>()): string {
+    if (bases.has(name)) return name;
+    if (depth > 12 || seen.has(name)) return '';
+    seen.add(name);
+    const cl = this.classIndex().get(platform + '|' + name);
+    if (!cl) return '';
+    for (const sup of supertypes(cl)) {
+      const hit = this.inherits(platform, sup, bases, depth + 1, seen);
+      if (hit) return hit;
+    }
+    return '';
+  }
+
+  subclassCounts(): Map<string, number> {
+    if (this.subs) return this.subs;
+    const m = new Map<string, number>();
+    for (const s of this.g.symbols) {
+      if (!['class', 'object', 'struct'].includes(s.kind) || isTestPath(s.file)) continue;
+      for (const sup of supertypes(s)) m.set(s.platform + '|' + sup, (m.get(s.platform + '|' + sup) ?? 0) + 1);
+    }
+    this.subs = m;
+    return m;
+  }
+
+  screenRoutes(): void {
+    const routes = this.f.routes as RouteX[];
+    const have = new Set<string>();
+    for (const r of routes) have.add(r.platform + '|' + r.symbol);
+    const add = (s: Symbol, rid = s.name, pattern = rid, links: DeepLink[] = []) => {
+      if (have.has(s.platform + '|' + s.id)) {
+        if (links.length) {
+          const r = routes.find((x) => x.platform === s.platform && x.symbol === s.id);
+          if (r) r.deeplinks = [...new Set([...(r.deeplinks ?? []), ...links.map(linkString)])];
+        }
+        return;
+      }
+      have.add(s.platform + '|' + s.id);
+      const r: RouteX = { platform: s.platform, route_id: rid, pattern, deeplink: '', file: s.file, symbol: s.id };
+      if (links.length) r.deeplinks = [...new Set(links.map(linkString))];
+      this.noDerive.add(r); // class-named screens: no `<scheme>://<ClassName>` guess
+      routes.push(r);
+    };
+    const cls = this.classIndex();
+    const subs = this.subclassCounts();
+    const concrete = (s: Symbol) => !isTestPath(s.file) && !/\b(abstract|sealed|open)\b/.test(s.signature.split(/[:{(]/)[0]!) && !(subs.get(s.platform + '|' + s.name) ?? 0) && !s.name.startsWith('Base') && !s.name.startsWith('Abstract');
+
+    // Android activities declared in a manifest (deep links of their intent-filters attached)
+    for (const a of this.activities) {
+      const s = cls.get(a.platform + '|' + a.name);
+      if (!s || (s.lang !== 'kotlin' && s.lang !== 'java') || isTestPath(s.file)) continue;
+      add(s, s.name, s.name, a.links);
+    }
+
+    // Kotlin/Java class screens
+    const fragmentBases = new Set(['Fragment', 'PreferenceFragmentCompat', 'PreferenceFragment', 'ListFragment']);
+    const dialogBases = new Set(['DialogFragment', 'BottomSheetDialogFragment', 'AppCompatDialogFragment']);
+    const fragments = new Map<string, Symbol>();
+    for (const s of cls.values()) {
+      if (s.lang !== 'kotlin' && s.lang !== 'java') continue;
+      if (s.kind !== 'class' && s.kind !== 'object') continue;
+      // Appyx leaf nodes: @ContributesNode
+      if (s.signature.includes('@ContributesNode') && !isTestPath(s.file)) {
+        add(s);
+        continue;
+      }
+      if (!concrete(s)) continue;
+      // Circuit screens: implement com.slack.circuit Screen (directly or via an app base class)
+      if (this.inherits(s.platform, s.name, new Set(['Screen'])) && !cls.has(s.platform + '|Screen') && this.circuitFile(s)) {
+        add(s);
+        continue;
+      }
+      if (s.kind === 'class' && !this.inherits(s.platform, s.name, dialogBases) && this.inherits(s.platform, s.name, fragmentBases)) fragments.set(s.name, s);
+    }
+    // Fragments become routes only when something outside them instantiates them (not a pager adapter page)
+    if (fragments.size) {
+      const sites = new Map<string, { adapter: number; other: number }>();
+      for (const file of this.sortedFiles()) {
+        const fi = this.g.files[file]!;
+        if (fi.lang !== 'kotlin' && fi.lang !== 'java') continue;
+        for (const call of this.calls(file)) {
+          let n = '';
+          if (fragments.has(call.callee)) n = call.callee;
+          else if (call.callee === 'newInstance' && fragments.has(lastSeg(call.receiver ?? ''))) n = lastSeg(call.receiver ?? '');
+          if (!n) continue;
+          let top = getSym(this.g, call.enclosing);
+          let inAdapter = false;
+          while (top && top.parent) {
+            if (/Adapter\b/.test(top.name) || supertypes(top).some((t) => t.endsWith('Adapter'))) inAdapter = true;
+            top = getSym(this.g, top.parent);
+          }
+          if (top && (/Adapter\b/.test(top.name) || supertypes(top).some((t) => t.endsWith('Adapter')))) inAdapter = true;
+          if (!top || top.name === n || isTestPath(file)) continue;
+          // embedded child fragments: created where the child fragment manager is used (directly, or in
+          // the same-class helper the instance is handed to)
+          if (this.childFragmentSite(file, call)) inAdapter = true;
+          const c = sites.get(n) ?? { adapter: 0, other: 0 };
+          if (inAdapter) c.adapter++;
+          else c.other++;
+          sites.set(n, c);
+        }
+      }
+      for (const [n, s] of [...fragments].sort((a, b) => cmpStr(a[0], b[0]))) if ((sites.get(n)?.other ?? 0) > 0) add(s);
+    }
+
+    // AppKit windows
+    for (const s of cls.values()) {
+      if (s.lang !== 'swift' || s.kind !== 'class' || !concrete(s)) continue;
+      if (s.name !== 'NSWindowController' && this.inherits(s.platform, s.name, new Set(['NSWindowController']))) add(s);
+    }
+
+    // HarmonyOS custom route decorators: @AppRouter({ name: "x/Y" }) (any decorator taking a route `name`)
+    for (const s of this.g.symbols) {
+      if (s.lang !== 'arkts' || (s.kind !== 'component' && s.kind !== 'struct')) continue;
+      const m = /@(\w*Rout\w*)\(\s*\{[^}]*?\bname\s*:\s*(['"])([^'"]+)\2/.exec(s.signature);
+      if (m) add(s, m[3]!, m[3]!);
+    }
+
+    this.swiftUIRoutes(add);
+  }
+
+  childFragmentSite(file: string, call: Call): boolean {
+    const usesChild = (sym: Symbol | undefined) => !!sym && /childFragmentManager|getChildFragmentManager/.test(this.symbolSource(sym));
+    const fn = getSym(this.g, call.enclosing);
+    if (usesChild(fn)) return true;
+    const pat = new RegExp('\\b' + (call.callee === 'newInstance' ? lastSeg(call.receiver ?? '') : call.callee) + '\\s*[.(]');
+    for (const c of this.calls(file)) {
+      if (c.line < call.line - 3 || c.line > call.line || c === call) continue;
+      if (!(c.args ?? []).some((a) => pat.test(a.text))) continue;
+      const helper = this.findSymNear(this.g.files[file]!.platform, c.callee, file, 'method', 'function');
+      if (helper && helper.file === file && usesChild(helper)) return true;
+    }
+    return false;
+  }
+
+  circuitFile(s: Symbol): boolean {
+    const seen = new Set<string>();
+    let cur: Symbol | undefined = s;
+    for (let i = 0; cur && i < 8 && !seen.has(cur.name); i++) {
+      seen.add(cur.name);
+      if ((this.g.files[cur.file]?.imports ?? []).some((x) => x.includes('circuit'))) return true;
+      const sup: string | undefined = supertypes(cur)[0];
+      cur = sup ? this.classIndex().get(s.platform + '|' + sup) : undefined;
+    }
+    return false;
+  }
+
+  /** SwiftUI destinations: views presented by sheet/fullScreenCover/popover/navigationDestination,
+   * passed as a `destination:` argument, hosted by UIHostingController(rootView:) / WindowGroup, or
+   * reached through a TCA `Destination` enum case (`case settings(Settings)` -> SettingsView). */
+  swiftUIRoutes(add: (s: Symbol) => void): void {
+    const views = new Map<string, Symbol>();
+    for (const s of this.g.symbols) {
+      if (s.lang !== 'swift' || (s.kind !== 'struct' && s.kind !== 'class') || isTestPath(s.file)) continue;
+      if (/Previews?$/.test(s.name) || s.file.includes('Preview')) continue;
+      if (!supertypes(s).includes('View')) continue;
+      const k = s.platform + '|' + s.name;
+      if (!views.has(k)) views.set(k, s);
+    }
+    if (!views.size) return;
+    const presenters = new Set(['sheet', 'fullScreenCover', 'popover', 'navigationDestination']);
+    const found: Symbol[] = [];
+    for (const file of this.sortedFiles()) {
+      const fi = this.g.files[file]!;
+      if (fi.lang !== 'swift' || isTestPath(file)) continue;
+      for (const call of this.calls(file)) {
+        const v = (n: string) => views.get(fi.platform + '|' + n);
+        for (const a of call.args ?? []) {
+          if (a.label === 'destination' || a.label === 'rootView') {
+            const m = /^([A-Z]\w*)\s*[({]/.exec(a.text.trim());
+            const s = m ? v(m[1]!) : undefined;
+            if (s) found.push(s);
+          }
+        }
+        if (presenters.has(call.callee) || call.callee === 'WindowGroup') {
+          const all = call.callee === 'navigationDestination' && (call.args ?? []).some((a) => a.label === 'for');
+          for (const n of call.inner ?? []) {
+            const s = v(n);
+            if (!s) continue;
+            found.push(s);
+            if (!all) break;
+          }
+        }
+      }
+    }
+    // TCA: enum Destination / Path cases with a reducer payload -> <Feature>View
+    for (const s of this.g.symbols) {
+      if (s.lang !== 'swift' || s.kind !== 'case' || !s.parent) continue;
+      const p = getSym(this.g, s.parent);
+      if (!p || p.kind !== 'enum' || !/^(Destination|Path)$/.test(p.name)) continue;
+      const m = /\(\s*([A-Z][\w.]*)\s*\)/.exec(s.signature);
+      if (!m) continue;
+      const t = lastSeg(m[1]!);
+      for (const c of [t + 'View', t.replace(/(Reducer|Feature|Core)$/, '') + 'View']) {
+        const v = views.get(s.platform + '|' + c);
+        if (v) {
+          found.push(v);
+          break;
+        }
+      }
+    }
+    for (const s of found) add(s);
+  }
+
   typedRoute(platform: string, file: string, call: Call): Route {
     const t = lastSeg(call.type_args![0]!);
     let base = t;
@@ -563,12 +878,15 @@ class Ctx {
         break;
       }
     }
-    const rid = snake(base);
-    let pattern = rid;
+    // route_id = the route type's name (the identifier the app navigates with); pattern keeps the
+    // snake_case id plus constructor params as a readable alias
+    let pattern = snake(base);
     const ks = this.findSym(platform, t, 'class', 'object');
     if (ks) for (const m of ks.signature.matchAll(reValParam)) pattern += '/{' + m[1] + '}';
-    let sym = call.enclosing, sfile = file;
+    const rid = t;
+    let sym = ks ? ks.id : call.enclosing, sfile = ks ? ks.file : file;
     for (const inn of call.inner ?? []) {
+      if (inn === t) continue;
       if (inn.endsWith('Screen') || inn.endsWith('Route')) {
         const s = this.findSymNear(platform, inn, file, 'composable', 'function');
         if (s) {
@@ -913,6 +1231,19 @@ class Ctx {
         edges.push({ e: { platform: fi.platform, from: screenID(src.name), to: screenID(to), kind, file, line: call.line }, from: src.name, to });
       }
     }
+    // panes: a VC held in a stored property of a window / split-view controller is composed, not navigated to
+    // (owners: window / split-view controllers; a property on an ordinary VC is often just a reference
+    // to a controller it presents)
+    const owners = new Set<string>();
+    for (const cl of classes.values()) if (this.inherits(cl.platform, cl.name, new Set(['NSWindowController', 'NSSplitViewController', 'UISplitViewController']))) owners.add(cl.platform + '|' + cl.name);
+    for (const s of this.g.symbols) {
+      if (s.lang !== 'swift' || s.kind !== 'property' || !s.parent) continue;
+      const p = getSym(this.g, s.parent);
+      if (!p || !owners.has(p.platform + '|' + p.name)) continue;
+      const m = /\b(?:var|let)\s+\w+\s*(?::\s*([A-Z]\w*)[?!]?\s*(?:=|$)|=\s*([A-Z]\w*)\s*\()/.exec(s.signature);
+      const t = m ? m[1] ?? m[2] : '';
+      if (t && t !== p.name && screens.has(s.platform + '|' + t)) child.add(t);
+    }
     const drop = new Set<string>();
     for (const k of keys) {
       const cl = screens.get(k)!;
@@ -1023,7 +1354,7 @@ class Ctx {
           this.manifest(p.name, fp, rel);
           break;
         case 'Info.plist':
-          this.plist(p.name, fp);
+          this.plist(p.name, fp, rel);
           break;
         case 'module.json5':
           this.moduleJSON5(p.name, fp, rel);
@@ -1035,7 +1366,10 @@ class Ctx {
           this.mainPages(p.name, fp, rel);
           break;
         default:
-          if (name.endsWith('.xml') && path.dirname(fp).split(path.sep).join('/').endsWith('/res/navigation')) this.navGraph(p.name, fp, rel);
+          // renamed Info plists (Wikipedia-Info.plist, Info-Debug.plist) and associated-domain entitlements
+          if (name.endsWith('.plist') && /(^|[-_.])Info([-_.]|$)/.test(name.slice(0, -6) + '.')) this.plist(p.name, fp, rel);
+          else if (name.endsWith('.entitlements')) this.entitlements(p.name, fp, rel);
+          else if (name.endsWith('.xml') && path.dirname(fp).split(path.sep).join('/').endsWith('/res/navigation')) this.navGraph(p.name, fp, rel);
       }
     });
   }
@@ -1053,19 +1387,72 @@ class Ctx {
     } catch {
       return;
     }
+    let act: { platform: string; name: string; file: string; links: DeepLink[] } | null = null;
+    let filt: { actions: string[]; schemes: string[]; hosts: string[]; paths: string[] } | null = null;
     for (const t of xmlTokens(b)) {
+      if (t.type === 'end') {
+        if (t.name === 'intent-filter' && filt) {
+          // a deep link = an ACTION_VIEW filter with at least one scheme; scheme x host x path combined
+          if (filt.actions.includes('android.intent.action.VIEW') && filt.schemes.length) {
+            for (const sc of filt.schemes)
+              for (const h of filt.hosts.length ? filt.hosts : [''])
+                for (const pa of filt.paths.length ? filt.paths : ['']) {
+                  const d: DeepLink = { platform, scheme: sc, host: h, path: pa, file: rel, source: 'intent-filter' };
+                  if (act) {
+                    d.route_id = act.name;
+                    act.links.push(d);
+                  }
+                  this.declare(d);
+                }
+          }
+          filt = null;
+        } else if ((t.name === 'activity' || t.name === 'activity-alias') && act) {
+          this.activities.push(act);
+          act = null;
+        }
+        continue;
+      }
       if (t.type !== 'start') continue;
       if (t.name === 'data') {
         let s = t.attrs.scheme ?? '';
+        const raw = s;
         if (s.startsWith('@string/')) s = androidString(fp, s.slice(8));
         if (s && !s.startsWith('@') && !s.startsWith('$')) this.addScheme(platform, s);
-      } else if (t.name === 'activity') {
-        (this.f.entries ??= []).push({ platform, kind: 'activity', name: t.attrs.name ?? '', file: rel });
+        if (filt) {
+          const sc = s || raw;
+          if (sc && !filt.schemes.includes(sc)) filt.schemes.push(sc);
+          const h = t.attrs.host ?? '';
+          if (h && !filt.hosts.includes(h)) filt.hosts.push(h);
+          for (const k of ['path', 'pathPrefix', 'pathPattern', 'pathAdvancedPattern', 'pathSuffix']) {
+            const v = t.attrs[k];
+            if (v && !filt.paths.includes(v)) filt.paths.push(v);
+          }
+        }
+      } else if (t.name === 'intent-filter') {
+        filt = { actions: [], schemes: [], hosts: [], paths: [] };
+      } else if (t.name === 'action' && filt) {
+        filt.actions.push(t.attrs.name ?? '');
+      } else if (t.name === 'activity' || t.name === 'activity-alias') {
+        if (t.name === 'activity') (this.f.entries ??= []).push({ platform, kind: 'activity', name: t.attrs.name ?? '', file: rel });
+        const cls = t.name === 'activity' ? t.attrs.name ?? '' : t.attrs.targetActivity ?? '';
+        act = { platform, name: lastSeg(cls), file: rel, links: [] };
+        if (t.selfClosing) {
+          /* end token follows */
+        }
       }
     }
   }
 
-  plist(platform: string, fp: string): void {
+  /** Record a declared deep link (deduplicated). */
+  declare(d: DeepLink): void {
+    const list = ((this.f as FactsX).deeplinks ??= []);
+    const k = [d.platform, d.scheme, d.host, d.path, d.file, d.route_id ?? ''].join('|');
+    if (this.declared.has(k)) return;
+    this.declared.add(k);
+    list.push(d);
+  }
+
+  plist(platform: string, fp: string, rel = ''): void {
     let b: string;
     try {
       b = fs.readFileSync(fp, 'utf8');
@@ -1091,7 +1478,34 @@ class Ctx {
         const s = trimSpace(t.text);
         if (!s) continue;
         if (cur === 'key') lastKey = s;
-        else if (cur === 'string' && inSchemes) this.addScheme(platform, s);
+        else if (cur === 'string' && inSchemes) {
+          this.addScheme(platform, s);
+          this.declare({ platform, scheme: s, host: '', path: '', file: rel, source: 'CFBundleURLSchemes' });
+        }
+      }
+    }
+  }
+
+  /** Associated domains: `applinks:host` in *.entitlements -> https://host (universal links). */
+  entitlements(platform: string, fp: string, rel: string): void {
+    let b: string;
+    try {
+      b = fs.readFileSync(fp, 'utf8');
+    } catch {
+      return;
+    }
+    let lastKey = '', cur = '';
+    for (const t of xmlTokens(b)) {
+      if (t.type === 'start') cur = t.name;
+      else if (t.type === 'end') cur = '';
+      else {
+        const s = trimSpace(t.text);
+        if (!s) continue;
+        if (cur === 'key') lastKey = s;
+        else if (cur === 'string' && lastKey === 'com.apple.developer.associated-domains' && s.startsWith('applinks:')) {
+          const host = s.slice(9).replace(/\?.*$/, '');
+          if (host) this.declare({ platform, scheme: 'https', host, path: '', file: rel, source: 'applinks' });
+        }
       }
     }
   }
@@ -1103,7 +1517,7 @@ class Ctx {
     } catch {
       return;
     }
-    let m: { module?: { name?: string; routerMap?: string; abilities?: { name?: string; skills?: { uris?: { scheme?: string }[] }[] }[] } };
+    let m: { module?: { name?: string; routerMap?: string; abilities?: { name?: string; skills?: { uris?: { scheme?: string; host?: string; path?: string; pathStartWith?: string; pathRegex?: string }[] }[] }[] } };
     try {
       m = JSON.parse(json5(b));
     } catch (e) {
@@ -1121,7 +1535,14 @@ class Ctx {
     }
     for (const a of mod.abilities ?? []) {
       (this.f.entries ??= []).push({ platform, kind: 'ability', name: a.name ?? '', file: rel });
-      for (const sk of a.skills ?? []) for (const u of sk.uris ?? []) if (u.scheme && u.scheme !== 'http' && u.scheme !== 'https') this.addScheme(platform, u.scheme);
+      for (const sk of a.skills ?? [])
+        for (const u of sk.uris ?? []) {
+          if (u.scheme && u.scheme !== 'http' && u.scheme !== 'https') this.addScheme(platform, u.scheme);
+          if (!u.scheme) continue;
+          let pa = u.path || u.pathStartWith || u.pathRegex || '';
+          if (pa && !pa.startsWith('/')) pa = '/' + pa;
+          this.declare({ platform, scheme: u.scheme, host: u.host ?? '', path: pa, file: rel, source: 'skills.uris' });
+        }
     }
   }
 
@@ -1238,6 +1659,8 @@ class Ctx {
           const u = at('uri');
           if (top && u) {
             top.r.deeplink = u;
+            const m = /^([^:/]+):\/\/([^/]*)(.*)$/.exec(u);
+            this.declare(m ? { platform, scheme: m[1]!, host: m[2]!, path: m[3]!, file: rel, source: 'nav-graph', route_id: top.r.route_id } : { platform, scheme: '', host: '', path: u, file: rel, source: 'nav-graph', route_id: top.r.route_id });
             const i = u.indexOf('://');
             if (i > 0) this.addScheme(platform, u.slice(0, i));
           }
@@ -1253,7 +1676,20 @@ class Ctx {
   }
 
   sortAll(): void {
-    for (const r of this.f.routes!) if (!r.deeplink) r.deeplink = this.deeplink(r.platform, r.pattern);
+    for (const r of this.f.routes as RouteX[]) {
+      // prefer a declared link; derive `<scheme>://<pattern>` only when the platform declares exactly
+      // one app scheme (with several, e.g. an app scheme plus an OAuth callback, the guess is unreliable)
+      if (!r.deeplink && r.deeplinks?.length && r.deeplinks[0]!.includes('://')) r.deeplink = r.deeplinks[0]!;
+      if (!r.deeplink && !this.noDerive.has(r) && (this.schemes[r.platform]?.length ?? 0) === 1) r.deeplink = this.deeplink(r.platform, r.pattern);
+      const i = r.symbol.lastIndexOf('#');
+      r.name = i >= 0 ? lastSeg(r.symbol.slice(i + 1)) || r.route_id : r.route_id;
+      if (r.deeplinks) {
+        const d = r.deeplinks;
+        delete r.deeplinks;
+        r.deeplinks = d; // keep `deeplinks` after `name` in the JSON
+      }
+    }
+    (this.f as FactsX).deeplinks?.sort((a, b) => cmpStr(a.platform, b.platform) || cmpStr(a.file, b.file) || cmpStr(linkString(a), linkString(b)));
     this.f.routes!.sort((a, b) => cmpStr(a.platform, b.platform) || cmpStr(a.route_id, b.route_id));
     this.f.testids!.sort((a, b) => cmpStr(a.platform, b.platform) || cmpStr(a.tid, b.tid) || cmpStr(a.file, b.file) || a.line - b.line);
     this.f.apis!.sort((a, b) => cmpStr(a.platform, b.platform) || cmpStr(a.path, b.path) || cmpStr(a.method, b.method));
@@ -1296,6 +1732,7 @@ export function extractFacts(cfg: Config, res: ScanResult): Facts {
   const c = new Ctx(cfg, res);
   for (const p of cfg.platforms) c.resources(p);
   c.routes();
+  c.screenRoutes();
   c.uikit();
   c.testIDs();
   c.apis();

@@ -26,6 +26,14 @@ and the change sets in `examples/minishop-changes/`; checked by `test/parity.tes
 
 ## Intentional differences
 
+- **Extraction tuning (bench/accuracy, 2026-10):** `routes.json` is no longer byte-identical to Go.
+  Every route gains a `name` field (bare type / page name), routes may carry `deeplinks` (declared
+  links), and minishop gains two class-based screens: `MainActivity` (manifest activity, carries its
+  intent-filter link `minishop://`) and `RootView` (SwiftUI `WindowGroup` root). Regenerated
+  `routes.json` and `plan-*.json` (the new routes add feature tasks / context) with the TS kb;
+  `testids.json` / `apis.json` are unchanged. New `facts/deeplinks.json` lists declared deep links.
+  `test/cli.test.ts` zero-config `routes` total 18 → 20 for the same reason.
+
 - Grammars are WASM builds of the exact grammar sources Go linked (`grammars/VENDORED.md`);
   tree-sitter-swift's scanner lost one `fprintf(stderr, …)` OOM message (no `stderr` in
   web-tree-sitter). Parse trees are unchanged.

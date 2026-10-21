@@ -42,6 +42,8 @@ export function factsJSON(f: Facts): Record<string, unknown> {
   if (f.entries?.length) o.entries = f.entries;
   if (f.warnings?.length) o.warnings = f.warnings;
   if (f.navigation?.length) o.navigation = f.navigation;
+  const dl = (f as Facts & { deeplinks?: unknown[] }).deeplinks;
+  if (dl && dl.length) o.deeplinks = dl;
   return o;
 }
 
@@ -59,6 +61,9 @@ export function renderFacts(f: Facts, g: Graph, platforms: string[]): Map<string
     ['facts/testids.json', testIDsJSON(f)],
     ['facts/apis.json', apisJSON(f)],
   ]);
+  // declared deep links (manifest intent-filters, URL schemes, applinks, skills.uris, URL route tables)
+  const dl = (f as Facts & { deeplinks?: unknown[] }).deeplinks;
+  if (dl && dl.length) out.set('facts/deeplinks.json', mustJSON({ version: 1, deeplinks: dl }));
   for (const p of platforms) {
     let b = header('facts/' + p + '/routes', title(p) + ' routes');
     const sc = f.schemes?.[p];

@@ -53,7 +53,6 @@
         }
       ],
       "context": [
-        "android://app/src/main/java/com/minishop/MainActivity.kt#MainActivity.applyTestParams",
         "android://app/src/main/java/com/minishop/navigation/MiniShopNavHost.kt#DEEPLINK_BASE",
         "android://app/src/main/java/com/minishop/navigation/MiniShopNavHost.kt#MiniShopNavHost",
         "android://app/src/main/java/com/minishop/navigation/Routes.kt#Routes",
@@ -80,7 +79,6 @@
         "ios://MiniShop/Navigation/AppRouter.swift#AppRouter.handle",
         "ios://MiniShop/Navigation/AppRouter.swift#AppRouter.match",
         "ios://MiniShop/Navigation/AppRouter.swift#AppRouter.path",
-        "ios://MiniShop/Navigation/AppRouter.swift#RootView.router",
         "ios://MiniShop/Navigation/Route.swift#Destination",
         "ios://MiniShop/Navigation/Route.swift#Destination.params",
         "ios://MiniShop/Navigation/Route.swift#Destination.route",
@@ -93,7 +91,7 @@
         "ios://MiniShop/Navigation/Route.swift#Route.products",
         "ios://MiniShop/Navigation/Route.swift#Route.profile"
       ],
-      "priority": 2
+      "priority": 4
     },
     {
       "id": "t02-concepts-shared-components",
@@ -107,6 +105,18 @@
       "reasons": [
         {
           "code": "anchor_added",
+          "sym": "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.getInstance"
+        },
+        {
+          "code": "anchor_added",
+          "sym": "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.save"
+        },
+        {
+          "code": "anchor_added",
+          "sym": "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.token"
+        },
+        {
+          "code": "anchor_added",
           "sym": "ios://MiniShop/Networking/APIClient.swift#LoginResponse.token"
         },
         {
@@ -118,6 +128,11 @@
         "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiClient",
         "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiClient.BASE_URL",
         "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiClient.service",
+        "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.getInstance",
+        "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.save",
+        "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.token",
+        "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.pending",
+        "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.preload",
         "android://app/src/main/java/com/minishop/ui/components/MiniShopTopBar.kt#MiniShopTopBar",
         "harmony://entry/src/main/ets/common/Api.ets#Api",
         "harmony://entry/src/main/ets/common/Api.ets#Api.addToCart",
@@ -137,10 +152,68 @@
         "ios://MiniShop/Networking/APIClient.swift#TokenStore.shared",
         "ios://MiniShop/Networking/APIClient.swift#TokenStore.token"
       ],
-      "priority": 3
+      "priority": 5
     },
     {
-      "id": "t03-features-profile",
+      "id": "t03-features-MainActivity",
+      "op": "update",
+      "kind": "feature",
+      "page": "pages/features/MainActivity.md",
+      "title": "MainActivity",
+      "route_id": "MainActivity",
+      "write_set": [
+        "pages/features/MainActivity.md"
+      ],
+      "reasons": [
+        {
+          "code": "anchor_added",
+          "sym": "android://app/src/main/java/com/minishop/ui/profile/ProfileScreen.kt#ProfileScreen"
+        }
+      ],
+      "context": [
+        "android://app/src/main/java/com/minishop/MainActivity.kt#MainActivity",
+        "android://app/src/main/java/com/minishop/MainActivity.kt#MainActivity.applyTestParams",
+        "android://app/src/main/java/com/minishop/MainActivity.kt#MainActivity.onCreate",
+        "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.TokenStore",
+        "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.instance",
+        "android://app/src/main/java/com/minishop/ui/cart/CartScreen.kt#CartScreen",
+        "android://app/src/main/java/com/minishop/ui/checkout/CheckoutScreen.kt#CheckoutScreen",
+        "android://app/src/main/java/com/minishop/ui/login/LoginScreen.kt#LoginScreen",
+        "android://app/src/main/java/com/minishop/ui/order/OrderDetailScreen.kt#OrderDetailScreen",
+        "android://app/src/main/java/com/minishop/ui/products/ProductDetailScreen.kt#ProductDetailScreen",
+        "android://app/src/main/java/com/minishop/ui/products/ProductsScreen.kt#ProductsScreen",
+        "android://app/src/main/java/com/minishop/ui/profile/ProfileScreen.kt#ProfileScreen"
+      ],
+      "priority": 1
+    },
+    {
+      "id": "t04-features-RootView",
+      "op": "update",
+      "kind": "feature",
+      "page": "pages/features/RootView.md",
+      "title": "RootView",
+      "route_id": "RootView",
+      "write_set": [
+        "pages/features/RootView.md"
+      ],
+      "reasons": [
+        {
+          "code": "anchor_body_changed",
+          "sym": "ios://MiniShop/Navigation/AppRouter.swift#RootView.body"
+        }
+      ],
+      "context": [
+        "ios://MiniShop/Features/Order/OrderDetailView.swift#OrderDetailView.id",
+        "ios://MiniShop/Features/Products/ProductDetailView.swift#ProductDetailView.cart",
+        "ios://MiniShop/Features/Products/ProductDetailView.swift#ProductDetailView.id",
+        "ios://MiniShop/Navigation/AppRouter.swift#RootView",
+        "ios://MiniShop/Navigation/AppRouter.swift#RootView.body",
+        "ios://MiniShop/Navigation/AppRouter.swift#RootView.router"
+      ],
+      "priority": 2
+    },
+    {
+      "id": "t05-features-profile",
       "op": "create",
       "kind": "feature",
       "page": "pages/features/profile.md",
@@ -157,11 +230,8 @@
       ],
       "context": [
         "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.TokenStore",
-        "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.getInstance",
         "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.instance",
         "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.isLoggedIn",
-        "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.save",
-        "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.token",
         "android://app/src/main/java/com/minishop/ui/profile/ProfileScreen.kt#ProfileScreen",
         "harmony://entry/src/main/ets/common/TokenStore.ets#TokenStore.isLoggedIn",
         "harmony://entry/src/main/ets/common/TokenStore.ets#TokenStore.save",
@@ -171,10 +241,10 @@
         "ios://MiniShop/Features/Profile/ProfileView.swift#ProfileView.body",
         "ios://MiniShop/Features/Profile/ProfileView.swift#ProfileView.router"
       ],
-      "priority": 1
+      "priority": 3
     },
     {
-      "id": "t04-overview",
+      "id": "t06-overview",
       "op": "update",
       "kind": "overview",
       "page": "pages/overview.md",
@@ -188,13 +258,42 @@
         }
       ],
       "context": [],
-      "priority": 4
+      "priority": 6
     }
   ],
   "changed_route_ids": [
+    "MainActivity",
+    "RootView",
     "profile"
   ],
   "changed_routes": [
+    {
+      "route_id": "MainActivity",
+      "platforms": [
+        "android"
+      ],
+      "reasons": [
+        "symbol_changed"
+      ],
+      "symbols": [
+        "android://app/src/main/java/com/minishop/navigation/MiniShopNavHost.kt#MiniShopNavHost",
+        "android://app/src/main/java/com/minishop/navigation/Routes.kt#Routes.PROFILE",
+        "android://app/src/main/java/com/minishop/ui/profile/ProfileScreen.kt#ProfileScreen"
+      ]
+    },
+    {
+      "route_id": "RootView",
+      "platforms": [
+        "ios"
+      ],
+      "reasons": [
+        "symbol_changed"
+      ],
+      "symbols": [
+        "ios://MiniShop/Navigation/AppRouter.swift#RootView.body",
+        "ios://MiniShop/Navigation/Route.swift#Route.profile"
+      ]
+    },
     {
       "route_id": "profile",
       "platforms": [

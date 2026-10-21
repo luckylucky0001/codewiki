@@ -42,7 +42,7 @@ describe('kb CLI', () => {
     const r = kb(['routes', '--json']);
     expect(r.code).toBe(0);
     expect(r.err).toContain('zero-config mode');
-    expect(JSON.parse(r.out).total).toBe(18);
+    expect(JSON.parse(r.out).total).toBe(20);
     expect(fs.existsSync(path.join(root, 'codewiki.yaml'))).toBe(false);
   });
 
