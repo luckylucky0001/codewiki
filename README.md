@@ -38,7 +38,7 @@ flowchart LR
 
 | 层 | 负责 | 产出 |
 |---|---|---|
-| 事实层 | Go CLI（tree-sitter，确定性） | `facts/{android,ios,harmony}/*.md`、`facts/routes.json`、`testids.json`、`apis.json`、`requirements.json` |
+| 事实层 | kb CLI（tree-sitter，确定性） | `facts/{android,ios,harmony}/*.md`、`facts/routes.json`、`testids.json`、`apis.json`、`requirements.json` |
 | 理解层 | LLM（`codewiki` skill 的 compound 流程，或离线 template writer） | `pages/features/*`、`pages/overview.md`、`pages/_conflicts.md` … |
 | 校验层 | `kb verify`（CI 门禁） | 锚点 hash 全部匹配 HEAD、符号存在、无死链、无孤儿页、index 覆盖、facts 新鲜 |
 

@@ -145,7 +145,10 @@ frontmatter：kb 只拥有 `last_compound_scan`、`compound_scan_mode`、`compou
 - `computeScopeChanges(git, scopes)`：git 以函数注入。有 commit 基准 → `git diff --name-status -M <base> HEAD`；否则 `git log --since=<date> --name-status -M`；再并上 `git diff`、`git diff --cached`、`git status --porcelain`；rename 两端都计入。文件按最深项目根归属，否则归 repository；根 `specs/` 变更对所有作用域都可见。非 git、浅克隆且缺基准、无 managed 文件 → `full`。
 - `.kb/run-state.json`（`runstate.ts`）：`decideResume()` —— 同一 HEAD 且未完成 → resume；`--restart` 或 HEAD 变化 → restart；上次已完成 → fresh。agent 结果契约（`contract.ts`）：按 `=== <目标文件> [维度] ===` 分组的条目 + 末行 `COMPOUND_META {"status":"done|continuation","remaining_scope":[…]}`；`routeAgentResult()` 保证仓库级结果只写根 docs、项目级结果只写本项目 docs、来源在 agent 白名单之外的条目被拒绝、按 150/100 行预算在条目边界截断。
 
-## 9. 计划中的 `kb docs …` 子命令
+## 9. `kb docs …` 子命令
+
+> 已实现（`src/engine/docsflow.ts` + `src/cli/cli.ts`，用法以 `kb help docs` 为准）。与下表原设计的差异：`kb docs scope` 为新增；`compound` 另有 `--no-root-read`、`--agent …|--llm template`，不接受路径参数，也没有 `--full` / `--write-adr` / `--write-debt`（ADR 与技术债走独立的 `kb docs adr|debt --write`）；`kb links` 只接受路径和 `--json`，有断链时 exit 1。
+
 
 | 命令 | 作用 | 退出码 |
 |---|---|---|
