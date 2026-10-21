@@ -77,9 +77,9 @@ kb install-skills ../app                      # 旧命令，保留为别名：.c
 | Claude（haiku）问“购物车上限三端分别是多少，引用出处” | 第一步就运行了 `kb search` 和 `kb parity`，回答给出了三端的符号 ID。5 轮，$0.0061 |
 | Claude（haiku）问“一共多少路由，哪些路由页面没设 testID” | 只调用了 `kb routes` 和 `kb lint-tid --pages` 两次，就给出完整答案。3 轮，$0.0037 |
 | Claude（haiku）只开放 MCP 工具（禁用 Bash、Read、Grep、Glob）问“login 页三端 testID 和接口” | 通过 `mcp__codewiki__kb_search` 和 `mcp__codewiki__kb_get` 两次调用回答，表格里带行号 |
-| Codex：`codex debug prompt-input`（没有调用模型） | AGENTS.md 里的 codewiki 块出现 1 次，4 个 kb skill 都在 skill 列表里；从子目录启动也一样 |
+| Codex：`codex debug prompt-input`（没有调用模型） | AGENTS.md 里的 codewiki 块出现 1 次，`codewiki` skill 在 skill 列表里；从子目录启动也一样（TypeScript 版用 codex-cli 0.163.0 重新验证过） |
 | Codex：`codex mcp list`（项目已信任） | 列出 `codewiki  kb  mcp --root <repo>  enabled` |
-| Gemini：真实 CLI 加 mock API | 模型输入里有 GEMINI.md 块和 kb skills，tools 里有 `mcp_codewiki_kb_*`（由真实的 `kb mcp` 握手提供） |
+| Gemini：真实 CLI 加 mock API | 模型输入里有 GEMINI.md 块和 `codewiki` skill，tools 里有 `mcp_codewiki_kb_*`，由真实的 TypeScript 版 `kb mcp` 握手提供（gemini 0.65.0 重新验证过） |
 
 **A/B：多装了别的 agent 的文件，会不会干扰 Claude？**（`demo/agents-ab.sh`，haiku，3 个问题，每组 3 次，共 18 次真实运行）
 
@@ -95,7 +95,21 @@ kb install-skills ../app                      # 旧命令，保留为别名：.c
 
 结论：差异都在随机波动范围内，额外的文件没有让 Claude 分心。明细见 [ab-claude-vs-all/summary.md](../demo/sample-output/agents/ab-claude-vs-all/summary.md)。
 
-Codex 和 Gemini 的这几项由 `TestRealCodexConsumesInstall` 和 `TestRealGeminiConsumesInstall` 覆盖。本机装了对应 CLI，或者设置了 `KB_CODEX_BIN` / `KB_GEMINI_BIN` 时才会运行，否则跳过。
+Codex 和 Gemini 的这几项由 [test/agents-real.test.ts](../test/agents-real.test.ts) 覆盖，它是 Go 版 `TestRealCodex*` 和 `TestRealGemini*` 的移植。本机装了对应 CLI，或者设置了 `KB_CODEX_BIN` / `KB_GEMINI_BIN` 时才会运行，否则跳过：
+
+```bash
+npm install --prefix /tmp/agents @openai/codex@0.163.0 @google/gemini-cli@0.65.0
+KB_CODEX_BIN=/tmp/agents/node_modules/.bin/codex KB_GEMINI_BIN=/tmp/agents/node_modules/.bin/gemini npx vitest run test/agents-real.test.ts
+```
+
+2026-10-21 在 TypeScript 版上跑过，4/4 通过，用时约 35 s。4 个用例分别是：
+
+- `compound` 和 `ingest --agent codex`；
+- codex 读到安装产物；
+- `compound --agent gemini`；
+- gemini 读到安装产物和 MCP。
+
+这次不需要修改任何代码。
 
 ## 作为后端：`--agent`
 
@@ -141,7 +155,7 @@ llm:
 
 ### Codex 端到端：真实二进制 + mock 模型
 
-`demo/codex-mock-demo.sh` 让真实的 codex-cli 0.163.0 完整跑一遍 `kb compound --agent codex` 和 `kb ingest --agent codex`，只有模型是假的。模型由 [demo/mock-model/mock_openai_responses.py](../demo/mock-model/mock_openai_responses.py) 代替：它是 OpenAI Responses API 的流式 mock，通过 Codex 的自定义 provider（`model_providers.mock.base_url`）接入。结果在 [demo/sample-output/agents/codex-mock/](../demo/sample-output/agents/codex-mock/)。
+`demo/codex-mock-demo.sh` 让真实的 codex-cli 0.163.0 完整跑一遍（2026-10-21 已在 TypeScript 版 kb 上重新运行，结果与 Go 版一致） `kb compound --agent codex` 和 `kb ingest --agent codex`，只有模型是假的。模型由 [demo/mock-model/mock_openai_responses.py](../demo/mock-model/mock_openai_responses.py) 代替：它是 OpenAI Responses API 的流式 mock，通过 Codex 的自定义 provider（`model_providers.mock.base_url`）接入。结果在 [demo/sample-output/agents/codex-mock/](../demo/sample-output/agents/codex-mock/)。
 
 | 环节 | 真实 / mock | 观察到的结果 |
 |---|---|---|
@@ -156,9 +170,24 @@ llm:
 | 后处理、verify、原子发布 | **真实** | `verify PASS`；mock 写的页面被重新盖上 `sources` 锚点后发布 |
 | `kb ingest --agent codex`（断言核对任务，写 `.kb/ingest/verdicts.json`） | **真实**（mock 的结论全是 unverifiable） | `_conflicts.md` 和 `requirements.json` 重新生成，越界写入同样被回滚 |
 
-这次运行顺带发现并修复了一个 bug：agent 的 stdout 和 stderr 由两个 goroutine 并发写进同一个未加锁的 buffer，导致 Codex 的 JSON 事件在任务日志里几乎全部丢失（3000 行里只剩 27 行）。修复后有回归测试 `TestAgentTaskLogKeepsStdoutAndStderr`。
+Go 版的这次运行顺带发现并修复了一个 bug：agent 的 stdout 和 stderr 由两个 goroutine 并发写进同一个未加锁的 buffer，导致 Codex 的 JSON 事件在任务日志里几乎全部丢失（3000 行里只剩 27 行）。修复后有回归测试 `TestAgentTaskLogKeepsStdoutAndStderr`。TypeScript 版的任务日志在 TS 版重跑时完整无缺（`04-codex-exec-json-events.jsonl`）。
 
 另外，Codex 运行时会尝试连接 `chatgpt.com` 和 `ab.chatgpt.com`。在本环境里这些连接被代理拒绝，任务不受影响。
+
+### Gemini 端到端：真实二进制 + mock 模型
+
+`demo/gemini-mock-demo.sh` 让真实的 gemini 0.65.0 完整跑一遍 `kb compound --agent gemini`，只有模型是假的。模型由 [demo/mock-model/mock_gemini.py](../demo/mock-model/mock_gemini.py) 代替，经 `GOOGLE_GEMINI_BASE_URL` 接入，认证方式为 API key，key 用的是假值。结果在 [demo/sample-output/agents/gemini-mock/](../demo/sample-output/agents/gemini-mock/)。
+
+| 环节 | 真实 / mock | 结果 |
+|---|---|---|
+| `gemini --skip-trust --approval-mode auto_edit --output-format json -p …`，prompt 从 stdin 读入 | **真实** | 命令行被接受，headless 模式下全程没有交互 |
+| 模型的路由调用（`generateContent`） | **mock** | 返回固定的路由选择 |
+| 主回合（`streamGenerateContent`） | **mock** | 第一轮对写集合内的每个页面调用一次 `write_file`，外加 `pages/evil-gemini.md`；第二轮回答 `done` |
+| `write_file` 工具的执行（auto_edit 自动批准） | **真实** | 页面写进 staging |
+| 提供给模型的工具 | **真实** | 不包含 `run_shell_command`：auto_edit 在 headless 模式下不开放 shell，所以 kb 在 prompt 里直接给出全部 hash |
+| `-o json` 的用量解析 | **真实** | 每个任务约 `in 2700 / out 90 tok, reasoning 12` |
+| 写集合守卫 | **真实** | 两个任务都是 `violation`，`reverted: pages/evil-gemini.md`，发布出来的 wiki 里没有这个文件 |
+| 后处理、verify、原子发布 | **真实** | `verify PASS: 27 pages, 262 anchors` |
 
 ## CI
 
