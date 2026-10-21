@@ -184,7 +184,52 @@ export function detect(root: string): Platform[] {
     if (out.length) return out;
   }
   if (Object.keys(atRoot).length === 0 || isDir('web')) dirs('web', 'web', 'src', 'lib');
+  addKMPModules(root, out, isDir, exists);
   return out;
+}
+
+const kmpSourceSets = ['src/commonMain', 'src/androidMain', 'src/iosMain'];
+
+/**
+ * Kotlin Multiplatform modules (shared/, composeApp/, core/, libs/foo/ ... with src/commonMain,
+ * src/androidMain or src/iosMain) next to an android/ project are not under the android root, so
+ * their Kotlin sources would never be scanned. When the build is Gradle and the android root is a
+ * subdirectory, widen android to the repo root restricted (via include) to its old root plus those
+ * modules. Symbol ids stay unique (one android entry) and deeper roots of other platforms still
+ * shadow it. Skipped when another platform already owns the repo root, since a second root-level
+ * platform would stop shadowing the android subtree for it.
+ */
+function addKMPModules(root: string, out: Platform[], isDir: (d: string) => boolean, exists: (f: string) => boolean): void {
+  const ai = out.findIndex((p) => p.name === 'android');
+  if (ai < 0) return;
+  const ar = cleanRoot(out[ai].root);
+  if (ar === '' || out[ai].include?.length) return; // root Gradle build already covers every module
+  const gradle = (d: string) => ['settings.gradle', 'settings.gradle.kts'].some((f) => exists(path.join(d, f)));
+  if (!gradle('.') && !gradle(ar)) return;
+  if (out.some((p, i) => i !== ai && cleanRoot(p.root) === '')) return;
+  const ls = (d: string) => {
+    try {
+      return fs.readdirSync(path.join(root, d)).filter((n) => !n.startsWith('.') && n !== 'build' && n !== 'node_modules' && isDir(path.join(d, n))).sort();
+    } catch {
+      return [];
+    }
+  };
+  const isKMP = (d: string) => kmpSourceSets.some((s) => isDir(path.join(d, s)));
+  const owned = (d: string) => out.some((p) => rootContains(cleanRoot(p.root), d));
+  const mods: string[] = [];
+  for (const k of ls('.')) {
+    if (owned(k)) continue;
+    if (isKMP(k)) {
+      mods.push(k);
+      continue;
+    }
+    for (const kk of ls(k)) {
+      const d = k + '/' + kk;
+      if (!owned(d) && isKMP(d)) mods.push(d);
+    }
+  }
+  if (mods.length === 0) return;
+  out[ai] = { name: 'android', root: '.', include: [ar, ...mods].map((d) => d + '/**') };
 }
 
 function q(s: string): string {
