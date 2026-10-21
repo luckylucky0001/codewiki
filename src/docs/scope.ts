@@ -144,7 +144,7 @@ export function nearestProjectRoot(fsv: ScopeFs, p: string, ex: string[] = []): 
   // fallback: direct child of a container dir
   for (const d of chain) {
     const segs = d.split('/');
-    if (segs.length === 2 && ContainerDirs.includes(segs[0]!)) return d;
+    if (segs.length === 2 && ContainerDirs.includes(segs[0]!) && !isIgnoredName(segs[1]!) && !fsv.isSymlink(d) && !excluded(d, ex)) return d;
   }
   return null;
 }
