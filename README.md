@@ -1,8 +1,35 @@
 # codewiki — 把三端代码 compound 成可被验证的 LLM Wiki
 
-`codewiki` 是一个 Go CLI（`kb`）加一组 Claude Code skills：它把一个移动端 monorepo 的代码（Android Kotlin/Java、iOS Swift、HarmonyOS ArkTS，另有 JS/TS 支持）和旧文档/规格 **compound**（持续复利式沉淀）成 agent 友好的 LLM Wiki。每次 merge 到 master 都增量更新，而且**知识必须可证明地与当前代码一致**：每个页面通过锚点（符号 ID + 内容 hash）绑定代码，CI 中 `kb verify` 不通过就不发布。
+`codewiki` 是一个 TypeScript CLI（`kb`，Node ≥ 20）加一个 agent skill（`codewiki`）：它把一个移动端 monorepo 的代码（Android Kotlin/Java、iOS Swift、HarmonyOS ArkTS，另有 JS/TS 支持）和旧文档/规格 **compound**（持续复利式沉淀）成 agent 友好的 LLM Wiki。每次 merge 到 master 都增量更新，而且**知识必须可证明地与当前代码一致**：每个页面通过锚点（符号 ID + 内容 hash）绑定代码，CI 中 `kb verify` 不通过就不发布。
 
 > 设计取向：**确定性交给 CLI，理解交给 LLM，一致性靠硬校验。**
+
+## v2 有什么变化
+
+| | v1（Go） | v2（本分支） |
+|---|---|---|
+| 实现 | Go 1.24 + cgo tree-sitter | **TypeScript**（Node ≥ 20），web-tree-sitter 加 WASM 语法，`npm i -g codewiki`，不需要 C 编译器。符号 ID、hash 和符号图与 Go 版逐字节一致（`test/parity.test.ts`）；facts 在 v2 有意扩展，minishop 的 facts golden 已更新，因此与 Go 不再相同。Go 源码保留在 `legacy-go/` |
+| Agent 接入 | 4 个 skill（kb-compound / ingest / query / lint） | **1 个 `codewiki` skill**：SKILL.md 负责路由，细节在 `references/*.md`；CLAUDE.md / AGENTS.md 指引块把常见问题映射到具体命令 |
+| Wiki 结构 | `pages/features/*` 平铺 | **多级目录**：L0 仓库 → L1 项目 → L2 模块 → L3 功能簇（`module_tree.json`）。每层有页面和 index，kb 维护的块带新鲜度校验；提供 `kb tree show/explain/deps/patch` |
+| 仓库 docs | 只读 ingest（断言核对） | **SFK 文档所有权**：`kb docs compound` 往仓库 `docs/` 和项目 `docs/` 写带来源的条目，人写内容一字不改；另有 ADR / 技术债提案、过期 spec、`kb links`、`kb verify --docs` |
+| 事实抽取准确率 | 见下 | 见下 |
+| 热扫描（HarmonyOS-Cases） | Go 约 1.1 s | 约 1.15 s（`kb scan` 整个进程）：并行引用解析，加上引用 / facts / call sites 三层缓存 |
+
+**事实抽取准确率（训练集数字）**：数字来自 `bench/accuracy/`，16 个人工标注仓库，详见 [bench/accuracy/RESULTS.md](bench/accuracy/RESULTS.md)。抽取规则是对着这批仓库调出来的，所以这些是**训练集上的数字**，存在过拟合风险。独立留出集的评测另行进行，结果会单独补充。
+
+| 指标 | Go `go-final` | TS v2 |
+|---|---|---|
+| routes recall | 51.6% | 98.6% |
+| not_screen FP | 12.8% | 7.0% |
+| deeplinks recall | 4.8% | 92.4% |
+| testIDs recall | 55.6% | 95.8% |
+| APIs recall | 18.1% | 96.2% |
+
+v2 的验证材料：
+
+- 真实仓库上的 SFK、真实 LLM 路径、架构类 A/B 和性能：[docs/validation-v2.md](docs/validation-v2.md)；
+- 设计说明：[DESIGN.md](DESIGN.md)、[docs/tree.md](docs/tree.md)、[docs/ownership.md](docs/ownership.md)；
+- 使用手册：[docs/codewiki-manual.pdf](docs/codewiki-manual.pdf)。
 
 ## 为什么
 
@@ -57,7 +84,7 @@ git clone https://github.com/luckylucky0001/codewiki && cd codewiki && npm ci &&
 
 **git 是可选的。** 不在 git 仓库里时，`kb init / scan / ingest / compound / verify / context` 同样可以运行，输出中的 head 显示为 `(no git)`。但增量 compound（与上次的 `last_sha` 比较）、`kb diff --base`、`kb hook` 和 `kb eval` 需要 git。
 
-语法（Kotlin、Java、Swift、TypeScript/TSX、JavaScript、ArkTS）由 `tree-sitter-cli` 0.27.1 从与旧 Go 版完全相同的语法源码编译为 WASM（见 `grammars/VENDORED.md`），因此符号 ID、hash 与 Go 版逐字节一致；ArkTS 语法源码（含本地 trailing-comma 补丁）在 `legacy-go/internal/grammars/arkts`。
+语法（Kotlin、Java、Swift、TypeScript/TSX、JavaScript、ArkTS）由 `tree-sitter-cli` 0.27.1 从与旧 Go 版完全相同的语法源码编译为 WASM（见 `grammars/VENDORED.md`），因此符号 ID、hash 与 Go 版逐字节一致（facts 在 v2 有意扩展，不再与 Go 相同）；ArkTS 语法源码（含本地 trailing-comma 补丁）在 `legacy-go/internal/grammars/arkts`。
 
 原 Go 实现保留在 `legacy-go/`（tag `go-final`），仅用于对照与重新生成 `test/golden/`。
 
@@ -364,8 +391,25 @@ e2epilot 侧的典型用法：
 ```bash
 ROUTES=$(kb diff --json | jq -r '.changed_route_ids | join(",")')
 e2e graph invalidate --changed-routes "$ROUTES"
-e2e impact --changed-routes "$ROUTES" --requirements wiki/facts/requirements.json
+e2e impact --codewiki-diff wiki/.kb/plan.json          # 选出受影响的 flows（changed_files / changed_routes / changed_testids）
+e2e seed --routes wiki/facts/routes.json --testids wiki/facts/testids.json --platform android
+e2e trace --specs wiki/facts/requirements.json         # 需求 → flow 追踪矩阵
 ```
+
+**互通实测（TypeScript 版 kb，2026-10-21）**：在 scratch 目录 clone e2epilot（`fefd111`），执行 `go build ./cmd/e2e`，然后对 `demo/run.sh` 产出的 minishop wiki 依次运行下列命令，全部 exit 0，不需要改 e2epilot：
+
+- `e2e seed`：三端分别得到 8 / 7 / 7 条深链边和 3 条静态 tap 边（来源 8 / 8 / 7 条路由、13 个 testID）；
+- `e2e path --to cart`：L0 为深链直达，L1 为 product_detail → `#add_to_cart`；
+- `e2e graph invalidate --changed-routes cart,MainActivity`：失效 5 条边；
+- `e2e impact --codewiki-diff wiki/.kb/plan.json`：识别出 changed routes `MainActivity RootView profile`、changed testIDs，并把 `profile` 列为新路由；
+- `e2e trace --specs wiki/facts/requirements.json`：33 条需求，其中 10 条冲突。
+
+TypeScript 版有两处 schema 变化，都向后兼容：
+
+- 路由新增 `name` 和 `deeplinks`（多个深链）两个字段；e2epilot 只读 `route_id / pattern / deeplink`，会忽略新字段。
+- 类型化路由（Activity、SwiftUI 根视图）以类名作为 `route_id`，例如 `MainActivity`、`RootView`。它们在 e2epilot 里就是普通路由节点。
+
+（旧版 README 写的 `e2e impact --changed-routes … --requirements …` 与当前 e2epilot 的参数不符，已改为 `--codewiki-diff`。）
 
 ## 增量扫描缓存与性能
 
@@ -387,12 +431,18 @@ TypeScript 版（Node 22，WASM 语法，同一 4 核容器，2026-10-21）：
 | 合成 3000 | 3000 | 21000 | 3493 ms | 774 ms | 1253 ms | 3550 / 1227 / 1366 ms |
 | HarmonyOS-Cases（`kb scan` 全进程墙钟） | 2267 | 20141 | 5.7 s | 2.2 s | — | 5.2 s / 1.1 s |
 
-热扫描做了两项优化，输出都与无缓存扫描逐字节一致：
+热扫描做了以下优化，输出都与无缓存扫描逐字节一致：
 
 - **并行引用解析**：引用解析分片在 worker_threads 上并行。图只序列化一次，放进 SharedArrayBuffer 供各 worker 读取。
 - **引用缓存**：解析出的引用写进扫描缓存，键是所有输入文件的 hash。文件全部未变时直接复用，不再解析。
+- **facts 结果缓存**：键是全部输入、平台根目录下所有文件的 (path, size, mtime) 和配置。
+- **call sites 按需加载**：call sites 单独存为 `scan.calls.v8.gz`，只在需要重算 facts 时才读。
 
-在 Cases 上，`scanRepo` 热扫描从 2.05 s 降到 **1.25 s**：并行解析快约 10%，引用缓存再省约 0.6 s。`kb scan` 整个进程约 2.1 s，其中约 0.6 s 是 facts 抽取，0.6 s 是读取缓存（gunzip 加 v8 反序列化，62 MB）。Go 版约 1.1 s。见 [docs/validation-v2.md](docs/validation-v2.md) §4。
+在 Cases 上，`kb scan` 热扫描的整个进程从 2.16–2.94 s 降到 **1.15–1.33 s**（新旧版本交替运行，load average 约 11.5）。Go 版约 1.1 s（低负载下测得）。三项改动：
+
+- 并行引用解析，约快 10%；
+- 引用缓存，省约 0.6 s；
+- facts 结果缓存，加上 call sites 拆成单独的缓存文件、按需加载，再省约 1 s。见 [docs/validation-v2.md](docs/validation-v2.md) §4。
 
 ```bash
 kb bench --synthetic 3000                       # 合成仓库，临时目录

@@ -31,6 +31,45 @@ Each repository went through these steps, in order:
 
 ² `kb links` over all docs. Every broken link is in human text. The docs kb wrote contained 0 broken links in every repo. Some of the human-text cases are real stale references, such as element-x `./tools/docs/generateModuleGraph.sh` where kb suggests `../tools/...`. Others are references to sibling repositories (NextE `../eros_fe`). `kb links` only reports and never edits.
 
+**Link-checker precision (wave 4).** The checker now follows the SFK rule exactly.
+
+What is checked:
+
+- markdown links (a target may contain balanced parentheses, e.g. `fig(5).png`);
+- backticked paths that start with `./` or `../`;
+- backticked repo paths: they contain `/`, end in a known extension or a trailing `/`, and their first segment exists at the repo root or in one of the file's ancestor directories.
+
+What is skipped:
+
+- code-ish strings (calls, operators, `::`, quotes, whitespace), globs, URLs and placeholders (`vX.Y.Z`, `<module>`, `{x}`, `[x]`, `…`);
+- fenced code;
+- `../` paths whose first named segment exists nowhere up the tree. These point at sibling repositories, e.g. NextE's `../eros_fe/lib/...`.
+
+Broken links per repo before → after:
+
+| repo | before | after |
+|---|---|---|
+| element-x | 14 | 11 |
+| HarmonyOS-Cases | 20 | 12 |
+| wikipedia-ios | 5 | 5 |
+| NextE | 428 | 288 (506 originally) |
+| the other 4 | 0 | 0 |
+
+**Sample of 20 remaining broken links** (stratified over all 316):
+
+- **19 true.** 15 point at NextE `scripts/test_*.mjs` contract scripts that no longer exist. The `scripts/` directory exists and holds 84 other `test_*.mjs` files, so these references are stale; they are not gitignored or generated files. 2 are moved files, where kb suggests the new location (`shared/Index.ets` → `entry/src/main/ets/pages/Index.ets`). 1 is element-x `libs.versions.toml`, linked from the wrong directory. 1 is Cases `../reference/apis-arkts/js-apis-worker.md`, which works on the upstream docs site but not in this repo.
+- **1 false.** element-x `../app/build/reports/kover/html/index.html` is a build artifact.
+
+**Precision ≈ 95% (19/20).** A first sample, taken before the sibling-repo rule, gave 15/20; its 5 false positives were all `../eros_fe/…`-style sibling-repo paths.
+
+**`kb verify --docs` semantics (wave 4).**
+
+- It fails only on broken references inside kb-owned content, i.e. the items `parseDocument` recognises: generated entries, index rows and kb blocks. A missing `**Source**` path also fails.
+- Broken links in human-owned text are returned as `human_review_candidates` (`W_DOCS_HUMAN_LINK`) and exit 0. `--strict` makes them fail.
+- `kb links` still reports everything and marks each link `[human text]` or kb-owned.
+- On the 8 repos: 0 kb-owned errors; the human review candidates are 11 / 12 / 5 / 288 on element-x, Cases, wikipedia-ios and NextE, and 0 elsewhere.
+- Tests: `test/v3.test.ts` covers "verify --docs semantics" and "link checker SFK rule".
+
 **Review candidates.** Every run had 0 files in `review`, 0 dropped entries and 0 parity differences. The candidates for a person to look at are:
 
 - the unregistered custom docs, 232 across the 8 repos. These are registered in `.kb/docs-schema-extra.yaml` with `enabled: true`. kb lists them, and in template mode it never writes to them.
@@ -146,6 +185,52 @@ A full `kb scan` process takes about 2.1–2.3 s. The CPU profile shows where it
 | directory walk + hashing | ~290 |
 
 Go's warm scan takes about 1.1 s. To get closer, the next steps are a smaller or lazier cache format and facts extraction from cached per-file results.
+
+### Wave 4: facts result cache + lazily loaded call sites
+
+Two more caches are now in the warm path.
+
+**Facts result cache** (`wiki/.kb/cache/facts.v8.gz`). Facts extraction resolves across files, so it is cached as one result. Its key combines three things:
+
+1. the scan's `inputsKey`: content hash of every source file plus the extractor and facts fingerprint;
+2. `treeStamp`: (path, size, mtime) of every non-excluded file under the platform roots, which covers the manifests, plists, `router_map.json` and `module.json5` that facts read;
+3. the configuration.
+
+A change to any of them is a miss, followed by a full re-extraction.
+
+A true per-file facts cache would need the facts extractor (owned by the facts agent) to be split into per-file and cross-file stages. That was out of scope.
+
+**Lazily loaded call sites.** Call sites are 34 MB of the 62 MB scan cache. They now live in `scan.calls.v8.gz`, paired with the main file by a stamp, and are deserialized only when facts must be recomputed.
+
+**Identity.** `test/v3.test.ts` ("warm-scan caches") checks that a cold run, a warm run with cached facts and lazy calls, and a run after a manifest change all produce facts and calls identical to an uncached run.
+
+Full warm `kb scan` process on HarmonyOS-Cases. The old build (`339c5ce`) and the new one each had their own warm wiki, and the runs were interleaved because another agent kept the load average at about 11.5:
+
+| build | runs (ms) |
+|---|---|
+| before (`339c5ce`) | 2156, 2165, 2436, 2938 |
+| after | 1146, 1205, 1235, 1331 |
+
+The result is about 1.15–1.33 s, against Go's about 1.1 s measured at low load. A warm `kb compound` noop on Cases takes about 7 s at load 14; most of that is wiki verify and publish, not scanning.
+
+## 5. e2epilot interop (read-only on /home/user/e2epilot)
+
+e2epilot was cloned into scratch at `fefd111` and built with `go build -o <scratch>/e2e ./cmd/e2e`. The commands below ran against the minishop wiki produced by `demo/run.sh` with the TypeScript kb. All of them exited 0, and nothing in e2epilot had to change:
+
+| command | result |
+|---|---|
+| `e2e seed --routes … --testids … --platform android / ios / harmony` | 8 / 7 / 7 deep-link edges and 3 static tap edges each, from 8 / 8 / 7 routes and 13 testIDs |
+| `e2e path --to cart` | L0: deep link; L1: product_detail → `#add_to_cart` |
+| `e2e graph invalidate --changed-routes cart,MainActivity` | 5 edges invalidated |
+| `e2e impact --codewiki-diff wiki/.kb/plan.json` | changed routes `MainActivity RootView profile`, changed testIDs, `profile` flagged as a new route |
+| `e2e trace --specs wiki/facts/requirements.json` | 33 requirements, 10 conflicts |
+
+The schema changes in the TypeScript kb are backward-compatible:
+
+- routes gained `name` and `deeplinks[]`, which e2epilot ignores;
+- typed routes use the class name as `route_id` (`MainActivity`, `RootView`).
+
+The README's old `e2e impact --changed-routes … --requirements …` example did not match the current e2epilot flags and has been corrected.
 
 ## Reproduce
 
