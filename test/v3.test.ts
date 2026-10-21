@@ -57,3 +57,13 @@ describe('wave 3', () => {
     expect(h()).toBe(serial);
   });
 });
+
+describe('cli output', () => {
+  it('large --json output is not cut when stdout is a pipe', async () => {
+    const { spawnSync } = await import('node:child_process');
+    const d = mk({ 'android/app/src/main/java/A.kt': 'class A', 'docs/many.md': Array.from({ length: 3000 }, (_, i) => `- [x](missing/file-${i}.md)`).join('\n') + '\n' });
+    const r = spawnSync('node', [path.join(repo, 'dist/cli.js'), 'links', '--json'], { cwd: d, encoding: 'utf8', maxBuffer: 64 << 20 });
+    expect(r.stdout.length).toBeGreaterThan(65536);
+    expect(JSON.parse(r.stdout).broken.length).toBe(3000);
+  });
+});

@@ -41,6 +41,9 @@ function isExternal(t: string): boolean {
   return /^[a-z][a-z0-9+.-]*:/i.test(t) || t.startsWith('//');
 }
 
+/** template paths in prose (`changelog/vX.Y.Z.md`, `docs/YYYY-MM-DD.md`, `src/xxx/…`) are not links */
+const PLACEHOLDER = /X\.Y\.Z|YYYY|\bxxx\b|\bXXX\b|\.\.\.|…/;
+
 function looksLikePath(s: string): boolean {
   return /^[\w.@~-]+(?:\/[\w.@~ -]*[\w.@~-])+\/?$/.test(s) && !/\s/.test(s);
 }
@@ -75,8 +78,8 @@ export function extractLinks(file: string, text: string, opts: LinkOptions = {})
     for (const m of t.matchAll(BACKTICK_RE)) {
       const s = m[1]!.trim();
       if (s.startsWith('./') || s.startsWith('../')) {
-        if (!/\s/.test(s) && !/[*?{}$<>]/.test(s)) out.push({ file, line: i + 1, target: s.replace(/[#:].*$/, ''), kind: 'backtick-relative' });
-      } else if (looksLikePath(s) && top.has(s.split('/')[0]!) && !/[*?{}$<>]/.test(s)) {
+        if (!/\s/.test(s) && !/[*?{}$<>]/.test(s) && !PLACEHOLDER.test(s)) out.push({ file, line: i + 1, target: s.replace(/[#:].*$/, ''), kind: 'backtick-relative' });
+      } else if (looksLikePath(s) && top.has(s.split('/')[0]!) && !/[*?{}$<>]/.test(s) && !PLACEHOLDER.test(s)) {
         out.push({ file, line: i + 1, target: s.replace(/#.*$/, '').replace(/:\d+(?:-\d+)?$/, ''), kind: 'backtick-repo' });
       }
     }
