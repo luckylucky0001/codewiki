@@ -198,13 +198,19 @@ function renderItem(it: CompoundItem, level: number): string[] {
 
 /** Rejects item bodies that would change the parse of the file (headings, Source lines, markers). */
 function validateItem(it: CompoundItem): string | null {
+  if (it.section !== undefined) {
+    const h = parseHeadingLine(`## ${it.section.trim()}`);
+    if (!it.section.trim() || /[\r\n]/.test(it.section) || !h || h.text !== it.section.trim()) return 'section is not a single-line heading text';
+  }
   if (it.kind === 'row') {
     if (/<!--\s*compound:/.test(it.line)) return 'row text contains a compound marker';
     if (!/^[\w-]+:/.test(it.key)) return 'row key needs a prefix (index:/debt:/xref:)';
     return null;
   }
-  if (it.kind === 'entry' && !it.heading.trim()) return 'entry without heading';
-  if (/[\r\n]/.test(it.kind === 'entry' ? it.heading : '')) return 'multi-line heading';
+  if (it.kind === 'entry') {
+    const h = parseHeadingLine(`### ${it.heading.trim()}`);
+    if (!it.heading.trim() || /[\r\n]/.test(it.heading) || !h || h.text !== it.heading.trim()) return 'entry heading is not a single-line heading text';
+  }
   let fence = false;
   for (const l of bodyLines(it.body)) {
     if (/^ {0,3}(`{3,}|~{3,})/.test(l)) fence = !fence;
@@ -237,7 +243,7 @@ function headingLevelFor(doc: ParsedDoc, sectionLine: number | null, it: Compoun
 }
 
 /** Inserts `it`; returns a blocking review note when the position is ambiguous. */
-function insertItem(ctx: Ctx, it: CompoundItem): ReviewNote | null {
+function insertItem(ctx: Ctx, it: CompoundItem, depth = 0): ReviewNote | null {
   const doc = parseDocument(joinLines(ctx.lines), { dimension: ctx.dimension });
   const n = ctx.lines.length;
   const ownedHeadingLines = new Set(doc.items.filter((x) => x.kind === 'entry').map((x) => x.start));
@@ -261,7 +267,8 @@ function insertItem(ctx: Ctx, it: CompoundItem): ReviewNote | null {
       const head = `## ${it.section.trim()}`;
       appendAt(ctx, n, [head], true);
       ctx.addedChunks.push(head);
-      return insertItem(ctx, it);
+      if (depth > 0) return { line: n, key: itemKey(it), reason: `could not create section "${it.section}"` };
+      return insertItem(ctx, it, depth + 1);
     }
   }
   const level = headingLevelFor(doc, sectionLine, it);

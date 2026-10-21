@@ -308,3 +308,54 @@ describe('adversarial human content preservation', () => {
     }
   });
 });
+
+describe('input validation and idempotency edge cases', () => {
+  it('rejects headings/sections that would not round-trip', () => {
+    const r = run(MANAGED, [
+      entry('Foo #', 'a.kt'),
+      entry('two\nlines', 'b.kt'),
+      entry('ok', 'c.kt', 'x', { section: 'Bad ##' }),
+      entry('ok2', 'd.kt', 'x', { section: '' }),
+    ]);
+    expect(r.dropped.map((d) => d.reason)).toEqual([
+      'entry heading is not a single-line heading text',
+      'entry heading is not a single-line heading text',
+      'section is not a single-line heading text',
+      'section is not a single-line heading text',
+    ]);
+  });
+  it('CJK / punctuation headings are idempotent', () => {
+    const items = [entry('购物车 (Cart) — 上限 99', 'apps/a/购物车.kt', '中文正文。', { section: '模块' }), entry('C# interop', 'x.cs', 'x', { section: '模块' })];
+    const r1 = run('# 架构\n\n人工说明。\n', items);
+    expect(r1.action).toBe('write');
+    const r2 = run(r1.text!, items, { scanDate: '2026-10-22' });
+    expect(r2.action).toBe('noop');
+    expect(r2.unchanged).toHaveLength(2);
+  });
+  it('input duplicates are dropped', () => {
+    const r = run(null, [entry('A', 'a.kt'), entry('A', './a.kt')]);
+    expect(r.dropped).toEqual([{ key: 'src:a.kt::a', reason: 'duplicate key in input' }]);
+  });
+  it('human edits inside an owned entry are overwritten only by a changed regeneration, never deleted otherwise', () => {
+    const t = MANAGED.replace('Old cart body.', 'Old cart body. (human tweak)');
+    expect(run(t, []).action).toBe('noop');
+    const r = run(t, [], { sourceExists: () => true });
+    expect(r.action).toBe('noop');
+  });
+  it('skeleton with frontmatter (not managed) keeps foreign keys', () => {
+    const t = '---\nowner: team-a\n---\n# A\n\nTBD\n';
+    expect(classifyFile(t, true)).toBe('skeleton');
+    const r = run(t, [entry('X', 'x.kt')]);
+    expect(r.text!.startsWith('---\nowner: team-a\nlast_compound_scan: 2026-10-21\n')).toBe(true);
+    expect(r.text).not.toContain('TBD');
+  });
+  it('skeleton placeholder lines inside code fences are kept', () => {
+    const t = '# A\n\nTODO\n';
+    expect(classifyFile(t + '\n```\nTODO\n```\n', true)).toBe('adopted');
+  });
+  it('adopted file with only a title line + one sentence stays adopted and gets entries appended at EOF', () => {
+    const t = '# A\nOne human sentence.';
+    const r = run(t, [entry('X', 'x.kt')]);
+    expect(r.text).toContain('# A\nOne human sentence.\n\n### X\n\nX body.\n\n**Source**: `x.kt` [Code Direct] [Verified]\n');
+  });
+});

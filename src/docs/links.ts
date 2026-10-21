@@ -155,7 +155,8 @@ export function checkLinks(files: { path: string; text: string }[], fsv: LinkFs,
         broken.push({ ...ref, reason: 'escapes-repo', suggestions: suggest(ref, fsv) });
         continue;
       }
-      const hit = cands.find((c) => !c.startsWith('..') && (c === '' || fsv.exists(c)));
+      const self = normalizeRepoPath(f.path);
+      const hit = cands.find((c) => !c.startsWith('..') && (c === '' || c === self || fsv.exists(c)));
       if (hit === undefined) {
         broken.push({ ...ref, reason: 'missing', suggestions: suggest(ref, fsv) });
         continue;
