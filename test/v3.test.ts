@@ -197,3 +197,21 @@ describe('warm-scan caches (facts result, lazy call sites)', () => {
     expect(JSON.stringify(extractFactsCached(cfg, await scanRepo(cfg)))).toBe(want2.facts);
   });
 });
+
+describe('discover-docs roots', () => {
+  it('finds Documentation/ and top-level prose, skips kb\'s own wiki even without a config', async () => {
+    const { discoverDocs } = await import('../src/engine/docs.js');
+    const d = mk({
+      'Documentation/How-it-works.md': '# How it works\n',
+      'Documentation/Setup.md': '# Setup\n',
+      'ARCHITECTURE.md': '# Arch\n',
+      'CHANGELOG.md': '# Changes\n',
+      'wiki/Home.md': '# project wiki\n',
+      'kbwiki/.kb/state.json': '{}',
+      'kbwiki/pages/features/a.md': '# page\n',
+      'kbwiki/index.md': '# index\n',
+    });
+    const paths = discoverDocs(d, []).docs.map((x) => x.path);
+    expect(paths).toEqual(['ARCHITECTURE.md', 'Documentation/How-it-works.md', 'Documentation/Setup.md', 'wiki/Home.md']);
+  });
+});

@@ -49,6 +49,19 @@ describe('go-compatible helpers', () => {
     expect(normAPIPath('/api/items/{id}/')).toBe('/api/items/{}');
     expect(normLit(' a "b" ')).toBe("a'b'");
     expect(classifyDoc('.kiro/specs/login/requirements.md')).toEqual(['spec', 'kiro']);
+    // generic doc roots and top-level prose (mastodon-ios Documentation/, ARCHITECTURE.md); boilerplate stays out
+    expect(classifyDoc('Documentation/How-it-works.md')).toEqual(['doc', 'docs']);
+    expect(classifyDoc('Documentation/Setup.md')).toEqual(['doc', 'docs']);
+    expect(classifyDoc('documentation/a.md')).toEqual(['doc', 'docs']);
+    expect(classifyDoc('Docs/Guide.md')).toEqual(['doc', 'docs']);
+    expect(classifyDoc('doc/x.md')).toEqual(['doc', 'docs']);
+    expect(classifyDoc('wiki/Home.md')).toEqual(['doc', 'docs']);
+    expect(classifyDoc('ARCHITECTURE.md')).toEqual(['doc', 'docs']);
+    expect(classifyDoc('CONTRIBUTING.md')).toEqual(['doc', 'docs']);
+    for (const f of ['CHANGELOG.md', 'LICENSE.md', 'CODE_OF_CONDUCT.md', 'HISTORY.md', 'SUPPORT.md']) expect(classifyDoc(f)).toBeNull();
+    expect(classifyDoc('docs/adr/0001-x.md')).toEqual(['adr', 'adr']);
+    expect(classifyDoc('specs/001/spec.md')).toEqual(['spec', 'spec-kit']);
+    expect(classifyDoc('app/src/notes.md')).toBeNull();
     expect(globMatch('*.env', 'prod.env')).toBe(true);
   });
 });

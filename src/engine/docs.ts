@@ -41,6 +41,8 @@ export function manifestJSON(m: DocsManifest): Record<string, unknown> {
   return o;
 }
 
+const NonDocTop = /^(changelog|changes|history|release[-_ ]?notes|releases|news|license|licence|copying|notice|code[-_]of[-_]conduct|authors|contributors|maintainers|codeowners|funding|support|patents)(\.[a-z0-9-]+)*\.mdx?$/;
+
 export function classifyDoc(rel: string): [string, string] | null {
   const p = rel.toLowerCase();
   const base = path.posix.basename(p);
@@ -72,8 +74,10 @@ export function classifyDoc(rel: string): [string, string] | null {
   if (base === 'agents.md' || base === 'claude.md' || base === 'gemini.md' || p === '.github/copilot-instructions.md') return ['agent-guide', 'agents-md'];
   if (base === 'threatmodel.md' || base === 'security.md') return ['design', 'security'];
   if (base === 'readme.md') return ['readme', 'readme'];
-  if (has('docs/') || has('doc/')) return ['doc', 'docs'];
+  if (has('docs/') || has('doc/') || has('documentation/') || has('wiki/')) return ['doc', 'docs'];
   if (base === 'contributing.md') return ['doc', 'docs'];
+  // top-level prose (ARCHITECTURE.md, DESIGN.md, …); release / legal boilerplate stays out
+  if (!p.includes('/') && !NonDocTop.test(base)) return ['doc', 'docs'];
   return null;
 }
 
@@ -102,6 +106,8 @@ export function discoverDocs(root: string, exclude: string[]): DocsManifest {
       const rel = path.relative(abs, p).split(path.sep).join('/');
       if (e.isDirectory()) {
         if (skipDirs.has(e.name) || excl.has(rel)) continue;
+        // kb's own wiki (also in zero-config mode, where wiki_dir is unknown)
+        if (fs.existsSync(path.join(p, '.kb')) && fs.existsSync(path.join(p, 'pages'))) continue;
         if (e.name.startsWith('.') && !['.kiro', '.specify', '.github'].includes(e.name)) continue;
         rec(p);
         continue;
