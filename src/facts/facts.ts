@@ -1622,7 +1622,8 @@ class Ctx {
           const h = t.attrs.host ?? '';
           if (h && !filt.hosts.includes(h)) filt.hosts.push(h);
           for (const k of ['path', 'pathPrefix', 'pathPattern', 'pathAdvancedPattern', 'pathSuffix']) {
-            const v = t.attrs[k];
+            let v = t.attrs[k];
+            if (v && (k.startsWith('pathPattern') || k === 'pathAdvancedPattern')) v = v.replace(/\\\\/g, '\\'); // Android unescapes `\\` in patterns
             if (v && !filt.paths.includes(v)) filt.paths.push(v);
           }
         }
@@ -1636,6 +1637,61 @@ class Ctx {
         act = { platform, name: lastSeg(cls), file: rel, links: [] };
         if (t.selfClosing) {
           /* end token follows */
+        }
+      }
+    }
+  }
+
+  /** Deep links handled in code: Compose `uriPattern = "…"` (navDeepLink / Nav3 deep-link patterns) and
+   * Swift URL dispatch on the host (`switch url.host { case "post": … }`, `"theme" == comps.host`). The
+   * scheme of a host dispatch comes from a nearby `scheme == "x"` test, else from the platform's only
+   * declared custom scheme, else it is left empty. */
+  codeDeepLinks(): void {
+    for (const file of this.sortedFiles()) {
+      const fi = this.g.files[file]!;
+      if (isTestPath(file)) continue;
+      if (fi.lang === 'kotlin') {
+        const lines = this.fileLines(file);
+        lines.forEach((l, i) => {
+          const m = /\buriPattern\s*=\s*"([^"]+)"/.exec(l);
+          if (!m) return;
+          let u = m[1]!.replace(/\$\{?(\w+)\}?/g, (all, n: string) => {
+            const [v, ok] = this.lookup(fi.platform, n);
+            return ok ? v : all;
+          });
+          const mm = /^([A-Za-z][\w+.-]*):\/\/([^/]*)(.*)$/.exec(u);
+          if (mm) this.declare({ platform: fi.platform, scheme: mm[1]!, host: mm[2]!, path: mm[3]!, file, source: 'uriPattern' });
+          else if (u.startsWith('/')) this.declare({ platform: fi.platform, scheme: '', host: '', path: u, file, source: 'uriPattern' });
+          void i;
+        });
+      } else if (fi.lang === 'swift') {
+        const lines = this.fileLines(file);
+        // only code that receives URLs from the system (scene/app delegate, onOpenURL, deep-link handlers)
+        if (!lines.some((l) => l.includes('.host')) || !/openURLContexts|open url|onOpenURL|continue userActivity|deep ?link|handle\w*URL/i.test(lines.join('\n'))) continue;
+        const custom = (this.schemes[fi.platform] ?? []).filter((x) => !nonAppSchemes.has(x));
+        const schemeNear = (i: number) => {
+          for (let j = Math.max(0, i - 10); j < Math.min(lines.length, i + 10); j++) {
+            const m = /scheme\b[^=\n]*==\s*"([\w+.-]+)"|"([\w+.-]+)"\s*==\s*\w+\.scheme\b/.exec(lines[j]!);
+            if (m) return m[1] ?? m[2]!;
+          }
+          return custom.length === 1 ? custom[0]! : '';
+        };
+        const emit = (host: string, i: number) => {
+          if (!/^[\w.-]+$/.test(host)) return;
+          this.declare({ platform: fi.platform, scheme: schemeNear(i), host, path: '', file, source: 'url-host-dispatch' });
+        };
+        for (let i = 0; i < lines.length; i++) {
+          const l = lines[i]!;
+          for (const m of l.matchAll(/\.host\s*==\s*"([^"]+)"|"([^"]+)"\s*==\s*[\w.?]+\.host\b/g)) emit(m[1] ?? m[2]!, i);
+          if (/\bswitch\s+[\w.?]*\.host\b[^{]*\{/.test(l)) {
+            let depth = 0;
+            for (let j = i; j < lines.length; j++) {
+              const t = lines[j]!;
+              if (j > i && depth === 1) for (const m of t.matchAll(/^\s*case\s+((?:"[^"]+"\s*,?\s*)+):/g)) for (const h of m[1]!.matchAll(/"([^"]+)"/g)) emit(h[1]!, i);
+              depth += (t.match(/\{/g) ?? []).length - (t.match(/\}/g) ?? []).length;
+              if (depth <= 0 && j > i) break;
+            }
+          }
         }
       }
     }
@@ -1946,6 +2002,7 @@ function androidString(manifest: string, name: string): string {
 export function extractFacts(cfg: Config, res: ScanResult): Facts {
   const c = new Ctx(cfg, res);
   for (const p of cfg.platforms) c.resources(p);
+  c.codeDeepLinks();
   c.routes();
   c.screenRoutes();
   c.uikit();
