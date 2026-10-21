@@ -30,10 +30,13 @@ export interface LinkFs {
 export interface LinkOptions {
   /** top-level directory names that make a backticked path a repo path */
   topLevelDirs?: string[];
+  /** repo-relative existence check: a backticked repo path counts only when its first segment exists at the
+   * repo root or in one of the file's ancestor directories (falls back to topLevelDirs) */
+  exists?: (p: string) => boolean;
   checkAnchors?: boolean;
 }
 
-const MD_LINK_RE = /!?\[(?:[^\]\\]|\\.)*\]\(\s*<?([^)\s>]+)>?(?:\s+"[^"]*")?\s*\)/g;
+const MD_LINK_RE = /!?\[(?:[^\]\\]|\\.)*\]\(\s*<?((?:[^()\s>]|\([^()\s]*\))+)>?(?:\s+"[^"]*")?\s*\)/g;
 const REF_DEF_RE = /^\s{0,3}\[[^\]]+\]:\s*<?(\S+?)>?(?:\s+["'(].*)?$/;
 const BACKTICK_RE = /`([^`\n]+)`/g;
 
@@ -41,11 +44,26 @@ function isExternal(t: string): boolean {
   return /^[a-z][a-z0-9+.-]*:/i.test(t) || t.startsWith('//');
 }
 
-/** template paths in prose (`changelog/vX.Y.Z.md`, `docs/YYYY-MM-DD.md`, `src/xxx/…`) are not links */
-const PLACEHOLDER = /X\.Y\.Z|YYYY|\bxxx\b|\bXXX\b|\.\.\.|…/;
+/** template paths in prose (`changelog/vX.Y.Z.md`, `docs/YYYY-MM-DD.md`, `src/xxx/…`, `<module>/src`) are not links */
+const PLACEHOLDER = /X\.Y\.Z|YYYY|\bxxx\b|\bXXX\b|\bfoo\b|\.\.\.|…|\[[^\]]*\]|<[^>]*>|\{[^}]*\}|%[sd]/;
+/** code rather than a path: calls, assignments, operators, member access, regexes, shell options */
+const CODEISH = /[()=,;'"|\\^$!]|::|->|=>|\s|^-|^@|^\$|^#/;
+const GLOB = /[*?]/;
+/** extensions that make `a/b.ext` a file reference */
+const KNOWN_EXT = /\.(md|mdx|txt|kt|kts|java|swift|m|mm|h|c|cc|cpp|ets|ts|tsx|js|jsx|mjs|cjs|json|json5|ya?ml|xml|toml|gradle|properties|plist|pbxproj|strings|sh|bash|py|rb|go|rs|html|css|scss|png|jpe?g|gif|svg|webp|pdf|lock|cfg|ini|env|sql|proto|graphql)$/i;
 
 function looksLikePath(s: string): boolean {
-  return /^[\w.@~-]+(?:\/[\w.@~ -]*[\w.@~-])+\/?$/.test(s) && !/\s/.test(s);
+  return /^[\w.@~-]+(?:\/[\w.@~-]+)+\/?$/.test(s);
+}
+
+/** the SFK rule for backticked paths (see docs/ownership.md §links) */
+export function backtickPathKind(s: string): 'backtick-relative' | 'backtick-repo' | null {
+  if (!s || isExternal(s) || CODEISH.test(s) || GLOB.test(s) || PLACEHOLDER.test(s)) return null;
+  if (s.startsWith('./') || s.startsWith('../')) return 'backtick-relative';
+  if (!s.includes('/') || !looksLikePath(s)) return null;
+  const bare = s.replace(/#.*$/, '').replace(/:\d+(?:-\d+)?$/, '');
+  if (!KNOWN_EXT.test(bare) && !bare.endsWith('/')) return null;
+  return 'backtick-repo';
 }
 
 export function extractLinks(file: string, text: string, opts: LinkOptions = {}): LinkRef[] {
@@ -76,12 +94,28 @@ export function extractLinks(file: string, text: string, opts: LinkOptions = {})
     const rd = REF_DEF_RE.exec(noCode);
     if (rd) pushTarget(rd[1]!);
     for (const m of t.matchAll(BACKTICK_RE)) {
-      const s = m[1]!.trim();
-      if (s.startsWith('./') || s.startsWith('../')) {
-        if (!/\s/.test(s) && !/[*?{}$<>]/.test(s) && !PLACEHOLDER.test(s)) out.push({ file, line: i + 1, target: s.replace(/[#:].*$/, ''), kind: 'backtick-relative' });
-      } else if (looksLikePath(s) && top.has(s.split('/')[0]!) && !/[*?{}$<>]/.test(s) && !PLACEHOLDER.test(s)) {
-        out.push({ file, line: i + 1, target: s.replace(/#.*$/, '').replace(/:\d+(?:-\d+)?$/, ''), kind: 'backtick-repo' });
+      const s = m[1]!.trim().replace(/:\d+(?:-\d+)?$/, '');
+      const kind = backtickPathKind(s);
+      if (!kind) continue;
+      const target = s.replace(/#.*$/, '');
+      {
+        // repo paths: first segment must exist; ../ paths whose first named segment exists nowhere up the
+        // tree point at a sibling repository (`../other_app/lib/x.dart`) and are not checked
+        const seg = (kind === 'backtick-repo' ? target : target.replace(/^(?:\.\.?\/)+/, '')).split('/')[0]!;
+        if (kind === 'backtick-relative' && (!opts.exists || !target.startsWith('../'))) { out.push({ file, line: i + 1, target, kind }); continue; }
+        let ok = top.has(seg);
+        if (opts.exists) {
+          ok = false;
+          let d = dirname(file);
+          for (;;) {
+            if (opts.exists(joinPath(d, seg))) { ok = true; break; }
+            if (d === '') break;
+            d = dirname(d);
+          }
+        }
+        if (!ok) continue;
       }
+      out.push({ file, line: i + 1, target, kind });
     }
   });
   return out;

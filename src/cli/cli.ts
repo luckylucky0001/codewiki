@@ -340,18 +340,19 @@ register({
 
 
 register({
-  name: 'verify', usage: '[--fix-index]', summary: 'CI gate: anchors match HEAD, symbols exist, no dead links/orphans, index complete, facts fresh',
-  flags: { 'fix-index': ['bool', 'regenerate index.md/llms.txt before verifying', false], 'dry-run': ['bool', 'with --fix-index: show what would change', false], docs: ['bool', 'also check owned entries and links in docs/ and <project>/docs/', false] },
+  name: 'verify', usage: '[--fix-index] [--docs [--strict]]', summary: 'CI gate: anchors match HEAD, symbols exist, no dead links/orphans, index complete, facts fresh',
+  flags: { 'fix-index': ['bool', 'regenerate index.md/llms.txt before verifying', false], 'dry-run': ['bool', 'with --fix-index: show what would change', false], docs: ['bool', 'also check owned entries and links in docs/ and <project>/docs/ (human-text links are review candidates)', false], strict: ['bool', 'with --docs: also fail on broken links in human-owned text', false] },
   async run(a, f) {
     const cfg = a.cfgOrFail();
     if (typeof cfg === 'number') return cfg;
     const wp = wikiPath(cfg);
     if (f.docs) {
-      const vd = await verifyDocs(cfg);
+      const vd = await verifyDocs(cfg, { strict: !!f.strict });
       if (!fs.existsSync(wp)) {
         a.emit(vd, () => {
           for (const e of vd.errors) a.out(`  ${e.code} ${e.page} ${e.detail}\n`);
-          a.out(`verify --docs ${vd.ok ? 'PASS' : 'FAIL'}: ${vd.files} docs, ${vd.errors.length} errors\n`);
+          printHumanCandidates(a, vd.human_review_candidates, vd.strict);
+          a.out(`verify --docs ${vd.ok ? 'PASS' : 'FAIL'}: ${vd.files} docs, ${vd.errors.length} errors, ${vd.human_review_candidates.length} human review candidate(s)\n`);
         });
         return vd.ok ? ExitOK : ExitStale;
       }
@@ -371,14 +372,27 @@ register({
     const rep = await verifyNow(cfg);
     if (docsVerify) {
       for (const e of docsVerify.errors) rep.errors.push(e);
+      if (docsVerify.strict) for (const e of docsVerify.human_review_candidates) rep.errors.push(e);
       if (!docsVerify.ok) rep.ok = false;
     }
-    a.emit(rep, () => printVerify(a, rep));
+    const dv = docsVerify;
+    const out = dv ? { ...rep, human_review_candidates: dv.human_review_candidates } : rep;
+    a.emit(out, () => {
+      if (dv && !dv.strict) printHumanCandidates(a, dv.human_review_candidates, false);
+      printVerify(a, rep);
+    });
     return rep.ok ? ExitOK : ExitStale;
   },
 });
 
-let docsVerify: { ok: boolean; errors: { code: string; page: string; detail: string }[] } | null = null;
+let docsVerify: Awaited<ReturnType<typeof verifyDocs>> | null = null;
+
+function printHumanCandidates(a: App, c: { page: string; detail: string }[], strict: boolean): void {
+  if (!c.length) return;
+  a.out(`human review candidates (broken links in human-owned docs text${strict ? '; --strict: counted as errors' : '; not a failure'}): ${c.length}\n`);
+  c.slice(0, 20).forEach((e) => a.out(`  ${e.page} ${e.detail}\n`));
+  if (c.length > 20) a.out(`  … ${c.length - 20} more (--json for all)\n`);
+}
 
 async function verifyNow(cfg: Config): Promise<Report> {
   const res = await scanRepo(cfg);
@@ -1234,10 +1248,10 @@ register({
       rec('');
       const files = args.map((p) => path.relative(cfg.root, path.resolve(p)).split(path.sep).join('/'));
       broken = linkCheck(cfg.root, files, all);
-    } else broken = v!.errors.filter((e) => e.code === 'E_DOCS_LINK');
+    } else broken = [...v!.errors.filter((e) => e.code === 'E_DOCS_LINK').map((e) => ({ ...e, owner: 'kb' })), ...v!.human_review_candidates.map((e) => ({ ...e, owner: 'human' }))];
     a.emit({ broken, ok: broken.length === 0 }, () => {
       if (!broken.length) a.out('no broken links\n');
-      for (const b of broken as { file?: string; page?: string; line?: number; target?: string; reason?: string; detail?: string; suggestions?: string[] }[]) a.out(b.detail ? `${b.page} ${b.detail}\n` : `${b.file}:${b.line} ${b.target} (${b.reason})${b.suggestions?.length ? ' → ' + b.suggestions[0] : ''}\n`);
+      for (const b of broken as { file?: string; page?: string; line?: number; target?: string; reason?: string; detail?: string; suggestions?: string[] }[]) a.out(b.detail ? `${b.page} ${b.detail}${(b as { owner?: string }).owner === 'human' ? ' [human text]' : ''}\n` : `${b.file}:${b.line} ${b.target} (${b.reason})${b.suggestions?.length ? ' → ' + b.suggestions[0] : ''}\n`);
     });
     return broken.length ? ExitStale : ExitOK;
   },

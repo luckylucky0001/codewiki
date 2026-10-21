@@ -115,3 +115,49 @@ describe('kb tree deps', () => {
     expect(kb('verify', '--quiet').status).toBe(0);
   });
 });
+
+describe('verify --docs semantics', () => {
+  it('fails only on kb-owned broken references; human-text links are review candidates unless --strict', async () => {
+    const { spawnSync } = await import('node:child_process');
+    const owned = (link: string) => `### Cart\n\nCart screen, see [spec](${link}).\n\n**Source**: \`android/app/A.kt\` [Code Direct] [Verified]\n`;
+    const d = mk({
+      'android/app/A.kt': 'class A\n',
+      'docs/notes.md': '# Notes\n\nHuman text with a [dead link](gone.md) and `tools/missing.sh`.\n',
+      'docs/features.md': '# Features\n\n' + owned('nowhere.md'),
+    });
+    fs.mkdirSync(path.join(d, 'tools'));
+    const kb = (...a: string[]) => spawnSync('node', [path.join(repo, 'dist/cli.js'), ...a], { cwd: d, encoding: 'utf8' });
+    expect(kb('init', '--quiet').status).toBe(0);
+    fs.rmSync(path.join(d, 'wiki'), { recursive: true });
+    let r = kb('verify', '--docs', '--json');
+    let j = JSON.parse(r.stdout);
+    expect(r.status).toBe(1);
+    expect(j.errors.map((e: { page: string }) => e.page)).toEqual(['docs/features.md']);
+    expect(j.human_review_candidates.map((e: { detail: string }) => e.detail.split(' ')[1]!.replace(/:$/, '')).sort()).toEqual(['gone.md', 'tools/missing.sh']);
+    fs.writeFileSync(path.join(d, 'docs/features.md'), '# Features\n\n' + owned('notes.md'));
+    r = kb('verify', '--docs', '--json');
+    j = JSON.parse(r.stdout);
+    expect(r.status).toBe(0);
+    expect(j.errors).toEqual([]);
+    expect(j.human_review_candidates).toHaveLength(2);
+    expect(kb('verify', '--docs', '--strict').status).toBe(1);
+  });
+});
+
+describe('link checker SFK rule', () => {
+  it('checks markdown links and only path-like backticks; skips code, globs, URLs, placeholders, fences, sibling repos', async () => {
+    const { checkLinks } = await import('../src/docs/index.js');
+    const files = new Set(['docs/a.md', 'src/main.kt', 'tools/run.sh']);
+    const dirs = new Set(['docs', 'src', 'tools']);
+    const exists = (p: string) => files.has(p) || dirs.has(p);
+    const text = [
+      '# A', '',
+      '[ok](a.md) [dead](b.md) ![img](./fig(5).png)',
+      '`src/main.kt` `src/gone.kt` `tools/` `tools/missing.sh` `./x.md` `../tools/run.sh`',
+      '`foo(bar)/x.kt` `src/*.kt` `https://x.io/a.md` `changelog/vX.Y.Z.md` `<module>/src/a.kt` `a.b.c` `src/main` `nodir/a.kt` `../other_repo/lib/a.dart`',
+      '```', '`src/inside-fence.kt` [f](fence.md)', '```',
+    ].join('\n');
+    const broken = checkLinks([{ path: 'docs/a.md', text }], { exists }, { exists }).map((b) => b.target).sort();
+    expect(broken).toEqual(['./fig(5).png', './x.md', 'b.md', 'src/gone.kt', 'tools/missing.sh']);
+  });
+});

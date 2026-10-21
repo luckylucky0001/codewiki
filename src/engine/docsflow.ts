@@ -521,7 +521,7 @@ export function linkCheck(root: string, files: string[], all: string[]): D.Broke
   return D.checkLinks(
     files.map((p) => ({ path: p, text: readOrNull(root, p) ?? '' })),
     { exists: exists(root), read: (p) => readOrNull(root, p), files: all },
-    { topLevelDirs: top, checkAnchors: true },
+    { topLevelDirs: top, exists: exists(root), checkAnchors: true },
   );
 }
 
@@ -732,21 +732,35 @@ export async function debtProposals(cfg: Config, write: boolean) {
 }
 
 /** verify --docs: owned [Code Direct] entries whose Source no longer exists, broken links in docs. */
-export async function verifyDocs(cfg: Config) {
+/**
+ * `kb verify --docs`: fails only on broken references in kb-owned content (generated entries, index rows,
+ * kb blocks — the items parseDocument recognises). Broken links in human-owned text are returned as
+ * human_review_candidates and fail only with `strict`.
+ */
+export async function verifyDocs(cfg: Config, opts: { strict?: boolean } = {}) {
   const root = cfg.root;
   const wikiRel = path.relative(root, wikiPath(cfg)).split(path.sep).join('/');
   const plan = D.discoverScopes(D.nodeScopeFs(root), { exclude: [wikiRel], configured: cfg.scopes?.projects });
   const all = listFiles(root, [wikiRel]);
   const docs = all.filter((f) => f.endsWith('.md') && docsScopes(plan).some((s) => f.startsWith(s.docsRoot + '/')));
   const errors: { code: string; page: string; detail: string }[] = [];
+  const human: { code: string; page: string; detail: string }[] = [];
+  const owned = new Map<string, Set<number>>(); // file -> 1-based lines inside kb-owned items
   for (const f of docs) {
     const text = readOrNull(root, f) ?? '';
     const doc = D.parseDocument(text);
+    const lines = new Set<number>();
     for (const it of doc.items ?? []) {
+      for (let l = it.start; l <= it.end; l++) lines.add(l + 1);
       const src = (it as { source?: { path: string; origin: string } }).source;
       if (src && src.origin === 'Code Direct' && !fs.existsSync(path.join(root, src.path))) errors.push({ code: 'E_DOCS_SOURCE_MISSING', page: f, detail: `owned entry source ${src.path} no longer exists (run kb docs compound)` });
     }
+    owned.set(f, lines);
   }
-  for (const b of linkCheck(root, docs, all)) errors.push({ code: 'E_DOCS_LINK', page: b.file, detail: `L${b.line} ${b.target}: ${b.reason}${b.suggestions.length ? ' (did you mean ' + b.suggestions[0] + ')' : ''}` });
-  return { ok: errors.length === 0, files: docs.length, errors };
+  for (const b of linkCheck(root, docs, all)) {
+    const e = { code: 'E_DOCS_LINK', page: b.file, detail: `L${b.line} ${b.target}: ${b.reason}${b.suggestions.length ? ' (did you mean ' + b.suggestions[0] + ')' : ''}` };
+    if (owned.get(b.file)?.has(b.line)) errors.push(e);
+    else human.push({ ...e, code: 'W_DOCS_HUMAN_LINK' });
+  }
+  return { ok: errors.length === 0 && !(opts.strict && human.length), strict: !!opts.strict, files: docs.length, errors, human_review_candidates: human };
 }
