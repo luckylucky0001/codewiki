@@ -195,4 +195,8 @@ AGENT_QUESTIONS=bench/agent-qa/questions-elementx-arch.json AGENT_REPS=2 AGENT_M
 - 注意：两组的 `--allowedTools` 都没有真正限制 Bash，B 组 20 次 Bash 调用都成功了。所以这组对比实际上是“有 wiki + 指引块”对“没有”，而不是工具权限不同。
 - **后续（已做，效果未验证）**：模块页新增 `kb:dependents` 块，列出反向依赖。用新 wiki 只重跑 A 组的 E2 两次：2/2 通过，3.5 turns，$0.009。但两次都只 grep 了 Gradle 文件，**没有读 wiki**，所以 turns 的下降不能算作这个块的功劳。结果在 `e2-with-dependents/`。要让 agent 真正用上它，还需要一个名字直接对应问题的命令（例如 `kb tree deps <module>`），并写进指引块。这一轮没有做。
 
+- **再加命令（`kb tree deps <module>` / `--top N`，并写进指引块）**：只重跑 A 组的 E1、E2、E4、E5，每题 2 次，$0.052。8 次运行中有 **7 次调用了 `kb tree deps`**，而之前是 0 次。命令的答案与标准答案完全一致（25 个依赖、2 个反向依赖、69 / 62、fan-in 147）。但 **turns 没有下降**：这 4 题 A 平均 6.4 turns，加命令前也是 6.4，B 是 8.3。原因是 agent 拿到命令的答案后，仍然会再 grep 一遍 build 文件来核对。结果在 `with-tree-deps/`。
+
+**本轮结论**：对架构类问题，多级目录和 `kb tree deps` 能给出正确答案，agent 也会用。但在 haiku 上没有带来可测的效率优势，因为答案本来就能从 build 文件 grep 到，agent 也倾向于再核对一次。A 组整体比 B 组少 20% 左右的 turns，但这部分差异在没有使用 kb 的运行里同样存在，所以归为噪声。
+
 逐题明细在 `demo/sample-output/agent-bench-elementx-arch/results.md`，每次运行用了哪些工具见同目录的 `usage.txt`，原始 transcript（路径已脱敏）在 `transcripts/`。

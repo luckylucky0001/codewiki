@@ -159,7 +159,7 @@ docs:
 | `kb eval [--llm …]` | 用人工标注的 golden set 评测断言核对与 plan 影响面（precision/recall） |
 | `kb hook install --mode post-receive\|post-merge [--repo <git dir>]` | 安装 git 钩子：服务端 push 到 master 或客户端 merge 后自动 compound（串行 + 追平） |
 | `kb mcp` | stdio MCP server（JSON-RPC 2.0），工具：`kb_search`、`kb_get`、`kb_context`、`kb_anchor`、`kb_status`、`kb_parity`、`kb_conflicts`、`kb_routes` |
-| `kb tree build\|show\|explain <symbol\|file>\|patch <ops.json>` | 多级目录：`wiki/module_tree.json`（L0 仓库 → L1 项目 → L2 模块 → L3 功能簇）的构建/展示/定位/受校验的 rename·merge·split |
+| `kb tree build\|show\|explain <symbol\|file>\|deps [<module>] [--top N]\|patch <ops.json>` | 多级目录：`wiki/module_tree.json`（L0 仓库 → L1 项目 → L2 模块 → L3 功能簇）的构建 / 展示 / 定位；模块的构建依赖、被依赖和 fan-in 排名；带校验的 rename·merge·split |
 | `kb docs scope\|status\|compound\|stale-specs\|adr\|debt` | 仓库 `docs/` 与 `<project>/docs/` 的所有权工作流（SFK）：人写内容逐字节不变 |
 | `kb links [paths…]` / `kb verify --docs` | docs 链接检查（只报告）；owned 条目的 Source 是否仍存在 |
 
@@ -180,7 +180,9 @@ docs:
 - 每页 frontmatter 增加 `level`、`tree_node`、`parent`、`summary`、`importance`、`children_digest`（父页）或 `sources`（叶页）。正文中由 kb 维护的块：`kb:breadcrumb`、`kb:children`（子页表 + 摘要）、`kb:symbols`（L4 符号表）、`kb:routes`（关联功能页）、`kb:diagram`（mermaid：项目 / 模块依赖 / 导航 / 簇关系，带 hash）、`kb:sources`（`Sources: path:起-止`）。LLM 只写块外的叙述，块在写后由 kb 覆盖。
 - 写作自底向上：叶页读源码，父页只读子页摘要；子摘要变化 → `children_digest` 变化 → 父页 stale。template 模式全部确定性生成。
 - `kb verify` 额外检查：树文件可解析、每个节点页面存在、kb 块与 mermaid hash 新鲜（`E_KB_BLOCK_STALE`）、`children_digest` 与树一致（`E_TREE_STALE`）。
-- 每层 `index.md` 与分层 `llms.txt` 由 kb 渲染；`kb tree explain <symbol|file>` 告诉 agent 某段代码在哪一页。
+- 每层的 `index.md` 和分层的 `llms.txt` 由 kb 渲染。
+- `kb tree explain <symbol|file>` 告诉 agent 某段代码在哪一页。
+- `kb tree deps <:module|path>` 列出某个模块依赖谁、被谁依赖；`kb tree deps --top N` 列出依赖最多和被依赖最多的模块。
 
 ```bash
 kb compound --llm template && kb tree show
@@ -188,6 +190,15 @@ kb tree explain android/app/src/main/java/com/minishop/ui/cart/CartViewModel.kt
 ```
 
 小仓库（如 minishop）可在 `codewiki.yaml` 里设 `tree: {budget_tokens: 2000}` 让模块拆成 L3 簇；`demo/run.sh` 就是这样得到 L0 → L1 → L3 三层的。
+
+模块页（L1 / L2）另有 `kb:dependents` 块，列出“被依赖”的模块（反向构建依赖）。它和其他 kb 块一样每次运行都会重算，所以别的模块新增依赖时也不会过期。
+
+**真实 LLM 路径**（`demo/llm-demo.sh`，claude haiku，输出见 `demo/sample-output/llm-claude/`，总花费约 $0.15）：
+
+- **L3 簇页**：在 examples/monorepo 上合入购物车上限的改动后，`kb compound --agent claude --max-llm-tasks 6` 重写了 3 个功能页和 1 个 L3 簇页（`cart-view-model`）。
+- **L1 / L2 页**：删掉 shop-ios 的 L1、L2 页后再跑一次，agent 只根据子页摘要重写了这两页。
+- **校验**：每一步 verify 都 PASS，kb 块（面包屑、子页表、符号表、mermaid、Sources）由 kb 覆盖、hash 新鲜，没有触发写集回滚。
+- **质量**：叙述具体，能写出路由表、跳转关系、各 ViewModel 的职责和常量（`MAX_CART_ITEMS = 20`）。缺点是会说“三端对照未包含在输入中”，因为 L3 簇只覆盖一端。
 
 ## 文档所有权（SFK）：`kb docs`
 
@@ -209,6 +220,15 @@ kb links && kb verify --docs
 ```
 
 `demo/docs-demo.sh`（示例 `examples/monorepo`）演示首次运行（adopted / skeleton / new）、人写内容逐字节保留的证明、无变化重跑为 noop、代码变更后的增量运行、ADR / 技术债提案、过期 spec 与链接检查；输出见 `demo/sample-output/docs/SUMMARY.md`。
+
+**真实仓库验证**（详见 [docs/validation-v2.md](docs/validation-v2.md)）：在 8 个真实仓库的 `git clone --shared` 副本上运行 `demo/sfk-real-repo.sh`，原始 clone 不写入。这 8 个仓库是 nowinandroid、element-x-android、kotlinconf-app、HarmonyOS-Cases、sunflower、wikipedia-ios、NextE、DroidconKotlin。
+
+- **人写文档没有被破坏**：共检查 708 个人写 `.md`，0 个被改动或删除。独立检查脚本 `demo/human-content-check.mjs` 和 kb 自己的 guard 都报告 0 违规。
+- **为什么 0 改动**：这些仓库原有的 docs 文件名都不在默认 schema 里，所以全部是 `frozen`，kb 只在旁边新建文件。
+- **adopted 实测**：用 `codewiki.yaml` 的 `docs_schema` 把维度指向真实文档后，kb 对它们只追加。涉及的文档是 nowinandroid 的 `ArchitectureLearningJourney.md`、element-x 的 `design.md` / `screenshot_testing.md`、wikipedia-ios 的 `ci.md`。
+- **第二次运行**：要么是 noop，要么是写入上一轮因行数预算推迟（deferred）的条目，输出里会注明。
+- **其他检查结果**：链接检查找到的坏链全部在人写正文里，kb 写的内容没有坏链；stale specs、review 均为 0。
+- **修掉的问题**：这批运行发现并修复了 8 个问题，包括 Gradle 子模块被当成项目、HarmonyOS 应用在子目录时检测不到平台、`index` 路由和树索引冲突，以及 `--json` 经管道输出时在 64 KiB 处被截断。
 
 ## Wiki 布局
 
@@ -366,6 +386,8 @@ TypeScript 版（Node 22，WASM 语法，同一 4 核容器，2026-10-21）：
 |---|---|---|---|---|---|---|
 | 合成 3000 | 3000 | 21000 | 3493 ms | 774 ms | 1253 ms | 3550 / 1227 / 1366 ms |
 | HarmonyOS-Cases（`kb scan` 全进程墙钟） | 2267 | 20141 | 5.7 s | 2.2 s | — | 5.2 s / 1.1 s |
+
+引用解析现在分片在 worker_threads 上并行：图只序列化一次，放进 SharedArrayBuffer 供各 worker 读取，输出与串行版逐字节一致。在 Cases 的热扫描上，`scanRepo` 从 2.05 s 降到 1.85 s（4 个 worker），只快了约 10%，离 Go 的约 1.1 s 还远。剩下的时间主要花在 resolve pass（约 550 ms）、扫描缓存的 v8 反序列化（约 350 ms）和 GC（约 290 ms）上，见 [docs/validation-v2.md](docs/validation-v2.md) §4。
 
 ```bash
 kb bench --synthetic 3000                       # 合成仓库，临时目录
@@ -574,6 +596,24 @@ kb eval --doc my-old-spec.md --golden my-labels.yaml                    # 任意
 **第 6 轮：新增 `kb conflicts` 命令，并在 skill 描述的第一句就指向它。** 只对 A 组重跑这一题 3 次，结果 3 次都调用了 `kb conflicts`（其中 1 次经由 kb-query skill）：**平均 25.3 → 4.7 turns，92 → 20 s，$0.069 → $0.018**，检查点仍然全部命中。这说明 agent 不是不愿意用 wiki，而是要有一个名字直接对应问题的命令。
 
 **大仓库变体（HarmonyOS Cases，1952 个 .ets 文件，5 题 × 2 次）**：A 10/10、平均 5.9 turns、$0.039；B 10/10、平均 5.9 turns、$0.040，**没有差别**。这些问题都能用一个唯一的字符串直接 grep 到答案，grep 在大仓库上也很快，A 组也几乎没用 wiki。所以“仓库越大 wiki 越有用”这个推测，这次**没有得到支持**。
+
+### 架构类问题：element-x-android（268 个 Gradle 模块，多级目录）
+
+5 道题：某模块的依赖、反向依赖、模块用途、依赖最多的 feature 模块、fan-in。标准答案直接从 `build.gradle.kts` 算出。用 haiku，每题每组 2 次。
+
+| | 通过 | 平均 turns | 总费用 | 用到 kb |
+|---|---|---|---|---|
+| A：wiki + skill + 指引块 | 10/10 | 5.9 | $0.064 | 4/10 |
+| B：只有源码 | 10/10 | 7.8 | $0.078 | — |
+| A + `kb tree deps`（只重跑依赖类 4 题） | 8/8 | 6.4（同 4 题：之前 A 6.4、B 8.3） | $0.052 | **7/8** |
+
+**结论如实写：**
+
+- 多级目录和新命令 `kb tree deps` 给出的答案与标准答案完全一致，agent 也确实会调用。
+- 但在 haiku 上**没有可测的效率提升**：依赖关系本来就能从 build 文件 grep 到，agent 拿到 kb 的答案后还会再 grep 一遍核对。
+- A 组比 B 组少的 turns，在没有用到 kb 的运行里同样存在，所以视为噪声。
+
+详见 [bench/agent-qa/README.md](bench/agent-qa/README.md)（第 10 轮）。
 
 ### 最终结果：大仓库 + 汇总类问题（HarmonyOS Cases，最终代码）
 
