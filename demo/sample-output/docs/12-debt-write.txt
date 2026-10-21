@@ -1,0 +1,3 @@
+TODO: move the cart limit to remote config so product can tune it without a release  `apps/shop-android/app/src/main/java/com/minishop/ui/cart/CartViewModel.kt:10` `CartViewModel`
+FIXME: retry failed requests with exponential backoff instead of failing immediately  `apps/shop-ios/MiniShop/Networking/APIClient.swift:3` —
+docs/tech-debt.md: write, adds TD-001, TD-002

@@ -1,1 +1,1 @@
-feat(cart): lower the Android cart limit to 20
+feat(cart): Android cart limit 20 and a cart_total testID

@@ -1,0 +1,3 @@
+proposed docs/adr/0002-login.md
+proposed docs/adr/0003-cart.md
+dry-run: re-run with --write to create the ADR files (or review them in a PR)

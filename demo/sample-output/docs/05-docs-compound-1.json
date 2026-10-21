@@ -1,0 +1,667 @@
+{
+  "ok": true,
+  "head": "0eac90a45f255baa4080e270c0069ae35df522e6",
+  "dry_run": true,
+  "run": {
+    "decision": "fresh",
+    "reason": "previous run completed"
+  },
+  "files": [
+    {
+      "path": "apps/shop-android/docs/architecture.md",
+      "scope": "shop-android",
+      "dimension": "architecture",
+      "state": "managed",
+      "action": "noop",
+      "inserted": 0,
+      "replaced": 0,
+      "unchanged": 4,
+      "pending": 0,
+      "dropped": [],
+      "review": []
+    },
+    {
+      "path": "apps/shop-android/docs/contracts.md",
+      "scope": "shop-android",
+      "dimension": "api-contracts",
+      "state": "managed",
+      "action": "noop",
+      "inserted": 0,
+      "replaced": 0,
+      "unchanged": 5,
+      "pending": 0,
+      "dropped": [],
+      "review": []
+    },
+    {
+      "path": "apps/shop-android/docs/design-patterns.md",
+      "scope": "shop-android",
+      "dimension": "design-patterns",
+      "state": "managed",
+      "action": "noop",
+      "inserted": 0,
+      "replaced": 0,
+      "unchanged": 2,
+      "pending": 0,
+      "dropped": [],
+      "review": []
+    },
+    {
+      "path": "apps/shop-android/docs/features.md",
+      "scope": "shop-android",
+      "dimension": "features",
+      "state": "managed",
+      "action": "noop",
+      "inserted": 0,
+      "replaced": 0,
+      "unchanged": 7,
+      "pending": 0,
+      "dropped": [],
+      "review": []
+    },
+    {
+      "path": "apps/shop-android/docs/navigation.md",
+      "scope": "shop-android",
+      "dimension": "navigation",
+      "state": "managed",
+      "action": "noop",
+      "inserted": 0,
+      "replaced": 0,
+      "unchanged": 7,
+      "pending": 0,
+      "dropped": [],
+      "review": []
+    },
+    {
+      "path": "apps/shop-android/docs/product-specs.md",
+      "scope": "shop-android",
+      "dimension": "product-specs",
+      "state": "managed",
+      "action": "noop",
+      "inserted": 0,
+      "replaced": 0,
+      "unchanged": 1,
+      "pending": 0,
+      "dropped": [],
+      "review": []
+    },
+    {
+      "path": "apps/shop-android/docs/testing.md",
+      "scope": "shop-android",
+      "dimension": "testing",
+      "state": "managed",
+      "action": "noop",
+      "inserted": 0,
+      "replaced": 0,
+      "unchanged": 7,
+      "pending": 0,
+      "dropped": [],
+      "review": []
+    },
+    {
+      "path": "apps/shop-ios/docs/architecture.md",
+      "scope": "shop-ios",
+      "dimension": "architecture",
+      "state": "managed",
+      "action": "noop",
+      "inserted": 0,
+      "replaced": 0,
+      "unchanged": 7,
+      "pending": 0,
+      "dropped": [],
+      "review": []
+    },
+    {
+      "path": "apps/shop-ios/docs/contracts.md",
+      "scope": "shop-ios",
+      "dimension": "api-contracts",
+      "state": "managed",
+      "action": "noop",
+      "inserted": 0,
+      "replaced": 0,
+      "unchanged": 5,
+      "pending": 0,
+      "dropped": [],
+      "review": []
+    },
+    {
+      "path": "apps/shop-ios/docs/design-patterns.md",
+      "scope": "shop-ios",
+      "dimension": "design-patterns",
+      "state": "managed",
+      "action": "noop",
+      "inserted": 0,
+      "replaced": 0,
+      "unchanged": 2,
+      "pending": 0,
+      "dropped": [],
+      "review": []
+    },
+    {
+      "path": "apps/shop-ios/docs/features.md",
+      "scope": "shop-ios",
+      "dimension": "features",
+      "state": "managed",
+      "action": "noop",
+      "inserted": 0,
+      "replaced": 0,
+      "unchanged": 7,
+      "pending": 0,
+      "dropped": [],
+      "review": []
+    },
+    {
+      "path": "apps/shop-ios/docs/navigation.md",
+      "scope": "shop-ios",
+      "dimension": "navigation",
+      "state": "managed",
+      "action": "noop",
+      "inserted": 0,
+      "replaced": 0,
+      "unchanged": 7,
+      "pending": 0,
+      "dropped": [],
+      "review": []
+    },
+    {
+      "path": "apps/shop-ios/docs/testing.md",
+      "scope": "shop-ios",
+      "dimension": "testing",
+      "state": "managed",
+      "action": "noop",
+      "inserted": 0,
+      "replaced": 0,
+      "unchanged": 7,
+      "pending": 0,
+      "dropped": [],
+      "review": []
+    },
+    {
+      "path": "docs/architecture.md",
+      "scope": "repo",
+      "dimension": "architecture",
+      "state": "managed",
+      "action": "noop",
+      "inserted": 0,
+      "replaced": 0,
+      "unchanged": 2,
+      "pending": 0,
+      "dropped": [],
+      "review": []
+    },
+    {
+      "path": "docs/contracts.md",
+      "scope": "repo",
+      "dimension": "api-contracts",
+      "state": "managed",
+      "action": "noop",
+      "inserted": 0,
+      "replaced": 0,
+      "unchanged": 5,
+      "pending": 0,
+      "dropped": [],
+      "review": []
+    },
+    {
+      "path": "docs/design-patterns.md",
+      "scope": "repo",
+      "dimension": "design-patterns",
+      "state": "managed",
+      "action": "noop",
+      "inserted": 0,
+      "replaced": 0,
+      "unchanged": 2,
+      "pending": 0,
+      "dropped": [],
+      "review": []
+    },
+    {
+      "path": "docs/features.md",
+      "scope": "repo",
+      "dimension": "features",
+      "state": "managed",
+      "action": "noop",
+      "inserted": 0,
+      "replaced": 0,
+      "unchanged": 6,
+      "pending": 0,
+      "dropped": [],
+      "review": []
+    },
+    {
+      "path": "docs/product-specs.md",
+      "scope": "repo",
+      "dimension": "product-specs",
+      "state": "managed",
+      "action": "noop",
+      "inserted": 0,
+      "replaced": 0,
+      "unchanged": 3,
+      "pending": 0,
+      "dropped": [],
+      "review": []
+    },
+    {
+      "path": "docs/requirements.md",
+      "scope": "repo",
+      "dimension": "requirements",
+      "state": "managed",
+      "action": "noop",
+      "inserted": 0,
+      "replaced": 0,
+      "unchanged": 5,
+      "pending": 0,
+      "dropped": [],
+      "review": []
+    },
+    {
+      "path": "docs/testing.md",
+      "scope": "repo",
+      "dimension": "testing",
+      "state": "managed",
+      "action": "noop",
+      "inserted": 0,
+      "replaced": 0,
+      "unchanged": 7,
+      "pending": 0,
+      "dropped": [],
+      "review": []
+    }
+  ],
+  "routing": [
+    {
+      "key": "route:shop-android:MainActivity",
+      "dest": "shop-android",
+      "reason": "project-only dimension"
+    },
+    {
+      "key": "route:shop-android:cart",
+      "dest": "shop-android",
+      "reason": "project-only dimension"
+    },
+    {
+      "key": "route:shop-android:checkout",
+      "dest": "shop-android",
+      "reason": "project-only dimension"
+    },
+    {
+      "key": "route:shop-android:login",
+      "dest": "shop-android",
+      "reason": "project-only dimension"
+    },
+    {
+      "key": "route:shop-android:order_detail",
+      "dest": "shop-android",
+      "reason": "project-only dimension"
+    },
+    {
+      "key": "route:shop-android:product_detail",
+      "dest": "shop-android",
+      "reason": "project-only dimension"
+    },
+    {
+      "key": "route:shop-android:products",
+      "dest": "shop-android",
+      "reason": "project-only dimension"
+    },
+    {
+      "key": "route:shop-ios:RootView",
+      "dest": "shop-ios",
+      "reason": "project-only dimension"
+    },
+    {
+      "key": "route:shop-ios:cart",
+      "dest": "shop-ios",
+      "reason": "project-only dimension"
+    },
+    {
+      "key": "route:shop-ios:checkout",
+      "dest": "shop-ios",
+      "reason": "project-only dimension"
+    },
+    {
+      "key": "route:shop-ios:login",
+      "dest": "shop-ios",
+      "reason": "project-only dimension"
+    },
+    {
+      "key": "route:shop-ios:order_detail",
+      "dest": "shop-ios",
+      "reason": "project-only dimension"
+    },
+    {
+      "key": "route:shop-ios:product_detail",
+      "dest": "shop-ios",
+      "reason": "project-only dimension"
+    },
+    {
+      "key": "route:shop-ios:products",
+      "dest": "shop-ios",
+      "reason": "project-only dimension"
+    },
+    {
+      "key": "tid:(shared)",
+      "dest": "repo",
+      "reason": "matching parity evidence from 2 projects",
+      "xref": [
+        "shop-android",
+        "shop-ios"
+      ]
+    },
+    {
+      "key": "tid:cart",
+      "dest": "repo",
+      "reason": "matching parity evidence from 2 projects",
+      "xref": [
+        "shop-android",
+        "shop-ios"
+      ]
+    },
+    {
+      "key": "tid:checkout",
+      "dest": "repo",
+      "reason": "matching parity evidence from 2 projects",
+      "xref": [
+        "shop-android",
+        "shop-ios"
+      ]
+    },
+    {
+      "key": "tid:login",
+      "dest": "repo",
+      "reason": "matching parity evidence from 2 projects",
+      "xref": [
+        "shop-android",
+        "shop-ios"
+      ]
+    },
+    {
+      "key": "tid:order_detail",
+      "dest": "repo",
+      "reason": "matching parity evidence from 2 projects",
+      "xref": [
+        "shop-android",
+        "shop-ios"
+      ]
+    },
+    {
+      "key": "tid:product_detail",
+      "dest": "repo",
+      "reason": "matching parity evidence from 2 projects",
+      "xref": [
+        "shop-android",
+        "shop-ios"
+      ]
+    },
+    {
+      "key": "tid:products",
+      "dest": "repo",
+      "reason": "matching parity evidence from 2 projects",
+      "xref": [
+        "shop-android",
+        "shop-ios"
+      ]
+    },
+    {
+      "key": "api:GET /api/products",
+      "dest": "repo",
+      "reason": "matching parity evidence from 2 projects",
+      "xref": [
+        "shop-android",
+        "shop-ios"
+      ]
+    },
+    {
+      "key": "api:GET /api/products/{id}",
+      "dest": "repo",
+      "reason": "matching parity evidence from 2 projects",
+      "xref": [
+        "shop-android",
+        "shop-ios"
+      ]
+    },
+    {
+      "key": "api:POST /api/cart",
+      "dest": "repo",
+      "reason": "matching parity evidence from 2 projects",
+      "xref": [
+        "shop-android",
+        "shop-ios"
+      ]
+    },
+    {
+      "key": "api:POST /api/login",
+      "dest": "repo",
+      "reason": "matching parity evidence from 2 projects",
+      "xref": [
+        "shop-android",
+        "shop-ios"
+      ]
+    },
+    {
+      "key": "api:POST /api/orders",
+      "dest": "repo",
+      "reason": "matching parity evidence from 2 projects",
+      "xref": [
+        "shop-android",
+        "shop-ios"
+      ]
+    },
+    {
+      "key": "feature:MainActivity",
+      "dest": "shop-android",
+      "reason": "single-project evidence"
+    },
+    {
+      "key": "feature:RootView",
+      "dest": "shop-ios",
+      "reason": "single-project evidence"
+    },
+    {
+      "key": "feature:cart",
+      "dest": "repo",
+      "reason": "matching parity evidence from 2 projects",
+      "xref": [
+        "shop-android",
+        "shop-ios"
+      ]
+    },
+    {
+      "key": "feature:checkout",
+      "dest": "repo",
+      "reason": "matching parity evidence from 2 projects",
+      "xref": [
+        "shop-android",
+        "shop-ios"
+      ]
+    },
+    {
+      "key": "feature:login",
+      "dest": "repo",
+      "reason": "matching parity evidence from 2 projects",
+      "xref": [
+        "shop-android",
+        "shop-ios"
+      ]
+    },
+    {
+      "key": "feature:order_detail",
+      "dest": "repo",
+      "reason": "matching parity evidence from 2 projects",
+      "xref": [
+        "shop-android",
+        "shop-ios"
+      ]
+    },
+    {
+      "key": "feature:product_detail",
+      "dest": "repo",
+      "reason": "matching parity evidence from 2 projects",
+      "xref": [
+        "shop-android",
+        "shop-ios"
+      ]
+    },
+    {
+      "key": "feature:products",
+      "dest": "repo",
+      "reason": "matching parity evidence from 2 projects",
+      "xref": [
+        "shop-android",
+        "shop-ios"
+      ]
+    },
+    {
+      "key": "pattern:MVVM（ViewModel）",
+      "dest": "repo",
+      "reason": "matching parity evidence from 2 projects",
+      "xref": [
+        "shop-android",
+        "shop-ios"
+      ]
+    },
+    {
+      "key": "pattern:状态容器（Store）",
+      "dest": "repo",
+      "reason": "matching parity evidence from 2 projects",
+      "xref": [
+        "shop-android",
+        "shop-ios"
+      ]
+    },
+    {
+      "key": "arch:project:shop-android",
+      "dest": "repo",
+      "reason": "root-owned evidence"
+    },
+    {
+      "key": "arch:shop-android/c-2fbaebfe",
+      "dest": "shop-android",
+      "reason": "single-project evidence"
+    },
+    {
+      "key": "arch:shop-android/c-4c13e15b",
+      "dest": "shop-android",
+      "reason": "single-project evidence"
+    },
+    {
+      "key": "arch:shop-android/c-6fe46617",
+      "dest": "shop-android",
+      "reason": "single-project evidence"
+    },
+    {
+      "key": "arch:shop-android/c-96e5ede0",
+      "dest": "shop-android",
+      "reason": "single-project evidence"
+    },
+    {
+      "key": "arch:project:shop-ios",
+      "dest": "repo",
+      "reason": "root-owned evidence"
+    },
+    {
+      "key": "arch:shop-ios/_root",
+      "dest": "shop-ios",
+      "reason": "single-project evidence"
+    },
+    {
+      "key": "arch:shop-ios/mini-shop",
+      "dest": "shop-ios",
+      "reason": "single-project evidence"
+    },
+    {
+      "key": "arch:shop-ios/mini-shop/c-5feb53c3",
+      "dest": "shop-ios",
+      "reason": "single-project evidence"
+    },
+    {
+      "key": "arch:shop-ios/mini-shop/c-6f7527c8",
+      "dest": "shop-ios",
+      "reason": "single-project evidence"
+    },
+    {
+      "key": "arch:shop-ios/mini-shop/c-a58fadb9",
+      "dest": "shop-ios",
+      "reason": "single-project evidence"
+    },
+    {
+      "key": "arch:shop-ios/mini-shop/c-aef82694",
+      "dest": "shop-ios",
+      "reason": "single-project evidence"
+    },
+    {
+      "key": "arch:shop-ios/mini-shop/c-b27ee65e",
+      "dest": "shop-ios",
+      "reason": "single-project evidence"
+    },
+    {
+      "key": "index:.kiro/specs/login/requirements.md",
+      "dest": "repo",
+      "reason": "root-owned evidence"
+    },
+    {
+      "key": "index:apps/shop-android/specs/010-push/spec.md",
+      "dest": "shop-android",
+      "reason": "single-project evidence"
+    },
+    {
+      "key": "index:specs/001-cart/spec.md",
+      "dest": "repo",
+      "reason": "root-owned evidence"
+    },
+    {
+      "key": "index:specs/002-wishlist/spec.md",
+      "dest": "repo",
+      "reason": "root-owned evidence"
+    },
+    {
+      "key": "req:.kiro/specs/login/requirements.md#LOGIN-R1.1",
+      "dest": "repo",
+      "reason": "root-owned evidence"
+    },
+    {
+      "key": "req:.kiro/specs/login/requirements.md#LOGIN-R1.2",
+      "dest": "repo",
+      "reason": "root-owned evidence"
+    },
+    {
+      "key": "req:specs/001-cart/spec.md#FR-002",
+      "dest": "repo",
+      "reason": "root-owned evidence"
+    },
+    {
+      "key": "req:specs/001-cart/spec.md#FR-003",
+      "dest": "repo",
+      "reason": "root-owned evidence"
+    },
+    {
+      "key": "req:specs/002-wishlist/spec.md#FR-001",
+      "dest": "repo",
+      "reason": "root-owned evidence"
+    }
+  ],
+  "broken_links": [],
+  "scopes": [
+    {
+      "id": "repo",
+      "root": ".",
+      "docs_root": "docs",
+      "write": true,
+      "scan_mode": "incremental"
+    },
+    {
+      "id": "shop-android",
+      "root": "apps/shop-android",
+      "docs_root": "apps/shop-android/docs",
+      "write": true,
+      "scan_mode": "incremental"
+    },
+    {
+      "id": "shop-ios",
+      "root": "apps/shop-ios",
+      "docs_root": "apps/shop-ios/docs",
+      "write": true,
+      "scan_mode": "incremental"
+    }
+  ]
+}

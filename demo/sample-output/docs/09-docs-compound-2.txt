@@ -1,0 +1,25 @@
+docs compound (fresh: previous run completed)
+  scope repo           docs incremental
+  scope shop-android   apps/shop-android/docs incremental
+  scope shop-ios       apps/shop-ios/docs incremental
+  noop   managed  apps/shop-android/docs/architecture.md [architecture] +0 ~0 =4
+  noop   managed  apps/shop-android/docs/contracts.md [api-contracts] +0 ~0 =5
+  noop   managed  apps/shop-android/docs/design-patterns.md [design-patterns] +0 ~0 =2
+  noop   managed  apps/shop-android/docs/features.md [features] +0 ~0 =7
+  noop   managed  apps/shop-android/docs/navigation.md [navigation] +0 ~0 =7
+  noop   managed  apps/shop-android/docs/product-specs.md [product-specs] +0 ~0 =1
+  noop   managed  apps/shop-android/docs/testing.md [testing] +0 ~0 =7
+  noop   managed  apps/shop-ios/docs/architecture.md [architecture] +0 ~0 =7
+  noop   managed  apps/shop-ios/docs/contracts.md [api-contracts] +0 ~0 =5
+  noop   managed  apps/shop-ios/docs/design-patterns.md [design-patterns] +0 ~0 =2
+  noop   managed  apps/shop-ios/docs/features.md [features] +0 ~0 =7
+  noop   managed  apps/shop-ios/docs/navigation.md [navigation] +0 ~0 =7
+  noop   managed  apps/shop-ios/docs/testing.md [testing] +0 ~0 =7
+  noop   managed  docs/architecture.md [architecture] +0 ~0 =2
+  noop   managed  docs/contracts.md [api-contracts] +0 ~0 =5
+  noop   managed  docs/design-patterns.md [design-patterns] +0 ~0 =2
+  noop   managed  docs/features.md [features] +0 ~0 =6
+  noop   managed  docs/product-specs.md [product-specs] +0 ~0 =3
+  noop   managed  docs/requirements.md [requirements] +0 ~0 =5
+  write  managed  docs/testing.md [testing] +0 ~1 =6
+routing: 58 item(s), 30 to repository docs (root evidence or ≥2 projects), 1 parity difference(s)

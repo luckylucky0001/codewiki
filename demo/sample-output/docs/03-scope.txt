@@ -1,0 +1,3 @@
+repository  docs=docs specs=specs write=true read=true
+project shop-android     root=apps/shop-android docs=apps/shop-android/docs specs=specs,apps/shop-android/specs android gradle (container)
+project shop-ios         root=apps/shop-ios docs=apps/shop-ios/docs specs=specs,apps/shop-ios/specs ios swiftpm (container)
