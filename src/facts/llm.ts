@@ -7,9 +7,13 @@
 //   - `evidence` is a verbatim substring of the source within ±5 lines of `line`;
 //   - routes: the route id or screen identifier appears in that window;
 //   - APIs: every literal path segment appears in the window, or in the value of a constant whose name
-//     appears in the window.
-// Rejected suggestions are reported, never written. Accepted items carry source "llm" and
-// confidence "verified-evidence"; rule results win on conflict. Raw agent answers are cached per
+//     appears in the window; the window holds an HTTP client call or an endpoint definition (not just a
+//     string constant); static-asset paths, foreign hosts and URLs built on a function parameter are dropped;
+//   - routes: only registration / declaration sites with a named screen; ids are normalised (qualifier
+//     stripped, enum/const resolved to its value) before de-duplication against rules and the batch.
+// Rejected suggestions are reported, never written. Accepted items carry source "llm" and confidence
+// "verified-call" (API next to an HTTP call / route screen resolved to its declaration) or "evidence-token"
+// (only the token checks passed); rule results win on conflict. Raw agent answers are cached per
 // (file content hash, model, prompt version, kinds), so reruns cost nothing; the accepted overlay is
 // stored in <wiki>/.kb/llm-facts.json and re-applied deterministically (kb verify, later compounds)
 // for files whose content hash is unchanged.
@@ -32,8 +36,11 @@ export const OverlayFile = '.kb/llm-facts.json';
 export const CacheDir = '.kb/cache/llm-facts';
 const Window = 5;
 
-export type LLMRoute = Route & { line: number; source: 'llm'; confidence: 'verified-evidence' };
-export type LLMAPI = API & { line: number; source: 'llm'; confidence: 'verified-evidence' };
+/** verified-call: API evidence window holds an HTTP client call / route screen resolved to its declaration;
+ * evidence-token: only the verbatim-evidence + identifier checks passed (endpoint definition / unresolved screen). */
+export type Confidence = 'verified-call' | 'evidence-token';
+export type LLMRoute = Route & { line: number; source: 'llm'; confidence: Confidence };
+export type LLMAPI = API & { line: number; source: 'llm'; confidence: Confidence };
 
 export interface SuggestOptions {
   agent?: string; // claude (default)
@@ -222,9 +229,37 @@ export interface VerifyCtx {
   platformOf: (rel: string) => string;
   consts: Map<string, string[]>; // constant name -> string values
   symbolsByName: Map<string, Symbol[]>;
+  /** functions / methods per file (to find the enclosing function's parameters) */
+  funcsByFile?: Map<string, Symbol[]>;
+  /** hosts of the app's own API base URLs (rule APIs, base-URL constants); empty = unknown */
+  apiHosts?: Set<string>;
 }
 
-export function verifyRoute(c: VerifyCtx, it: RawItem): { ok: true; r: LLMRoute } | { ok: false; reason: string } {
+// Route registration / declaration sites (vs. use sites such as navigate(X), backStack.add(X), startDestination = X).
+const RouteDeclRe = /\b(composable|entry|navigation|dialog|bottomSheet|activity|fragment)\s*[<(]|\bentry\s*<|NavigationLink\b|\.navigationDestination\b|\.sheet\b|\.fullScreenCover\b|@Entry\b|@Route\b|@Destination\b|\brouteName\b|\b(data\s+)?object\s+\w+|\b(data\s+)?class\s+\w+|\bstruct\s+\w+|\bcase\s+\w+|\benum\s+\w+|\bstatic\s+(readonly\s+)?\w+\s*[:=]|\bconst\s+(val\s+)?\w+\s*[:=]|\bregister\w*\s*\(|\b(path|name|url|route|pageUrl|page)\s*[:=]\s*["'`]|\bbuilder\s*[:=(]|\bTab\s*\(|\bWrappedBuilder\b|\bNavDestination\b|\bNavEntry\b|\bentryProvider\b|\bcase\s+\.\w+|^\s*(is\s+)?[A-Z][\w.]*\s*->/m;
+const RouteUseRe = /\b(navigate|navigateTo|push\w*|replace\w*|popTo\w*|backStack\.(add|push)|startDestination|listOf|mutableStateListOf|rememberNavBackStack|pushUrl|pushPath|pushPathByName|replaceUrl|router\.back)\b/;
+
+// HTTP client calls and endpoint definitions (vs. bare string constants).
+const HttpCallRe = /\.(get|post|put|delete|patch|head|request|fetch|execute|enqueue|newCall|dataTask|submitForm|submitFormWithBinaryData)\s*(<[^>]*>)?\s*[({]|\b(fetch|axios|request|httpRequest|ajax)\s*\(|@(GET|POST|PUT|DELETE|PATCH|HEAD|HTTP|Multipart|FormUrlEncoded)\b|\bURLRequest\s*\(|\bRequest\.Builder\b|\bAF\.(request|upload|download)\b|\bURLSession\b|\bcreateHttp\b|\bHttpMethod\.|\bhttpMethod\b|\bmethod\s*[:=]\s*["'`.]?\w|\bRequestMethod\.|\.url\s*\(|\burl\s*\{|\b(GET|POST|PUT|DELETE|PATCH)\s*\(/;
+const EndpointDefRe = /\b(var|val|let|static|case)\s+path\b|\bpath\s*[:=]\s*["'`]|\bpath\s*\(\s*\)|\bendpoint\b|\bEndpoint\b|\bapiPath\b|\bpathFor\b/i;
+
+const AssetExtRe = /\.(png|jpe?g|gif|webp|ico|svg|bmp|css|js|mjs|map|woff2?|ttf|otf|eot|mp3|mp4|m4a|wav|webm|pdf)$/i;
+const AssetPrefixRe = /(^|\/)(static|assets?|images?|img|imgs|fonts?|css|js|media|icons?|favicons?)(\/|$)|^\/?t\/p(\/|$)/i;
+
+/** Route id with `Qualifier.` prefixes removed and enum / const names resolved to their string value. */
+export function normalizeRouteId(c: VerifyCtx, rid: string): string {
+  const m = /^((?:[A-Za-z_]\w*\.)+)([A-Za-z_]\w*)$/.exec(rid);
+  if (!m) return rid;
+  const quals = m[1]!.slice(0, -1);
+  const name = m[2]!;
+  const owner = quals.split('.').pop()!;
+  const vals = (c.symbolsByName.get(name) ?? []).filter((s) => s.value && (s.qual === `${owner}.${name}` || s.qual.endsWith(`.${owner}.${name}`) || s.parent?.endsWith('#' + owner) || s.parent?.endsWith('.' + owner)));
+  const v = vals.length ? vals[0]!.value!.trim().replace(/^["'`]|["'`]$/g, '') : '';
+  if (v && /^[\w/.:{}-]+$/.test(v) && new Set(vals.map((x) => x.value)).size === 1) return v;
+  return name;
+}
+
+function evidenceOK(c: VerifyCtx, it: RawItem): { ok: true; file: string; lines: string[]; line: number; win: string } | { ok: false; reason: string } {
   const file = str(it.file);
   const text = c.files.get(file);
   if (text === undefined) return { ok: false, reason: 'file not in scan' };
@@ -235,30 +270,53 @@ export function verifyRoute(c: VerifyCtx, it: RawItem): { ok: true; r: LLMRoute 
   if (ev.length < 4) return { ok: false, reason: 'evidence missing' };
   const win = windowText(lines, line);
   if (!win.includes(ev) && !ws(win).includes(ws(ev))) return { ok: false, reason: 'evidence not found near line' };
+  return { ok: true, file, lines, line, win };
+}
+
+export function verifyRoute(c: VerifyCtx, it: RawItem): { ok: true; r: LLMRoute } | { ok: false; reason: string } {
+  const e = evidenceOK(c, it);
+  if (!e.ok) return e;
+  const { file, lines, line, win } = e;
   const rid = str(it.route_id).trim();
   const screen = str(it.screen).trim().replace(/\(\)$/, '');
   if (!rid) return { ok: false, reason: 'route_id missing' };
   const ids = [rid, screen, rid.split(/[./]/).filter(Boolean).pop() ?? '', screen.split('.').pop() ?? ''].filter((s) => s.length >= 2);
   if (!ids.some((s) => win.includes(s))) return { ok: false, reason: 'route/screen identifier not in window' };
-  // anchor the screen to its declaration when it is a known symbol
-  // (file + line anchor the evidence; symbol is the screen's declaration when it is a unique known symbol)
+  // rule 5: registration / declaration sites only, never bare use sites; the target screen must be named
+  if (!screen) return { ok: false, reason: 'empty screen symbol' };
+  const near = lines.slice(Math.max(0, line - 3), Math.min(lines.length, line + 2)).join('\n');
+  const cited = lines[line - 1] ?? '';
+  if (!RouteDeclRe.test(near) || (RouteUseRe.test(cited) && !RouteDeclRe.test(cited))) return { ok: false, reason: 'use site, not a registration/declaration site' };
+  // file + line anchor the evidence; symbol is the screen's declaration when it is a unique known symbol
   let symbol = screen;
-  const cands = c.symbolsByName.get(screen.split('.').pop() ?? '') ?? [];
-  if (cands.length === 1) symbol = cands[0]!.id;
-  return { ok: true, r: { platform: c.platformOf(file), route_id: rid, pattern: rid, deeplink: '', file, symbol, line, source: 'llm', confidence: 'verified-evidence' } };
+  const sname = screen.split('.').pop() ?? '';
+  const cands = (c.symbolsByName.get(sname) ?? []).filter((s) => s.kind !== 'property' && s.kind !== 'variable' && s.kind !== 'field');
+  const resolved = cands.length === 1;
+  if (resolved) symbol = cands[0]!.id;
+  const nid = normalizeRouteId(c, rid);
+  return { ok: true, r: { platform: c.platformOf(file), route_id: nid, pattern: nid, deeplink: '', file, symbol, line, source: 'llm', confidence: resolved ? 'verified-call' : 'evidence-token' } };
+}
+
+/** Parameter names of the function enclosing `line` in `file`. */
+function enclosingParams(c: VerifyCtx, file: string, line: number): string[] {
+  let best: Symbol | undefined;
+  for (const s of c.funcsByFile?.get(file) ?? []) if (s.start_line <= line && line <= s.end_line && (!best || s.start_line >= best.start_line)) best = s;
+  if (!best) return [];
+  const a = best.signature.indexOf('(');
+  if (a < 0) return [];
+  const inner = best.signature.slice(a + 1, best.signature.lastIndexOf(')') > a ? best.signature.lastIndexOf(')') : undefined);
+  const out: string[] = [];
+  for (const part of inner.split(',')) {
+    const m = /(?:^|\s)(?:val\s+|var\s+|_\s+)?([A-Za-z_]\w*)\s*(?:\??\s*:)/.exec(part.trim()) ?? /([A-Za-z_]\w*)\s*$/.exec(part.trim());
+    if (m) out.push(m[1]!);
+  }
+  return out;
 }
 
 export function verifyAPI(c: VerifyCtx, it: RawItem): { ok: true; a: LLMAPI } | { ok: false; reason: string } {
-  const file = str(it.file);
-  const text = c.files.get(file);
-  if (text === undefined) return { ok: false, reason: 'file not in scan' };
-  const lines = text.split('\n');
-  const line = Math.trunc(Number(it.line));
-  if (!(line >= 1 && line <= lines.length)) return { ok: false, reason: 'line out of range' };
-  const ev = stripPrefix(str(it.evidence));
-  if (ev.length < 4) return { ok: false, reason: 'evidence missing' };
-  const win = windowText(lines, line);
-  if (!win.includes(ev) && !ws(win).includes(ws(ev))) return { ok: false, reason: 'evidence not found near line' };
+  const e = evidenceOK(c, it);
+  if (!e.ok) return e;
+  const { file, lines, line, win } = e;
   const method = str(it.method).trim().toUpperCase() || 'GET';
   if (!Methods.has(method)) return { ok: false, reason: 'unknown method ' + method };
   let p = str(it.path).trim();
@@ -270,15 +328,45 @@ export function verifyAPI(c: VerifyCtx, it: RawItem): { ok: true; a: LLMAPI } | 
   const constVals: string[] = [];
   for (const id of idents) for (const v of c.consts.get(id) ?? []) constVals.push(v);
   for (const s of segs) if (!win.includes(s) && !constVals.some((v) => v.includes(s))) return { ok: false, reason: `path segment ${JSON.stringify(s)} not in window or named constant` };
-  p = p.replace(/^[a-z][a-z0-9+.-]*:\/\/[^/]*/i, '');
+  // rule 2: static assets are not API endpoints
+  const bare = p.replace(/^[a-z][a-z0-9+.-]*:\/\/[^/]*/i, '').replace(/[?#].*$/, '');
+  if (AssetExtRe.test(bare) || AssetPrefixRe.test(bare)) return { ok: false, reason: 'static asset path' };
+  // rule 3: absolute URLs must point at the app's own API host(s)
+  const hosts = new Set<string>();
+  for (const m of (p + '\n' + (lines[line - 1] ?? '')).matchAll(/https?:\/\/([A-Za-z0-9.-]+)/g)) hosts.add(m[1]!.toLowerCase());
+  if (hosts.size && c.apiHosts?.size && ![...hosts].some((h) => c.apiHosts!.has(h))) return { ok: false, reason: `foreign host ${[...hosts].join(',')}` };
+  const cited = lines[line - 1] ?? '';
+  const params = enclosingParams(c, file, line);
+  if (params.length && !hosts.size) {
+    const baseIdent = /\bURL\s*\(\s*([A-Za-z_]\w*)\s*,/.exec(cited)?.[1] ?? /([A-Za-z_]\w*)\s*\+\s*["'`]\//.exec(cited)?.[1] ?? /["'`]\$\{?([A-Za-z_]\w*)\}?\//.exec(cited)?.[1] ?? /\\\(([A-Za-z_]\w*)\)\//.exec(cited)?.[1];
+    if (baseIdent && params.includes(baseIdent) && !/(api|base|server|host|endpoint)/i.test(baseIdent)) return { ok: false, reason: `URL built on function parameter ${baseIdent}` };
+  }
+  // rule 1: an HTTP client call or an endpoint definition must be in the window (not just a string constant)
+  const call = HttpCallRe.test(win);
+  if (!call && !EndpointDefRe.test(win)) return { ok: false, reason: 'no HTTP call or endpoint definition near line' };
+  p = bare;
   if (!p.startsWith('/')) p = '/' + p;
-  return { ok: true, a: { platform: c.platformOf(file), method, path: p, file, symbol: '', line, source: 'llm', confidence: 'verified-evidence' } };
+  return { ok: true, a: { platform: c.platformOf(file), method, path: p, file, symbol: '', line, source: 'llm', confidence: call ? 'verified-call' : 'evidence-token' } };
 }
 
-function verifyCtx(cfg: Config, res: ScanResult, files: Map<string, string>): VerifyCtx {
+const BaseNameRe = /(base|api|host|server|endpoint|domain|root)/i;
+const HostRe = /https?:\/\/([A-Za-z0-9.-]+)/g;
+
+function verifyCtx(cfg: Config, res: ScanResult, files: Map<string, string>, facts?: Facts): VerifyCtx {
   const consts = new Map<string, string[]>();
   const byName = new Map<string, Symbol[]>();
+  const funcsByFile = new Map<string, Symbol[]>();
+  const apiHosts = new Set<string>();
+  for (const a of facts?.apis ?? []) for (const m of a.path.matchAll(HostRe)) apiHosts.add(m[1]!.toLowerCase());
+  for (const t of files.values())
+    for (const m of t.matchAll(/(base[_-]?ur[li]|api[_-]?ur[li]|base[_-]?host|api[_-]?host|server[_-]?ur[li]|host[_-]?ur[li]|baseURL|BASE_URL|API_URL)\w*["'\s\]]*[:=(][^\n]{0,40}?https?:\/\/([A-Za-z0-9.-]+)/gi)) apiHosts.add(m[2]!.toLowerCase());
   for (const s of res.graph.symbols) {
+    if ((s.kind === 'function' || s.kind === 'method' || s.kind === 'init') && s.end_line > s.start_line) {
+      const l = funcsByFile.get(s.file) ?? [];
+      l.push(s);
+      funcsByFile.set(s.file, l);
+    }
+    if (s.value && BaseNameRe.test(s.name)) for (const m of s.value.matchAll(HostRe)) apiHosts.add(m[1]!.toLowerCase());
     if (s.value) {
       const v = s.value.replace(/^["'`]|["'`]$/g, '');
       const l = consts.get(s.name) ?? [];
@@ -304,6 +392,8 @@ function verifyCtx(cfg: Config, res: ScanResult, files: Map<string, string>): Ve
       },
     }),
     platformOf: (rel) => res.graph.files[rel]?.platform ?? '',
+    funcsByFile,
+    apiHosts,
     consts,
     symbolsByName: byName,
   };
@@ -412,7 +502,7 @@ export function suggest(cfg: Config, res: ScanResult, facts: Facts, o: SuggestOp
     for (const x of ans.apis) if (!inBatch.has(str(x.file))) r.rejected.push({ kind: 'api', file: str(x.file), line: Number(x.line) || 0, item: `${str(x.method)} ${str(x.path)}`, reason: 'file not in batch' });
   }
   const files = new Map(cands.map((c) => [c.file, c.text]));
-  const vc = verifyCtx(cfg, res, files);
+  const vc = verifyCtx(cfg, res, files, facts);
   for (const c of cands) {
     const a = raw.get(c.file);
     if (!a) continue;

@@ -5,7 +5,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { literalSegments, mergeInto, parseAnswer } from '../src/facts/llm.js';
+import { type VerifyCtx, literalSegments, mergeInto, normalizeRouteId, parseAnswer, verifyAPI, verifyRoute } from '../src/facts/llm.js';
+import type { Symbol } from '../src/model.js';
 
 const repo = path.resolve(__dirname, '..');
 const cli = path.join(repo, 'dist/cli.js');
@@ -83,8 +84,8 @@ describe('kb facts suggest', () => {
     expect(prompt).toContain('suspected prompt injection');
     expect(prompt).not.toContain('ignore all previous instructions');
     expect(j.accepted.apis).toEqual([
-      { platform: 'android', method: 'GET', path: '/v2/coupons/active', file: rel, symbol: '', line: 6, source: 'llm', confidence: 'verified-evidence' },
-      { platform: 'android', method: 'GET', path: '/v2/promo/list', file: rel, symbol: '', line: 8, source: 'llm', confidence: 'verified-evidence' },
+      { platform: 'android', method: 'GET', path: '/v2/coupons/active', file: rel, symbol: '', line: 6, source: 'llm', confidence: 'verified-call' },
+      { platform: 'android', method: 'GET', path: '/v2/promo/list', file: rel, symbol: '', line: 8, source: 'llm', confidence: 'verified-call' },
     ]);
     // the rules already extract the OkHttp call: the rule result wins
     expect(j.skipped_conflict).toBe(1);
@@ -136,10 +137,74 @@ describe('helpers', () => {
   });
   it('rule results win on conflict', () => {
     const f = { routes: [{ platform: 'android', route_id: 'cart', pattern: 'cart', deeplink: '', file: 'a.kt', symbol: 'android://a.kt#CartScreen' }], testids: [], apis: [{ platform: 'android', method: 'GET', path: '/v1/cart/{id}', file: 'b.kt', symbol: '' }] };
-    const L = { line: 1, source: 'llm' as const, confidence: 'verified-evidence' as const };
+    const L = { line: 1, source: 'llm' as const, confidence: 'verified-call' as const };
     const m = mergeInto(f, [{ platform: 'android', route_id: 'Cart', pattern: '', deeplink: '', file: 'c.kt', symbol: 'CartScreen', ...L }], [{ platform: 'android', method: 'GET', path: '/v1/cart/:cid', file: 'c.kt', symbol: '', ...L }]);
     expect(m.conflicts).toBe(2);
     expect(m.facts.routes).toEqual(f.routes);
     expect(m.facts.apis).toEqual(f.apis);
+  });
+});
+
+// post-audit verification rules (generic, see facts/llm.ts)
+describe('verification rules', () => {
+  const sym = (p: Partial<Symbol>): Symbol => ({ id: '', platform: 'android', lang: 'kotlin', kind: 'class', name: '', qual: '', file: 'a/Nav.kt', start_line: 1, end_line: 1, signature: '', hash: '', sig_hash: '', norm_hash: '', simhash: '', ...p });
+  const files = new Map<string, string>([
+    ['a/Api.kt', ['class Api(private val client: HttpClient) {', '    suspend fun cart(id: String) = client.get("/v1/cart/$id")', '}', 'enum class Size(val url: String) {', '    W154("https://image.cdn.org/t/p/w154/"),', '    Big("https://image.cdn.org/big/"),', '}', 'object Keys { const val PROFILE = "/v1/profile/me" }', ''].join('\n')],
+    ['a/Icons.kt', ['class IconFinder {', '    fun find(siteUrl: String) {', '        val u = URL(siteUrl, "/probe")', '        http.get(u)', '        val v = siteUrl + "/feeds/list"', '        http.get(v)', '    }', '}', 'fun ext() = client.get("https://evil.example.com/v1/x")', ''].join('\n')],
+    ['a/Nav.kt', ['sealed interface Route {', '    data object Feeds : Route', '}', 'fun Graph() {', '    entry<Route.Feeds> { FeedsPage() }', '    entry<RouterName.Hot> { HotPage() }',
+      '    when (key) { else -> Unit }', '}', 'fun go() {', '    backStack.add(Route.Feeds)', '    startDestination = Route.Feeds', '}', ''].join('\n')],
+  ]);
+  const syms = [
+    sym({ id: 'android://a/Nav.kt#FeedsPage', name: 'FeedsPage', kind: 'function' }),
+    sym({ id: 'android://a/Nav.kt#HotPage', name: 'HotPage', kind: 'function' }),
+    sym({ id: 'android://a/R.kt#RouterName.Hot', name: 'Hot', kind: 'case', qual: 'RouterName.Hot', value: '"HotKey"' }),
+    sym({ id: 'android://a/Icons.kt#IconFinder.find', name: 'find', kind: 'method', file: 'a/Icons.kt', start_line: 2, end_line: 7, signature: 'fun find(siteUrl: String)' }),
+  ];
+  const byName = new Map<string, Symbol[]>();
+  for (const s of syms) byName.set(s.name, [...(byName.get(s.name) ?? []), s]);
+  const funcs = new Map<string, Symbol[]>([['a/Icons.kt', [syms[3]!]]]);
+  const c: VerifyCtx = { files, platformOf: () => 'android', consts: new Map([['PROFILE', ['/v1/profile/me']]]), symbolsByName: byName, funcsByFile: funcs, apiHosts: new Set(['api.example.com']) };
+  const api = (o: Record<string, unknown>) => verifyAPI(c, { method: 'GET', ...o });
+  const reason = (v: { ok: boolean; reason?: string }) => (v.ok ? 'ok' : v.reason);
+
+  it('rule 1: APIs need an HTTP call or endpoint definition; confidence verified-call vs evidence-token', () => {
+    const ok = api({ path: '/v1/cart/{id}', file: 'a/Api.kt', line: 2, evidence: 'client.get("/v1/cart/$id")' });
+    expect(ok.ok && ok.a.confidence).toBe('verified-call');
+    const big = api({ path: 'https://image.cdn.org/big/', file: 'a/Api.kt', line: 6, evidence: 'Big("https://image.cdn.org/big/")' });
+    expect(reason(big)).not.toBe('ok');
+    const k = verifyAPI({ ...c, apiHosts: new Set() }, { method: 'GET', path: '/v1/profile/me', file: 'a/Api.kt', line: 8, evidence: 'const val PROFILE = "/v1/profile/me"' });
+    expect(reason(k)).toBe('no HTTP call or endpoint definition near line');
+  });
+  it('rule 2: static asset paths are dropped', () => {
+    expect(reason(api({ path: '/t/p/w154/{poster}', file: 'a/Api.kt', line: 5, evidence: 'W154("https://image.cdn.org/t/p/w154/")' }))).toBe('static asset path');
+    expect(reason(api({ path: '/v1/cart/{id}.png', file: 'a/Api.kt', line: 2, evidence: 'client.get("/v1/cart/$id")' }))).toBe('static asset path');
+  });
+  it('rule 3: foreign hosts and URLs built on a function parameter are rejected', () => {
+    expect(reason(api({ path: 'https://evil.example.com/v1/x', file: 'a/Icons.kt', line: 9, evidence: 'client.get("https://evil.example.com/v1/x")' }))).toBe('foreign host evil.example.com');
+    expect(reason(api({ path: '/probe', file: 'a/Icons.kt', line: 3, evidence: 'URL(siteUrl, "/probe")' }))).toBe('URL built on function parameter siteUrl');
+    expect(reason(api({ path: '/feeds/list', file: 'a/Icons.kt', line: 5, evidence: 'siteUrl + "/feeds/list"' }))).toBe('URL built on function parameter siteUrl');
+  });
+  it('rule 4: ids are normalised (qualifier stripped, enum value resolved) and de-duplicated', () => {
+    expect(normalizeRouteId(c, 'Route.Feeds')).toBe('Feeds');
+    expect(normalizeRouteId(c, 'RouterName.Hot')).toBe('HotKey');
+    expect(normalizeRouteId(c, 'pages/Home')).toBe('pages/Home');
+    const a = verifyRoute(c, { route_id: 'Route.Feeds', screen: 'FeedsPage', file: 'a/Nav.kt', line: 5, evidence: 'entry<Route.Feeds>' });
+    const b = verifyRoute(c, { route_id: 'RouterName.Hot', screen: 'HotPage', file: 'a/Nav.kt', line: 6, evidence: 'entry<RouterName.Hot>' });
+    expect(a.ok && [a.r.route_id, a.r.symbol, a.r.confidence]).toEqual(['Feeds', 'android://a/Nav.kt#FeedsPage', 'verified-call']);
+    expect(b.ok && b.r.route_id).toBe('HotKey');
+    const rules = { routes: [{ platform: 'android', route_id: 'feeds', pattern: '', deeplink: '', file: 'x.kt', symbol: 'android://x.kt#AppNav.Feeds' }], testids: [], apis: [] };
+    if (a.ok && b.ok) {
+      const dupInBatch = { ...b.r, line: 7 };
+      const m = mergeInto(rules, [a.r, b.r, dupInBatch], []);
+      expect(m.conflicts).toBe(2);
+      expect(m.facts.routes!.map((r) => r.route_id)).toEqual(['feeds', 'HotKey']);
+    }
+  });
+  it('rule 5: use sites and empty screens are rejected; when-branch registrations (Nav3 entryProvider) accepted', () => {
+    const f2 = new Map(files);
+    f2.set('a/Entry.kt', ['val p = entryProvider { key ->', '    when (key) {', '        Route.Feeds -> {', '            NavEntry(key) { FeedsPage() }', '        }', '    }', '}', ''].join('\n'));
+    expect(reason(verifyRoute({ ...c, files: f2 }, { route_id: 'Route.Feeds', screen: 'FeedsPage', file: 'a/Entry.kt', line: 3, evidence: 'Route.Feeds -> {' }))).toBe('ok');
+    expect(reason(verifyRoute(c, { route_id: 'Route.Feeds', screen: 'FeedsPage', file: 'a/Nav.kt', line: 10, evidence: 'backStack.add(Route.Feeds)' }))).toBe('use site, not a registration/declaration site');
+    expect(reason(verifyRoute(c, { route_id: 'Feeds', screen: '', file: 'a/Nav.kt', line: 5, evidence: 'entry<Route.Feeds>' }))).toBe('empty screen symbol');
   });
 });
