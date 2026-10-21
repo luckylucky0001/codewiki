@@ -1396,7 +1396,11 @@ export class Ctx {
         for (const m of b.matchAll(/\b(get|post|put|delete|patch)\s*\{\s*\w+\(\s*"([^"\s]+)"/g)) found.push([m[2]!, m[1]!.toUpperCase()]);
         // Ktor URL builder DSL: client.get { url { path("a", id); appendPathSegments(..); encodedPath = "/x"; takeFrom(BASE) } },
         // `client.post { url(BASE + "x") }`, `client.submitForm(url = "...")`, `method = HttpMethod.Post`
-        if (/\b(?:HttpClient|client|httpClient|HttpRequestBuilder|submitForm|request)\b/.test(b)) for (const [p, m] of ktorBuilderPaths(b, consts)) found.push([p, m]);
+        if (/\b(?:HttpClient|client|httpClient|HttpRequestBuilder|submitForm|request)\b/.test(b)) for (const [p, m] of ktorBuilderPaths(b, consts, (r) => {
+            const [v, ok] = this.lookup(fi.platform, r);
+            return ok ? v : undefined;
+          }))
+            found.push([p, m]);
         // URLComponents: `components.path = "/w/api.php"`
         if (/URLComponents/.test(b)) for (const m of b.matchAll(/\b\w+\.path\s*=\s*"(\/[^"\s]+)"/g)) found.push([m[1]!, '']);
         // absolute URL literals (possibly concatenated with a query) in a body that issues a request
@@ -2283,10 +2287,15 @@ const docAssetRe = /\.(?:db|sqlite3?|plist|html?|md|txt|xml|xhtml)$|\/(?:README|
  * `appendPathSegments(..)` / `encodedPath = ".."` (non-literal segments become `{name}`), a base from
  * `takeFrom(CONST)` / `url(CONST + "x")` (absolute URL constants stripped to their path), method from the
  * `client.<verb>` call or `method = HttpMethod.X`. Returns [path, method or ''] pairs. */
-export function ktorBuilderPaths(b: string, consts?: Map<string, string>): [string, string][] {
+export function ktorBuilderPaths(b: string, consts?: Map<string, string>, resolve?: (ref: string) => string | undefined): [string, string][] {
   const out: [string, string][] = [];
   const seg = (t: string): string => {
     t = t.trim();
+    // constant reference (`NOTIFICATIONS`, `Api.USERS`, `MainService.NOTIFICATIONS`) resolved to its value
+    if (resolve && /^[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*$/.test(t) && !/^(?:true|false|null|this)$/.test(t)) {
+      const v = resolve(t);
+      if (v !== undefined && /^[^"\s]*$/.test(v)) return v.replace(/^https?:\/\/[^/]*/, '').replace(/^\/+|\/+$/g, '');
+    }
     if (/^"(?:[^"\\$]|\\.)*"$/.test(t)) return trimPrefix(trimSuffix(t.slice(1, -1), '/'), '/');
     if (/^"[^"]*"$/.test(t)) return t.slice(1, -1).replace(/\$\{?(?:[\w.]*\.)?(\w+)\}?/g, '{$1}').replace(/^\/+|\/+$/g, '');
     return '{' + (/(\w+)\W*$/.exec(t.replace(/\.toString\(\)$/, ''))?.[1] ?? 'param') + '}';
@@ -2350,12 +2359,13 @@ export function ktorBuilderPaths(b: string, consts?: Map<string, string>): [stri
         if (/[A-Za-z]/.test(s2.replace(/\{\w+\}/g, ''))) lit = true;
       }
     }
-    const ep = /\bencodedPath\s*=\s*("[^"]*")/.exec(blk);
-    if (ep) {
+    // `encodedPath = X` / `encodedPath += X` (X a literal or a resolvable constant)
+    for (const ep of blk.matchAll(/\bencodedPath\s*\+?=\s*("[^"]*"|[A-Za-z_][\w.]*)/g)) {
+      if (!ep[1]!.startsWith('"') && !resolve?.(ep[1]!)) continue;
       const s2 = seg(ep[1]!);
       if (s2) {
         segs.push(s2);
-        lit = true;
+        if (/[A-Za-z]/.test(s2.replace(/\{\w+\}/g, ''))) lit = true;
       }
     }
     if (lit) out.push([segs.filter(Boolean).join('/'), method]);

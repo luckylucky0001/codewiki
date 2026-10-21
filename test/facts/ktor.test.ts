@@ -96,4 +96,51 @@ class Api(private val client: HttpClient) {
     });
     expect(apis).toEqual(expect.arrayContaining(['GET /api/v1/items/{id}', 'POST /v1/items', 'DELETE /api/v1/items/{id}', 'POST /auth/login']));
   });
+  it('resolves constant references in path / appendPathSegments / encodedPath (= and +=)', () => {
+    const k = new Map([['NOTIFICATIONS', 'notifications'], ['MainService.NOTIFICATIONS', 'notifications'], ['USERS', '/v1/users'], ['DETAIL', 'detail']]);
+    const r = (x: string) => k.get(x) ?? k.get(x.split('.').pop()!);
+    expect(ktorBuilderPaths(`fun a() = client.get { url { path(MainService.NOTIFICATIONS) } }`, undefined, r)).toEqual([['notifications', 'GET']]);
+    expect(ktorBuilderPaths(`fun a(id: String) = client.get { url { appendPathSegments(USERS, id, DETAIL) } }`, undefined, r)).toEqual([['v1/users/{id}/detail', 'GET']]);
+    expect(ktorBuilderPaths(`fun a() = client.post { url { encodedPath = USERS } }`, undefined, r)).toEqual([['v1/users', 'POST']]);
+    expect(ktorBuilderPaths(`fun a() = client.post { url { encodedPath += NOTIFICATIONS } }`, undefined, r)).toEqual([['notifications', 'POST']]);
+    // unresolved references stay placeholders / are ignored
+    expect(ktorBuilderPaths(`fun a() = client.get { url { encodedPath = unknownVar } }`, undefined, r)).toEqual([]);
+  });
+});
+
+describe('ktor constant resolution end to end', () => {
+  it('companion, top-level, object and interface-companion constants', async () => {
+    const apis = await apisOf({
+      'settings.gradle.kts': 'include(":shared")\n',
+      'shared/build.gradle.kts': 'kotlin { androidTarget(); iosArm64() }\n',
+      'shared/src/commonMain/kotlin/t/ex/Paths.kt': `package t.ex
+const val TOP_ITEMS = "items"
+object Paths { const val TAGS = "tags" }
+interface MainService { companion object { const val NOTIFICATIONS = "notifications" } }
+`,
+      'shared/src/commonMain/kotlin/t/ex/Api.kt': `package t.ex
+
+import io.ktor.client.HttpClient
+import io.ktor.client.request.*
+import io.ktor.http.*
+
+class Api(private val client: HttpClient) {
+  companion object { const val PROFILE = "/me/profile" }
+  suspend fun profile() = client.get {
+    url { encodedPath = PROFILE }
+  }
+  suspend fun items() = client.get {
+    url { path(TOP_ITEMS) }
+  }
+  suspend fun tags() = client.post {
+    url { appendPathSegments(Paths.TAGS) }
+  }
+  suspend fun notes() = client.get {
+    url { encodedPath += MainService.NOTIFICATIONS }
+  }
+}
+`,
+    });
+    expect(apis).toEqual(expect.arrayContaining(['GET /me/profile', 'GET /items', 'POST /tags', 'GET /notifications']));
+  });
 });
