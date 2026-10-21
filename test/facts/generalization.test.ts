@@ -227,7 +227,7 @@ struct Index {
     expect(apis).toContain('POST /app/user/login');
     expect(apis).toContain('GET /app/goods/list');
     expect(apis).toContain('GET /app/static/banner');
-    expect(apis.some((a) => a.includes('{url}') || a.includes('dynamicUrl') || a.includes('token'))).toBe(false);
+    expect(apis.filter((a) => a.includes('{url}') || a.includes('dynamicUrl') || a.includes('token'))).toEqual([]);
   });
 });
 
@@ -428,5 +428,169 @@ describe('facts symbol ids resolve in the graph (kb verify gate)', () => {
     const syms = [...facts.routes!.map((r) => r.symbol), ...facts.apis!.map((a) => a.symbol)].filter(Boolean);
     expect(facts.routes!.map((r) => r.route_id)).toEqual(expect.arrayContaining(['about', 'Home']));
     for (const s of syms) expect(ids.has(s), s).toBe(true);
+  });
+});
+
+describe('round R2: ArkTS HTTP shapes', () => {
+  it('class singletons with object-literal config, static Api classes, const enums, axios.create instances across files', async () => {
+    const f = await factsOf({
+      'harmony/entry/src/main/module.json5': '{ module: { name: "entry", type: "entry", abilities: [] } }',
+      'harmony/entry/src/main/ets/common/Api.ets': `export class Api {
+  static readonly GOODS_LIST: string = '/goods/list';
+  static readonly CART_ADD = '/cart/add';
+}
+export const enum ApiPath {
+  USER_INFO = '/user/info',
+  ORDERS = '/order/list'
+}
+export const BASE_URL: string = 'https://shop.example.com';
+`,
+      'harmony/entry/src/main/ets/net/HttpUtil.ets': `import http from '@ohos.net.http';
+import { BASE_URL } from '../common/Api';
+export class HttpUtil {
+  static request<T>(options: RequestOptions): Promise<T> {
+    const req = http.createHttp();
+    return req.request(BASE_URL + options.url, { method: options.method, extraData: options.data });
+  }
+}
+`,
+      'harmony/entry/src/main/ets/net/Ax.ets': `import axios from '@ohos/axios';
+export const httpRequest = axios.create({ baseURL: 'https://shop.example.com', timeout: 5000 });
+`,
+      'harmony/entry/src/main/ets/pages/Goods.ets': `import { HttpUtil } from '../net/HttpUtil';
+import { httpRequest } from '../net/Ax';
+import { Api, ApiPath } from '../common/Api';
+@Entry
+@Component
+struct Goods {
+  aboutToAppear() {
+    HttpUtil.request({ url: Api.GOODS_LIST, method: http.RequestMethod.GET });
+    HttpUtil.request({ url: Api.CART_ADD, method: http.RequestMethod.POST, data: {} });
+    httpRequest.get<UserInfo>(ApiPath.USER_INFO);
+    httpRequest.post(ApiPath.ORDERS, {});
+    HttpUtil.request({ url: this.unknown, method: http.RequestMethod.GET });
+  }
+  build() {}
+}
+`,
+    });
+    const apis = f.apis!.map((a) => a.method + ' ' + a.path);
+    expect(apis).toEqual(expect.arrayContaining(['GET /goods/list', 'POST /cart/add', 'GET /user/info', 'POST /order/list']));
+    expect(apis.some((a) => a.includes('unknown') || a.includes('{url}'))).toBe(false);
+  });
+  it('concatenation over class fields / static members in ArkTS', async () => {
+    const f = await factsOf({
+      'harmony/entry/src/main/ets/common/Constants.ets': "export class Constants {\n  static readonly BASE: string = 'https://feed.example.com/';\n}\n",
+      'harmony/entry/src/main/ets/net/Feed.ets': `import http from '@ohos.net.http';
+export class FeedService {
+  private baseUrl: string = 'https://feed.example.com/';
+  async load() {
+    const req = http.createHttp();
+    await req.request(this.baseUrl + 'api/v2/feed', { method: http.RequestMethod.GET });
+  }
+  async like() {
+    const req = http.createHttp();
+    await req.request(\`\${Constants.BASE}api/v2/like\`, { method: http.RequestMethod.POST });
+  }
+}
+`,
+    });
+    const apis = f.apis!.map((a) => a.method + ' ' + a.path);
+    expect(apis.map((a) => a.replace('/api/v2', ''))).toEqual(expect.arrayContaining(['GET /feed', 'POST /like']));
+  });
+});
+
+describe('round R2: Swift URL building', () => {
+  it('URLRequest helper with httpMethod, Endpoint computed URLs, String(format:)', async () => {
+    const f = await factsOf({
+      'ios/App/Net.swift': `import Foundation
+struct Endpoint {
+  static let base = "https://api.example.com"
+  static var profile: URL { URL(string: base)!.appendingPathComponent("v1/profile") }
+}
+enum API {
+  static var search: URL { return URL(string: Endpoint.base)!.appendingPathComponent("search/items") }
+}
+final class Client {
+  func makeRequest(_ url: URL) -> URLRequest {
+    var r = URLRequest(url: url)
+    r.httpMethod = "POST"
+    return r
+  }
+  func comments(id: String) {
+    let s = String(format: "%@/posts/%@/comments", Endpoint.base, id)
+    URLSession.shared.dataTask(with: URL(string: s)!).resume()
+  }
+}
+`,
+    });
+    const apis = f.apis!.map((a) => a.method + ' ' + a.path);
+    expect(apis).toContain('GET /v1/profile');
+    expect(apis).toContain('GET /search/items');
+    expect(apis).toContain('GET /posts/{param}/comments');
+  });
+});
+
+describe('round R2: Decompose across files', () => {
+  it('config declared in another file, createChild in a separate function, several navigators', async () => {
+    const f = await factsOf({
+      'android/shared/src/commonMain/kotlin/a/RootConfig.kt': `package a
+@Serializable
+sealed interface RootConfig {
+  @Serializable data object Home : RootConfig
+  @Serializable data class Article(val id: String) : RootConfig
+}
+`,
+      'android/shared/src/commonMain/kotlin/a/TabConfig.kt': `package a
+@Serializable
+sealed class TabConfig {
+  @Serializable data object Feed : TabConfig()
+  @Serializable data object Profile : TabConfig()
+}
+`,
+      'android/shared/src/commonMain/kotlin/a/Root.kt': `package a
+class DefaultRoot(ctx: ComponentContext) : Root, ComponentContext by ctx {
+  private val nav = StackNavigation<RootConfig>()
+  override val stack: Value<ChildStack<*, Root.Child>> = childStack(source = nav, serializer = RootConfig.serializer(), initialConfiguration = RootConfig.Home, childFactory = ::createChild)
+  private fun createChild(config: RootConfig, ctx: ComponentContext): Root.Child =
+    when (config) {
+      is RootConfig.Home -> Root.Child.Home(DefaultHomeComponent(ctx))
+      is RootConfig.Article -> Root.Child.Article(DefaultArticleComponent(ctx, config.id))
+    }
+}
+class DefaultHomeComponent(ctx: ComponentContext)
+class DefaultArticleComponent(ctx: ComponentContext, id: String)
+`,
+      'android/shared/src/commonMain/kotlin/a/Tabs.kt': `package a
+class DefaultTabs(ctx: ComponentContext) {
+  private val nav = StackNavigation<TabConfig>()
+  val stack = childStack(source = nav, serializer = TabConfig.serializer(), initialConfiguration = TabConfig.Feed, childFactory = ::child)
+}
+`,
+    });
+    const ids = f.routes!.map((r) => r.route_id);
+    expect(ids).toEqual(expect.arrayContaining(['Home', 'Article', 'Feed', 'Profile']));
+  });
+});
+
+describe('round R2: Swift request helpers', () => {
+  it('a helper building a URLRequest with httpMethod is followed to its literal call sites', async () => {
+    const f = await factsOf({
+      'ios/App/Auth.swift': `import Foundation
+final class AuthAPI {
+  func makeRequest(path: String, body: Data) -> URLRequest {
+    var r = URLRequest(url: baseURL.appendingPathComponent(path))
+    r.httpMethod = "POST"
+    r.httpBody = body
+    return r
+  }
+  func login(_ d: Data) {
+    let r = makeRequest(path: "/auth/login", body: d)
+    URLSession.shared.dataTask(with: r).resume()
+  }
+}
+`,
+    });
+    expect(f.apis!.map((a) => a.method + ' ' + a.path)).toContain('POST /auth/login');
   });
 });

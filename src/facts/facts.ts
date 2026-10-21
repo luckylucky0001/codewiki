@@ -12,7 +12,7 @@ import type { ScanResult } from '../scan/scan.js';
 import { walkDir } from '../scan/scan.js';
 import { cmpStr, cut, trimChars, trimPrefix, trimSuffix, trimSpace } from '../util/go.js';
 import { xmlTokens } from './xml.js';
-import { decomposeRoutes, objc, swiftEnumTestIDs, bindingIDsUsedByTests, bindingName, concatPaths, arktsWrapperAPIs, netBodyNativeRe, ibTestIDs } from './general.js';
+import { decomposeRoutes, objc, swiftEnumTestIDs, bindingIDsUsedByTests, bindingName, concatPaths, arktsWrapperAPIs, netBodyNativeRe, ibTestIDs, augmentConsts, resolveStr, paramNames } from './general.js';
 
 /** A deep link declared by the app (manifest intent-filter, plist URL scheme, applinks entitlement,
  * module.json5 skills.uris, nav-graph deepLink or an in-code URL route table). */
@@ -311,6 +311,7 @@ export class Ctx {
   lineCache = new Map<string, string[]>();
   noDerive = new WeakSet<Route>();
   curRel = '';
+  axiosVars = new Set<string>();
   appDirs = new Map<string, Set<string>>();
   schemeDirs = new Map<string, Set<string>>();
   classes: Map<string, Symbol> | null = null;
@@ -1227,9 +1228,14 @@ export class Ctx {
           case 'typescript':
           case 'javascript':
           case 'tsx':
-            if (call.callee === 'request' && args.length > 0 && !args[0]!.text.startsWith('{') && ((recv + call.callee_text).includes('createHttp') || httpVarRecvRe.test(recv))) {
+            if (call.callee === 'request' && args.length > 0 && !args[0]!.text.startsWith('{') && ((recv + call.callee_text).includes('createHttp') || httpVarRecvRe.test(recv) || (fi.lang === 'arkts' && this.fileLines(file).some((l) => l.includes('createHttp('))))) {
               const [p, ok] = evalPath(fi.platform, args[0]!, false);
-              if (ok) {
+              // inside a wrapper the url is the wrapper's own parameter (`BASE_URL + url`): call sites carry it
+              const encl = getSym(this.g, call.enclosing);
+              const own = encl ? paramNames(encl.signature) : [];
+              const parts0 = args[0]!.parts ?? [];
+              const wrapperURL = !parts0.some((x) => x.lit && /[A-Za-z]/.test(x.lit)) && parts0.some((x) => x.ref && own.includes(x.ref.split('.')[0]!));
+              if (ok && !wrapperURL) {
                 let method = 'GET';
                 if (args.length > 1 && args[1]!.props) {
                   const m = lastSeg(args[1]!.props.method ?? '').toUpperCase();
@@ -1238,9 +1244,11 @@ export class Ctx {
                 api(method, p);
               }
             } else if ((lc === 'axios' || lc === 'request') && args.length > 0 && args[0]!.props && (args[0]!.props.url ?? '') !== '') {
-              let m = trimChars(args[0]!.props.method ?? '', q3).toUpperCase();
+              let m = lastSeg(trimChars(args[0]!.props.method ?? '', q3)).toUpperCase();
               if (!httpMethods.has(m)) m = 'GET';
-              const [p, ok] = normPath(trimChars(args[0]!.props.url!, q3));
+              // url literal or constant (`{ url: Api.GOODS_LIST }`); unresolved → nothing
+              const u = resolveStr(this, fi.platform, args[0]!.props.url!);
+              const [p, ok] = u ? normPath(u) : ['', false];
               if (ok) api(m, p);
             } else if (call.callee === 'Request' && call.callee_text.includes('rcp') && args.length > 0) {
               const [p, ok] = evalPath(fi.platform, args[0]!, false);
@@ -1252,7 +1260,7 @@ export class Ctx {
                 }
                 api(m, p);
               }
-            } else if (httpMethods.has(M) && args.length > 0 && clientRecvRe.test(recv)) {
+            } else if (httpMethods.has(M) && args.length > 0 && (clientRecvRe.test(recv) || this.axiosVars.has(lastSeg(recv)))) {
               const [p, ok] = evalPath(fi.platform, args[0]!, false);
               if (ok) api(M, p);
             }
@@ -1307,7 +1315,7 @@ export class Ctx {
    * absolute-URL constants used where a request is built. Method from the same function (or, for an
    * endpoint helper, from the functions in the file that call it); GET when nothing says otherwise. */
   composedAPIs(add: (a: API) => void): void {
-    const pre = /appendingPathComponent|additionalPathComponents|String\.format|\(\s*\.(?:GET|POST|PUT|DELETE|PATCH|HEAD)\s*,|`\$\{[^}]*\}\/|\b(?:get|post|put|delete|patch)\s*\{\s*\w+\(\s*"|https?:\/\/[^"'`\s]+\/|URLComponents|\.appending\(\s*(?:path|component)|(?:base|host|server|domain|endpoint|api|url|root)\w*(?:\(\))?\s*\+\s*"|"(?:\$\{?|\\\()\w*(?:base|host|server|domain|endpoint|api|url|root)/i;
+    const pre = /appendingPathComponent|additionalPathComponents|String\.format|String\(\s*format|\(\s*\.(?:GET|POST|PUT|DELETE|PATCH|HEAD)\s*,|`\$\{[^}]*\}\/|\b(?:get|post|put|delete|patch)\s*\{\s*\w+\(\s*"|https?:\/\/[^"'`\s]+\/|URLComponents|\.appending\(\s*(?:path|component)|(?:base|host|server|domain|endpoint|api|url|root)\w*(?:\(\))?\s*\+\s*"|"(?:\$\{?|\\\()\w*(?:base|host|server|domain|endpoint|api|url|root)/i;
     const callables = new Set(['function', 'method', 'property', 'constructor', 'composable', 'const', 'variable']);
     // absolute URL constants (value with a path) by platform
     const urlConsts = new Map<string, Map<string, string>>();
@@ -1320,7 +1328,8 @@ export class Ctx {
     }
     const byFile = new Map<string, Symbol[]>();
     for (const s of this.g.symbols) {
-      if (!callables.has(s.kind) || s.end_line <= s.start_line && s.kind !== 'const') continue;
+      // single-line computed properties (`static var profile: URL { URL(string: base)!.appendingPathComponent("x") }`) count
+      if (!callables.has(s.kind) || (s.end_line <= s.start_line && s.kind !== 'const' && s.kind !== 'property')) continue;
       const a = byFile.get(s.file);
       if (a) a.push(s);
       else byFile.set(s.file, [s]);
@@ -1364,7 +1373,7 @@ export class Ctx {
           }
           // the chain must extend a URL-ish base (not a file-system directory)
           const before = b.slice(Math.max(0, (m.index ?? 0) - 80), m.index ?? 0);
-          const baseOK = /url|endpoint|base|api|host|server/i.test(before) && !/director|folder|cache|document|file|container|bundle|temporary/i.test(before.slice(-50));
+          const baseOK = /url|endpoint|base|api|host|server/i.test(before) && !/director|folder|cache|document|FileManager|fileURL|\bfile|container|bundle|temporary/i.test(before.slice(-50));
           if (lit && baseOK) found.push([segs.join('/'), '']);
         }
         // iOS 16 `base.appending(path: "x")` / `appending(component:)` over a URL-ish base
@@ -1378,6 +1387,9 @@ export class Ctx {
         // String.format("%s/api/x/%s.json", ...) building a URL
         if (/\b(URI|URL|Request|HttpUrl|url)\b/.test(b))
           for (const m of b.matchAll(/String\.format\(\s*(?:Locale\.\w+\s*,\s*)?"([^"\s]*\/[^"\s]*)"/g)) if (!m[1]!.includes('=')) found.push([m[1]!, '']);
+        // Swift / ObjC-style `String(format: "%@/posts/%@", base, id)` building a URL (leading base placeholder dropped)
+        if (/\b(URL|URLRequest|url)\b/.test(b))
+          for (const m of b.matchAll(/String\(\s*format\s*:\s*"%@(\/[^"\s]*)"/g)) if (!m[1]!.includes('=') && /[A-Za-z]/.test(m[1]!)) found.push([m[1]!, '']);
         // template literal over a base-URL variable: `${EhConstants.baseUrl(isEx)}/uconfig.php`
         for (const m of b.matchAll(/`\$\{([^}]+)\}(\/[^`\s?#]*)/g)) if (/base|host|url|domain|server|endpoint|api/i.test(m[1]!) && m[2]!.length > 1) found.push([m[2]!, '']);
         // Ktor: client.get { apiUrl("config") }
@@ -2319,6 +2331,7 @@ function androidString(manifest: string, name: string): string {
 /** Compute all facts for a scan result. */
 export function extractFacts(cfg: Config, res: ScanResult): Facts {
   const c = new Ctx(cfg, res);
+  augmentConsts(c);
   for (const p of cfg.platforms) c.resources(p);
   c.codeDeepLinks();
   c.routes();

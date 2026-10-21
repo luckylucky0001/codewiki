@@ -140,6 +140,11 @@ export function objcAPIs(text: string): { method: string; path: string; line: nu
       if (af) method = af[1]!;
     }
     if (!httpVerbs.has(method)) method = 'GET';
+    // `[NSString stringWithFormat:@"%@/posts/%@", base, id]`: leading base placeholder dropped
+    for (const m of body.matchAll(/stringWithFormat:\s*@"%@(\/[^"\s]*)"/g)) {
+      const p = m[1]!.replace(/%(?:@|d|ld|lu|i|s)/g, '{param}').replace(/[?#].*$/, '');
+      if (/[A-Za-z]/.test(p) && !p.includes('=')) out.push({ method, path: p, line: starts[k]! + body.slice(0, m.index).split('\n').length });
+    }
     for (const m of body.matchAll(/@"(https?:\/\/[^"\s/]+\/[^"\s]*)"/g)) {
       const raw = m[1]!.replace(/%(?:@|d|ld|lu|i|s)/g, '{param}');
       const p = raw.replace(/^https?:\/\/[^/]+/, '').replace(/[?#].*$/, '');
@@ -395,7 +400,7 @@ export function objectConsts(name: string, src: string): Map<string, string> {
 }
 
 /** Request-issuing bodies in Kotlin / Java / Swift (wrappers over OkHttp, Ktor, URLSession, Alamofire). */
-export const netBodyNativeRe = /\b(?:newCall|Request\.Builder|HttpRequest|dataTask|URLSession|AF\.request|AF\.upload|httpClient|client\.(?:get|post|put|delete|patch|request)|session\.request)\b/;
+export const netBodyNativeRe = /\b(?:URLRequest\(|newCall|Request\.Builder|HttpRequest|dataTask|URLSession|AF\.request|AF\.upload|httpClient|client\.(?:get|post|put|delete|patch|request)|session\.request)\b/;
 const netBodyRe = /\bcreateHttp\s*\(|\.request\s*\(|\baxios\b|\brcp\.|\bsession\.(?:get|post|put|delete|fetch)\b|\bcreateSession\s*\(|\binstance\.(?:get|post|put|delete|patch|request)\s*\(|\bhttpRequest\.request\b|\bfetch\s*\(/;
 
 interface Wrapper {
@@ -406,6 +411,7 @@ interface Wrapper {
   method: string; // from the name or a literal passed inward
   base: string; // base URL path prepended in the body (`BASE_URL + url`)
   file: string;
+  prop?: string; // url passed as a field of an options object argument
 }
 
 /** ArkTS / TS HTTP wrappers: functions or methods that issue a request (http.createHttp().request,
@@ -427,6 +433,8 @@ export function arktsWrapperAPIs(c: Ctx, add: (a: { platform: string; method: st
     }
   }
   const resolve = (platform: string, text: string): string => {
+    const r = resolveStr(c, platform, text);
+    if (r) return r;
     const t = text.trim();
     const lit = /^(['"`])((?:(?!\1)[^\\])*)\1$/.exec(t);
     if (lit) return lit[2]!.includes('${') ? '' : lit[2]!;
@@ -469,16 +477,22 @@ export function arktsWrapperAPIs(c: Ctx, add: (a: { platform: string; method: st
     const b = bodyOf.get(s)!;
     if (!netRe.test(b)) continue;
     const ps = paramNames(s.signature);
-    const urlIdx = ps.findIndex((p) => /^(?:url|path|api|apiPath|endpoint|uri|urlPath|relativeUrl|subUrl|action)$/i.test(p));
-    if (urlIdx < 0) continue;
-    const urlP = ps[urlIdx]!;
+    let urlIdx = ps.findIndex((p) => /^(?:url|path|api|apiPath|endpoint|uri|urlPath|relativeUrl|subUrl|action)$/i.test(p));
+    let prop = '';
+    if (urlIdx < 0) {
+      // an options object whose `url` field is used: `static request<T>(options: RequestOptions)` → `options.url`
+      urlIdx = ps.findIndex((p) => new RegExp('\\b' + p + '\\.(?:url|path)\\b').test(b));
+      if (urlIdx < 0) continue;
+      prop = new RegExp('\\b' + ps[urlIdx] + '\\.url\\b').test(b) ? 'url' : 'path';
+    }
+    const urlP = prop ? ps[urlIdx]! + '.' + prop : ps[urlIdx]!;
     // the url parameter must flow into the request
     const bodyStart = b.indexOf('{') >= 0 ? b.indexOf('{') : b.indexOf(')');
     if (!new RegExp('\\b' + urlP + '\\b').test(b.slice(Math.max(0, bodyStart)))) continue;
     const methodIdx = ps.findIndex((p) => /^(?:method|httpMethod|requestMethod|type)$/i.test(p));
     let method = methodFromName(s.name);
     if (!method) {
-      const mm = /\bmethod\s*:\s*(?:[\w.]*\.)?['"]?(GET|POST|PUT|DELETE|PATCH|HEAD)\b/i.exec(b) ?? /\b(?:axios|instance|\w*[hH]ttp\w*|request|session|client)\.(get|post|put|delete|patch)\s*(?:<[^>]*>)?\s*\(/.exec(b);
+      const mm = /\b(?:method|httpMethod)\s*[:=]\s*(?:[\w.]*\.)?['"]?(GET|POST|PUT|DELETE|PATCH|HEAD)\b/i.exec(b) ?? /\b(?:axios|instance|\w*[hH]ttp\w*|request|session|client)\.(get|post|put|delete|patch)\s*(?:<[^>]*>)?\s*\(/.exec(b);
       if (mm && methodIdx < 0) method = mm[1]!.toUpperCase();
     }
     let base = '';
@@ -487,7 +501,7 @@ export function arktsWrapperAPIs(c: Ctx, add: (a: { platform: string; method: st
       const v = resolve(s.platform, bm[1] ?? bm[2]!);
       if (v) base = v.replace(/^[a-z][\w+.-]*:\/\/[^/]*/i, '').replace(/\/$/, '');
     }
-    addW({ name: s.name, owner: ownerOf(s), urlIdx, methodIdx, method, base, file: s.file });
+    addW({ name: s.name, owner: ownerOf(s), urlIdx, methodIdx, method, base, file: s.file, prop });
   }
   // levels 1-2: functions forwarding their url parameter to a known wrapper
   for (let lvl = 0; lvl < 2; lvl++) {
@@ -537,7 +551,8 @@ export function arktsWrapperAPIs(c: Ctx, add: (a: { platform: string; method: st
       if (enc && enc.name === w.name && enc.file === w.file) continue;
       const a = call.args[w.urlIdx];
       if (!a) continue;
-      const v = resolve(fi.platform, a.text);
+      if (w.prop && !a.props?.[w.prop]) continue;
+      const v = resolve(fi.platform, w.prop ? a.props![w.prop]! : a.text);
       if (!v || /\s/.test(v)) continue;
       let p = v.replace(/^[a-z][\w+.-]*:\/\/[^/]*/i, '');
       const abs = v !== p;
@@ -550,6 +565,10 @@ export function arktsWrapperAPIs(c: Ctx, add: (a: { platform: string; method: st
       if (w.methodIdx >= 0 && call.args[w.methodIdx]) {
         const mm = /(GET|POST|PUT|DELETE|PATCH|HEAD)['"]?\s*$/i.exec(call.args[w.methodIdx]!.text);
         if (mm) method = mm[1]!.toUpperCase();
+      }
+      if (w.prop && a.props?.method) {
+        const mm = lastSeg(a.props.method.replace(/['"`]/g, '')).toUpperCase();
+        if (httpVerbs.has(mm)) method = mm;
       }
       if (!method) {
         const mm = /\bmethod\s*:\s*(?:[\w.]*\.)?['"]?(GET|POST|PUT|DELETE|PATCH|HEAD)\b/i.exec(call.args.map((x) => x.text).join(','));
@@ -590,4 +609,68 @@ export function ibTestIDs(c: Ctx, push: (platform: string, tid: string, file: st
       for (const t of ibIdentifiers(b)) push(p.name, t.tid, rel, t.line);
     });
   }
+}
+
+// ---------------------------------------------------------------- constant tables (enums, object literals)
+
+/** Make enum members (`enum ApiPath { X = '/x' }`, `const enum`) and object-literal tables
+ * (`const API = { X: '/x' }`) resolvable as `ApiPath.X` / `API.X`; record `axios.create(...)` instances. */
+export function augmentConsts(c: Ctx): void {
+  const langs = new Set(['arkts', 'typescript', 'javascript', 'tsx']);
+  for (const s of c.g.symbols) {
+    if (!langs.has(s.lang) || isTestPath(s.file)) continue;
+    if (s.kind === 'enum') {
+      let m = c.consts.get(s.platform);
+      if (!m) c.consts.set(s.platform, (m = new Map()));
+      const src = c.symbolSource(s);
+      for (const x of src.slice(src.indexOf('{') + 1).matchAll(/([A-Za-z_$][\w$]*)\s*=\s*(['"`])((?:(?!\2)[^\\\n])*)\2/g)) {
+        if (x[3]!.includes('${')) continue;
+        if (!m.has(s.name + '.' + x[1]!)) m.set(s.name + '.' + x[1]!, x[3]!);
+      }
+    } else if ((s.kind === 'const' || s.kind === 'property' || s.kind === 'variable') && !s.value) {
+      const src = c.symbolSource(s);
+      if (/=\s*axios\.create\s*\(/.test(src)) c.axiosVars.add(s.name);
+      if (s.end_line <= s.start_line && !/=\s*\{/.test(src)) continue;
+      if (!/^[^=]*=\s*\{/.test(src.replace(/\n/g, ' '))) continue;
+      let m = c.consts.get(s.platform);
+      if (!m) c.consts.set(s.platform, (m = new Map()));
+      for (const [k, v] of objectConsts(s.name, src)) if (!m.has(k)) m.set(k, v);
+    }
+  }
+}
+
+/** Resolve a string expression: literal, constant (`Api.X`, `this.base`), or `a + b` / template of those.
+ * Returns '' when any non-trailing part is unresolved. */
+export function resolveStr(c: Ctx, platform: string, text: string): string {
+  const t = text.trim();
+  const lit = /^(['"`])((?:(?!\1)[^\\])*)\1$/.exec(t);
+  if (lit) {
+    if (lit[1] !== '`' || !lit[2]!.includes('${')) return lit[2]!;
+    // template: every ${…} must resolve, except a trailing parameter
+    let ok = true;
+    const out = lit[2]!.replace(/\$\{([^}]+)\}/g, (_all, e: string) => {
+      // locals / parameters (`${oId}`) stay placeholders; constants are dotted or capitalised
+      const v = /\.|^\s*[A-Z]/.test(e) ? resolveStr(c, platform, e) : '';
+      if (v) return v;
+      if (/^[A-Za-z_$][\w$.]*$/.test(e.trim())) return '{' + lastSeg(e.trim()) + '}';
+      ok = false;
+      return '';
+    });
+    if (!ok || out.startsWith('{')) return '';
+    return out;
+  }
+  if (/^[A-Za-z_$][\w$.]*$/.test(t)) {
+    const [v, ok] = c.lookup(platform, t);
+    return ok && !/["'`\s]/.test(v) ? v : '';
+  }
+  const parts = t.split(/\s*\+\s*/);
+  if (parts.length < 2) return '';
+  let out = '';
+  for (const p of parts) {
+    const v = resolveStr(c, platform, p);
+    if (v) out += v;
+    else if (/^[A-Za-z_$][\w$.]*$/.test(p) && out) out += '{' + lastSeg(p) + '}';
+    else return '';
+  }
+  return out;
 }

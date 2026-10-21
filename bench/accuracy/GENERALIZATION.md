@@ -30,4 +30,15 @@ deeplinks 92.4% (97/105)、testids 95.8% (69/72)、apis 96.2% (101/105)、API mu
 
 最终全流程（`bin/run.sh`，16 仓全部 compound/discover/ingest exit 0，kb 快照含本轮全部 `src/facts` 改动）：routes 98.6% (281/285)、FP 7.0% (6/86)、deeplinks 92.4%、testids 95.8%、apis 96.2%、API must-not 0、无 testID 仓抽取 1——与基线完全一致；16 仓 `kb verify` 全部 exit 0、0 个 E_ 错误。新增合成测试：`test/facts/generalization.test.ts`（19 个）。
 
+## 第二轮（held-out 第一轮后：testids 59.5→94.6%、routes 85→91%、FP 12→8%，apis 仅 33→36%）
+
+| # | 类别 | 规则 | 训练集 Δ（routes / FP / deeplinks / testids / apis） | 训练集新增抽取（无标注） | 过拟合风险 |
+|---|---|---|---|---|---|
+| R2-a1 | a ArkTS 常量表 | 抽取前把 ArkTS/TS 的 `enum` / `const enum` 成员（`ApiPath.X = '/x'`）和对象字面量常量表（`const API = { X: '/x' }`）并入常量表，所有基于 `eval/lookup` 的规则（直接 client 调用、封装调用点、路由名）都能解析；`export class Api { static readonly X = '/x' }` 原本就作为带 parent 的属性可解析。跨文件按名字解析（与既有常量查找相同）。 | 0 / 0 / 0 / 0 / 0 | 无单独新增 | 低。 |
+| R2-a2 | a 对象参数 / 单例封装 | 封装函数没有 url 形参、但某形参在体内以 `options.url` / `options.path` 使用时（`static request<T>(options: RequestOptions)`），调用点取对象实参的 `url` 字段、方法取其 `method` 字段末段（`http.RequestMethod.POST` → POST）；`request({url: Api.X, method})`/`axios({url})` 的 url 字段改为按常量解析（原先把 `Api.X` 当字面路径），解析不出即跳过。 | 0 / 0 / 0 / 0 / 0 | 无 | 低。 |
+| R2-a3 | a axios.create 实例 | 由 `= axios.create(...)` 初始化的常量/属性名（任意文件）视为 HTTP client 接收者（`service.get(Api.X)` 即使变量名不含 http/client/api）。 | 0 / 0 / 0 / 0 / 0 | 无 | 低。 |
+| R2-b | b ArkTS 拼接 | 文件里有 `createHttp(` 时，任意接收者的 `x.request(url, …)` 都按请求处理（原先要求接收者名含 http 或链上直接 `createHttp()`）；`this.baseUrl + 'api/v2/feed'`、`` `${Constants.BASE}api/…` `` 通过字段/静态成员常量解析。精确度：在封装体内、url 只由本函数形参构成（`BASE_URL + url`，无字面路径）时不输出（调用点负责），避免 `/app{url}`；模板中的小写局部变量（`${oId}`）不按全局同名常量解析，解析出的值含引号/空白时丢弃。 | 0 / 0 / 0 / 0 / 0 | NextE +1（`GET /repos/erosTeam/NextE/releases`，真实） | 低–中。 |
+| R2-c | c Swift URL 构造 | 单行计算属性（`static var profile: URL { URL(string: base)!.appendingPathComponent("v1/profile") }`）也作为函数体参与；`appendingPathComponent` 的"文件系统 base"排除词改为 `\bfile`/`FileManager`/`fileURL`（原先 `file` 子串误伤 `profile`）；Swift `String(format: "%@/posts/%@", base, id)` 与 ObjC `stringWithFormat:@"%@/…"`（前导 base 占位符丢弃，其余 `%@` → `{param}`）；原生封装识别也认只构造 `URLRequest(` 的辅助函数，方法取体内 `httpMethod = "POST"`。 | 0 / 0 / 0 / 0 / 0 | mastodon +4（joinmastodon `/servers`、`/languages`、`/categories`、`/default-servers`，真实） | 低–中。 |
+| R2-d | d Decompose 跨文件 | 已有规则即按名字跨文件/模块解析 sealed 配置类型、在任意宿主文件中找 `when (config)` 分支，多导航器（root/tabs）各自的配置都出路由；本轮补测试锁定该行为（配置在另一文件、`createChild` 为独立函数、两个导航器）。 | 0 / 0 / 0 / 0 / 0 | 无 | 低。 |
+
 未做 / 已知局限：G2 不解析 Objective-C 的 `pushViewController:`/`presentViewController:` 边，也不处理 storyboard 中 ObjC 类的 embed 关系以外的情况；"仅内部实例化、不呈现的辅助 VC"只按 `addChildViewController:` 近似。G4 不跟踪跨文件的实例变量类型（`private http = new HttpClient()` 的接收者名若不含关键词则漏）。
