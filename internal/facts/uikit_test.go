@@ -40,7 +40,15 @@ class AccountInspectorViewController: UITableViewController {
 class AboutViewController: BaseViewController {}
 class LicensesViewController: ThemeableViewController {}
 class HelpViewController: UIViewController {}
-class FeedsViewController: UICollectionViewController {}
+class FeedsViewController: UICollectionViewController {
+    func viewDidLoad() {
+        let banner = BannerViewController()
+        addChild(banner)
+    }
+}
+class BannerViewController: UIViewController {}
+class OpenPanelAccessoryViewController: UIViewController {}
+class StatusViewController: UIViewController {}
 final class HostingSettingsController<V: View>: UIHostingController<V> {}
 `,
 		"App/Main.storyboard": `<?xml version="1.0" encoding="UTF-8"?>
@@ -49,6 +57,9 @@ final class HostingSettingsController<V: View>: UIHostingController<V> {}
   <connections><segue destination="vc2" kind="show" identifier="showHelp" id="sg1"/></connections>
 </viewController></objects></scene>
 <scene sceneID="s2"><objects><viewController id="vc2" customClass="HelpViewController" sceneMemberID="viewController"/></objects></scene>
+<scene sceneID="s4"><objects><viewController id="vc4" customClass="HelpViewController" sceneMemberID="viewController">
+  <connections><segue destination="vc5" kind="embed" id="sg2"/></connections>
+</viewController><viewController id="vc5" customClass="StatusViewController" sceneMemberID="viewController"/></objects></scene>
 <scene sceneID="s3"><objects><collectionViewController storyboardIdentifier="FeedsScene" id="vc3" customClass="FeedsViewController" sceneMemberID="viewController"/></objects></scene>
 </scenes></document>`,
 		"AppTests/SettingsViewControllerTests.swift": "import XCTest\nclass FakeViewController: UIViewController {}\n",
@@ -60,7 +71,7 @@ final class HostingSettingsController<V: View>: UIHostingController<V> {}
 			t.Errorf("screen %s missing: %v", rid, rm)
 		}
 	}
-	for _, rid := range []string{"base", "root_tab_bar", "fake", "themeable"} {
+	for _, rid := range []string{"base", "root_tab_bar", "fake", "themeable", "banner", "open_panel_accessory", "status"} {
 		if _, ok := rm[rid]; ok {
 			t.Errorf("%s is not a screen", rid)
 		}

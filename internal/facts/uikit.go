@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/luckylucky0001/codewiki/internal/extract"
 	"github.com/luckylucky0001/codewiki/internal/model"
 )
 
@@ -126,26 +127,29 @@ func (c *ctx) uikit() {
 		}
 	}
 	sort.Strings(keys)
-	have := map[string]bool{}
-	for _, r := range c.f.Routes {
-		have[r.File+"|"+r.Symbol] = true
-	}
-	for _, k := range keys {
-		cl := screens[k]
-		if have[cl.File+"|"+cl.ID] {
-			continue
-		}
-		rid := screenID(cl.Name)
-		c.f.Routes = append(c.f.Routes, model.Route{Platform: cl.Platform, RouteID: rid, Pattern: rid, File: cl.File, Symbol: cl.ID})
-	}
 	// storyboards: scene id / storyboardIdentifier -> customClass, segue identifier -> (source, destination)
 	sb := c.storyboards()
+	type pending struct {
+		e        model.NavEdge
+		from, to string
+	}
+	var edges []pending
 	top := func(id string) *model.Symbol {
 		s := c.g.Get(id)
 		for s != nil && s.Parent != "" {
 			s = c.g.Get(s.Parent)
 		}
 		return s
+	}
+	// child / inbound bookkeeping (class names) to drop embedded child
+	// controllers that are never navigated to
+	child := map[string]bool{}
+	inbound := map[string]bool{}
+	for n := range sb.embeds {
+		child[n] = true
+	}
+	for n := range sb.roots {
+		inbound[n] = true
 	}
 	seen := map[string]bool{}
 	edge := func(e model.NavEdge) {
@@ -162,6 +166,22 @@ func (c *ctx) uikit() {
 			continue
 		}
 		for _, call := range c.res.Calls[file] {
+			// UINavigationController(rootViewController: X()) makes X a root
+			for _, a := range call.Args {
+				if a.Label == "rootViewController" {
+					if n := soleScreen(fi.Platform, a.Text, screens); n != "" {
+						inbound[n] = true
+					}
+				}
+			}
+			if call.Callee == "addChild" || call.Callee == "addChildViewController" || call.Callee == "embed" {
+				if len(call.Args) > 0 {
+					if n := c.resolveVC(fi.Platform, call, screens); n != "" {
+						child[n] = true
+					}
+				}
+				continue
+			}
 			kind := ""
 			switch call.Callee {
 			case "pushViewController":
@@ -199,25 +219,40 @@ func (c *ctx) uikit() {
 			default:
 				// push(X(...)), push(X.instantiate()), present(UINavigationController(rootViewController: X())),
 				// or a local `let vc = X(...)` / `let vc: X = …` in the same function
-				arg := strings.TrimRight(strings.TrimSpace(call.Args[0].Text), "!?")
-				to = soleScreen(fi.Platform, arg, screens)
-				if to == "" && reIdent.MatchString(arg) {
-					if fn := c.g.Get(call.Enclosing); fn != nil {
-						src := c.symbolSource(fn)
-						for _, m := range reLocalAssign.FindAllStringSubmatch(src, -1) {
-							if m[1] == arg {
-								if to = soleScreen(fi.Platform, m[2]+" "+m[3], screens); to != "" {
-									break
-								}
-							}
-						}
-					}
-				}
+				to = c.resolveVC(fi.Platform, call, screens)
 			}
 			if to == "" || screens[fi.Platform+"|"+to] == nil {
 				continue
 			}
-			edge(model.NavEdge{Platform: fi.Platform, From: screenID(src.Name), To: screenID(to), Kind: kind, File: file, Line: call.Line})
+			inbound[to] = true
+			edges = append(edges, pending{model.NavEdge{Platform: fi.Platform, From: screenID(src.Name), To: screenID(to), Kind: kind, File: file, Line: call.Line}, src.Name, to})
+		}
+	}
+	// drop embedded child controllers (addChild / embed / storyboard embed
+	// segue) and Accessory / Inspector / Cell / Container controllers that
+	// nothing navigates to
+	drop := map[string]bool{}
+	for _, k := range keys {
+		cl := screens[k]
+		if !inbound[cl.Name] && (child[cl.Name] || reChildName.MatchString(cl.Name)) {
+			drop[cl.Name] = true
+		}
+	}
+	have := map[string]bool{}
+	for _, r := range c.f.Routes {
+		have[r.File+"|"+r.Symbol] = true
+	}
+	for _, k := range keys {
+		cl := screens[k]
+		if have[cl.File+"|"+cl.ID] || drop[cl.Name] {
+			continue
+		}
+		rid := screenID(cl.Name)
+		c.f.Routes = append(c.f.Routes, model.Route{Platform: cl.Platform, RouteID: rid, Pattern: rid, File: cl.File, Symbol: cl.ID})
+	}
+	for _, e := range edges {
+		if !drop[e.from] && !drop[e.to] {
+			edge(e.e)
 		}
 	}
 	sort.SliceStable(c.f.Navigation, func(i, j int) bool {
@@ -237,6 +272,33 @@ var (
 	reLocalAssign = regexp.MustCompile(`(?m)\b(?:let|var)\s+(\w+)\s*(?::\s*([^=\n]+?))?\s*=\s*([^\n]+)`)
 	reTypeName    = regexp.MustCompile(`\b[A-Z]\w*`)
 )
+
+var reChildName = regexp.MustCompile(`(Accessory|Cell)(View)?Controller$`)
+
+// resolveVC resolves the first argument of a navigation / containment call
+// to a screen class: a direct or nested type, or a local `let vc = X…` /
+// `let vc: X` in the enclosing function.
+func (c *ctx) resolveVC(platform string, call extract.Call, screens map[string]*model.Symbol) string {
+	arg := strings.TrimRight(strings.TrimSpace(call.Args[0].Text), "!?")
+	if to := soleScreen(platform, arg, screens); to != "" {
+		return to
+	}
+	if !reIdent.MatchString(arg) {
+		return ""
+	}
+	fn := c.g.Get(call.Enclosing)
+	if fn == nil {
+		return ""
+	}
+	for _, m := range reLocalAssign.FindAllStringSubmatch(c.symbolSource(fn), -1) {
+		if m[1] == arg {
+			if to := soleScreen(platform, m[2]+" "+m[3], screens); to != "" {
+				return to
+			}
+		}
+	}
+	return ""
+}
 
 // soleScreen returns the only screen class named in expr ("" if none or several).
 func soleScreen(platform, expr string, screens map[string]*model.Symbol) string {
@@ -268,10 +330,12 @@ func screenID(name string) string {
 type storyboardIndex struct {
 	ids    map[string]string // storyboardIdentifier -> customClass
 	segues map[string]string // segue identifier -> destination customClass (unique only)
+	embeds map[string]bool   // destinations of containerView embed segues
+	roots  map[string]bool   // initial / rootViewController relationship destinations
 }
 
 func (c *ctx) storyboards() storyboardIndex {
-	idx := storyboardIndex{ids: map[string]string{}, segues: map[string]string{}}
+	idx := storyboardIndex{ids: map[string]string{}, segues: map[string]string{}, embeds: map[string]bool{}, roots: map[string]bool{}}
 	ambiguous := map[string]bool{}
 	for _, p := range c.cfg.Platforms {
 		root := filepath.Join(c.res.Dir, filepath.FromSlash(p.Root))
@@ -296,6 +360,8 @@ func (c *ctx) storyboards() storyboardIndex {
 			scene := map[string]string{} // element id -> customClass
 			type seg struct{ id, dest string }
 			var segs []seg
+			var embedDest, rootDest []string
+			initial := ""
 			dec := xml.NewDecoder(strings.NewReader(string(b)))
 			for {
 				tok, err := dec.Token()
@@ -314,7 +380,16 @@ func (c *ctx) storyboards() storyboardIndex {
 					}
 					return ""
 				}
+				if se.Name.Local == "document" {
+					initial = attr("initialViewController")
+				}
 				if se.Name.Local == "segue" {
+					switch {
+					case attr("kind") == "embed":
+						embedDest = append(embedDest, attr("destination"))
+					case attr("kind") == "relationship" && strings.Contains(attr("relationship"), "ootViewController"):
+						rootDest = append(rootDest, attr("destination"))
+					}
 					if id := attr("identifier"); id != "" {
 						segs = append(segs, seg{id, attr("destination")})
 					}
@@ -325,6 +400,16 @@ func (c *ctx) storyboards() storyboardIndex {
 					if sid := attr("storyboardIdentifier"); sid != "" {
 						idx.ids[sid] = cc
 					}
+				}
+			}
+			for _, d := range embedDest {
+				if cc := scene[d]; cc != "" {
+					idx.embeds[cc] = true
+				}
+			}
+			for _, d := range append(rootDest, initial) {
+				if cc := scene[d]; cc != "" {
+					idx.roots[cc] = true
 				}
 			}
 			for _, s := range segs {
