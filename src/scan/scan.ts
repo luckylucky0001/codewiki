@@ -213,7 +213,8 @@ export class ScanCache {
   get(rel: string, hash: string, lang: string, platform: string): FileResult | undefined {
     const e = this.entries.get(rel);
     if (!e || e.hash !== hash || e.lang !== lang || e.platform !== platform) return undefined;
-    return structuredClone(e.fr);
+    // callers set refs on the returned symbols: copy them, share the rest
+    return { ...e.fr, symbols: e.fr.symbols.map((x) => ({ ...x })) };
   }
 
   put(rel: string, hash: string, lang: string, platform: string, fr: FileResult): void {

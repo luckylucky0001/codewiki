@@ -19,6 +19,11 @@ function push<K, V>(m: Map<K, V[]>, k: K, v: V): void {
  */
 export function resolveRefs(g: Graph): void {
   const byName = new Map<string, Symbol[]>(); // platform\0name
+  const byNameTop = new Map<string, Symbol[]>(); // platform\0name, top-level only
+  const byNameMember = new Map<string, Symbol[]>(); // platform\0name, members only
+  const byID = new Map<string, Symbol>();
+  for (const s of g.symbols) byID.set(s.id, s);
+  const getS = (id: string) => byID.get(id);
   const byFile = new Map<string, Symbol[]>(); // file\0name
   const byParent = new Map<string, Symbol[]>(); // platform\0parent\0name
   const byMember = new Map<string, Symbol[]>(); // platform\0name
@@ -44,9 +49,10 @@ export function resolveRefs(g: Graph): void {
   }
   for (const s of g.symbols) {
     push(byName, s.platform + '\0' + s.name, s);
+    push(s.parent ? byNameMember : byNameTop, s.platform + '\0' + s.name, s);
     push(byFile, s.file + '\0' + s.name, s);
     if (s.parent) {
-      const p = getSym(g, s.parent);
+      const p = getS(s.parent);
       if (p) {
         push(byParent, s.platform + '\0' + p.name + '\0' + s.name, s);
         push(byMember, s.platform + '\0' + s.name, s);
@@ -148,18 +154,35 @@ export function resolveRefs(g: Graph): void {
       }
       if (pick.length === 0) {
         const vis: Symbol[] = [];
-        for (const c of byName.get(s.platform + '\0' + n) ?? []) {
-          if (self(c)) continue;
-          if (c.parent) {
-            const p = getSym(g, c.parent);
-            if (p && (scope.has(p.name) || fileScope.get(s.file)?.has(p.name))) vis.push(c);
-            continue;
+        const key = s.platform + '\0' + n;
+        const mem = byNameMember.get(key);
+        if (mem) {
+          const fsc = fileScope.get(s.file);
+          if (mem.length > scope.size + (fsc?.size ?? 0)) {
+            // fewer visible owner names than candidates: look members up by owner
+            const seenOwner = new Set<string>();
+            for (const set of [scope, fsc]) {
+              if (!set) continue;
+              for (const pn of set) {
+                if (seenOwner.has(pn)) continue;
+                seenOwner.add(pn);
+                for (const c of byParent.get(s.platform + '\0' + pn + '\0' + n) ?? []) if (!self(c)) vis.push(c);
+              }
+            }
+          } else {
+            for (const c of mem) {
+              if (self(c)) continue;
+              const pn = parentName.get(c);
+              if (pn !== undefined && (scope.has(pn) || fsc?.has(pn))) vis.push(c);
+            }
           }
-          if (lang === 'kotlin' || lang === 'java') {
-            if (pkgOf(c.file) === pkgOf(s.file) || (wild.get(s.file) ?? []).includes(pkgOf(c.file))) vis.push(c);
-          } else if (isES(lang)) {
-            // top-level ES symbols must be imported
-          } else vis.push(c);
+        }
+        if (lang === 'kotlin' || lang === 'java') {
+          const pk = pkgOf(s.file);
+          const w = wild.get(s.file);
+          for (const c of byNameTop.get(key) ?? []) if (!self(c) && (pkgOf(c.file) === pk || (w !== undefined && w.includes(pkgOf(c.file))))) vis.push(c);
+        } else if (!isES(lang)) {
+          for (const c of byNameTop.get(key) ?? []) if (!self(c)) vis.push(c);
         }
         if (vis.length <= 3) {
           let top = vis.filter((c) => !c.parent);
@@ -185,7 +208,7 @@ export function resolveRefs(g: Graph): void {
   g.symbols.forEach((s, i) => {
     const scope = new Set<string>();
     for (const r of first[i]!) {
-      const rs = getSym(g, r);
+      const rs = getS(r);
       if (rs) {
         scope.add(rs.name);
         for (const n of rs.refNames ?? []) scope.add(n);
