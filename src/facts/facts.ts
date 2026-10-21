@@ -1315,7 +1315,7 @@ export class Ctx {
    * absolute-URL constants used where a request is built. Method from the same function (or, for an
    * endpoint helper, from the functions in the file that call it); GET when nothing says otherwise. */
   composedAPIs(add: (a: API) => void): void {
-    const pre = /appendingPathComponent|additionalPathComponents|String\.format|String\(\s*format|\(\s*\.(?:GET|POST|PUT|DELETE|PATCH|HEAD)\s*,|`\$\{[^}]*\}\/|\b(?:get|post|put|delete|patch)\s*\{\s*\w+\(\s*"|https?:\/\/[^"'`\s]+\/|URLComponents|\.appending\(\s*(?:path|component)|(?:base|host|server|domain|endpoint|api|url|root)\w*(?:\(\))?\s*\+\s*"|"(?:\$\{?|\\\()\w*(?:base|host|server|domain|endpoint|api|url|root)/i;
+    const pre = /appendPathSegments|encodedPath\s*=|submitForm|\burl\s*\{|takeFrom\(|appendingPathComponent|additionalPathComponents|String\.format|String\(\s*format|\(\s*\.(?:GET|POST|PUT|DELETE|PATCH|HEAD)\s*,|`\$\{[^}]*\}\/|\b(?:get|post|put|delete|patch)\s*\{\s*\w+\(\s*"|https?:\/\/[^"'`\s]+\/|URLComponents|\.appending\(\s*(?:path|component)|(?:base|host|server|domain|endpoint|api|url|root)\w*(?:\(\))?\s*\+\s*"|"(?:\$\{?|\\\()\w*(?:base|host|server|domain|endpoint|api|url|root)/i;
     const callables = new Set(['function', 'method', 'property', 'constructor', 'composable', 'const', 'variable']);
     // absolute URL constants (value with a path) by platform
     const urlConsts = new Map<string, Map<string, string>>();
@@ -1394,6 +1394,9 @@ export class Ctx {
         for (const m of b.matchAll(/`\$\{([^}]+)\}(\/[^`\s?#]*)/g)) if (/base|host|url|domain|server|endpoint|api/i.test(m[1]!) && m[2]!.length > 1) found.push([m[2]!, '']);
         // Ktor: client.get { apiUrl("config") }
         for (const m of b.matchAll(/\b(get|post|put|delete|patch)\s*\{\s*\w+\(\s*"([^"\s]+)"/g)) found.push([m[2]!, m[1]!.toUpperCase()]);
+        // Ktor URL builder DSL: client.get { url { path("a", id); appendPathSegments(..); encodedPath = "/x"; takeFrom(BASE) } },
+        // `client.post { url(BASE + "x") }`, `client.submitForm(url = "...")`, `method = HttpMethod.Post`
+        if (/\b(?:HttpClient|client|httpClient|HttpRequestBuilder|submitForm|request)\b/.test(b)) for (const [p, m] of ktorBuilderPaths(b, consts)) found.push([p, m]);
         // URLComponents: `components.path = "/w/api.php"`
         if (/URLComponents/.test(b)) for (const m of b.matchAll(/\b\w+\.path\s*=\s*"(\/[^"\s]+)"/g)) found.push([m[1]!, '']);
         // absolute URL literals (possibly concatenated with a query) in a body that issues a request
@@ -2275,6 +2278,97 @@ const reqContextRe = /\b(?:StringRequest|JsonObjectRequest|JsonArrayRequest|requ
 const netCallRe = /\b(?:StringRequest|JsonObjectRequest|JsonArrayRequest|newCall|Request\.Builder|HttpRequest|createHttp|dataTask|URLSession|AF\.request|httpClient|OkHttpClient|HttpClient|client\.(?:get|post|put|delete|patch))\b/;
 // local files / documents / web pages are not API endpoints
 const docAssetRe = /\.(?:db|sqlite3?|plist|html?|md|txt|xml|xhtml)$|\/(?:README|LICENSE)[^/]*$/i;
+
+/** Ktor `HttpRequestBuilder` URL DSL inside a request block: literal segments from `path(..)` /
+ * `appendPathSegments(..)` / `encodedPath = ".."` (non-literal segments become `{name}`), a base from
+ * `takeFrom(CONST)` / `url(CONST + "x")` (absolute URL constants stripped to their path), method from the
+ * `client.<verb>` call or `method = HttpMethod.X`. Returns [path, method or ''] pairs. */
+export function ktorBuilderPaths(b: string, consts?: Map<string, string>): [string, string][] {
+  const out: [string, string][] = [];
+  const seg = (t: string): string => {
+    t = t.trim();
+    if (/^"(?:[^"\\$]|\\.)*"$/.test(t)) return trimPrefix(trimSuffix(t.slice(1, -1), '/'), '/');
+    if (/^"[^"]*"$/.test(t)) return t.slice(1, -1).replace(/\$\{?(?:[\w.]*\.)?(\w+)\}?/g, '{$1}').replace(/^\/+|\/+$/g, '');
+    return '{' + (/(\w+)\W*$/.exec(t.replace(/\.toString\(\)$/, ''))?.[1] ?? 'param') + '}';
+  };
+  const basePath = (t: string): string => {
+    t = t.trim();
+    let v: string | undefined;
+    if (/^"[^"]*"$/.test(t)) v = t.slice(1, -1);
+    else if (/^[\w.]+$/.test(t)) v = consts?.get(t.split('.').pop()!);
+    if (!v) return '';
+    v = v.replace(/^https?:\/\/[^/]*/, '');
+    return v.replace(/^\/+|\/+$/g, '');
+  };
+  // each request block: `<recv>.<verb|request|prepareGet..> [(..)] {` up to its matching brace
+  for (const m of b.matchAll(/\b(\w+)\.(get|post|put|delete|patch|head|request|prepareGet|preparePost|preparePut|prepareDelete|preparePatch|prepareRequest)\s*(\((?:[^()]|\([^()]*\))*\))?\s*\{/g)) {
+    if (!/client|http|ktor|api|service/i.test(m[1]!)) continue;
+    let i = (m.index ?? 0) + m[0].length;
+    let depth = 1;
+    const start = i;
+    while (i < b.length && depth > 0) {
+      if (b[i] === '{') depth++;
+      else if (b[i] === '}') depth--;
+      i++;
+    }
+    const blk = b.slice(start, i - 1);
+    let method = /^(?:prepare)?(get|post|put|delete|patch|head)$/i.exec(m[2]!)?.[1]?.toUpperCase() ?? '';
+    const hm = /\bmethod\s*=\s*HttpMethod\.(Get|Post|Put|Delete|Patch|Head)\b/.exec(blk);
+    if (hm) method = hm[1]!.toUpperCase();
+    const segs: string[] = [];
+    let lit = false;
+    // base
+    const tf = /\btakeFrom\(\s*([^()]*?)\s*\)/.exec(blk);
+    if (tf) {
+      const bp = basePath(tf[1]!);
+      if (bp) segs.push(bp);
+    }
+    // url(BASE + "x") / url("...")
+    const u = /\burl\(\s*([^(){}]*?)\s*\)/.exec(blk);
+    if (u && !/^\s*$/.test(u[1]!)) {
+      const parts = u[1]!.split('+').map((x) => x.trim());
+      for (const [k, p] of parts.entries()) {
+        if (/^"[^"]*"$/.test(p)) {
+          let v = p.slice(1, -1);
+          if (k === 0) v = v.replace(/^https?:\/\/[^/]*/, '').replace(/^\$\{?\w*(?:base|host|url|api|server|endpoint|domain)\w*\}?/i, '');
+          const s2 = seg('"' + v + '"');
+          if (s2) {
+            segs.push(s2);
+            if (/[A-Za-z]/.test(s2.replace(/\{\w+\}/g, ''))) lit = true;
+          }
+        } else if (k === 0) {
+          const bp = basePath(p);
+          if (bp) segs.push(bp);
+        } else segs.push(seg(p));
+      }
+    }
+    for (const pm of blk.matchAll(/\b(?:path|appendPathSegments|appendEncodedPathSegments|pathSegments\s*=\s*listOf)\(\s*((?:[^()]|\([^()]*\))*)\)/g)) {
+      for (const a of splitTop(pm[1]!).map((x) => x.trim()).filter(Boolean)) {
+        const s2 = seg(a);
+        if (!s2) continue;
+        segs.push(s2);
+        if (/[A-Za-z]/.test(s2.replace(/\{\w+\}/g, ''))) lit = true;
+      }
+    }
+    const ep = /\bencodedPath\s*=\s*("[^"]*")/.exec(blk);
+    if (ep) {
+      const s2 = seg(ep[1]!);
+      if (s2) {
+        segs.push(s2);
+        lit = true;
+      }
+    }
+    if (lit) out.push([segs.filter(Boolean).join('/'), method]);
+  }
+  // client.submitForm(url = "...") / submitForm("...")
+  for (const m of b.matchAll(/\bsubmitForm(?:WithBinaryData)?\(\s*(?:url\s*=\s*)?("[^"]*"|[\w.]+\s*\+\s*"[^"]*")/g)) {
+    const parts = m[1]!.split('+').map((x) => x.trim());
+    let v = parts.length > 1 ? basePath(parts[0]!) + '/' + parts[1]!.slice(1, -1) : parts[0]!.slice(1, -1).replace(/^https?:\/\/[^/]*/, '');
+    v = v.replace(/\$\{?(?:[\w.]*\.)?(\w+)\}?/g, '{$1}').replace(/\/\/+/g, '/').replace(/^\/+/, '');
+    if (/[A-Za-z]/.test(v.replace(/\{\w+\}/g, ''))) out.push([v, 'POST']);
+  }
+  return out;
+}
 
 function methodsIn(b: string): string[] {
   const out = new Set<string>();
