@@ -12,6 +12,11 @@ export interface SwiftTarget {
 
 /** Returns the text between the paren at `open` and its matching close paren. */
 function balanced(src: string, open: number): string {
+  return src.slice(open + 1, matchEnd(src, open));
+}
+
+/** Index of the paren/bracket closing the one at `open`. */
+function matchEnd(src: string, open: number): number {
   let depth = 0;
   for (let i = open; i < src.length; i++) {
     const c = src[i];
@@ -21,18 +26,22 @@ function balanced(src: string, open: number): string {
     } else if (c === '(' || c === '[') depth++;
     else if (c === ')' || c === ']') {
       depth--;
-      if (depth === 0) return src.slice(open + 1, i);
+      if (depth === 0) return i;
     }
   }
-  return src.slice(open + 1);
+  return src.length;
 }
 
 export function parsePackageSwift(text: string): { name?: string; targets: SwiftTarget[] } {
   const src = stripComments(text);
   const pk = /Package\s*\(\s*name\s*:\s*"([^"]+)"/.exec(src);
   const targets: SwiftTarget[] = [];
+  let end = -1;
   for (const m of src.matchAll(/\.(target|executableTarget|testTarget|macro|plugin|systemLibrary|binaryTarget)\s*\(/g)) {
-    const body = balanced(src, m.index! + m[0].length - 1);
+    if (m.index! < end) continue; // `.target(name:)` inside another target's dependencies
+    const open = m.index! + m[0].length - 1;
+    end = matchEnd(src, open);
+    const body = src.slice(open + 1, end);
     const name = /^\s*name\s*:\s*"([^"]+)"/.exec(body);
     if (!name) continue;
     const path = /(?:^|,)\s*path\s*:\s*"([^"]+)"/.exec(body);

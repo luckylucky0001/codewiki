@@ -85,13 +85,14 @@ export function repairTree(prev: ModuleTree, input: TreeInput, delta: GraphDelta
     const core = cg.core.get(m.key) ?? [];
     const coreSet = new Set(core);
     const clusters = prevC.map((p) => ({ ...p, core: p.core.slice(), review: [] as string[] }));
+    const full = (cl: { id: string }) => (h.id ? `${h.id}/${cl.id.split('/').pop()!}` : cl.id.split('/').pop()!);
     const before = clusters.reduce((s, x) => s + x.core.length, 0);
     // 1. rename in place
     for (const cl of clusters) {
       cl.core = cl.core.map((id) => {
         const to = renameMap.get(id);
         if (to && coreSet.has(to)) {
-          decisions.push({ symbol: to, from: id, module: h.id, rule: 'rename', cluster: cl.id });
+          decisions.push({ symbol: to, from: id, module: h.id, rule: 'rename', cluster: full(cl) });
           return to;
         }
         return id;
@@ -100,7 +101,7 @@ export function repairTree(prev: ModuleTree, input: TreeInput, delta: GraphDelta
     // 2. delete
     for (const cl of clusters) {
       const keep = cl.core.filter((id) => coreSet.has(id));
-      for (const id of cl.core) if (!coreSet.has(id)) decisions.push({ symbol: id, module: h.id, rule: 'delete', cluster: cl.id });
+      for (const id of cl.core) if (!coreSet.has(id)) decisions.push({ symbol: id, module: h.id, rule: 'delete', cluster: full(cl) });
       cl.core = keep;
     }
     // 3. route new core symbols
@@ -176,7 +177,7 @@ export function repairTree(prev: ModuleTree, input: TreeInput, delta: GraphDelta
       }
       target.core.push(id);
       placed.set(id, target);
-      decisions.push({ symbol: id, module: h.id, rule, cluster: target.id });
+      decisions.push({ symbol: id, module: h.id, rule, cluster: full(target) });
     }
     // 4. materialize; empty clusters vanish, undersize ones are flagged for merge review
     const children: TreeNode[] = [];

@@ -20,6 +20,10 @@ export function parseGradleSettings(text: string): GradleSettings {
   const rn = /rootProject\.name\s*=\s*["']([^"']+)["']/.exec(src);
   if (rn) out.rootName = rn[1];
   const add = (args: string) => {
+    if (args.replace(/["'][^"'\n]*["']/g, '').replace(/[\s,]/g, '') !== '') {
+      out.dynamic = true; // computed include (string concatenation, variables, …)
+      return;
+    }
     for (const m of args.matchAll(quoted)) {
       const p = m[1]!.trim();
       if (p.includes('$')) {
@@ -28,7 +32,6 @@ export function parseGradleSettings(text: string): GradleSettings {
       }
       out.includes.push(p.startsWith(':') ? p : ':' + p);
     }
-    if (!/["']/.test(args) && args.trim()) out.dynamic = true;
   };
   for (const m of src.matchAll(/(?<![\w.])include\s*\(([^)]*)\)/g)) add(m[1]!);
   // Groovy: include ':a', ':b' (a trailing comma continues on the next line)
