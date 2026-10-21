@@ -85,6 +85,7 @@ Exit codes: 0 ok · 1 stale / verify failed · 2 usage · 3 internal. See [refer
 ```bash
 kb tree show                      # the hierarchy (wiki/module_tree.json)
 kb tree explain <symbol-id|file>  # which page documents it, with the breadcrumb path
+kb tree deps <:module|path>       # its build dependencies and who depends on it; --top N: most deps / fan-in
 kb plan --json                    # plan.tree: repair decisions + tree page tasks
 ```
 

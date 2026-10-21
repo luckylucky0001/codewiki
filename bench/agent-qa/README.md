@@ -193,6 +193,6 @@ AGENT_QUESTIONS=bench/agent-qa/questions-elementx-arch.json AGENT_REPS=2 AGENT_M
 - **依赖类题目（E1、E4、E5）上，A 组 6 次运行都没有用 kb，也没有读 wiki**，而是像 B 组一样直接 grep `build.gradle.kts`。这几题 A 的 turns 更少（E1 6 vs 10，E4 10 vs 14），应视为噪声，不是 wiki 的功劳。原因是依赖关系本来就写在一个文件里，grep 一次就能拿到。
 - 用到 kb 的是 E2 和 E3，各 2 次（`kb search`、`kb context`、`kb tree show`，然后读模块页）。E3（模块是做什么的）A 4 turns，B 6 turns。E2（反向依赖）A 5 turns，B 4.5 turns，因为模块页只列出正向依赖，反向依赖仍然要 grep。
 - 注意：两组的 `--allowedTools` 都没有真正限制 Bash，B 组 20 次 Bash 调用都成功了。所以这组对比实际上是“有 wiki + 指引块”对“没有”，而不是工具权限不同。
-- 下一步：在 L2 页面加上“被依赖”（反向依赖）一节，加一个 `kb tree deps <module>` 命令，并让指引块把“模块依赖 / 反向依赖”映射到这个命令。这一轮没有做。
+- **后续（已做，效果未验证）**：模块页新增 `kb:dependents` 块，列出反向依赖。用新 wiki 只重跑 A 组的 E2 两次：2/2 通过，3.5 turns，$0.009。但两次都只 grep 了 Gradle 文件，**没有读 wiki**，所以 turns 的下降不能算作这个块的功劳。结果在 `e2-with-dependents/`。要让 agent 真正用上它，还需要一个名字直接对应问题的命令（例如 `kb tree deps <module>`），并写进指引块。这一轮没有做。
 
 逐题明细在 `demo/sample-output/agent-bench-elementx-arch/results.md`，每次运行用了哪些工具见同目录的 `usage.txt`，原始 transcript（路径已脱敏）在 `transcripts/`。

@@ -1120,12 +1120,12 @@ register({
 });
 
 register({
-  name: 'tree', usage: 'build [--rebuild] [--dry-run] | show | explain <symbol-id|file>… | patch <ops.json> [--dry-run]', summary: 'the L0–L3 module tree (module_tree.json): build/repair, show, explain where a symbol or file lives, apply a tree-patch',
-  flags: { rebuild: ['bool', 'build from scratch (ids still inherited by Jaccard matching)', false], 'dry-run': ['bool', 'compute / validate only; write nothing', false] },
+  name: 'tree', usage: 'build [--rebuild] [--dry-run] | show | explain <symbol-id|file>… | deps [<module>…] [--top N] | patch <ops.json> [--dry-run]', summary: 'the L0–L3 module tree (module_tree.json): build/repair, show, explain where a symbol or file lives, module dependencies / dependents, apply a tree-patch',
+  flags: { rebuild: ['bool', 'build from scratch (ids still inherited by Jaccard matching)', false], 'dry-run': ['bool', 'compute / validate only; write nothing', false], top: ['int', 'deps without a module: list the N modules with most dependencies / dependents', 10] },
   async run(a, f, args) {
     const cfg = a.cfgOrDetect();
     if (typeof cfg === 'number') return cfg;
-    const r = await treeCommand(cfg, args[0] ?? 'show', args.slice(1), { rebuild: !!f.rebuild, dryRun: !!f['dry-run'] });
+    const r = await treeCommand(cfg, args[0] ?? 'show', args.slice(1), { rebuild: !!f.rebuild, dryRun: !!f['dry-run'], top: Number(f.top || 10) });
     a.emit(r.json, () => a.out(r.text));
     return r.code;
   },

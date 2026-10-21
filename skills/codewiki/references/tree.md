@@ -18,6 +18,8 @@ project page is the module page), so depth can be smaller than the level number.
 ```bash
 kb tree show [--json]                  # the tree (computed when there is no wiki yet)
 kb tree explain <symbol-id|file>       # which page documents it: node, page, breadcrumb path
+kb tree deps <:module|path>... [--json] # build deps + dependents (kb:dependents block on module pages)
+kb tree deps --top 10                   # modules with most dependencies / most dependents
 kb tree build [--rebuild] [--dry-run]  # (re)build module_tree.json; kb compound does this every run
 kb tree patch ops.json [--dry-run]     # rename / merge / split clusters (validated); then kb compound
 kb plan --json                         # plan.tree: build|repair|rebuild, decisions, tree page tasks

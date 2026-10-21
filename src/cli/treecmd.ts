@@ -39,7 +39,24 @@ function render(t: ModuleTree): string {
   return lines.join('\n') + '\n';
 }
 
-export async function treeCommand(cfg: Config, sub: string, args: string[], flags: { rebuild?: boolean; dryRun?: boolean }): Promise<TreeCmdOut> {
+/** Module / project nodes and their build-dependency edges (deps = this node needs; dependents = needed by). */
+function depIndex(t: ModuleTree) {
+  const nodes: TreeNode[] = [];
+  tree.walk(t.root, (n) => void ((n.kind === 'module' || n.kind === 'project') && nodes.push(n)));
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const users = new Map<string, TreeNode[]>();
+  for (const n of nodes) for (const d of n.deps ?? []) users.set(d, [...(users.get(d) ?? []), n]);
+  const norm = (s: string) => s.toLowerCase().replace(/^[:/]+|[:/]+$/g, '').replace(/[:/]+/g, ':');
+  const find = (q: string): TreeNode | undefined => {
+    const k = norm(q);
+    return byId.get(q) ?? nodes.find((n) => norm(n.title) === k || norm(n.id) === k || (n.root && norm(n.root) === k) || (n.paths ?? []).some((p) => norm(p) === k));
+  };
+  return { nodes, byId, users, find };
+}
+
+const brief = (n: TreeNode) => ({ id: n.id, title: n.title, page: n.page });
+
+export async function treeCommand(cfg: Config, sub: string, args: string[], flags: { rebuild?: boolean; dryRun?: boolean; top?: number }): Promise<TreeCmdOut> {
   const wp = wikiPath(cfg);
   switch (sub) {
     case 'build': {
@@ -61,6 +78,35 @@ export async function treeCommand(cfg: Config, sub: string, args: string[], flag
         note = '(computed; no module_tree.json in the wiki yet)\n';
       }
       return { json: t, text: note + render(t), code: 0 };
+    }
+    case 'deps': {
+      const t = loadTree(wp) ?? (await current(cfg, true)).t;
+      const ix = depIndex(t);
+      if (!args.length) {
+        const n = flags.top && flags.top > 0 ? flags.top : 10;
+        const rows = ix.nodes.map((m) => ({ ...brief(m), deps: (m.deps ?? []).length, dependents: (ix.users.get(m.id) ?? []).length }));
+        const byDeps = rows.slice().sort((a, b) => b.deps - a.deps || a.title.localeCompare(b.title)).slice(0, n);
+        const byUsers = rows.slice().sort((a, b) => b.dependents - a.dependents || a.title.localeCompare(b.title)).slice(0, n);
+        const text = `modules with build dependencies: ${rows.filter((r) => r.deps).length} / ${rows.length}\n\nmost dependencies:\n${byDeps.map((r) => `  ${String(r.deps).padStart(4)}  ${r.title}  → ${r.page}`).join('\n')}\n\nmost dependents (fan-in):\n${byUsers.map((r) => `  ${String(r.dependents).padStart(4)}  ${r.title}  → ${r.page}`).join('\n')}\n`;
+        return { json: { ok: true, modules: rows.length, most_deps: byDeps, most_dependents: byUsers }, text, code: 0 };
+      }
+      const out: unknown[] = [];
+      let text = '';
+      let code = 0;
+      for (const q of args) {
+        const m = ix.find(q);
+        if (!m) {
+          out.push({ query: q, found: false });
+          text += `${q}: no module or project with that name, id or path (see kb tree show)\n`;
+          code = 1;
+          continue;
+        }
+        const deps = (m.deps ?? []).map((id) => ix.byId.get(id)).filter((x): x is TreeNode => !!x);
+        const users = (ix.users.get(m.id) ?? []).slice().sort((a, b) => a.title.localeCompare(b.title));
+        out.push({ query: q, found: true, node: brief(m), deps: deps.map(brief), dependents: users.map(brief) });
+        text += `${m.title}  [${m.id}] → ${m.page}\n  depends on (${deps.length}):${deps.map((d) => `\n    ${d.title}`).join('') || ' —'}\n  depended on by (${users.length}):${users.map((d) => `\n    ${d.title}`).join('') || ' —'}\n`;
+      }
+      return { json: out.length === 1 ? out[0] : out, text, code };
     }
     case 'explain': {
       if (!args.length) return { json: { error: 'usage: kb tree explain <symbol-id|file>', ok: false }, text: 'usage: kb tree explain <symbol-id|file>\n', code: 2 };
