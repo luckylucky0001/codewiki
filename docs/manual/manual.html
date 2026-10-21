@@ -94,7 +94,7 @@
   <div><b>27</b><span>kb 子命令（全部支持 --json；含 tree / docs / links）</span></div>
   <div><b>7</b><span>tree-sitter 语言：Kotlin/Java/Swift/ArkTS/JS/TS/TSX</span></div>
   <div><b>1</b><span>codewiki skill：路由式 SKILL.md + references/*.md</span></div>
-  <div><b>277</b><span>vitest 测试（含与 Go 版的 golden 对拍、v2 树 / 文档所有权），tsc strict 无告警</span></div>
+  <div><b>289</b><span>vitest 测试（含与 Go 版的 golden 对拍、v2 树 / 文档所有权），tsc strict 无告警</span></div>
 </div>
 </section>
 
@@ -261,12 +261,7 @@ status: current            # current | stale | outdated-doc
 <p><b>验证</b>：</p>
 <ul>
   <li>Codex 0.163.0 和 Gemini 0.65.0 的真实二进制通过本地 mock 模型 API 跑通了 <code>kb compound</code>：页面写入成功，越界文件被回滚，用量从各自的 JSON 事件中解析。</li>
-  <li><code>codex debug prompt-input</code> 确认模型能看到 AGENTS.md 块和 skill（当时为合并前的 4 个 skill）。</li>
-  <li><code>kb install</code> 会提示 Codex 的两个坑：<code>AGENTS.override.md</code> 会取代 AGENTS.md，超过 32 KiB 的部分会被截断。</li>
   <li>真实 Claude（haiku）：<code>kb compound --agent claude</code> 完成 2 个任务，花费 $0.032；<code>kb ingest --agent claude</code> 用 1 个任务、花费 $0.0075，找出 2 处文档冲突。安装后的问答首选 kb 命令，只开放 MCP 时也能完成。</li>
-  <li>A/B 对比 <code>--agent claude</code> 与 <code>--agent all</code>（18 次运行）：两组都没有读取其他 agent 的文件，首个动作相同，花费相同。</li>
-  <li><code>demo/codex-mock-demo.sh</code> 区分了真实环节和 mock 环节。<b>真实</b>的有：codex 二进制、provider 配置、沙箱、<code>exec_command</code> 工具、<code>--json</code> 事件流、kb 的 prompt、守卫和 verify。<b>mock</b> 的只有模型输出。</li>
-  <li>这次运行发现并修复了一个 bug：agent 的 stdout 和 stderr 在旧 Go 版中由两个 goroutine 并发写入同一个日志，事件行会丢失，或者被 stderr 从中间截断拼接。修复方法是每个流按行缓冲，只把整行写入日志。用 <code>-race -count=50</code> 验证过。</li>
 </ul>
 </section>
 
@@ -344,7 +339,10 @@ depth 3; L0 1 · L1 2 · L2 2 · L3 9</code></pre>
   <tr><td>8 个真实仓库上的 SFK</td><td>nowinandroid、element-x-android、kotlinconf、HarmonyOS-Cases、sunflower、wikipedia-ios、NextE、DroidconKotlin，都在 <code>git clone --shared</code> 副本上运行。共检查 708 个人写 <code>.md</code>：改动 0、删除 0，独立检查和 kb guard 都是 0 违规。人写文档都是 frozen，kb 只在旁边新建文件；用 <code>docs_schema</code> 把维度指向 4 篇真实文档后，它们变成 adopted，kb 只做追加。kb 写的内容 0 坏链。修复了 8 个问题，包括 Gradle 子模块被当成项目、子目录里的 HarmonyOS 应用检测不到、<code>index</code> 路由与树索引冲突、<code>--json</code> 经管道输出在 64 KiB 处截断。</td></tr>
   <tr><td>真实 LLM（haiku，<code>demo/llm-demo.sh</code>）</td><td>写了 L3 簇页、L1 / L2 页（由子页摘要自底向上）和 53 条 docs 条目。docs agent 只有只读工具。每一步 verify 都 PASS，kb 块由 kb 覆盖，写集和人写内容的 guard 都没有触发。叙述具体（路由表、跳转关系、<code>MAX_CART_ITEMS = 20</code>）。共约 $0.15。</td></tr>
   <tr><td>架构类 A/B（element-x，268 个模块，haiku）</td><td>A 10/10、5.9 turns、$0.064；B 10/10、7.8 turns、$0.078。<b>但 A 在依赖类题目上没有用 kb</b>，差距视为噪声。加入 <code>kb tree deps</code> 后，8 次运行中有 7 次调用了它，答案与标准答案一致，但 turns 没有下降：agent 还会再 grep 一遍 build 文件核对。</td></tr>
-  <tr><td>热扫描（Cases，20141 个符号）</td><td>引用解析改为 worker_threads 并行（约快 10%），并按全部输入 hash 缓存解析结果。<code>scanRepo</code> 从 2.05 s 降到 1.25 s，结果逐字节一致。Go 版约 1.1 s。</td></tr>
+  <tr><td>热扫描（Cases，20141 个符号）</td><td>三项改动：引用解析并行；按全部输入 hash 缓存解析结果；facts 结果缓存，并把 call sites 拆成单独文件按需加载。<code>kb scan</code> 整个进程从 2.2–2.9 s 降到 1.15–1.33 s（load 约 11.5），Go 版约 1.1 s。结果逐字节一致，有测试覆盖。</td></tr>
+  <tr><td>链接检查与 <code>verify --docs</code></td><td>反引号路径只在形如路径（以 <code>./</code> <code>../</code> 开头，或带已知扩展名、首段目录存在）时才检查，跳过代码片段、glob、占位符和兄弟仓库路径。NextE 的坏链从 506 降到 288，抽样精度 19/20。<code>verify --docs</code> 只在 kb 拥有的内容出错时失败；人写正文里的坏链列为 <code>human_review_candidates</code>，加 <code>--strict</code> 才算失败。</td></tr>
+  <tr><td>e2epilot 互通</td><td>用新 clone 构建 e2e，对 TS 版 minishop facts 运行 <code>seed / path / graph invalidate / impact --codewiki-diff / trace</code>，全部 exit 0。新字段 <code>name</code> / <code>deeplinks</code> 向后兼容。</td></tr>
+  <tr><td>抽取准确率（训练集）</td><td><code>bench/accuracy</code> 的 16 个标注仓库，从 Go 到 TS：routes 51.6% → 98.6%、deeplinks 4.8% → 92.4%、testIDs 55.6% → 95.8%、APIs 18.1% → 96.2%、not_screen FP 12.8% → 7.0%。规则是对着这批仓库调的，留出集结果另行给出。</td></tr>
 </table>
 </section>
 
