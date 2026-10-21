@@ -9,7 +9,7 @@
   "engines": { "node": ">=20" },
   "scripts": {
     "build": "tsc -p tsconfig.json && node scripts/postbuild.mjs",
-    "test": "vitest run",
+    "test": "npm run build && vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
