@@ -1234,7 +1234,7 @@ class Ctx {
    * absolute-URL constants used where a request is built. Method from the same function (or, for an
    * endpoint helper, from the functions in the file that call it); GET when nothing says otherwise. */
   composedAPIs(add: (a: API) => void): void {
-    const pre = /appendingPathComponent|additionalPathComponents|String\.format|\(\s*\.(?:GET|POST|PUT|DELETE|PATCH|HEAD)\s*,|`\$\{[^}]*\}\/|\b(?:get|post|put|delete|patch)\s*\{\s*\w+\(\s*"|https?:\/\/[^"'`\s]+\//;
+    const pre = /appendingPathComponent|additionalPathComponents|String\.format|\(\s*\.(?:GET|POST|PUT|DELETE|PATCH|HEAD)\s*,|`\$\{[^}]*\}\/|\b(?:get|post|put|delete|patch)\s*\{\s*\w+\(\s*"|https?:\/\/[^"'`\s]+\/|URLComponents/;
     const callables = new Set(['function', 'method', 'property', 'constructor', 'composable', 'const', 'variable']);
     // absolute URL constants (value with a path) by platform
     const urlConsts = new Map<string, Map<string, string>>();
@@ -1269,6 +1269,7 @@ class Ctx {
       const emit = (s: Symbol, raw: string, method: string) => {
         if (!raw.includes('://') && docAssetRe.test(raw.replace(/[?#].*$/, '').replace(/\/$/, ''))) return;
         raw = raw.replace(/\\\((?:[^()]*\.)?(\w+)[^()]*\)/g, '{$1}').replace(/\$\{(?:[^}]*\.)?(\w+)[^}]*\}/g, '{$1}').replace(/%[sd@]/g, '{param}');
+        if (/\s|\\\(/.test(raw.replace(/[?#].*$/, ''))) return; // prose / unresolved interpolation
         if (!raw.startsWith('/') && !raw.startsWith('{') && !raw.includes('://')) raw = '/' + raw;
         const [p, ok] = normPath(raw);
         if (ok && /[A-Za-z]/.test(p)) add({ platform: fi.platform, method: httpMethods.has(method) ? method : 'GET', path: p, file, symbol: s.id });
@@ -1305,6 +1306,10 @@ class Ctx {
         for (const m of b.matchAll(/`\$\{([^}]+)\}(\/[^`\s?#]*)/g)) if (/base|host|url|domain|server|endpoint|api/i.test(m[1]!) && m[2]!.length > 1) found.push([m[2]!, '']);
         // Ktor: client.get { apiUrl("config") }
         for (const m of b.matchAll(/\b(get|post|put|delete|patch)\s*\{\s*\w+\(\s*"([^"\s]+)"/g)) found.push([m[2]!, m[1]!.toUpperCase()]);
+        // URLComponents: `components.path = "/w/api.php"`
+        if (/URLComponents/.test(b)) for (const m of b.matchAll(/\b\w+\.path\s*=\s*"(\/[^"\s]+)"/g)) found.push([m[1]!, '']);
+        // absolute URL literals (possibly concatenated with a query) in a body that issues a request
+        if (netCallRe.test(b)) for (const m of b.matchAll(/"(https?:\/\/[^"\s/]+\/[^"\s]*)"/g)) if (!staticAssetRe.test(m[1]!.replace(/[?#].*$/, ''))) found.push([m[1]!, '']);
         // absolute URL constants referenced where a request is built
         if (consts && reqContextRe.test(b))
           for (const [k, v] of consts) if (s.name !== k && new RegExp('\\b' + k + '\\b').test(b)) found.push([v, '']);
@@ -2122,6 +2127,8 @@ export function urlRoutingRoutes(text: string): { method: string; path: string; 
 /** HTTP verbs a function body uses (builder calls, method labels, HTTPMethod enums, post* helpers). */
 // a body that actually issues an HTTP request (not a web view / namespace / file use of a URL)
 const reqContextRe = /\b(?:request|newCall|execute|fetch|createHttp|HttpRequest|dataTask|URLRequest|AF\.request|httpClient|client\.(?:get|post|put|delete|patch)|Request\.Builder|Request\(|getJson|getString|download)\b/;
+// stricter: a body that runs a network client call (for bare URL literals, which are often web pages)
+const netCallRe = /\b(?:newCall|Request\.Builder|HttpRequest|createHttp|dataTask|URLSession|AF\.request|httpClient|OkHttpClient|HttpClient|client\.(?:get|post|put|delete|patch))\b/;
 // local files / documents / web pages are not API endpoints
 const docAssetRe = /\.(?:db|sqlite3?|plist|html?|md|txt|xml|xhtml)$|\/(?:README|LICENSE)[^/]*$/i;
 
