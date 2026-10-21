@@ -6,7 +6,14 @@
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd); ACC=$(dirname "$HERE"); REPO=$(cd "$ACC/../.." && pwd)
 OUT=${1:?out dir}; shift; mkdir -p "$OUT"; OUT=$(cd "$OUT" && pwd)
-if [ -z "${KB:-}" ]; then (cd "$REPO" && npm run build >/dev/null) || exit 1; KB="node $REPO/dist/cli.js"; fi
+if [ -z "${KB:-}" ]; then
+  # build, then run a frozen snapshot so a rebuild of the checkout during the run cannot mix versions
+  (cd "$REPO" && npm run build >/dev/null) || exit 1
+  SNAP="$OUT/_kb"; rm -rf "$SNAP"; mkdir -p "$SNAP"
+  cp -r "$REPO/dist" "$REPO/grammars" "$REPO/package.json" "$SNAP/" && ln -s "$REPO/node_modules" "$SNAP/node_modules"
+  echo "kb snapshot: $(git -C "$REPO" rev-parse --short HEAD) $(git -C "$REPO" status --porcelain -- src | wc -l) uncommitted src files" > "$OUT/kb-version.txt"
+  KB="node $SNAP/dist/cli.js"
+fi
 NAMES=("$@"); [ ${#NAMES[@]} -eq 0 ] && NAMES=($(cd "$ACC/labels" && ls *.json | sed 's/\.json$//'))
 one() {
   local N=$1 D="$OUT/$1" R; mkdir -p "$D"

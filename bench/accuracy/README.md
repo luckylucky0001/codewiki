@@ -190,3 +190,18 @@ verified/pass/ok/consistent/implemented… → `verified`。
 5 个新仓库在 `repos/` 下用 `git clone --depth 1 --filter=blob:limit=2m` 获取；其余 11 个复用
 `/tmp/claude-0/-home-user-axios/f608cc50-0c09-5f4c-8195-0e8da779e294/scratchpad/oss2/` 下的只读克隆（未修改）。
 运行抽取器前请 `git checkout <commit>` 到标签中的 SHA。
+
+## 7. 在本仓库中运行（codewiki-ts）
+
+```bash
+# 克隆放在仓库外，按标签 commit checkout；ACC_REPOS 为冒号分隔的克隆目录（<dir>/<标签名> 或 <dir>/<仓库名>）
+ACC_REPOS=/path/to/clones JOBS=3 bench/accuracy/bin/run.sh /tmp/acc-out     # 构建 TS kb 快照，逐仓 compound --full + discover-docs + ingest（全部 --llm template）
+node bench/accuracy/score.mjs --labels-dir bench/accuracy/labels --runs /tmp/acc-out --json > after.json
+node bench/accuracy/bin/compare.mjs before.json after.json --repos            # 各类 micro 召回 / 精确率代理指标的差值
+node bench/accuracy/bin/facts.mjs /tmp/acc-out                               # 迭代用：只重新抽取 facts（复用 run.sh 的配置与扫描缓存）
+```
+
+* wiki 写在输出目录里（`wiki_dir` 在克隆之外），克隆不被修改；`run.sh` 结束时打印 `git status --porcelain`。
+* 打分器修正：`idKeys()` 对 `platform://path#Name` 形式的符号 id 也生成裸名 `Name`（原实现只对不含 `/` 的串取末段，导致 kb 的符号 id 永远无法按名字匹配）。
+* 打分器扩展：若 facts 目录中有 `deeplinks.json`（`{version, deeplinks:[{platform, scheme, host, path, file, source}]}`），其中每条声明的深链与 routes.json 中的 `deeplink`/`deeplinks` 一起参与深链匹配。
+* 结果与修复记录见 `RESULTS.md`。
