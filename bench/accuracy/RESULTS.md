@@ -40,3 +40,135 @@ ingest/claims engine (outside the extractor).
 | 8 | swift-url-routing parser DSL (files importing `URLRouting`): `Route(.case(…)) { Method.x; Path { "a"; "b" } }` nested through `OneOf` and router variables / properties mounted inside a parent Route; leaf routes emit the concatenated path and the nearest declared method. | 281 | 6 | 97 | 69 | 85→97 | The benchmark's "deliberately hard" isowords sample (12/12). Library-specific but not repo-specific. |
 | — | Determinism (coordinator report: Cases testids.json rewritten by the first warm run): could not reproduce with the current code (cold/warm scan cache and cold/incremental compound give identical facts). Root cause candidate fixed: the extractor fingerprint, which keys the facts query cache, did not cover `src/facts`, so facts computed by older facts code could be served/replaced after an upgrade. Test `test/facts/determinism.test.ts` asserts identical facts for cold scan, reloaded cache and worker threads. | | | | | | |
 | 9 | `URLComponents` `x.path = "/…"` assignments; absolute URL literals (incl. `"https://host/lookup?id=" + id`) in bodies that run a network client call (OkHttp/URLSession/HttpClient/…); paths with whitespace or unresolved interpolation dropped. | 281 | 6 | 97 | 69 | 97→101 | First attempt (any body mentioning "request"/"url") also picked up help pages and store links; tightened to network-client bodies before committing. |
+
+## Final: Go baseline → TS (all fixes), fixed scorer
+
+Final run: `bin/run.sh` full pipeline on all 16 repos (kb snapshot of `c8ac019`; the snapshot also
+contained the concurrent agent's uncommitted cli/engine edits, which do not touch facts). All 16 runs
+exited 0 and every clone stayed clean.
+
+| metric | Go `go-final` | TS final | Δ |
+|---|---|---|---|
+| routes recall (micro) | 51.6% (147/285) | **98.6% (281/285)** | +134 |
+| routes recall (macro) | 53.5% | 98.4% | |
+| not_screen FP rate | 12.8% (11/86) | **7.0% (6/86)** | −5 |
+| deeplinks recall | 4.8% (5/105) | **92.4% (97/105)** | +92 |
+| testids recall | 55.6% (40/72) | **95.8% (69/72)** | +29 |
+| testIDs extracted in the 8 repos without testIDs | 1 | 1 | 0 |
+| apis recall | 18.1% (19/105) | **96.2% (101/105)** | +82 |
+| API must-not hits | 0 | 0 | 0 |
+| claims coverage / acc(all) | 23.7% / 11.3% | 23.7% / 11.3% | (claims engine not in scope) |
+| conflict recall | 0/18 | 0/18 | |
+
+### Per repo (hits Go → **TS** / expected)
+
+| repo | routes | not_screen FP | deeplinks | testids | apis |
+|---|---|---|---|---|---|
+| AntennaPod/AntennaPod | 0→**26**/26 | 0→1/6 | 0→**9**/9 | 0→**9**/10 | 0→**10**/10 |
+| FishPiOffical/fishpi-harmony | 10→**10**/11 | 0→0/6 | n/a | n/a | 11→**11**/11 |
+| HarmonyOS-Cases/Cases | 9→**29**/29 | 0→0/6 | n/a | 11→**11**/11 | 1→**2**/3 |
+| JetBrains/kotlinconf-app | 16→**24**/24 | 0→0/5 | n/a | n/a | 0→**10**/10 |
+| Ranchero-Software/NetNewsWire | 13→**23**/23 | 5→2/7 | 2→**8**/8 | n/a | 0→**10**/10 |
+| android/compose-samples | 13→**14**/16 | 0→0/5 | 0→**3**/3 | n/a | n/a |
+| android/sunflower | 3→**4**/4 | 0→0/6 | n/a | 1→**1**/1 | 1→**1**/1 |
+| chrisbanes/tivi | 0→**19**/19 | 0→0/6 | 0→**2**/2 | 7→**9**/9 | 0→**1**/1 |
+| element-hq/element-x-android | 0→**19**/19 | 3→0/3 | 1→**9**/9 | 0→**9**/10 | 2→**2**/2 |
+| erosTeam/NextE | 22→**22**/22 | 0→0/3 | 0→**4**/4 | 10→**10**/10 | 0→**7**/9 |
+| kickstarter/ios-oss | 22→**22**/23 | 1→1/5 | 0→**47**/47 | n/a | 0→**12**/12 |
+| mastodon/mastodon-ios | 16→**21**/21 | 1→1/6 | 2→**7**/7 | n/a | 0→**10**/10 |
+| android/nowinandroid | 5→**6**/6 | 0→0/6 | 0→**1**/1 | 11→**11**/11 | 4→**4**/4 |
+| pointfreeco/isowords | 0→**21**/21 | 0→0/5 | 0→**3**/3 | n/a | 0→**12**/12 |
+| touchlab/KaMPKit | 0→**3**/3 | 0→0/7 | n/a | n/a | 0→**1**/1 |
+| wikimedia/wikipedia-ios | 18→**18**/18 | 1→1/4 | 0→**4**/12 | 0→**9**/10 | 0→**8**/9 |
+
+### Extraction volume and time (TS before tuning → final)
+
+| repo | compound time | routes | testids | apis | declared deeplinks |
+|---|---|---|---|---|---|
+| AntennaPod | 9s → 11s | 0→59 | 0→56 | 0→15 | 15 |
+| fishpi-harmony | 4s → 5s | 11→11 | 0→0 | 52→52 | 0 |
+| HarmonyOS-Cases | 11s → 16s | 34→199 | 1413→1415 | 1→4 | 1 |
+| kotlinconf-app | 7s → 7s | 25→27 | 0 | 0→10 | 0 |
+| NetNewsWire | 8s → 12s | 29→64 | 0 | 8→37 | 8 |
+| compose-samples | 3s → 7s | 30→32 | 1→1 | 0→0 | 5 |
+| sunflower | 2s → 4s | 3→4 | 1→1 | 1→1 | 0 |
+| tivi | 5s → 11s | 0→21 | 7→9 | 0→1 | 2 |
+| element-x-android | 24s → 39s | 176→145 | 0→29 | 2→3 | 9 |
+| NextE | 18s → 24s | 58→58 | 630→632 | 0→58 | 4 |
+| kickstarter ios-oss | 18s → 22s | 120→136 | 0 | 0→58 | 52 |
+| mastodon-ios | 8s → 10s | 31→97 | 0 | 0→96 | 7 |
+| nowinandroid | 2s → 3s | 5→6 | 14→14 | 4→4 | 1 |
+| isowords | 5s → 8s | 0→32 | 0 | 0→26 | 5 |
+| KaMPKit | 3s → 4s | 0→3 | 0 | 0→2 | 0 |
+| wikipedia-ios | 12s → 22s | 146→189 | 28→89 | 0→15 | 12 |
+
+Scan time is unchanged. Facts extraction alone went from about 0.2 s to 0.3–0.4 s on Cases (`bin/facts.mjs`).
+Most of the compound increase comes from the extra feature pages for the new routes (Cases: 34 → 199
+routes). The concurrent v2 hierarchy work landed in the same window, so part of the increase may also
+come from that work.
+
+## Remaining misses by cause
+
+| cause | misses |
+|---|---|
+| Objective-C sources are not parsed (Wikipedia `NSUserActivity+WMFExtensions.m` host dispatch) | 8 deeplinks |
+| Compose string-concatenated routes: Jetsnack `"$SNACK_DETAIL_ROUTE/{snackId}?origin={origin}"` and a duplicate `home` | 2 routes |
+| `main_pages.json` page that hosts a `Navigation` container: fishpi `pages/Index`. Kept deliberately (Go also skips shell pages; see minishop). | 1 route |
+| kickstarter `RootTabBarViewController` (a UITabBarController subclass, excluded as a container) | 1 route |
+| NextE `favorites.php`/`archiver.php`: URL built by string concatenation or a query builder, not a template literal | 2 APIs |
+| Cases: a `.png` fetched over HTTP (filtered as a static asset); MediaWiki `/w/api.php` (a path constant joined elsewhere) | 2 APIs |
+| testIDs: element `login-email_username`, wikipedia `profile-button`, one AntennaPod resource id | 3 testids |
+| not_screen FPs: AntennaPod `NavDrawerFragment` (single-fragment container); NNW `WebViewController` (page VC child) and `DetailWebViewController`; kickstarter `BackerDashboardProjectsViewController` (pager page); mastodon `AutoCompleteViewController` (view added as a subview); wikipedia `ArticlePeekPreviewViewController` (has a resolvable present edge) | 6 FPs |
+| Claims / conflicts: unchanged. Claim extraction and verification live in `src/engine/claims.ts`, which is outside this task's scope. | 122/160 claims unmatched, 0/18 conflicts |
+
+## Over-fitting caveats
+
+* Every rule was written while looking at these 16 repos and their misses, so the final numbers are
+  **training-set** numbers. A fresh blind sample is needed before the ~95% figures can be claimed in general.
+* Name heuristics, used as the last resort and documented in code:
+  * `…PreviewViewController` child-name suffix
+  * Appyx NavTargets dropped when `@ContributesNode` leaves exist
+  * the TCA `<Feature>View` / `<Feature minus Reducer|Feature|Core>View` naming convention
+  * `…Screen` for activity `setContent` roots
+  * the URL-ish base keyword list (`url|endpoint|base|api|host|server`) for path-component chains
+* Library-specific recognisers:
+  * swift-url-routing DSL
+  * Circuit (`Screen` plus a circuit import)
+  * Appyx `@ContributesNode`
+  * ArkTS route decorators matched by `@…Rout…({name})`
+
+  Each is generic for its library, but the benchmark has only one repo per library.
+* Fragment routes need an instantiation outside the fragment (not in an adapter and not under a child
+  fragment manager). An app that navigates purely by reflection or by the navigation component without
+  a nav graph would lose them.
+* API precision is only measured through must-not labels (0 hits). Unlabelled API extractions grew
+  substantially:
+  * mastodon 0→96
+  * NextE 0→58
+  * kickstarter 0→58
+
+  Spot checks show mostly real endpoints, plus some downloads (model files, torrents) and one test
+  fixture store.
+* Deep-link recall benefits from scorer leniency for `route-pattern` labels: a path-only fact matches
+  any scheme/host. kickstarter's 47 hits come from the URL route table.
+* `route_id` for typed/Nav3 routes changed to the route type name (`GoldenKodeeScreen`). The old
+  snake_case id survives as `pattern`. Consumers that keyed on the old ids must adapt.
+
+## Interface changes (schema-compatible additions)
+
+* Every `routes.json` entry gains `name` (the bare type or page name). Routes may also carry
+  `deeplinks: [..]`, which holds the declared links of that screen.
+* New `facts/deeplinks.json`, written only when non-empty: `{version: 1, deeplinks: [{platform, scheme,
+  host, path, file, source, route_id?}]}`. `source` is one of:
+  * `intent-filter`
+  * `CFBundleURLSchemes`
+  * `applinks`
+  * `skills.uris`
+  * `nav-graph`
+  * `route-table`
+  * `uriPattern`
+  * `url-host-dispatch`
+* `deeplink` on a route is either a declared link, or `<scheme>://<pattern>` when the platform declares
+  exactly one app scheme. Class-named screens never get a derived link.
+* The extractor fingerprint now covers `src/facts`, so facts query caches and scan caches are
+  invalidated whenever the facts code changes.
