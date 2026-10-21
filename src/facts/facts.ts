@@ -307,6 +307,7 @@ class Ctx {
   f: Facts;
   mainPageIDs = new Map<string, string>();
   declared = new Set<string>();
+  lineCache = new Map<string, string[]>();
   noDerive = new WeakSet<Route>();
   classes: Map<string, Symbol> | null = null;
   subs: Map<string, number> | null = null;
@@ -990,7 +991,9 @@ class Ctx {
             } else if (httpMethods.has(M) && args.length > 0 && recv.includes('.url(')) {
               okhttp.set(recv, M);
             } else if (httpMethods.has(M) && args.length > 0 && clientRecvRe.test(recv)) {
-              const [p, ok] = evalPath(fi.platform, args[0]!, false);
+              // relative paths (`client.get("shows/anticipated")`, resolved against defaultRequest's base URL)
+              const rel = /^[A-Za-z][\w\-.]*\/[\w\-./{}]*$/.test((args[0]!.parts ?? []).map((x) => x.lit ?? '{' + (x.ref ?? x.param) + '}').join(''));
+              const [p, ok] = evalPath(fi.platform, args[0]!, rel);
               if (ok) api(M, p);
             }
             break;
@@ -1067,6 +1070,117 @@ class Ctx {
       }
     }
     this.endpointEnums(add);
+    this.composedAPIs(add);
+  }
+
+  fileLines(file: string): string[] {
+    let l = this.lineCache.get(file);
+    if (!l) {
+      try {
+        l = fs.readFileSync(path.join(this.res.dir, file), 'utf8').split('\n');
+      } catch {
+        l = [];
+      }
+      this.lineCache.set(file, l);
+    }
+    return l;
+  }
+
+  /** URLs composed in code rather than written as one literal: Swift appendingPathComponent chains and
+   * additionalPathComponents arrays, route enums returning (method, path) tuples, String.format URL
+   * templates, template literals over a base-URL variable, Ktor `client.get { helper("path") }` and
+   * absolute-URL constants used where a request is built. Method from the same function (or, for an
+   * endpoint helper, from the functions in the file that call it); GET when nothing says otherwise. */
+  composedAPIs(add: (a: API) => void): void {
+    const pre = /appendingPathComponent|additionalPathComponents|String\.format|\(\s*\.(?:GET|POST|PUT|DELETE|PATCH|HEAD)\s*,|`\$\{[^}]*\}\/|\b(?:get|post|put|delete|patch)\s*\{\s*\w+\(\s*"|https?:\/\/[^"'`\s]+\//;
+    const callables = new Set(['function', 'method', 'property', 'constructor', 'composable', 'const', 'variable']);
+    // absolute URL constants (value with a path) by platform
+    const urlConsts = new Map<string, Map<string, string>>();
+    for (const s of this.g.symbols) {
+      if (!s.value || !/^https?:\/\/[^/\s]+\/[^\s]*$/.test(s.value) || staticAssetRe.test(s.value.replace(/[?#].*$/, ''))) continue;
+      if (/^https?:\/\/(?:www\.w3\.org|purl\.org|ns\.|schemas\.|xmlns\.)/.test(s.value)) continue; // XML namespaces
+      let m = urlConsts.get(s.platform);
+      if (!m) urlConsts.set(s.platform, (m = new Map()));
+      m.set(s.name, s.value);
+    }
+    const byFile = new Map<string, Symbol[]>();
+    for (const s of this.g.symbols) {
+      if (!callables.has(s.kind) || s.end_line <= s.start_line && s.kind !== 'const') continue;
+      const a = byFile.get(s.file);
+      if (a) a.push(s);
+      else byFile.set(s.file, [s]);
+    }
+    for (const file of this.sortedFiles()) {
+      const fi = this.g.files[file]!;
+      if (!['swift', 'kotlin', 'java', 'arkts', 'typescript', 'javascript', 'tsx'].includes(fi.lang) || isTestPath(file)) continue;
+      const syms = byFile.get(file);
+      if (!syms) continue;
+      const consts = urlConsts.get(fi.platform);
+      const lines = this.fileLines(file);
+      const text = lines.join('\n');
+      const constHit = consts && [...consts.keys()].some((k) => text.includes(k));
+      if (!pre.test(text) && !constHit) continue;
+      // leaf callables only (a class body would repeat its members)
+      const leaves = syms.filter((s) => !syms.some((o) => o !== s && o.start_line >= s.start_line && o.end_line <= s.end_line && (o.start_line > s.start_line || o.end_line < s.end_line)));
+      const bodies = new Map<Symbol, string>();
+      for (const s of leaves) bodies.set(s, lines.slice(s.start_line - 1, s.end_line).join('\n'));
+      const emit = (s: Symbol, raw: string, method: string) => {
+        if (!raw.includes('://') && docAssetRe.test(raw.replace(/[?#].*$/, '').replace(/\/$/, ''))) return;
+        raw = raw.replace(/\\\((?:[^()]*\.)?(\w+)[^()]*\)/g, '{$1}').replace(/\$\{(?:[^}]*\.)?(\w+)[^}]*\}/g, '{$1}').replace(/%[sd@]/g, '{param}');
+        if (!raw.startsWith('/') && !raw.startsWith('{') && !raw.includes('://')) raw = '/' + raw;
+        const [p, ok] = normPath(raw);
+        if (ok && /[A-Za-z]/.test(p)) add({ platform: fi.platform, method: httpMethods.has(method) ? method : 'GET', path: p, file, symbol: s.id });
+      };
+      for (const [s, b] of bodies) {
+        const found: [string, string][] = []; // [path, method or '']
+        // (method, "path") tuples
+        for (const m of b.matchAll(/\(\s*\.(GET|POST|PUT|DELETE|PATCH|HEAD)\s*,\s*"((?:[^"\\]|\\.)*)"/g)) found.push([m[2]!, m[1]!]);
+        // appendingPathComponent chains
+        for (const m of b.matchAll(/(?:\.appendingPathComponent\((?:[^()]|\([^()]*\))*\)\s*)+/g)) {
+          const segs: string[] = [];
+          let lit = false;
+          for (const a of m[0].matchAll(/\.appendingPathComponent\(\s*((?:[^()]|\([^()]*\))*?)\s*\)/g)) {
+            const t = a[1]!;
+            if (/^"(?:[^"\\]|\\.)*"$/.test(t)) {
+              segs.push(trimPrefix(t.slice(1, -1), '/'));
+              lit = true;
+            } else segs.push('{' + (/(\w+)\W*$/.exec(t)?.[1] ?? 'param') + '}');
+          }
+          // the chain must extend a URL-ish base (not a file-system directory)
+          const before = b.slice(Math.max(0, (m.index ?? 0) - 80), m.index ?? 0);
+          const baseOK = /url|endpoint|base|api|host|server/i.test(before) && !/director|folder|cache|document|file|container|bundle|temporary/i.test(before.slice(-50));
+          if (lit && baseOK) found.push([segs.join('/'), '']);
+        }
+        // additionalPathComponents: ["a", "b", expr]
+        for (const m of b.matchAll(/(?:additionalPathComponents|pathComponents)\s*:\s*\[([^\]]*)\]/g)) {
+          const segs = splitTop(m[1]!).map((x) => x.trim()).filter(Boolean).map((x) => (/^"[^"]*"$/.test(x) ? x.slice(1, -1) : '{' + (/^(\w+)/.exec(x)?.[1] ?? 'param') + '}'));
+          if (segs.some((x) => !x.startsWith('{'))) found.push([segs.join('/'), '']);
+        }
+        // String.format("%s/api/x/%s.json", ...) building a URL
+        if (/\b(URI|URL|Request|HttpUrl|url)\b/.test(b))
+          for (const m of b.matchAll(/String\.format\(\s*(?:Locale\.\w+\s*,\s*)?"([^"\s]*\/[^"\s]*)"/g)) if (!m[1]!.includes('=')) found.push([m[1]!, '']);
+        // template literal over a base-URL variable: `${EhConstants.baseUrl(isEx)}/uconfig.php`
+        for (const m of b.matchAll(/`\$\{([^}]+)\}(\/[^`\s?#]*)/g)) if (/base|host|url|domain|server|endpoint|api/i.test(m[1]!) && m[2]!.length > 1) found.push([m[2]!, '']);
+        // Ktor: client.get { apiUrl("config") }
+        for (const m of b.matchAll(/\b(get|post|put|delete|patch)\s*\{\s*\w+\(\s*"([^"\s]+)"/g)) found.push([m[2]!, m[1]!.toUpperCase()]);
+        // absolute URL constants referenced where a request is built
+        if (consts && reqContextRe.test(b))
+          for (const [k, v] of consts) if (s.name !== k && new RegExp('\\b' + k + '\\b').test(b)) found.push([v, '']);
+        if (!found.length) continue;
+        let verbs = methodsIn(b);
+        if (!verbs.length && /^\w/.test(s.name)) {
+          // endpoint helper: take the verbs of the functions in this file that call it
+          const callRe = new RegExp('\\b' + s.name + '\\s*\\(');
+          for (const [o, ob] of bodies) if (o !== s && callRe.test(ob)) verbs.push(...methodsIn(ob));
+          verbs = [...new Set(verbs)];
+        }
+        for (const [p, m] of found) {
+          if (m) emit(s, p, m);
+          else if (!verbs.length) emit(s, p, 'GET');
+          else for (const v of verbs) emit(s, p, v);
+        }
+      }
+    }
   }
 
   endpointEnums(add: (a: API) => void): void {
@@ -1696,6 +1810,23 @@ class Ctx {
     this.f.entries?.sort((a: Entry, b: Entry) => cmpStr(a.platform + a.kind + a.name, b.platform + b.kind + b.name));
     for (const k of Object.keys(this.schemes)) this.schemes[k]!.sort(cmpStr);
   }
+}
+
+/** HTTP verbs a function body uses (builder calls, method labels, HTTPMethod enums, post* helpers). */
+// a body that actually issues an HTTP request (not a web view / namespace / file use of a URL)
+const reqContextRe = /\b(?:request|newCall|execute|fetch|createHttp|HttpRequest|dataTask|URLRequest|AF\.request|httpClient|client\.(?:get|post|put|delete|patch)|Request\.Builder|Request\(|getJson|getString|download)\b/;
+// local files / documents / web pages are not API endpoints
+const docAssetRe = /\.(?:db|sqlite3?|plist|html?|md|txt|xml|xhtml)$|\/(?:README|LICENSE)[^/]*$/i;
+
+function methodsIn(b: string): string[] {
+  const out = new Set<string>();
+  for (const m of b.matchAll(/\.(get|post|put|patch|delete|head)\s*\(/gi)) out.add(m[1]!.toUpperCase());
+  for (const m of b.matchAll(/\b(?:method|httpMethod)\s*[:=]\s*(?:[\w.]*\.)?["'.]?(GET|POST|PUT|PATCH|DELETE|HEAD)\b/gi)) out.add(m[1]!.toUpperCase());
+  for (const m of b.matchAll(/\bHTTPMethod\.(get|post|put|patch|delete|head)\b/gi)) out.add(m[1]!.toUpperCase());
+  if (/\bpost[A-Z]\w*\s*\(/.test(b)) out.add('POST');
+  const nonGet = [...out].filter((v) => v !== 'GET');
+  if (nonGet.length) return nonGet;
+  return [...out];
 }
 
 function moduleDir(p: string): string {
