@@ -1,0 +1,24 @@
+# 泛化改进记录（held-out 盲测后的通用规则）
+
+背景：规则在 16 仓训练集（`labels/`，见 `RESULTS.md`）上调到 92–99% 召回，但 10 个新仓的盲测集给出
+routes 85.3%、not_screen FP 12.2%、testids 59.5%、apis 33.3%（deeplinks 100%）。本轮**不看**盲测集标注与克隆，
+只根据漏检原因的**类别**实现通用支持，并用自写的最小合成片段（`test/facts/generalization.test.ts`）验证；
+每项改动后跑训练集基准（`bin/run.sh` 基线 + `bin/facts.mjs` 重新抽取 + `score.mjs` + `bin/compare.mjs`），
+要求任何类别的训练集 micro 召回下降不超过 1 pp。
+
+训练集基线（`bin/run.sh` 全流程，kb 快照 = `339c5ce` + 工作区）：routes 98.6% (281/285)、not_screen FP 7.0% (6/86)、
+deeplinks 92.4% (97/105)、testids 95.8% (69/72)、apis 96.2% (101/105)、API must-not 0。
+
+| # | 类别 | 规则 | 训练集 Δ（routes / FP / deeplinks / testids / apis） | 训练集新增抽取（无标注） | 过拟合风险 |
+|---|---|---|---|---|---|
+| G1 | 1 Decompose 导航（KMP） | 文件中出现 `StackNavigation<C>` / `SlotNavigation<C>` / `ChildStack<C,…>` / `childStack(… serializer = C.serializer())` 时，`C` 若是 `sealed class/interface`，则其每个非 sealed/abstract 子类（`data object X : C` / `class X(...) : C()`，嵌套或顶层）都是一条路由，`route_id = X`；屏幕符号取宿主文件中 `is C.X -> Child.X(DefaultXComponent(…))` 分支里第一个以 Component/Content/Screen/Page/View 结尾的构造调用，找不到则用配置子类本身。已有同名路由时不重复。 | 0 / 0 / 0 / 0 / 0 | 无（训练集无 Decompose 仓） | 低：只依赖 Decompose 公共 API 名称；`when` 分支映射是惯用写法，非惯用写法时退化为配置类本身（route_id 仍正确）。 |
+| G2 | 2 Objective-C（无语法树） | 在 iOS 平台根下扫描 `.h/.m/.mm`（跳过 Pods/Carthage/vendor/Third Party/build）：`@interface X : Super` 链到 `UIViewController/UITableViewController/UICollectionViewController/UIPageViewController/NSViewController` 即屏幕（`route_id` 同 Swift 的 `screenID`，去 ViewController 后 snake）；沿用 UIKit 排除：容器类、`Base*/Abstract*`、被 ≥2 个类继承的基类、`…Cell/Accessory/Preview/Child/Embedded/ContainerViewController`、只被 `addChildViewController:` 嵌入且全仓无 present/push 的类、测试路径。`x.accessibilityIdentifier = @"id"` / `setAccessibilityIdentifier:@"id"` → testID；方法体内有 NSURLSession/NSURLRequest/AFNetworking 调用时，其中 `@"https://host/…%@"` 字面量 → API（`%@/%d` → `{param}`，方法取 `HTTPMethod = @"POST"` / `setHTTPMethod:` / AF `POST:`，否则 GET）。平台 ios，不推导 `<scheme>://` 深链。 | 0 / 0 / 0 / 0 / 0 | wikipedia-ios routes +5（About、两个 Popover 消息页、两个语言列表子类；`WMFLanguagesViewController` 作为被 2 个子类继承的基类被排除；`Third Party Code/NYTPhotoViewer` 被跳过） | 中：类名后缀排除与 Swift 规则一致；`@"https://…"` 只在发请求的方法体里取，帮助页链接不会进入。 |
+| G3 | 3 Swift 枚举 raw value testID | `.accessibilityIdentifier(X.foo.rawValue)`、`x.accessibilityIdentifier = X.foo.rawValue` 以及接收枚举的自定义修饰符（`accessibilityID/testID/testTag/a11yID/identifier(...)`，参数 `X.foo` / `.foo`）解析到 `enum X: String` 的 case 原始值；无显式值时原始值 = case 名。隐式成员 `.foo` 只有在唯一（或取值一致）的 String 枚举声明该 case 时才解析，否则取离调用处最近的声明，仍有歧义则跳过。 | 0 / 0 / 0 / 0 / 0 | 无 | 低：只认 String 原始值枚举与明确的 id 修饰符名。 |
+| G4 | 4 ArkTS HTTP 封装 | 找发请求的函数/方法（体内有 `http.createHttp()` / `.request(` / `axios` / `rcp.` / `instance.get…` / `fetch(`）且有名为 `url/path/api/endpoint/uri/…` 的参数并流入请求；再做两层"把 url 参数转交给已知封装"的传播（`get(url) → request(url, GET)`）。方法：封装名前缀（get/post/put/delete/patch）> 内层调用传入的 `RequestMethod.X` > 体内 `method: …`；调用点传入 `method` 实参时以实参为准。调用点（接收者为空 / `this` / 封装所属类名 / 名字含 http/request/api/net/service/client/util/manager/repo 的变量）实参按字面量、静态字段/常量（`c.lookup`）、`const API = { LOGIN: '/user/login' }` 对象表、`A + '/x'` 拼接解析；**解析不出就跳过**（不输出 `/{url}`），解析值既不是 URL 也不含 `/` 时（`AppStorage.get('token')`）也跳过。封装体里 `BASE_URL + url` 的 base 常量若可解析，其路径部分作前缀。 | 0 / 0 / 0 / 0 / 0 | fishpi +1（`GET /upload`）；NextE +2（`POST /index.php`、`GET /translator`），抽查为真实端点 | 中：参数名列表与接收者名关键词是通用约定；精确度靠"不可解析即跳过"与"必须像路径"两道闸。 |
+| G5 | 5 字符串拼接 URL | 在发请求的函数体（`reqContextRe`/`netCallRe`）内：`baseUrl + "api/v1/x"` / `BASE + "/x"`（左侧标识符末段匹配 base/host/server/domain/endpoint/api/url/root）、Kotlin `"$BASE/x"` / `"${BASE}/x"`（`$id` → `{id}`）、Swift `"\(base)/x"` → 路径；HTTP 方法沿用同一函数体的 `methodsIn`（`.post(`、`httpMethod = "POST"`、`request.method = .post`、`HTTPMethod.x`），无信息才 GET。 | 0 / 0 / 0 / 0 / 0 | element-x +1（`GET /.well-known/element/element.json`，真实请求） | 低–中：base 变量名关键词表是唯一启发式。 |
+| G6a | 6 精确度：深链 scheme 作用域 | 资源扫描时记录"应用容器"（含 LAUNCHER 的 AndroidManifest 所在模块、含 `UILaunchStoryboardName/UIApplicationSceneManifest/CFBundleURLSchemes/…` 且非扩展的 Info.plist 所在目录、`type: entry` 的 module.json5 所在模块）及每个 scheme 的声明目录。同一平台有 ≥2 个应用容器时，`<scheme>://<pattern>` 只推导给声明该 scheme 的应用目录内的路由；不在任何应用容器内的共享代码保持原行为。 | 0 / 0 / 0 / 0 / 0 | 无变化 | 低：单应用仓不受影响。 |
+| G6b | 6 精确度：占位导航目的地 | nav-graph 目的地的 id/name 含 `placeholder/empty/stub/dummy`、没有 `tools:layout` 且 `android:name` 解析不到类时不作为路由。 | 0 / 0 / 0 / 0 / 0 | 无变化 | 低。 |
+| G6c | 6 精确度：ArkTS `…NavDestination` 封装组件 | 自身名为 `*NavDestination` 的 `@Component`（框架/应用壳封装，内部调用 `NavDestination()`）不再被当作页面；调用该封装的组件仍是页面。 | 0 / 0 / 0 / 0 / 0 | 无变化 | 低。 |
+| G7 | 7 ViewBinding id（仅测试源） | 测试源中 `xxxBinding.fooBar` / `binding.fooBar` 的属性名与 `res/layout*` 的 `@+id/foo_bar`（snake → camel）匹配时，记录为 testID（与既有 `R.id.x` 规则同一出口，只取测试引用到的 id）。 | 0 / 0 / 0 / 0 / 0 | 无变化 | 低：限定测试源，应用代码里的 binding 访问不计。 |
+
+未做 / 已知局限：G2 不解析 Objective-C 的 `pushViewController:`/`presentViewController:` 边，也不处理 storyboard 中 ObjC 类的 embed 关系以外的情况；"仅内部实例化、不呈现的辅助 VC"只按 `addChildViewController:` 近似。G4 不跟踪跨文件的实例变量类型（`private http = new HttpClient()` 的接收者名若不含关键词则漏）。

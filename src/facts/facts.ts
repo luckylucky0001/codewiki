@@ -12,6 +12,7 @@ import type { ScanResult } from '../scan/scan.js';
 import { walkDir } from '../scan/scan.js';
 import { cmpStr, cut, trimChars, trimPrefix, trimSuffix, trimSpace } from '../util/go.js';
 import { xmlTokens } from './xml.js';
+import { decomposeRoutes, objc, swiftEnumTestIDs, bindingIDsUsedByTests, bindingName, concatPaths, arktsWrapperAPIs } from './general.js';
 
 /** A deep link declared by the app (manifest intent-filter, plist URL scheme, applinks entitlement,
  * module.json5 skills.uris, nav-graph deepLink or an in-code URL route table). */
@@ -301,7 +302,7 @@ function soleScreen(platform: string, expr: string, screens: Map<string, Symbol>
 
 const skipResDir = (n: string) => n === 'build' || n === 'node_modules' || n === 'oh_modules' || n === 'Pods';
 
-class Ctx {
+export class Ctx {
   consts = new Map<string, Map<string, string>>();
   byName = new Map<string, Symbol[]>();
   f: Facts;
@@ -309,6 +310,9 @@ class Ctx {
   declared = new Set<string>();
   lineCache = new Map<string, string[]>();
   noDerive = new WeakSet<Route>();
+  curRel = '';
+  appDirs = new Map<string, Set<string>>();
+  schemeDirs = new Map<string, Set<string>>();
   classes: Map<string, Symbol> | null = null;
   subs: Map<string, number> | null = null;
   activities: { platform: string; name: string; file: string; links: DeepLink[] }[] = [];
@@ -643,12 +647,17 @@ class Ctx {
         if (!call.callee.endsWith('NavDestination')) continue;
         let top = getSym(this.g, call.enclosing);
         while (top && top.parent) top = getSym(this.g, top.parent);
-        if (!top || top.kind !== 'component' || isTestPath(file)) continue;
+        // a component that is itself a `…NavDestination` wrapper (framework / app shell) is not a page
+        if (!top || top.kind !== 'component' || isTestPath(file) || top.name.endsWith('NavDestination')) continue;
         covered.add(file);
         add(R(fi.platform, top.name, top.name, file, top.id));
         break;
       }
     }
+    // Decompose: sealed Config subclasses of a childStack / childSlot navigation
+    const knownIDs = new Set<string>();
+    for (const r of routes) knownIDs.add(r.platform + '|' + r.route_id);
+    decomposeRoutes(this, add, knownIDs);
   }
 
   // ---------- class-based screens (activities, fragments, Circuit, Appyx, SwiftUI, AppKit, ArkTS decorators) ----------
@@ -1008,6 +1017,7 @@ class Ctx {
       }
     }
     this.assignedTestIDs(push);
+    swiftEnumTestIDs(this, push);
     this.resourceIDsUsedByTests(push);
   }
 
@@ -1060,9 +1070,13 @@ class Ctx {
           }
       }
     }
-    if (!used.size) return;
+    const bound = bindingIDsUsedByTests(this);
+    if (!used.size && !bound.size) return;
     for (const p of this.cfg.platforms) {
-      const u = used.get(p.name);
+      const u = used.get(p.name) ?? new Set<string>();
+      const bu = bound.get(p.name);
+      if (bu) for (const x of bu) u.add('\0' + x);
+      if (!u.size) continue;
       if (!u) continue;
       const root = path.join(this.res.dir, p.root);
       walkDir(root, (fp, name, isDir) => {
@@ -1077,7 +1091,7 @@ class Ctx {
           return;
         }
         b.split('\n').forEach((l, i) => {
-          for (const m of l.matchAll(/android:id="@\+id\/(\w+)"/g)) if (u.has(m[1]!)) push(p.name, m[1]!, rel, i + 1);
+          for (const m of l.matchAll(/android:id="@\+id\/(\w+)"/g)) if (u.has(m[1]!) || u.has('\0' + bindingName(m[1]!))) push(p.name, m[1]!, rel, i + 1);
         });
       });
     }
@@ -1202,6 +1216,7 @@ class Ctx {
     }
     this.endpointEnums(add);
     this.composedAPIs(add);
+    arktsWrapperAPIs(this, add);
     for (const file of this.sortedFiles()) {
       const fi = this.g.files[file]!;
       if (fi.lang !== 'swift' || isTestPath(file) || !this.fileLines(file).some((l) => /^import\s+URLRouting\b/.test(l))) continue;
@@ -1234,7 +1249,7 @@ class Ctx {
    * absolute-URL constants used where a request is built. Method from the same function (or, for an
    * endpoint helper, from the functions in the file that call it); GET when nothing says otherwise. */
   composedAPIs(add: (a: API) => void): void {
-    const pre = /appendingPathComponent|additionalPathComponents|String\.format|\(\s*\.(?:GET|POST|PUT|DELETE|PATCH|HEAD)\s*,|`\$\{[^}]*\}\/|\b(?:get|post|put|delete|patch)\s*\{\s*\w+\(\s*"|https?:\/\/[^"'`\s]+\/|URLComponents/;
+    const pre = /appendingPathComponent|additionalPathComponents|String\.format|\(\s*\.(?:GET|POST|PUT|DELETE|PATCH|HEAD)\s*,|`\$\{[^}]*\}\/|\b(?:get|post|put|delete|patch)\s*\{\s*\w+\(\s*"|https?:\/\/[^"'`\s]+\/|URLComponents|(?:base|host|server|domain|endpoint|api|url|root)\w*(?:\(\))?\s*\+\s*"|"(?:\$\{?|\\\()\w*(?:base|host|server|domain|endpoint|api|url|root)/i;
     const callables = new Set(['function', 'method', 'property', 'constructor', 'composable', 'const', 'variable']);
     // absolute URL constants (value with a path) by platform
     const urlConsts = new Map<string, Map<string, string>>();
@@ -1313,6 +1328,8 @@ class Ctx {
         // absolute URL constants referenced where a request is built
         if (consts && reqContextRe.test(b))
           for (const [k, v] of consts) if (s.name !== k && new RegExp('\\b' + k + '\\b').test(b)) found.push([v, '']);
+        // string concatenation over a base-URL variable (`baseUrl + "api/v1/x"`, `"$BASE/x"`, `"\(base)/x"`)
+        if (reqContextRe.test(b) || netCallRe.test(b)) for (const p of concatPaths(b)) found.push([p, '']);
         if (!found.length) continue;
         let verbs = methodsIn(b);
         if (!verbs.length && /^\w/.test(s.name)) {
@@ -1619,6 +1636,8 @@ class Ctx {
       if (isDir) return !(skipResDir(name) || (name.startsWith('.') && fp !== root));
       const rel = path.relative(this.res.dir, fp).split(path.sep).join('/');
       if (shadowed(this.cfg, p, rel)) return;
+      this.curRel = rel;
+      if (!isTestPath(rel) && (name === 'AndroidManifest.xml' || name === 'module.json5' || name.endsWith('.plist'))) this.noteAppContainer(p.name, fp, rel, name);
       switch (name) {
         case 'AndroidManifest.xml':
           this.manifest(p.name, fp, rel);
@@ -1644,8 +1663,33 @@ class Ctx {
     });
   }
 
+  /** App containers (launchable Android module, iOS app Info.plist, HarmonyOS entry module): used to keep a
+   * scheme declared by one app off the screens of another app in the same repo. */
+  noteAppContainer(platform: string, fp: string, rel: string, name: string): void {
+    let b: string;
+    try {
+      b = fs.readFileSync(fp, 'utf8');
+    } catch {
+      return;
+    }
+    let app = false;
+    if (name === 'AndroidManifest.xml') app = b.includes('android.intent.category.LAUNCHER');
+    else if (name === 'module.json5') app = /["']?type["']?\s*:\s*["']entry["']/.test(b);
+    else app = !b.includes('NSExtension') && /CFBundleURLSchemes|UIApplicationSceneManifest|UILaunchStoryboardName|UILaunchScreen|LSRequiresIPhoneOS|UIMainStoryboardFile|NSMainStoryboardFile|LSApplicationCategoryType/.test(b);
+    if (!app) return;
+    let s = this.appDirs.get(platform);
+    if (!s) this.appDirs.set(platform, (s = new Set()));
+    s.add(appDirOf(rel));
+  }
+
   addScheme(platform: string, s: string): void {
     if (nonAppSchemes.has(s.toLowerCase())) return;
+    if (this.curRel) {
+      const k = platform + '|' + s;
+      let d = this.schemeDirs.get(k);
+      if (!d) this.schemeDirs.set(k, (d = new Set()));
+      d.add(appDirOf(this.curRel));
+    }
     const list = (this.schemes[platform] ??= []);
     if (!list.includes(s)) list.push(s);
   }
@@ -1955,7 +1999,7 @@ class Ctx {
     } catch {
       return;
     }
-    const stack: ({ r: Route; args: string[] } | null)[] = [];
+    const stack: ({ r: Route; args: string[]; stub: boolean } | null)[] = [];
     const destTags = new Set(['fragment', 'dialog', 'activity', 'composable']);
     for (const t of xmlTokens(b)) {
       if (t.type === 'start') {
@@ -1967,8 +2011,10 @@ class Ctx {
             stack.push(null);
             continue;
           }
-          const d = { r: { platform, route_id: snake(id), pattern: '', deeplink: '', file: rel, symbol: '' } as Route, args: [] as string[] };
+          const d = { r: { platform, route_id: snake(id), pattern: '', deeplink: '', file: rel, symbol: '' } as Route, args: [] as string[], stub: false };
           const cls = at('name');
+          // placeholder / empty / stub destinations with neither a class nor a layout are not screens
+          d.stub = /placeholder|empty|stub|dummy/i.test(id + ' ' + cls) && !at('tools:layout');
           if (cls) {
             const s = this.findSym(platform, lastSeg(cls), 'class', 'object', 'function', 'composable');
             if (s) {
@@ -1994,11 +2040,25 @@ class Ctx {
       } else if (t.type === 'end' && destTags.has(t.name)) {
         if (stack.length === 0) continue;
         const d = stack.pop();
-        if (!d) continue;
+        if (!d || (d.stub && !d.r.symbol)) continue;
         d.r.pattern = d.r.route_id + d.args.map((a) => '/{' + a + '}').join('');
         this.f.routes!.push(d.r);
       }
     }
+  }
+
+  /** With several apps on a platform, a scheme applies only to screens of the app that declares it
+   * (screens outside every app container, e.g. shared modules, keep the platform scheme). */
+  schemeInScope(r: Route): boolean {
+    const apps = this.appDirs.get(r.platform);
+    if (!apps || apps.size < 2) return true;
+    let best = '';
+    for (const d of apps) if ((d === '' || r.file.startsWith(d + '/')) && d.length >= best.length) best = d;
+    if (best === '' && !apps.has('')) return true;
+    const decl = this.schemeDirs.get(r.platform + '|' + this.schemes[r.platform]![0]!);
+    if (!decl) return true;
+    for (const d of decl) if (d === best || d.startsWith(best + '/') || best.startsWith(d + '/')) return true;
+    return false;
   }
 
   sortAll(): void {
@@ -2006,7 +2066,7 @@ class Ctx {
       // prefer a declared link; derive `<scheme>://<pattern>` only when the platform declares exactly
       // one app scheme (with several, e.g. an app scheme plus an OAuth callback, the guess is unreliable)
       if (!r.deeplink && r.deeplinks?.length && r.deeplinks[0]!.includes('://')) r.deeplink = r.deeplinks[0]!;
-      if (!r.deeplink && !this.noDerive.has(r) && (this.schemes[r.platform]?.length ?? 0) === 1) r.deeplink = this.deeplink(r.platform, r.pattern);
+      if (!r.deeplink && !this.noDerive.has(r) && (this.schemes[r.platform]?.length ?? 0) === 1 && this.schemeInScope(r)) r.deeplink = this.deeplink(r.platform, r.pattern);
       const i = r.symbol.lastIndexOf('#');
       r.name = i >= 0 ? lastSeg(r.symbol.slice(i + 1)) || r.route_id : r.route_id;
       if (r.deeplinks) {
@@ -2152,6 +2212,17 @@ function methodsIn(b: string): string[] {
   return [...out];
 }
 
+/** Directory of the app / module a resource file belongs to (`app/src/main/AndroidManifest.xml` → `app`,
+ * `App/Supporting Files/Info.plist` → `App`). */
+function appDirOf(rel: string): string {
+  const i = rel.indexOf('/src/main/');
+  if (i >= 0) return rel.slice(0, i);
+  if (rel.startsWith('src/main/')) return '';
+  let d = path.posix.dirname(rel);
+  while (/(?:^|\/)(?:Resources|Supporting ?Files|Config|Configs|Configuration|Info|res|navigation|Plists?)$/i.test(d)) d = path.posix.dirname(d);
+  return d === '.' ? '' : d;
+}
+
 function moduleDir(p: string): string {
   const s = p.split(path.sep).join('/');
   const i = s.indexOf('/src/main/');
@@ -2189,6 +2260,7 @@ export function extractFacts(cfg: Config, res: ScanResult): Facts {
   c.routes();
   c.screenRoutes();
   c.uikit();
+  if (uikitEnabled(cfg)) objc(c);
   c.testIDs();
   c.apis();
   c.sortAll();
