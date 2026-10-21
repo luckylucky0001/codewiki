@@ -718,6 +718,18 @@ class Ctx {
       const s = cls.get(a.platform + '|' + a.name);
       if (!s || (s.lang !== 'kotlin' && s.lang !== 'java') || isTestPath(s.file)) continue;
       add(s, s.name, s.name, a.links);
+      // the screen composable an activity sets as its content
+      for (const call of this.calls(s.file)) {
+        if (call.callee !== 'setContent') continue;
+        for (const inn of call.inner ?? []) {
+          if (!inn.endsWith('Screen')) continue;
+          const c = this.findSymNear(s.platform, inn, s.file, 'composable', 'function');
+          if (c && !isTestPath(c.file)) {
+            add(c);
+            break;
+          }
+        }
+      }
     }
 
     // Kotlin/Java class screens
@@ -820,13 +832,13 @@ class Ctx {
     const views = new Map<string, Symbol>();
     for (const s of this.g.symbols) {
       if (s.lang !== 'swift' || (s.kind !== 'struct' && s.kind !== 'class') || isTestPath(s.file)) continue;
-      if (/Previews?$/.test(s.name) || s.file.includes('Preview')) continue;
+      if (/Previews?$/.test(s.name) || /Preview Content\/|(^|\/)Previews?\//.test(s.file)) continue;
       if (!supertypes(s).includes('View')) continue;
       const k = s.platform + '|' + s.name;
       if (!views.has(k)) views.set(k, s);
     }
     if (!views.size) return;
-    const presenters = new Set(['sheet', 'fullScreenCover', 'popover', 'navigationDestination']);
+    const presenters = new Set(['sheet', 'fullScreenCover', 'popover', 'navigationDestination', 'NavigationStack', 'NavigationView', 'Tab']);
     const found: Symbol[] = [];
     for (const file of this.sortedFiles()) {
       const fi = this.g.files[file]!;
@@ -835,10 +847,23 @@ class Ctx {
         const v = (n: string) => views.get(fi.platform + '|' + n);
         for (const a of call.args ?? []) {
           if (a.label === 'destination' || a.label === 'rootView') {
-            const m = /^([A-Z]\w*)\s*[({]/.exec(a.text.trim());
+            let t = a.text.trim();
+            // a local: `let addAccountView = AddAccountView(...)`; pushed as rootView: addAccountView
+            if (/^[a-z_]\w*$/.test(t)) {
+              const fn = getSym(this.g, call.enclosing);
+              const lm = fn ? new RegExp('\\b(?:let|var)\\s+' + t + '\\s*(?::[^=]+)?=\\s*([A-Z]\\w*)\\s*[({]').exec(this.symbolSource(fn)) : null;
+              if (lm) t = lm[1]! + '(';
+            }
+            const m = /^([A-Z]\w*)\s*[({]/.exec(t);
             const s = m ? v(m[1]!) : undefined;
             if (s) found.push(s);
           }
+        }
+        // tab roots: `X().tabItem { … }`
+        if (call.callee === 'tabItem' && call.receiver) {
+          const m = /^([A-Z]\w*)\s*\(/.exec(call.receiver.trim());
+          const s = m ? v(m[1]!) : undefined;
+          if (s) found.push(s);
         }
         if (presenters.has(call.callee) || call.callee === 'WindowGroup') {
           const all = call.callee === 'navigationDestination' && (call.args ?? []).some((a) => a.label === 'for');
@@ -850,6 +875,28 @@ class Ctx {
           }
         }
       }
+    }
+    // destination builders: `-> some View` functions switching over a destination enum
+    // (`case .settings: SettingsNavigationView(…)`), at least two cases mapped to app views
+    for (const fn of this.g.symbols) {
+      if (fn.lang !== 'swift' || (fn.kind !== 'function' && fn.kind !== 'property') || !/some View/.test(fn.signature) || isTestPath(fn.file)) continue;
+      const body = this.symbolSource(fn);
+      if (!/\bswitch\b/.test(body)) continue;
+      const lines = body.split('\n');
+      const hits: Symbol[] = [];
+      for (let i = 0; i < lines.length; i++) {
+        if (!/^\s*case\s+(let\s+)?\./.test(lines[i]!)) continue;
+        for (let j = i + 1; j < Math.min(lines.length, i + 4); j++) {
+          if (/^\s*(case|default)\b/.test(lines[j]!)) break;
+          const m = /^\s*([A-Z]\w*)\s*\(/.exec(lines[j]!);
+          const s = m ? views.get(fn.platform + '|' + m[1]) : undefined;
+          if (s) {
+            hits.push(s);
+            break;
+          }
+        }
+      }
+      if (new Set(hits.map((h) => h.id)).size >= 2) found.push(...hits);
     }
     // TCA: enum Destination / Path cases with a reducer payload -> <Feature>View
     for (const s of this.g.symbols) {
