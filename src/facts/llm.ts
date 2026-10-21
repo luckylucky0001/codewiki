@@ -1,7 +1,8 @@
 // LLM-assisted fallback extraction of routes / APIs (`kb facts suggest`, `kb compound --llm-facts`).
 //
 // Rules stay the source of truth: the agent only sees navigation / networking-looking files where the
-// rules found little, its file contents are wrapped as untrusted data, and EVERY suggestion is verified
+// rules found little (or, for networking files, fewer APIs than HTTP call sites: "partial coverage", the
+// known endpoints are listed in the prompt so only missing ones come back; KMP source sets included), its file contents are wrapped as untrusted data, and EVERY suggestion is verified
 // deterministically against the scanned source before it is accepted:
 //   - the file is part of the scan, `line` is inside the file;
 //   - `evidence` is a verbatim substring of the source within ±5 lines of `line`;
@@ -34,7 +35,7 @@ import { type Usage, shellQuote, usageAdd, usageParsers } from '../agents/agents
 import { cmpStr } from '../util/go.js';
 import { isTestPath } from './facts.js';
 
-export const PromptVersion = 'llm-facts-v1';
+export const PromptVersion = 'llm-facts-v2';
 export const OverlayFile = '.kb/llm-facts.json';
 export const CacheDir = '.kb/cache/llm-facts';
 const Window = 5;
@@ -66,6 +67,8 @@ export interface Rejected {
 
 export interface SuggestResult {
   candidates: string[];
+  /** partial-coverage candidates: networking files where the rules found some APIs but fewer than the HTTP call sites */
+  partial: { file: string; call_sites: number; extracted: number }[];
   batches: number;
   cached_files: number;
   agent_calls: number;
@@ -77,8 +80,44 @@ export interface SuggestResult {
 }
 
 const NavRe = /\b(NavHost|NavKey|NavDisplay|NavDestination|NavController|NavigationStack|NavigationLink|NavigationPath|navigation\s*\(|composable\s*[<(]|entry\s*<|router|Router|main_pages|pushUrl|pushPath|NavPathStack|Navigation\b|@Entry|Destination|Screen\b|sealed\s+(class|interface)\s+\w*(Route|Screen|Destination|Key))/;
-const NetRe = /\b(Ktor|HttpClient|OkHttp|okhttp3|Retrofit|@GET|@POST|URLSession|URLRequest|Alamofire|Moya|axios|createHttp|http\.request|fetch\s*\(|Endpoint|baseUrl|BASE_URL|baseURL|apiPath|\.get\s*\(\s*["'`/]|\.post\s*\(\s*["'`/]|HttpMethod|httpMethod|Request\.Builder)/;
+const NetRe = /\b(Ktor|io\.ktor|HttpClient|OkHttp|okhttp3|Retrofit|@GET|@POST|URLSession|URLRequest|Alamofire|Moya|axios|createHttp|http\.request|fetch\s*\(|Endpoint|baseUrl|BASE_URL|baseURL|apiPath|\.get\s*\(\s*["'`/]|\.post\s*\(\s*["'`/]|HttpMethod|httpMethod|Request\.Builder)/;
 const SrcExt = /\.(kt|kts|java|swift|ets|ts|m|mm)$/;
+/** KMP shared source sets: shared networking lives here, rank it like platform code. */
+const KmpMainRe = /(^|\/)(commonMain|androidMain|iosMain|jvmMain|appleMain|nativeMain|mobileMain|nonWebMain|shared)(\/|$)/;
+/** KMP test source sets (commonTest, androidUnitTest, iosTest, ...): not covered by isTestPath. */
+const KmpTestRe = /(^|\/)(\w*Test|androidUnitTest|androidInstrumentedTest)(\/|$)/;
+/** One HTTP call site per matching line: client/http receivers (OkHttp, Ktor client.get|post|put|delete|request,
+ * httpClient.*, HarmonyOS httpRequest.request), fetch / axios / http.request, URLSession, Alamofire, Retrofit annotations. */
+const CallSiteRe = new RegExp(
+  [
+    String.raw`\b\w*(?:[cC]lient|[hH]ttp|HTTP|[sS]ession|[aA]xios|[rR]equest)\w*(?:\(\))?\s*\.\s*(?:get|post|put|patch|delete|head|options|request|submitForm|fetch|newCall|dataTask|data|upload|download)\s*(?:<[^>\n]*>)?\s*[({]`,
+    String.raw`\bfetch\s*\(`,
+    String.raw`\baxios(?:\.\w+)?\s*\(`,
+    String.raw`\bAF\.request\s*\(`,
+    String.raw`\bURLSession\.\w+\.\w+\s*\(`,
+    String.raw`@(?:GET|POST|PUT|DELETE|PATCH|HEAD|HTTP)\s*\(`,
+  ].join('|'),
+);
+
+/** Number of lines holding an HTTP call site (comments skipped). */
+export function httpCallSites(text: string): number {
+  let n = 0;
+  for (const l of text.split('\n')) {
+    const t = l.trim();
+    if (t.startsWith('//') || t.startsWith('*') || t.startsWith('/*')) continue;
+    if (CallSiteRe.test(l)) n++;
+  }
+  return n;
+}
+
+/** Candidate file; `known` lists rule-extracted APIs of a partial-coverage file (the LLM returns only missing ones). */
+export interface Candidate {
+  file: string;
+  text: string;
+  hash: string;
+  known?: string[];
+  callSites?: number;
+}
 
 function sha(s: string): string {
   return createHash('sha256').update(s).digest('hex');
@@ -92,33 +131,55 @@ function readSrc(cfg: Config, rel: string): string | null {
   }
 }
 
-/** Candidate files: navigation / networking looking, not tests, where the rules found ≤1 item of that kind. */
-export function candidates(cfg: Config, res: ScanResult, facts: Facts, o: SuggestOptions): { file: string; text: string; hash: string }[] {
+/** Candidate files: navigation / networking looking, not tests, where the rules found ≤1 item of that kind, plus
+ * partial-coverage networking files (HTTP call sites > rule-extracted APIs + 1). KMP source sets are scanned. */
+export function candidates(cfg: Config, res: ScanResult, facts: Facts, o: SuggestOptions): Candidate[] {
   const kinds = new Set(o.kinds?.length ? o.kinds : ['routes', 'apis']);
   const rCount = new Map<string, number>();
   const aCount = new Map<string, number>();
   for (const r of facts.routes ?? []) rCount.set(r.file, (rCount.get(r.file) ?? 0) + 1);
-  for (const a of facts.apis ?? []) aCount.set(a.file, (aCount.get(a.file) ?? 0) + 1);
-  const scored: { file: string; text: string; hash: string; score: number }[] = [];
+  const aKnown = new Map<string, string[]>();
+  for (const a of facts.apis ?? []) {
+    aCount.set(a.file, (aCount.get(a.file) ?? 0) + 1);
+    const l = aKnown.get(a.file) ?? [];
+    l.push(`${a.method} ${a.path}`);
+    aKnown.set(a.file, l);
+  }
+  const scored: (Candidate & { score: number })[] = [];
   for (const rel of Object.keys(res.graph.files).sort(cmpStr)) {
-    if (!SrcExt.test(rel) || isTestPath(rel)) continue;
+    if (!SrcExt.test(rel) || isTestPath(rel) || KmpTestRe.test(rel)) continue;
     const text = readSrc(cfg, rel);
     if (text === null || text.length > 60000 || text.length < 40) continue;
     let score = 0;
+    let known: string[] | undefined;
+    let callSites: number | undefined;
     if (kinds.has('routes') && NavRe.test(text) && (rCount.get(rel) ?? 0) <= 1) score += countMatches(text, NavRe);
-    if (kinds.has('apis') && NetRe.test(text) && (aCount.get(rel) ?? 0) <= 1) score += countMatches(text, NetRe);
-    if (score > 0) scored.push({ file: rel, text, hash: sha(text), score });
+    if (kinds.has('apis') && NetRe.test(text)) {
+      const extracted = aCount.get(rel) ?? 0;
+      if (extracted <= 1) score += countMatches(text, NetRe);
+      else {
+        const calls = httpCallSites(text);
+        if (calls > extracted + 1) {
+          // partial coverage: rank by the number of call sites the rules missed
+          score += Math.min(20, calls - extracted);
+          known = [...new Set(aKnown.get(rel) ?? [])].sort(cmpStr);
+          callSites = calls;
+        }
+      }
+    }
+    if (score > 0 && KmpMainRe.test(rel)) score += 2;
+    if (score > 0) scored.push({ file: rel, text, hash: sha(text), score, ...(known ? { known, callSites } : {}) });
   }
   scored.sort((a, b) => b.score - a.score || cmpStr(a.file, b.file));
   const maxFiles = o.maxFiles ?? 40;
   const maxBytes = o.maxBytes ?? 400000;
-  const out: { file: string; text: string; hash: string }[] = [];
+  const out: Candidate[] = [];
   let bytes = 0;
-  for (const s of scored) {
+  for (const { score: _s, ...s } of scored) {
     if (out.length >= maxFiles) break;
     if (bytes + s.text.length > maxBytes) continue;
     bytes += s.text.length;
-    out.push({ file: s.file, text: s.text, hash: s.hash });
+    out.push(s);
   }
   return out.sort((a, b) => cmpStr(a.file, b.file));
 }
@@ -134,7 +195,10 @@ const numbered = (text: string) =>
     .map((l, i) => `${String(i + 1).padStart(4)}| ${l}`)
     .join('\n');
 
-export function buildPrompt(files: { file: string; text: string }[], kinds: string[]): string {
+/** Known endpoint as shown to the agent: path-ish characters only (rule paths come from source text). */
+const knownLabel = (k: string) => k.replace(/[^\w/{}:.\-?=&$ ]/g, '').slice(0, 120);
+
+export function buildPrompt(files: { file: string; text: string; known?: string[] }[], kinds: string[]): string {
   let p = SafetyPreamble;
   p += `## Task: extract navigation routes and HTTP API calls
 
@@ -150,6 +214,16 @@ Answer with ONLY one JSON object, no prose, no markdown fence:
 {"routes":[{"route_id":"...","screen":"...","file":"...","line":0,"evidence":"..."}],"apis":[{"method":"GET","path":"/...","file":"...","line":0,"evidence":"..."}]}
 
 `;
+  const partial = kinds.includes('apis') ? files.filter((f) => f.known?.length) : [];
+  if (partial.length) {
+    p += `## Already known endpoints (do NOT report these again)
+
+For the files below the HTTP APIs listed are already extracted. Report ONLY the endpoints of that file that are
+missing from its list (calls with computed / constant / helper-built URLs are the usual gaps):
+`;
+    for (const f of partial) p += `- ${f.file}: ${f.known!.map(knownLabel).join('; ')}\n`;
+    p += '\n';
+  }
   for (const f of files) p += dataBlock('source', f.file, numbered(f.text)) + '\n';
   return p;
 }
@@ -489,13 +563,13 @@ export function suggest(cfg: Config, res: ScanResult, facts: Facts, o: SuggestOp
   const wiki = wikiPath(cfg);
   const cdir = path.join(wiki, CacheDir);
   const model = o.model || '';
-  const keyOf = (h: string) => sha(`${h}\n${model}\n${o.llmCmd ?? o.agent ?? 'claude'}\n${PromptVersion}\n${[...kinds].sort().join(',')}`);
-  const r: SuggestResult = { candidates: cands.map((c) => c.file), batches: 0, cached_files: 0, agent_calls: 0, accepted: { routes: [], apis: [] }, rejected: [], skipped_conflict: 0, usage: {}, errors: [] };
+  const keyOf = (c: Candidate) => sha(`${c.hash}\n${(c.known ?? []).join('\n')}\n${model}\n${o.llmCmd ?? o.agent ?? 'claude'}\n${PromptVersion}\n${[...kinds].sort().join(',')}`);
+  const r: SuggestResult = { candidates: cands.map((c) => c.file), partial: cands.filter((c) => c.known).map((c) => ({ file: c.file, call_sites: c.callSites ?? 0, extracted: c.known!.length })), batches: 0, cached_files: 0, agent_calls: 0, accepted: { routes: [], apis: [] }, rejected: [], skipped_conflict: 0, usage: {}, errors: [] };
   const raw = new Map<string, RawAnswer>();
   const todo: typeof cands = [];
   for (const c of cands) {
     try {
-      raw.set(c.file, JSON.parse(fs.readFileSync(path.join(cdir, keyOf(c.hash) + '.json'), 'utf8')) as RawAnswer);
+      raw.set(c.file, JSON.parse(fs.readFileSync(path.join(cdir, keyOf(c) + '.json'), 'utf8')) as RawAnswer);
       r.cached_files++;
     } catch {
       todo.push(c);
@@ -533,7 +607,7 @@ export function suggest(cfg: Config, res: ScanResult, facts: Facts, o: SuggestOp
       raw.set(c.file, mine);
       try {
         fs.mkdirSync(cdir, { recursive: true });
-        fs.writeFileSync(path.join(cdir, keyOf(c.hash) + '.json'), JSON.stringify(mine));
+        fs.writeFileSync(path.join(cdir, keyOf(c) + '.json'), JSON.stringify(mine));
       } catch {
         /* no wiki: not cached */
       }

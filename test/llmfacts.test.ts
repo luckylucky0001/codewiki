@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { type VerifyCtx, literalSegments, mergeInto, normalizeRouteId, parseAnswer, verifyAPI, verifyRoute } from '../src/facts/llm.js';
+import { type VerifyCtx, httpCallSites, literalSegments, mergeInto, normalizeRouteId, parseAnswer, verifyAPI, verifyRoute } from '../src/facts/llm.js';
 import type { Symbol } from '../src/model.js';
 
 const repo = path.resolve(__dirname, '..');
@@ -241,5 +241,95 @@ describe('verification rules', () => {
     expect(reason(verifyRoute(vc, { route_id: 'video', screen: 'AVPlayerViewController', file: 'a/Links.swift', line: 7, evidence: 'case .video:' }))).toBe('system framework screen');
     expect(reason(verifyRoute(vc, { route_id: 'Route.Wifi', screen: 'Settings.ACTION_WIFI_SETTINGS', file: 'a/Sys.kt', line: 2, evidence: 'Route.Wifi -> startActivity(Intent(Settings.ACTION_WIFI_SETTINGS))' }))).toBe('system framework screen');
     expect(reason(verifyRoute(vc, { route_id: 'Route.Wifi', screen: 'android.provider.Settings', file: 'a/Sys.kt', line: 2, evidence: 'Route.Wifi ->' }))).toBe('system framework screen');
+  });
+});
+
+// partial coverage: networking files where the rules found some APIs but missed call sites (KMP commonMain Ktor)
+describe('partial-coverage candidates', () => {
+  const krel = 'android/shared/src/commonMain/kotlin/com/minishop/net/ShopApi.kt';
+  const trel = 'android/shared/src/commonTest/kotlin/com/minishop/net/ShopApiProbe.kt';
+  let ptmp = '';
+  let proot = '';
+  const run = (args: string[]) => {
+    const r = spawnSync('node', [cli, '--root', proot, ...args], { encoding: 'utf8', env: { ...process.env, PATH: path.join(ptmp, 'bin') + path.delimiter + process.env.PATH, KB_FAKE_DIR: ptmp } });
+    return { code: r.status ?? -1, out: r.stdout, err: r.stderr };
+  };
+  const ktor = [
+    'package com.minishop.net',
+    'import io.ktor.client.HttpClient',
+    'import io.ktor.client.request.get',
+    'import io.ktor.client.request.post',
+    'class ShopApi(private val client: HttpClient) {',
+    '    suspend fun banners() = client.get("/v3/banners")',
+    '    suspend fun hot() = client.get("/v3/hot/list")',
+    '    suspend fun coupons() = client.get { url { appendPathSegments("v3", "coupons") } }',
+    '    suspend fun claim(id: String) = client.post { url { appendPathSegments("v3", "coupons", id, "claim") } }',
+    '    suspend fun cats() = client.get { url { appendPathSegments("v3", "categories") } }',
+    '}',
+    '',
+  ].join('\n');
+
+  beforeAll(() => {
+    ptmp = fs.mkdtempSync(path.join(os.tmpdir(), 'kb-llmpartial-'));
+    proot = path.join(ptmp, 'minishop');
+    fs.cpSync(path.join(repo, 'examples/minishop'), proot, { recursive: true });
+    for (const [f, t] of [[krel, ktor], [trel, ktor.replace('class ShopApi', 'class ShopApiProbe')]] as const) {
+      fs.mkdirSync(path.dirname(path.join(proot, f)), { recursive: true });
+      fs.writeFileSync(path.join(proot, f), t);
+    }
+    fs.mkdirSync(path.join(ptmp, 'bin'));
+    const answer = {
+      routes: [],
+      apis: [
+        { method: 'GET', path: '/v3/coupons', file: krel, line: 8, evidence: 'appendPathSegments("v3", "coupons")' },
+        { method: 'POST', path: '/v3/coupons/{id}/claim', file: krel, line: 9, evidence: 'client.post { url { appendPathSegments("v3", "coupons", id, "claim") } }' },
+        { method: 'GET', path: '/v3/categories', file: krel, line: 10, evidence: 'appendPathSegments("v3", "categories")' },
+        { method: 'GET', path: '/v3/banners', file: krel, line: 6, evidence: 'client.get("/v3/banners")' }, // already known: rule wins
+      ],
+    };
+    fs.writeFileSync(
+      path.join(ptmp, 'bin', 'claude'),
+      `#!/usr/bin/env node
+const fs = require('fs');
+const d = process.env.KB_FAKE_DIR;
+fs.appendFileSync(d + '/prompt.txt', fs.readFileSync(0, 'utf8'));
+process.stdout.write(JSON.stringify({ type: 'result', result: ${JSON.stringify(JSON.stringify(answer))} }) + '\\n');
+`,
+      { mode: 0o755 },
+    );
+    expect(run(['init']).code).toBe(0);
+  });
+  afterAll(() => fs.rmSync(ptmp, { recursive: true, force: true }));
+
+  it('counts HTTP call sites (Ktor, httpClient.*, fetch, axios, URLSession, Retrofit, ArkTS http.request)', () => {
+    expect(httpCallSites(ktor)).toBe(5);
+    const misc = [
+      '@GET("/a") fun a(): Call<A>',
+      'val r = httpClient.request { url("/b") }',
+      'const x = await fetch(`/c`)',
+      'axios.post("/d", body)',
+      'let (d, _) = try await URLSession.shared.data(from: u)',
+      'httpRequest.request(url, { method: http.RequestMethod.GET })',
+      '// client.get("/commented")',
+      'val y = map.get(key)',
+    ].join('\n');
+    expect(httpCallSites(misc)).toBe(6);
+  });
+
+  it('selects commonMain files where rules missed call sites, tells the agent the known endpoints, rule items win', () => {
+    const r = run(['facts', 'suggest', '--agent', 'claude', '--model', 'haiku', '--kinds', 'apis', '--json']);
+    expect(r.code, r.err).toBe(0);
+    const j = JSON.parse(r.out);
+    expect(j.candidates).toContain(krel);
+    expect(j.candidates).not.toContain(trel);
+    const p = j.partial.find((x: { file: string }) => x.file === krel);
+    expect(p).toEqual({ file: krel, call_sites: 5, extracted: 2 });
+    const prompt = fs.readFileSync(path.join(ptmp, 'prompt.txt'), 'utf8');
+    expect(prompt).toContain('Already known endpoints');
+    expect(prompt).toContain(`- ${krel}: GET /v3/banners; GET /v3/hot/list`);
+    const got = j.accepted.apis.filter((a: { file: string }) => a.file === krel).map((a: { method: string; path: string }) => `${a.method} ${a.path}`);
+    // the re-reported known endpoint is verified but dropped at merge: the rule item wins
+    expect([...got].sort()).toEqual(['GET /v3/banners', 'GET /v3/categories', 'GET /v3/coupons', 'POST /v3/coupons/{id}/claim']);
+    expect(j.skipped_conflict).toBeGreaterThanOrEqual(1);
   });
 });
