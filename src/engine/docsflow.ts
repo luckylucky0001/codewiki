@@ -14,7 +14,7 @@ import type { CompoundItem, NewEntry, ScopePlan, Dimension, MergeResult, Evidenc
 import * as tree from '../tree/index.js';
 import type { ModuleTree, TreeNode } from '../tree/index.js';
 import { scanRepo } from '../scan/scan.js';
-import { extractFacts } from '../facts/facts.js';
+import { extractFactsCached } from './factscache.js';
 import { cmpStr } from '../util/go.js';
 import { gitHead, loadGraph, today } from './compound.js';
 import { computeTree, loadTree } from './hier.js';
@@ -121,7 +121,7 @@ export async function docsContext(cfg: Config, o: Pick<DocsOptions, 'projects' |
     configured: cfg.scopes?.projects,
   });
   const res = await scanRepo(cfg);
-  const facts = extractFacts(cfg, res);
+  const facts = extractFactsCached(cfg, res);
   const head = gitHead(root);
   let t = loadTree(wikiPath(cfg));
   if (!t) t = computeTree(cfg, res.graph, loadGraph(path.join(wikiPath(cfg), '.kb', 'graph.json')), facts, null, true, head).tree;

@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { ConfigNotFoundError, DefaultLLMCmd, FileName, absRoot, defaultConfig, detect, detectedConfig, loadConfig, renderConfig, wikiPath, type Config } from '../config/config.js';
 import { scanRepo, CacheFile } from '../scan/scan.js';
 import { extractFacts } from '../facts/facts.js';
+import { extractFactsCached } from '../engine/factscache.js';
 import { factsJSON } from '../facts/render.js';
 import { symbolJSON, parseFailureJSON, getSym } from '../model.js';
 import type { Plan } from '../engine/plan.js';
@@ -246,7 +247,7 @@ register({
     const res = await scanRepo(cfg);
     const commit = gitHead(cfg.root);
     if (commit) res.graph.commit = commit;
-    const facts = extractFacts(cfg, res);
+    const facts = extractFactsCached(cfg, res);
     if (f.out) {
       const { graphJSON } = await import('../model.js');
       fs.writeFileSync(String(f.out), goJSON(graphJSON(res.graph), ' '));
@@ -396,7 +397,7 @@ function printHumanCandidates(a: App, c: { page: string; detail: string }[], str
 
 async function verifyNow(cfg: Config): Promise<Report> {
   const res = await scanRepo(cfg);
-  const facts = extractFacts(cfg, res);
+  const facts = extractFactsCached(cfg, res);
   const rep = verifyWiki(wikiPath(cfg), res.graph, expectedFacts(cfg, res.graph, facts));
   verifyRequirements(wikiPath(cfg), res.graph, rep);
   verifyTree(wikiPath(cfg), res.graph, facts, rep);
@@ -947,7 +948,7 @@ register({
     const plats = cfg.platforms.map((p) => p.name);
     const p = await stampCached(cfg, 'parity', async () => {
       const res = await scanRepo(cfg);
-      return computeParity(res.graph, extractFacts(cfg, res), plats);
+      return computeParity(res.graph, extractFactsCached(cfg, res), plats);
     });
     a.emit(p, () => {
       let md = renderParity(p);

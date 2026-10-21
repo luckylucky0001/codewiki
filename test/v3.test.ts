@@ -161,3 +161,39 @@ describe('link checker SFK rule', () => {
     expect(broken).toEqual(['./fig(5).png', './x.md', 'b.md', 'src/gone.kt', 'tools/missing.sh']);
   });
 });
+
+describe('warm-scan caches (facts result, lazy call sites)', () => {
+  it('cached facts and lazily loaded calls are identical to an uncached run; a resource change misses', async () => {
+    const { spawnSync } = await import('node:child_process');
+    const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kbfc-'));
+    fs.cpSync(path.join(repo, 'examples/minishop'), d, { recursive: true });
+    expect(spawnSync('node', [path.join(repo, 'dist/cli.js'), 'init', '--quiet'], { cwd: d }).status).toBe(0);
+    const { loadConfig } = await import(path.join(repo, 'dist/config/config.js'));
+    const { scanRepo } = await import(path.join(repo, 'dist/scan/scan.js'));
+    const { extractFacts } = await import(path.join(repo, 'dist/facts/facts.js'));
+    const { extractFactsCached } = await import(path.join(repo, 'dist/engine/factscache.js'));
+    const cfg = loadConfig(d);
+    const fresh = async () => {
+      process.env.KB_NO_CACHE = '1';
+      try {
+        const r = await scanRepo(cfg);
+        return { calls: JSON.stringify(r.calls), facts: JSON.stringify(extractFacts(cfg, r)) };
+      } finally {
+        delete process.env.KB_NO_CACHE;
+      }
+    };
+    const want = await fresh();
+    const r1 = await scanRepo(cfg); // cold: fills both caches
+    expect(JSON.stringify(extractFactsCached(cfg, r1))).toBe(want.facts);
+    const r2 = await scanRepo(cfg); // warm: hits, calls loaded lazily
+    expect(r2.stats.cache_hits).toBe(r2.stats.files);
+    expect(JSON.stringify(r2.calls)).toBe(want.calls);
+    expect(JSON.stringify(extractFactsCached(cfg, r2))).toBe(want.facts);
+    // a non-source input of facts (deep-link scheme in the manifest) changes -> miss, new facts
+    const mf = path.join(d, 'android/app/src/main/AndroidManifest.xml');
+    fs.writeFileSync(mf, fs.readFileSync(mf, 'utf8').replace(/android:scheme="[^"]+"/, 'android:scheme="changedscheme"'));
+    const want2 = await fresh();
+    expect(want2.facts).not.toBe(want.facts);
+    expect(JSON.stringify(extractFactsCached(cfg, await scanRepo(cfg)))).toBe(want2.facts);
+  });
+});

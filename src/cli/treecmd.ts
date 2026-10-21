@@ -6,7 +6,7 @@ import { wikiPath } from '../config/config.js';
 import * as tree from '../tree/index.js';
 import type { ModuleTree, TreeNode, PatchOp } from '../tree/index.js';
 import { scanRepo } from '../scan/scan.js';
-import { extractFacts } from '../facts/facts.js';
+import { extractFactsCached } from '../engine/factscache.js';
 import { gitHead, loadGraph } from '../engine/compound.js';
 import { computeTree, loadTree, TreeFile } from '../engine/hier.js';
 import { writeFileAtomic } from '../wiki/page.js';
@@ -24,7 +24,7 @@ function nodeBrief(n: TreeNode) {
 async function current(cfg: Config, full: boolean): Promise<{ t: ModuleTree; mode: string; warnings?: string[] }> {
   const res = await scanRepo(cfg);
   const head = gitHead(cfg.root);
-  const facts = extractFacts(cfg, res);
+  const facts = extractFactsCached(cfg, res);
   const prev = loadTree(wikiPath(cfg));
   const old = loadGraph(path.join(wikiPath(cfg), '.kb', 'graph.json'));
   const ct = computeTree(cfg, res.graph, old, facts, prev, full || !prev, head);
@@ -111,7 +111,7 @@ export async function treeCommand(cfg: Config, sub: string, args: string[], flag
     case 'explain': {
       if (!args.length) return { json: { error: 'usage: kb tree explain <symbol-id|file>', ok: false }, text: 'usage: kb tree explain <symbol-id|file>\n', code: 2 };
       const res = await scanRepo(cfg);
-      const facts = extractFacts(cfg, res);
+      const facts = extractFactsCached(cfg, res);
       const t = loadTree(wp) ?? (await current(cfg, true)).t;
       const projects = tree.detectProjects(tree.fsSource(cfg.root));
       const ctx = tree.prepare({ graph: res.graph, facts, projects, config: (cfg.tree ?? {}) as Partial<tree.TreeConfig> });

@@ -27,6 +27,8 @@ export interface Stats {
 
 export interface ScanResult {
   graph: Graph;
+  /** sha256 over every scanned input (path, platform, lang, content hash) + cache version */
+  inputsKey?: string;
   calls: Record<string, Call[]>;
   dir: string;
   stats: Stats;
@@ -141,6 +143,8 @@ export async function scan(cfg: Config, dir: string, opt: ScanOptions = {}): Pro
   results = pr.results;
   res.stats.workers = pr.workers;
   const seen = new Set<string>();
+  const lazyCalls: [string, string][] = [];
+  const eagerCalls: Record<string, Call[]> = {};
   jobs.forEach((j, i) => {
     const r = results[i]!;
     if (r.err !== undefined) {
@@ -150,7 +154,8 @@ export async function scan(cfg: Config, dir: string, opt: ScanOptions = {}): Pro
     const fr = r.fr!;
     if (fr.failure) g.parse_failures.push(fr.failure);
     for (const s of fr.symbols) g.symbols.push(s);
-    res.calls[j.rel] = fr.calls;
+    if (r.hit) lazyCalls.push([j.rel, r.hash]);
+    else eagerCalls[j.rel] = fr.calls;
     g.files[j.rel] = { platform: j.platform, lang: j.lang, hash: r.hash, symbols: fr.symbols.length, package: fr.package || undefined, imports: fr.imports.length ? fr.imports : undefined };
     res.stats.files++;
     if (r.hit) res.stats.cache_hits++;
@@ -159,6 +164,32 @@ export async function scan(cfg: Config, dir: string, opt: ScanOptions = {}): Pro
     if (opt.cache && !r.hit) opt.cache.put(j.rel, r.hash, j.lang, j.platform, fr);
   });
   if (opt.cache) opt.cache.prune(seen);
+  // call sites of cache hits are read only when somebody (facts extraction) asks for them
+  let calls: Record<string, Call[]> | null = lazyCalls.length ? null : eagerCalls;
+  const cache = opt.cache;
+  Object.defineProperty(res, 'calls', {
+    enumerable: true,
+    configurable: true,
+    get(): Record<string, Call[]> {
+      if (!calls) {
+        const out: Record<string, Call[]> = {};
+        const lz = new Map(lazyCalls);
+        for (const j of jobs) {
+          if (eagerCalls[j.rel]) out[j.rel] = eagerCalls[j.rel]!;
+          else if (lz.has(j.rel)) {
+            const c = cache!.callsFor(j.rel, lz.get(j.rel)!);
+            if (!c) throw new Error(`scan cache: call sites of ${j.rel} missing (delete ${CacheFile} and rerun)`);
+            out[j.rel] = c;
+          }
+        }
+        calls = out;
+      }
+      return calls;
+    },
+    set(v: Record<string, Call[]>) {
+      calls = v;
+    },
+  });
   g.symbols.sort((a, b) => cmpStr(a.id, b.id));
   g.parse_failures.sort((a, b) => cmpStr(a.file, b.file));
   // resolved references are a pure function of the parsed files: reuse them when every input is unchanged
@@ -166,6 +197,7 @@ export async function scan(cfg: Config, dir: string, opt: ScanOptions = {}): Pro
   refsKey.update(cacheVersion() + '\n');
   jobs.forEach((j, i) => refsKey.update(`${j.rel}\0${j.prel}\0${j.lang}\0${j.platform}\0${results[i]!.hash}\0${results[i]!.err ?? ''}\n`));
   const key = refsKey.digest('hex');
+  res.inputsKey = key;
   const cached = opt.cache?.refs;
   if (cached && cached.key === key) {
     for (const s of g.symbols) {
@@ -190,7 +222,7 @@ export async function scan(cfg: Config, dir: string, opt: ScanOptions = {}): Pro
 
 // ---- cache ----
 
-const cacheFormat = 'scan-cache/ts2';
+const cacheFormat = 'scan-cache/ts3';
 export const CacheFile = '.kb/cache/scan.v8.gz';
 
 export function cacheVersion(): string {
@@ -209,13 +241,19 @@ export class ScanCache {
   /** resolved references of the last scan, keyed by its inputs */
   refs?: { key: string; refs: Record<string, string[]> };
   dirty = false;
+  /** call sites live in a second file (55% of the cache) that is read only when facts are recomputed */
+  callsPath?: string;
+  private callsMap?: Map<string, { hash: string; calls: Call[] }>;
   constructor(public version = cacheVersion()) {}
 
   static load(p: string): ScanCache {
     const c = new ScanCache();
+    c.callsPath = callsFileOf(p);
     try {
-      const raw = v8.deserialize(zlib.gunzipSync(fs.readFileSync(p))) as { version: string; entries: Record<string, CacheEntry>; refs?: ScanCache['refs'] };
+      const raw = v8.deserialize(zlib.gunzipSync(fs.readFileSync(p))) as { version: string; stamp?: string; entries: Record<string, CacheEntry>; refs?: ScanCache['refs'] };
       if (raw.version !== c.version) return c;
+      // both files are written together; a mismatched pair (interrupted save, manual delete) is a miss
+      if (!raw.stamp || readStamp(c.callsPath) !== raw.stamp) return c;
       for (const [k, v] of Object.entries(raw.entries)) c.entries.set(k, v);
       if (raw.refs) c.refs = raw.refs;
     } catch {
@@ -224,13 +262,43 @@ export class ScanCache {
     return c;
   }
 
+  /** call sites by file (loaded on first use) */
+  calls(): Map<string, { hash: string; calls: Call[] }> {
+    if (this.callsMap) return this.callsMap;
+    this.callsMap = new Map();
+    if (this.callsPath && this.entries.size) {
+      try {
+        const raw = v8.deserialize(zlib.gunzipSync(fs.readFileSync(this.callsPath))) as { version: string; calls: Record<string, { hash: string; calls: Call[] }> };
+        if (raw.version === this.version) for (const [k, v] of Object.entries(raw.calls)) this.callsMap.set(k, v);
+      } catch {
+        /* missing: callers fall back to re-parsing */
+      }
+    }
+    return this.callsMap;
+  }
+
+  callsFor(rel: string, hash: string): Call[] | undefined {
+    const e = this.calls().get(rel);
+    return e && e.hash === hash ? e.calls : undefined;
+  }
+
   save(p: string): void {
     if (!this.dirty) return;
     fs.mkdirSync(path.dirname(p), { recursive: true });
-    const tmp = p + '.tmp~';
-    const obj = { version: this.version, entries: Object.fromEntries(this.entries), ...(this.refs ? { refs: this.refs } : {}) };
-    fs.writeFileSync(tmp, zlib.gzipSync(v8.serialize(obj), { level: 1 }));
-    fs.renameSync(tmp, p);
+    const cp = callsFileOf(p);
+    const calls: Record<string, { hash: string; calls: Call[] }> = {};
+    const all = this.calls();
+    for (const [k, e] of this.entries) {
+      const c = all.get(k);
+      if (c && c.hash === e.hash) calls[k] = c;
+    }
+    const stamp = createHash('sha256').update(`${Date.now()}\n${process.pid}\n${Math.random()}`).digest('hex').slice(0, 16);
+    const obj = { version: this.version, stamp, entries: Object.fromEntries(this.entries), ...(this.refs ? { refs: this.refs } : {}) };
+    fs.writeFileSync(cp + '.tmp~', zlib.gzipSync(v8.serialize({ version: this.version, calls }), { level: 1 }));
+    fs.writeFileSync(p + '.tmp~', zlib.gzipSync(v8.serialize(obj), { level: 1 }));
+    fs.renameSync(cp + '.tmp~', cp);
+    fs.renameSync(p + '.tmp~', p);
+    fs.writeFileSync(cp + '.stamp', stamp);
     this.dirty = false;
   }
 
@@ -241,8 +309,10 @@ export class ScanCache {
   get(rel: string, hash: string, lang: string, platform: string): FileResult | undefined {
     const e = this.entries.get(rel);
     if (!e || e.hash !== hash || e.lang !== lang || e.platform !== platform) return undefined;
+    // calls are filled in lazily by scan(); a cache entry without its calls is a miss
+    if (!this.callsPath && !this.calls().has(rel)) return undefined;
     // callers set refs on the returned symbols: copy them, share the rest
-    return { ...e.fr, symbols: e.fr.symbols.map((x) => ({ ...x })) };
+    return { ...e.fr, calls: [], symbols: e.fr.symbols.map((x) => ({ ...x })) };
   }
 
   put(rel: string, hash: string, lang: string, platform: string, fr: FileResult): void {
@@ -251,7 +321,8 @@ export class ScanCache {
       delete cp.refs;
       return cp;
     });
-    this.entries.set(rel, { hash, lang, platform, fr: { ...fr, symbols: syms } });
+    this.calls().set(rel, { hash, calls: fr.calls });
+    this.entries.set(rel, { hash, lang, platform, fr: { ...fr, calls: [], symbols: syms } });
     this.dirty = true;
   }
 
@@ -262,6 +333,15 @@ export class ScanCache {
         this.dirty = true;
       }
     }
+  }
+}
+
+const callsFileOf = (p: string) => p.replace(/\.v8\.gz$/, '') + '.calls.v8.gz';
+function readStamp(callsPath: string): string | null {
+  try {
+    return fs.readFileSync(callsPath + '.stamp', 'utf8');
+  } catch {
+    return null;
   }
 }
 

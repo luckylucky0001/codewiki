@@ -8,7 +8,7 @@ import type { Config } from '../config/config.js';
 import { wikiPath } from '../config/config.js';
 import { GraphVersion, type Facts, type Graph, type Anchor, getSym, graphJSON, reindexGraph } from '../model.js';
 import { scan, scanRepo, type ScanResult } from '../scan/scan.js';
-import { extractFacts } from '../facts/facts.js';
+import { extractFactsCached } from './factscache.js';
 import { renderFacts } from '../facts/render.js';
 import { goJSON, cmpStr } from '../util/go.js';
 import { type Page, loadPages, parsePage, renderPage, writeFileAtomic, idFromPath, StatusCurrent } from '../wiki/page.js';
@@ -168,7 +168,7 @@ export async function analyze(o: Options): Promise<Analysis> {
   const cfg = o.cfg;
   const res = await scanRepo(cfg);
   res.graph.commit = gitHead(cfg.root) || undefined;
-  const facts = extractFacts(cfg, res);
+  const facts = extractFactsCached(cfg, res);
   let old: Graph | null = null;
   if (o.base) old = (await scanRevision(cfg, o.base)).graph;
   else old = loadGraph(path.join(wikiPath(cfg), '.kb', 'graph.json'));
