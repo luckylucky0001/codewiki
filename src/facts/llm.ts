@@ -10,7 +10,10 @@
 //     appears in the window; the window holds an HTTP client call or an endpoint definition (not just a
 //     string constant); static-asset paths, foreign hosts and URLs built on a function parameter are dropped;
 //   - routes: only registration / declaration sites with a named screen; ids are normalised (qualifier
-//     stripped, enum/const resolved to its value) before de-duplication against rules and the batch.
+//     stripped, enum/const resolved to its value) before de-duplication against rules and the batch; routes
+//     are also de-duplicated by screen symbol name / declaring file + class; string-list literal elements
+//     without a navigation call and system framework screens (UI*/AV*/SF*... controllers, android.*,
+//     Intent ACTION_*) are rejected.
 // Rejected suggestions are reported, never written. Accepted items carry source "llm" and confidence
 // "verified-call" (API next to an HTTP call / route screen resolved to its declaration) or "evidence-token"
 // (only the token checks passed); rule results win on conflict. Raw agent answers are cached per
@@ -239,6 +242,14 @@ export interface VerifyCtx {
 const RouteDeclRe = /\b(composable|entry|navigation|dialog|bottomSheet|activity|fragment)\s*[<(]|\bentry\s*<|NavigationLink\b|\.navigationDestination\b|\.sheet\b|\.fullScreenCover\b|@Entry\b|@Route\b|@Destination\b|\brouteName\b|\b(data\s+)?object\s+\w+|\b(data\s+)?class\s+\w+|\bstruct\s+\w+|\bcase\s+\w+|\benum\s+\w+|\bstatic\s+(readonly\s+)?\w+\s*[:=]|\bconst\s+(val\s+)?\w+\s*[:=]|\bregister\w*\s*\(|\b(path|name|url|route|pageUrl|page)\s*[:=]\s*["'`]|\bbuilder\s*[:=(]|\bTab\s*\(|\bWrappedBuilder\b|\bNavDestination\b|\bNavEntry\b|\bentryProvider\b|\bcase\s+\.\w+|^\s*(is\s+)?[A-Z][\w.]*\s*->/m;
 const RouteUseRe = /\b(navigate|navigateTo|push\w*|replace\w*|popTo\w*|backStack\.(add|push)|startDestination|listOf|mutableStateListOf|rememberNavBackStack|pushUrl|pushPath|pushPathByName|replaceUrl|router\.back)\b/;
 
+// String array / list literals: `[ 'A', ...`, `@[@"A", ...`, `listOf("a", ...`, or a line that is only a quoted list element.
+const StringListRe = /(^|[=:(,\s@])\[\s*@?(["'`][^"'`]*["'`]|[A-Za-z_][\w.]*)\s*,|\b(listOf|mutableListOf|arrayListOf|arrayOf|setOf|mutableSetOf|List\.of|Set\.of|Arrays\.asList)\s*\(\s*(["'`]|[A-Za-z_][\w.]*\s*,)|^\s*@?["'`][^"'`]*["'`]\s*[,\])]/;
+// Navigation / registration calls that make a line with a list literal still a route site.
+const NavCallRe = /\b(navigate\w*|push\w*|replace\w*|present\w*|show\w*|startActivity\w*|register\w*|addRoute\w*|composable|entry|navigation|dialog|bottomSheet|activity|fragment|NavigationLink|navigationDestination|sheet|fullScreenCover|NavEntry|NavDestination|WrappedBuilder|setRoot\w*)\s*[<({]|\bIntent\s*\(/;
+// System framework view controllers (Apple) and Android framework intent actions.
+const SystemScreenRe = /^(AV|UI|NS|SF|MF|PH)[A-Z]\w*Controller$/;
+const ActionRe = /(^|\.)ACTION_[A-Z0-9_]+$/;
+
 // HTTP client calls and endpoint definitions (vs. bare string constants).
 const HttpCallRe = /\.(get|post|put|delete|patch|head|request|fetch|execute|enqueue|newCall|dataTask|submitForm|submitFormWithBinaryData)\s*(<[^>]*>)?\s*[({]|\b(fetch|axios|request|httpRequest|ajax)\s*\(|@(GET|POST|PUT|DELETE|PATCH|HEAD|HTTP|Multipart|FormUrlEncoded)\b|\bURLRequest\s*\(|\bRequest\.Builder\b|\bAF\.(request|upload|download)\b|\bURLSession\b|\bcreateHttp\b|\bHttpMethod\.|\bhttpMethod\b|\bmethod\s*[:=]\s*["'`.]?\w|\bRequestMethod\.|\.url\s*\(|\burl\s*\{|\b(GET|POST|PUT|DELETE|PATCH)\s*\(/;
 const EndpointDefRe = /\b(var|val|let|static|case)\s+path\b|\bpath\s*[:=]\s*["'`]|\bpath\s*\(\s*\)|\bendpoint\b|\bEndpoint\b|\bapiPath\b|\bpathFor\b/i;
@@ -287,6 +298,11 @@ export function verifyRoute(c: VerifyCtx, it: RawItem): { ok: true; r: LLMRoute 
   const near = lines.slice(Math.max(0, line - 3), Math.min(lines.length, line + 2)).join('\n');
   const cited = lines[line - 1] ?? '';
   if (!RouteDeclRe.test(near) || (RouteUseRe.test(cited) && !RouteDeclRe.test(cited))) return { ok: false, reason: 'use site, not a registration/declaration site' };
+  // a string array / list literal element (e.g. `['MusicPlayerPage', ...]`, `listOf("a", "b")`) is not a route
+  if (StringListRe.test(cited) && !NavCallRe.test(cited)) return { ok: false, reason: 'list literal element, not a registration' };
+  // system framework screens (AVPlayerViewController, SFSafariViewController, android.* / Intent.ACTION_*) are not app routes
+  const sname0 = screen.split('.').pop() ?? '';
+  if (!(c.symbolsByName.get(sname0) ?? []).length && (SystemScreenRe.test(sname0) || /^(android|androidx)\./.test(screen) || ActionRe.test(screen) || ActionRe.test(rid))) return { ok: false, reason: 'system framework screen' };
   // file + line anchor the evidence; symbol is the screen's declaration when it is a unique known symbol
   let symbol = screen;
   const sname = screen.split('.').pop() ?? '';
@@ -401,20 +417,46 @@ function verifyCtx(cfg: Config, res: ScanResult, files: Map<string, string>, fac
 
 const normApi = (p: string) => p.toLowerCase().replace(/\{[^}]*\}|:[a-z_]\w*|\$\{[^}]*\}/g, '{}').replace(/\/+$/, '');
 
+// Member names too generic to identify a screen on their own.
+const GenericMember = new Set(['body', 'build', 'content', 'view', 'screen', 'page', 'render', 'oncreate', 'oncreateview', 'viewdidload', 'aboutToAppear'.toLowerCase(), 'invoke', 'init', 'main']);
+
+/** Dedupe keys of a route's screen symbol: names (full fragment, non-generic simple name), the declaration
+ *  (file#fragment) and its declaring file + outer class (file#Class). */
+function screenKeys(symbol: string): { names: string[]; decl: string; cls: string } {
+  const s = symbol.toLowerCase();
+  const hash = s.indexOf('#');
+  const file = hash >= 0 ? s.slice(0, hash) : '';
+  const frag = hash >= 0 ? s.slice(hash + 1) : s;
+  const parts = frag.split('.').filter(Boolean);
+  const simple = parts[parts.length - 1] ?? '';
+  const names = frag ? [frag, ...(simple && simple !== frag && !GenericMember.has(simple) ? [simple] : [])] : [];
+  return { names, decl: file && frag ? `${file}#${frag}` : '', cls: file && parts[0] ? `${file}#${parts[0]}` : '' };
+}
+
 /** Merge accepted items; rule results win (same route id / screen, or same method + path). */
 export function mergeInto(facts: Facts, routes: LLMRoute[], apis: LLMAPI[]): { facts: Facts; conflicts: number } {
   let conflicts = 0;
   const rr = [...(facts.routes ?? [])];
   const seenR = new Set(rr.map((r) => r.route_id.toLowerCase()));
-  const seenS = new Set(rr.map((r) => (r.symbol.split('#').pop() ?? '').toLowerCase()).filter(Boolean));
+  // same screen: same symbol name, same declaration, or one is a member of the other's class in the same file
+  const seenN = new Set<string>();
+  const seenD = new Set<string>();
+  const seenC = new Set<string>();
+  const add = (k: ReturnType<typeof screenKeys>) => {
+    for (const n of k.names) seenN.add(n);
+    if (k.decl) seenD.add(k.decl);
+    if (k.cls) seenC.add(k.cls);
+  };
+  for (const r of rr) add(screenKeys(r.symbol));
   for (const r of routes) {
-    const sn = (r.symbol.split('#').pop() ?? '').toLowerCase();
-    if (seenR.has(r.route_id.toLowerCase()) || (sn && seenS.has(sn))) {
+    const k = screenKeys(r.symbol);
+    const dup = k.names.some((n) => seenN.has(n)) || (k.decl && (seenD.has(k.decl) || seenC.has(k.decl))) || (k.cls && seenD.has(k.cls));
+    if (seenR.has(r.route_id.toLowerCase()) || dup) {
       conflicts++;
       continue;
     }
     seenR.add(r.route_id.toLowerCase());
-    if (sn) seenS.add(sn);
+    add(k);
     rr.push(r);
   }
   const aa = [...(facts.apis ?? [])];

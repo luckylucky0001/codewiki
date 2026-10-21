@@ -207,4 +207,39 @@ describe('verification rules', () => {
     expect(reason(verifyRoute(c, { route_id: 'Route.Feeds', screen: 'FeedsPage', file: 'a/Nav.kt', line: 10, evidence: 'backStack.add(Route.Feeds)' }))).toBe('use site, not a registration/declaration site');
     expect(reason(verifyRoute(c, { route_id: 'Feeds', screen: '', file: 'a/Nav.kt', line: 5, evidence: 'entry<Route.Feeds>' }))).toBe('empty screen symbol');
   });
+  it('rule 6: LLM routes are de-duplicated against rule routes by screen symbol name and declaring file + class', () => {
+    const L = { pattern: '', deeplink: '', line: 1, source: 'llm' as const, confidence: 'verified-call' as const, platform: 'android' };
+    const rules = { routes: [
+      { platform: 'android', route_id: 'player', pattern: '', deeplink: '', file: 'a/Screens.kt', symbol: 'android://a/Screens.kt#PlayerScreen.Content' },
+      { platform: 'android', route_id: 'feeds', pattern: '', deeplink: '', file: 'a/R.kt', symbol: 'android://a/R.kt#Routes.Feeds' },
+      { platform: 'android', route_id: 'music', pattern: '', deeplink: '', file: 'a/M.kt', symbol: 'android://a/M.kt#MusicPlayerPage' },
+    ], testids: [], apis: [] };
+    const m = mergeInto(rules, [
+      { ...L, route_id: 'PlayerRoute', file: 'a/Nav.kt', symbol: 'android://a/Screens.kt#PlayerScreen' }, // same file + class
+      { ...L, route_id: 'MusicPlayer', file: 'a/Nav.kt', symbol: 'android://b/Other.kt#MusicPlayerPage' }, // same symbol name
+      { ...L, route_id: 'hot', file: 'a/Nav.kt', symbol: 'android://a/R.kt#Routes.Hot' }, // sibling member: kept
+    ], []);
+    expect(m.conflicts).toBe(2);
+    expect(m.facts.routes!.map((r) => r.route_id)).toEqual(['player', 'feeds', 'music', 'hot']);
+  });
+  it('rule 7: evidence that is only a string array / list literal element is rejected', () => {
+    const f2 = new Map(files);
+    f2.set('a/pages.ts', ["export const PAGES = ['MusicPlayerPage', 'HotPage'];", 'class Titles {', '  static readonly ALL = [CANCEL_ROUTE_TITLE, OK_ROUTE_TITLE];', '}', 'val names = listOf("MusicPlayerPage", "HotPage")', ''].join('\n'));
+    const vc = { ...c, files: f2 };
+    expect(reason(verifyRoute(vc, { route_id: 'MusicPlayerPage', screen: 'MusicPlayerPage', file: 'a/pages.ts', line: 1, evidence: "['MusicPlayerPage', 'HotPage']" }))).toBe('list literal element, not a registration');
+    expect(reason(verifyRoute(vc, { route_id: 'CANCEL_ROUTE_TITLE', screen: 'CancelPage', file: 'a/pages.ts', line: 3, evidence: '[CANCEL_ROUTE_TITLE, OK_ROUTE_TITLE]' }))).toBe('list literal element, not a registration');
+    expect(reason(verifyRoute(vc, { route_id: 'HotPage', screen: 'HotPage', file: 'a/pages.ts', line: 5, evidence: 'listOf("MusicPlayerPage", "HotPage")' }))).not.toBe('ok');
+    // a registration call on the line is still accepted
+    expect(reason(verifyRoute(c, { route_id: 'Route.Feeds', screen: 'FeedsPage', file: 'a/Nav.kt', line: 5, evidence: 'entry<Route.Feeds>' }))).toBe('ok');
+  });
+  it('rule 8: system framework screens (Apple AV/UI/NS/SF/MF/PH controllers, Android intent actions) are rejected', () => {
+    const f2 = new Map(files);
+    f2.set('a/Links.swift', ['enum Link {', '    case web, video', '}', 'func open(_ l: Link) {', '    switch l {', '    case .web: present(SFSafariViewController(url: u), animated: true)', '    case .video: present(AVPlayerViewController(), animated: true)', '    }', '}', ''].join('\n'));
+    f2.set('a/Sys.kt', ['fun open(r: Route) = when (r) {', '    Route.Wifi -> startActivity(Intent(Settings.ACTION_WIFI_SETTINGS))', '    else -> Unit', '}', ''].join('\n'));
+    const vc = { ...c, files: f2 };
+    expect(reason(verifyRoute(vc, { route_id: 'web', screen: 'SFSafariViewController', file: 'a/Links.swift', line: 6, evidence: 'case .web: present(SFSafariViewController(url: u), animated: true)' }))).toBe('system framework screen');
+    expect(reason(verifyRoute(vc, { route_id: 'video', screen: 'AVPlayerViewController', file: 'a/Links.swift', line: 7, evidence: 'case .video:' }))).toBe('system framework screen');
+    expect(reason(verifyRoute(vc, { route_id: 'Route.Wifi', screen: 'Settings.ACTION_WIFI_SETTINGS', file: 'a/Sys.kt', line: 2, evidence: 'Route.Wifi -> startActivity(Intent(Settings.ACTION_WIFI_SETTINGS))' }))).toBe('system framework screen');
+    expect(reason(verifyRoute(vc, { route_id: 'Route.Wifi', screen: 'android.provider.Settings', file: 'a/Sys.kt', line: 2, evidence: 'Route.Wifi ->' }))).toBe('system framework screen');
+  });
 });
