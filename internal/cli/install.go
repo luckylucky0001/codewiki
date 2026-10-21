@@ -131,6 +131,8 @@ func agentsBlockFor(wikiDir string, t agents.ToolWords) string {
 This repo has a code-anchored wiki in ` + "`" + w + "/`" + ` (generated from code, verified against HEAD in CI).
 For these questions do the listed action FIRST — one call usually answers it — then read code only to confirm.
 ` + t.Intro + `
+If ` + "`" + w + "/`" + ` does not exist yet, build it once: ` + run("kb init") + `, then ` + run("kb compound --llm template") + ` (deterministic, no LLM, seconds).
+` + "`kb routes`, `kb lint-tid` and `kb parity`" + ` already work before that (zero-config mode).
 
 | Question (问题类型) | Exact action (首选动作) |
 |---|---|

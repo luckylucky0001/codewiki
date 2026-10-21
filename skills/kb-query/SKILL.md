@@ -8,6 +8,15 @@ description: Answer questions about the app from the code-anchored codewiki LLM 
 The wiki is cheaper and more reliable than re-reading the whole repo: every page is anchored
 to symbol hashes that CI verifies against HEAD.
 
+## Prerequisite: is the repo initialized?
+
+- No `codewiki.yaml` at the repo root: run `kb init` once. It auto-detects the android/ios/harmony
+  roots (also root-level Gradle/Xcode/HarmonyOS projects and KMP); nothing needs hand-editing.
+- Source queries (`kb routes`, `kb lint-tid`, `kb parity`, `kb scan`, `kb anchor`) also work without it
+  (zero-config mode, noted on stderr, writes nothing). Wiki commands (`compound`, `ingest`, `verify`,
+  `status`, `search`, `get`, `context`, `conflicts`) need the wiki: if `wiki/` is missing, build it once with
+  `kb init`, then `kb compound --llm template` (deterministic, no LLM cost, seconds) and continue.
+
 ## Recipes
 
 ```bash

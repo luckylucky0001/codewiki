@@ -84,6 +84,40 @@ func (a *app) cfgOrFail() (*config.Config, int) {
 	return cfg, ExitOK
 }
 
+// cfgOrDetect is cfgOrFail for read-only queries over the source tree (scan,
+// routes, lint-tid, parity, anchor): without codewiki.yaml it falls back to
+// the configuration `kb init` would write. Nothing is written — scan and
+// query caches are only saved once a wiki directory exists.
+func (a *app) cfgOrDetect() (*config.Config, int) {
+	cfg, err := a.loadConfig()
+	if err == nil {
+		return cfg, ExitOK
+	}
+	if !errors.Is(err, config.ErrNotFound) || a.config != "" {
+		return a.cfgOrFail()
+	}
+	cfg, err = config.Detected(a.root)
+	if err != nil {
+		return nil, a.fail(ExitInternal, err)
+	}
+	if len(cfg.Platforms) == 0 {
+		return nil, a.fail(ExitUsage, fmt.Errorf("%s not found and no platform root detected (run `kb init` and set platforms)", config.FileName))
+	}
+	if a.wikiDir != "" {
+		wd := a.wikiDir
+		if !filepath.IsAbs(wd) {
+			wd = filepath.Join(cfg.Root, wd)
+		}
+		cfg.WikiDir = filepath.Clean(wd)
+	}
+	var ps []string
+	for _, p := range cfg.Platforms {
+		ps = append(ps, p.Name+"="+p.Root)
+	}
+	a.logf("kb: no %s, zero-config mode (detected %s); run `kb init` to persist it", config.FileName, strings.Join(ps, ", "))
+	return cfg, ExitOK
+}
+
 func kbPath() string {
 	p, err := os.Executable()
 	if err != nil {
@@ -309,7 +343,7 @@ func cmdInit(a *app, fs *flag.FlagSet, _ []string) int {
 // ---------- scan ----------
 
 func cmdScan(a *app, fs *flag.FlagSet, _ []string) int {
-	cfg, code := a.cfgOrFail()
+	cfg, code := a.cfgOrDetect()
 	if cfg == nil {
 		return code
 	}
@@ -1284,7 +1318,7 @@ func cmdAnchor(a *app, fs *flag.FlagSet, args []string) int {
 		if a.root == "." && os.Getenv("KB_ROOT") != "" {
 			a.root = os.Getenv("KB_ROOT")
 		}
-		cfg, code := a.cfgOrFail()
+		cfg, code := a.cfgOrDetect()
 		if cfg == nil {
 			return code
 		}
@@ -1323,7 +1357,7 @@ func cmdAnchor(a *app, fs *flag.FlagSet, args []string) int {
 // ---------- lint-tid ----------
 
 func cmdLintTid(a *app, fs *flag.FlagSet, _ []string) int {
-	cfg, code := a.cfgOrFail()
+	cfg, code := a.cfgOrDetect()
 	if cfg == nil {
 		return code
 	}
@@ -1688,7 +1722,7 @@ func lintTidPages(a *app, f *model.Facts) int {
 }
 
 func cmdRoutes(a *app, fs *flag.FlagSet, _ []string) int {
-	cfg, code := a.cfgOrFail()
+	cfg, code := a.cfgOrDetect()
 	if cfg == nil {
 		return code
 	}
@@ -1751,7 +1785,7 @@ func cmdRoutes(a *app, fs *flag.FlagSet, _ []string) int {
 // ---------- parity ----------
 
 func cmdParity(a *app, fs *flag.FlagSet, _ []string) int {
-	cfg, code := a.cfgOrFail()
+	cfg, code := a.cfgOrDetect()
 	if cfg == nil {
 		return code
 	}

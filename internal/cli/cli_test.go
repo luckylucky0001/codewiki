@@ -735,3 +735,35 @@ func TestParityQueryCache(t *testing.T) {
 		t.Fatalf("parity not recomputed after edit:\n%s", out3)
 	}
 }
+
+func TestZeroConfigQueries(t *testing.T) {
+	dir := repo(t)
+	// read-only queries work without codewiki.yaml, using what `kb init` would detect
+	code, out, errs := run(t, dir, "routes", "--json")
+	if code != 0 || !strings.Contains(errs, "zero-config mode") {
+		t.Fatalf("routes without config: %d stderr=%s", code, errs)
+	}
+	var v map[string]any
+	if err := json.Unmarshal([]byte(out), &v); err != nil || v["total"].(float64) != 18 {
+		t.Fatalf("routes: %v %s", err, out)
+	}
+	for _, args := range [][]string{{"scan"}, {"lint-tid", "--top", "3"}, {"parity"}} {
+		if code, _, errs := run(t, dir, args...); code != 0 {
+			t.Fatalf("kb %v without config: %d %s", args, code, errs)
+		}
+	}
+	// ... and leave the repo untouched
+	for _, p := range []string{"codewiki.yaml", "wiki"} {
+		if _, err := os.Stat(filepath.Join(dir, p)); err == nil {
+			t.Fatalf("zero-config query created %s", p)
+		}
+	}
+	// commands that write the wiki still require `kb init`
+	if code, _, errs := run(t, dir, "compound", "--llm", "template"); code != ExitUsage || !strings.Contains(errs, "kb init") {
+		t.Fatalf("compound without config: %d %s", code, errs)
+	}
+	// nothing to detect: a clear usage error
+	if code, _, errs := run(t, t.TempDir(), "routes"); code != ExitUsage || !strings.Contains(errs, "no platform root detected") {
+		t.Fatalf("routes in empty dir: %d %s", code, errs)
+	}
+}

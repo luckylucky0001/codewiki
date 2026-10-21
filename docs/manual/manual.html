@@ -233,7 +233,7 @@ plan:
   rebuild_module_ratio: 0.5</code></pre>
 </div>
 </div>
-<p>指定 <code>--config &lt;file&gt; --root &lt;repo&gt;</code> 时，wiki 会写到被分析仓库之外，用于只读分析第三方仓库（axios 和 5 个开源项目都是这样跑的）。</p>
+<p><b>配置不需要手写</b>：<code>kb init</code> 会自动探测平台目录，只有探测不准时才需要改。<b>零配置</b>：没有 yaml 时，<code>kb routes / lint-tid / parity / scan / anchor</code> 仍可直接运行，且不写入任何文件。wiki 类命令遇到未初始化的仓库，会提示先运行 <code>kb init</code> 和 <code>kb compound --llm template</code>，这一步是确定性的，不调用 LLM，只需几秒。skill 和 CLAUDE.md/AGENTS.md 指引块也写了同样的步骤。实测在未初始化的仓库里，Claude 会自行完成初始化，轮数从 12 降到 5。指定 <code>--config &lt;file&gt; --root &lt;repo&gt;</code> 时，wiki 会写到被分析仓库之外，用于只读分析第三方仓库。</p>
 <h3>4.3 页面 frontmatter 契约</h3>
 <pre><code>---
 id: features/cart          # = 路径去掉 pages/ 与 .md（verify 强制检查）

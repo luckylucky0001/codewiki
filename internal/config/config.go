@@ -71,7 +71,7 @@ func Default() *Config {
 }
 
 // ErrNotFound is returned when no codewiki.yaml exists.
-var ErrNotFound = errors.New("codewiki.yaml not found (run `kb init` first)")
+var ErrNotFound = errors.New("codewiki.yaml not found (run `kb init` first, then `kb compound --llm template` to build the wiki; `kb routes`, `kb lint-tid` and `kb parity` work without it)")
 
 // Load reads <root>/codewiki.yaml, filling defaults.
 func Load(root string) (*Config, error) {
@@ -100,6 +100,21 @@ func Load(root string) (*Config, error) {
 		c.LLM.Cmd = DefaultLLMCmd
 	}
 	c.Root = abs
+	return c, nil
+}
+
+// Detected returns the configuration `kb init` would write for root, without
+// writing anything: defaults plus Detect(root). Read-only queries use it when
+// no codewiki.yaml exists (zero-config mode).
+func Detected(root string) (*Config, error) {
+	abs, err := AbsRoot(root)
+	if err != nil {
+		return nil, err
+	}
+	c := Default()
+	c.Root = abs
+	c.Platforms = Detect(abs)
+	c.Project = filepath.Base(abs)
 	return c, nil
 }
 

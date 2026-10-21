@@ -94,6 +94,10 @@ kb context android/app/src/main/java/com/minishop/ui/cart/CartViewModel.kt   # �
 
 ## 配置 `codewiki.yaml`
 
+**不需要手写。** `kb init` 自动探测平台目录，包括根目录下的 Gradle / Xcode / HarmonyOS 工程和 KMP，并写出下面这份配置。只有探测不对，或者要换 agent、关闭 UIKit 抽取时，才需要改它。
+
+**零配置查询。** 即使没有 `codewiki.yaml`，`kb routes`、`kb lint-tid`、`kb parity`、`kb scan`、`kb anchor` 这几个只读命令也能运行。它们使用 `kb init` 会探测出的同一份配置，在 stderr 提示 `zero-config mode`，不会向仓库写任何文件。写 wiki 的命令（`compound`、`ingest`）和读 wiki 的命令（`verify`、`status`、`search`、`get`、`context`、`conflicts`）仍需先运行 `kb init`，因为 wiki 的位置需要固定下来。4 个 skill 开头的 "Prerequisite" 一节写明了这条规则。
+
 ```yaml
 version: 1
 wiki_dir: wiki

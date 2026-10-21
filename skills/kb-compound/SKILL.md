@@ -9,6 +9,15 @@ Keep `wiki/` provably in sync with the code. The CLI does everything determinist
 (parsing, diffing, planning, verification, publishing); you only write prose inside
 the write set you are given.
 
+## Prerequisite: is the repo initialized?
+
+- No `codewiki.yaml` at the repo root: run `kb init` once. It auto-detects the android/ios/harmony
+  roots (also root-level Gradle/Xcode/HarmonyOS projects and KMP); nothing needs hand-editing.
+- Source queries (`kb routes`, `kb lint-tid`, `kb parity`, `kb scan`, `kb anchor`) also work without it
+  (zero-config mode, noted on stderr, writes nothing). Wiki commands (`compound`, `ingest`, `verify`,
+  `status`, `search`, `get`, `context`, `conflicts`) need the wiki: if `wiki/` is missing, build it once with
+  `kb init`, then `kb compound --llm template` (deterministic, no LLM cost, seconds) and continue.
+
 ## When to use
 
 - After a merge to `master`/`main` (CI does this automatically, see `.github/workflows/compound.yml`).

@@ -59,3 +59,22 @@ func TestShadowedOverlappingRoots(t *testing.T) {
 		t.Error("platforms with the same root (split by include) must not shadow each other")
 	}
 }
+
+func TestDetectedMatchesInit(t *testing.T) {
+	dir := t.TempDir()
+	for _, d := range []string{"android", "ios", "harmony"} {
+		if err := os.MkdirAll(filepath.Join(dir, d), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	c, err := Detected(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(c.Platforms) != 3 || c.WikiDir != "wiki" || c.LLM.Cmd != DefaultLLMCmd || c.Project != filepath.Base(c.Root) {
+		t.Fatalf("detected config: %+v", c)
+	}
+	if _, err := os.Stat(filepath.Join(dir, FileName)); err == nil {
+		t.Fatal("Detected must not write codewiki.yaml")
+	}
+}
