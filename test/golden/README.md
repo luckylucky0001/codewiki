@@ -36,3 +36,15 @@ and the change sets in `examples/minishop-changes/`; checked by `test/parity.tes
   `mcp_hint` / `notes` fields.
 - Help output is grouped by area; `kb agents install|skills|mcp|list|hook` are aliases.
 - The four skills are merged into one `codewiki` skill; `kb install` installs it.
+- Error-recovery location: the tree-sitter runtime differs (go-tree-sitter 0.25 core vs
+  web-tree-sitter 0.27), so for a file with a syntax error the reported `parse_failures[].line`
+  can differ by a few lines (seen once on IceCubesApp, 1 of 1,1xx Swift files); symbols are identical.
+
+## Wider sweep (zero-config, no cache)
+
+| repo | symbols | symbol diff | routes / lint-tid / parity JSON |
+|---|---|---|---|
+| HarmonyOS-Cases | 20,141 | 0 | — (scan only) |
+| nowinandroid | 1,748 | 0 | identical |
+| IceCubesApp | 6,058 | 0 (1 parse-failure line differs) | identical |
+| arkTS_universal_starter | 863 | 0 | identical |

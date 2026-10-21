@@ -60,7 +60,7 @@ class App {
   }
   fail(code: number, err: Error | string): number {
     const msg = typeof err === 'string' ? err : err.message;
-    if (this.json) this.emit({ ok: false, error: msg, exit_code: code }, () => {});
+    if (this.json) this.emit({ error: msg, exit_code: code, ok: false }, () => {});
     process.stderr.write(`kb: ${msg}\n`);
     return code;
   }

@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
+import v8 from 'node:v8';
 import { createHash } from 'node:crypto';
 import type { Config, Platform } from '../config/config.js';
 import { absRoot, shadowed, wikiPath } from '../config/config.js';
@@ -165,8 +166,8 @@ export async function scan(cfg: Config, dir: string, opt: ScanOptions = {}): Pro
 
 // ---- cache ----
 
-const cacheFormat = 'scan-cache/ts1';
-export const CacheFile = '.kb/cache/scan.json.gz';
+const cacheFormat = 'scan-cache/ts2';
+export const CacheFile = '.kb/cache/scan.v8.gz';
 
 export function cacheVersion(): string {
   return `${cacheFormat}/g${GraphVersion}/${fingerprint().slice(0, 16)}`;
@@ -187,7 +188,7 @@ export class ScanCache {
   static load(p: string): ScanCache {
     const c = new ScanCache();
     try {
-      const raw = JSON.parse(zlib.gunzipSync(fs.readFileSync(p)).toString('utf8')) as { version: string; entries: Record<string, CacheEntry> };
+      const raw = v8.deserialize(zlib.gunzipSync(fs.readFileSync(p))) as { version: string; entries: Record<string, CacheEntry> };
       if (raw.version !== c.version) return c;
       for (const [k, v] of Object.entries(raw.entries)) c.entries.set(k, v);
     } catch {
@@ -201,7 +202,7 @@ export class ScanCache {
     fs.mkdirSync(path.dirname(p), { recursive: true });
     const tmp = p + '.tmp~';
     const obj = { version: this.version, entries: Object.fromEntries(this.entries) };
-    fs.writeFileSync(tmp, zlib.gzipSync(JSON.stringify(obj), { level: 1 }));
+    fs.writeFileSync(tmp, zlib.gzipSync(v8.serialize(obj), { level: 1 }));
     fs.renameSync(tmp, p);
     this.dirty = false;
   }
