@@ -4,12 +4,12 @@
 
 ## 1. 安装依赖
 
-- Go 1.24，需要 cgo 和 gcc/clang（tree-sitter 语法是 C 代码）
+- Node.js ≥ 20 与 npm（tree-sitter 语法为预编译 WASM）
 - git、jq
 - 可选：`claude` CLI（已登录，`claude -p "hi"` 能返回结果）。只有 claude 模式需要。
 
 ```bash
-go build -o kb ./cmd/kb      # 仅为了确认能编译；run.sh 会自行编译到输出目录
+npm ci && npm run build      # run.sh 也会自行构建，并在输出目录生成 kb 包装脚本
 ./kb --help
 ```
 

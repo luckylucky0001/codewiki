@@ -42,7 +42,7 @@ status: current   # current | stale | outdated-doc
 1. `kb scan`：tree-sitter 抽三端符号 + 引用边 → 新符号图；解析失败文件记入 parse_failures。
 2. `kb diff`：与 `.kb/graph.json.gz` 按符号 ID 比对 → unchanged / body / signature / added / deleted / renamed；注释、格式变化 = no-op；`--base <sha>` 兼容 squash。
 3. `kb plan`：受影响页面 = 自身锚点变化 ∪ 签名变化沿引用边 k 跳；每任务附**可写集合**；>50% 模块或 >30% 结构变化 → 全量重建。
-4. LLM 执行：`claude -p` + `kb-compound` skill，写入 staging。
+4. LLM 执行：`claude -p`（或 codex / gemini）+ `codewiki` skill（references/compound.md），写入 staging。
 5. `kb verify`：锚点 hash、符号存在、死链、孤儿页、index 覆盖。
 6. 原子替换发布，写 log.md / update_record；失败不发布。
 
@@ -59,7 +59,7 @@ CI 串行（concurrency group）；积压时从 last_sha 一次追到 HEAD。
 ## 5. CLI / Skills 约定
 
 - 所有命令 `--json`；stdout 数据 / stderr 日志；退出码 0 ok / 1 stale / 2 usage / 3 internal；`--dry-run`；无交互；幂等。
-- Skills：`kb-compound`、`kb-ingest`、`kb-query`、`kb-lint`（agentskills 规范，SKILL.md < 500 行）。
+- Skill：单一 `codewiki` skill（agentskills 规范：SKILL.md 作路由 < 500 行，细节在 `references/{query,ingest,compound,lint}.md`）。CLI 只有一个 `kb`，新功能都是子命令。
 
 ## 参考
 

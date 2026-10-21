@@ -39,27 +39,27 @@ flowchart LR
 | 层 | 负责 | 产出 |
 |---|---|---|
 | 事实层 | Go CLI（tree-sitter，确定性） | `facts/{android,ios,harmony}/*.md`、`facts/routes.json`、`testids.json`、`apis.json`、`requirements.json` |
-| 理解层 | LLM（`kb-compound` skill，或离线 template writer） | `pages/features/*`、`pages/overview.md`、`pages/_conflicts.md` … |
+| 理解层 | LLM（`codewiki` skill 的 compound 流程，或离线 template writer） | `pages/features/*`、`pages/overview.md`、`pages/_conflicts.md` … |
 | 校验层 | `kb verify`（CI 门禁） | 锚点 hash 全部匹配 HEAD、符号存在、无死链、无孤儿页、index 覆盖、facts 新鲜 |
 
 ## 安装
 
-需要 Go 1.24 与 C 编译器（tree-sitter 语法通过 cgo 编译）。
+需要 Node.js ≥ 20（无需 C 编译器：tree-sitter 语法以预编译的 WASM 随包发布在 `grammars/`）。
 
 ```bash
-go install github.com/luckylucky0001/codewiki/cmd/kb@latest
-# 或从 checkout 安装（装到 $(go env GOPATH)/bin，确保该目录在 PATH 中）
-git clone https://github.com/luckylucky0001/codewiki && cd codewiki && go install ./cmd/kb
-# 或者只构建二进制，再自行放进 PATH：go build -o ~/bin/kb ./cmd/kb
+npm i -g codewiki            # 安装全局命令 kb
+npx -y codewiki --help       # 或不安装，直接 npx（包名 codewiki，命令 kb）
+# 从 checkout 安装：
+git clone https://github.com/luckylucky0001/codewiki && cd codewiki && npm ci && npm run build && npm link
 ```
 
 下面的命令都直接调用 `kb`，所以它必须在 PATH 中。
 
 **git 是可选的。** 不在 git 仓库里时，`kb init / scan / ingest / compound / verify / context` 同样可以运行，输出中的 head 显示为 `(no git)`。但增量 compound（与上次的 `last_sha` 比较）、`kb diff --base`、`kb hook` 和 `kb eval` 需要 git。
 
-ArkTS 语法以源码形式 vendored 在模块内部（`internal/grammars/arkts`，含 MIT LICENSE 与 VENDORED.md），`go.mod` 不含任何 `replace`，因此远程 `go install …@latest` 可用。
+语法（Kotlin、Java、Swift、TypeScript/TSX、JavaScript、ArkTS）由 `tree-sitter-cli` 0.27.1 从与旧 Go 版完全相同的语法源码编译为 WASM（见 `grammars/VENDORED.md`），因此符号 ID、hash 与 Go 版逐字节一致；ArkTS 语法源码（含本地 trailing-comma 补丁）在 `legacy-go/internal/grammars/arkts`。
 
-提示：Swift 语法的 C 代码在编译时会打印 `TOKEN_COUNT redefined` 警告，无害；可用 `CGO_CFLAGS="-O2 -w"` 静默。
+原 Go 实现保留在 `legacy-go/`（tag `go-final`），仅用于对照与重新生成 `test/golden/`。
 
 ## 快速开始
 
@@ -369,20 +369,22 @@ post-receive 钩子的行为：
 - 第二次 push 的钩子一次处理了 4 个新提交，第三次的钩子输出 `already compounded`；
 - 最终 `wiki last_sha == master`，verify 通过。
 
-## 在 Claude Code 中使用 skills
+## 在 Claude Code 中使用 skill
 
-`skills/` 下有 4 个符合 [Agent Skills 规范](https://agentskills.io) 的 skill（frontmatter `name` = 目录名、`description` 说明做什么 + 何时用、正文 < 500 行、`references/` 按需加载）：
+`skills/codewiki/` 是唯一的 skill（符合 [Agent Skills 规范](https://agentskills.io)：description < 1024 字符、SKILL.md < 500 行）。SKILL.md 是路由：前置检查 → 判断任务 → 精确命令；细节按需加载 `references/`：
 
-| skill | 用途 |
+| 任务 | reference |
 |---|---|
-| `kb-compound` | 合并后增量更新 wiki；也是 `kb compound --llm claude` 时单个任务的写作规范 |
-| `kb-ingest` | 发现并核对 spec/旧文档，产出 `_conflicts.md` 与 requirements 追踪 |
-| `kb-query` | 回答“X 在三端怎么实现”、改代码前 `kb context <file>` |
-| `kb-lint` | `kb verify` / `--fix-index` / `kb lint-tid` |
+| 回答“X 在三端怎么实现”、路由/testID/接口/常量、过时文档、改代码前 `kb context <file>` | `references/query.md` |
+| 发现并核对 spec/旧文档，产出 `_conflicts.md` 与 requirements 追踪 | `references/ingest.md`（+ `conventions.md`） |
+| 合并后增量更新 wiki；`kb compound --agent …` 时单个任务的写作规范 | `references/compound.md`（+ `page-contract.md`） |
+| `kb verify` / `--fix-index` / `kb lint-tid` / `kb parity` 门禁 | `references/lint.md` |
 
 ```bash
-kb install-skills /path/to/app-repo     # 复制到 /path/to/app-repo/.claude/skills/
-# 本仓库内：.claude/skills/* 是指向 skills/* 的符号链接，Claude Code 可直接发现
+kb install --agent claude --target /path/to/app-repo   # skill → .claude/skills/codewiki/，CLAUDE.md 指引块
+kb install --agent all --mcp --target /path/to/app-repo # 所有 agent：指引块、skill、MCP 注册
+kb install-skills /path/to/app-repo                     # 旧命令，保留为别名
+# 本仓库内：.claude/skills/codewiki 是指向 skills/codewiki 的符号链接
 ```
 
 skills 只驱动 CLI，不重新实现逻辑。
@@ -672,7 +674,7 @@ codewiki 的 LLM 会读取不可信的内容：旧文档、第三方代码里的
 
 ## 局限
 
-- **cgo**：tree-sitter 语法是 C 代码，需要 C 编译器；交叉编译需相应工具链。
+- **WASM 语法**：tree-sitter 语法以预编译 WASM 发布（web-tree-sitter 0.27），无需 C 编译器；重新编译语法需 `tree-sitter-cli` 0.27.1（自动下载 wasi-sdk）。
 - **ArkTS 语法**：使用 `harmony-contrib/tree-sitter-arkts`（vendored 于 `internal/grammars/arkts`，MIT）。上游报告约 94% 的真实工程文件可无错解析，我们在 3858 个真实 .ets 文件上实测为 99.9%，失败均来自 ArkUI 调用参数中的尾逗号。修补语法后为 100%；出错文件记录在 `parse_failures`（仍尽量抽取符号），不会中断扫描。
 - Swift 语法来自 `alex-pinkus/tree-sitter-swift`（使用带生成文件的 tag 版本）；Kotlin 为 `tree-sitter-grammars/tree-sitter-kotlin` v1.1.0；Java/JS/TS 为官方语法。
 - 引用边为名称级解析，没有类型推断；跨平台不建立边。
@@ -694,9 +696,9 @@ codewiki 的 LLM 会读取不可信的内容：旧文档、第三方代码里的
 ## 开发
 
 ```bash
-CGO_CFLAGS="-O2 -w" go test ./...      # 单测 + 集成测试（template 流程、写集回滚、失败不发布）
-go vet ./... && gofmt -l cmd internal skills
-DEMO_LLM=template demo/run.sh           # 端到端 demo
+npm ci && npm test                      # 构建 + vitest（Go 对照 golden、CLI 集成、写集回滚、MCP）
+npm run typecheck
+DEMO_LLM=template demo/run.sh           # 端到端 demo（verify PASS）
 ```
 
-目录：`cmd/kb`（入口）、`internal/extract`（tree-sitter 符号/调用点）、`internal/scan`（遍历 + 引用解析）、`internal/facts`（三端事实）、`internal/engine`（diff/plan/compound/claims/docs）、`internal/wiki`（页面/索引/日志/verify）、`internal/cli`、`skills/`、`examples/`、`demo/`、`internal/grammars/arkts`（vendored ArkTS 语法 + cgo binding）。
+目录：`src/cli`（`kb` 命令、install、hook）、`src/config`、`src/scan`（遍历 + 引用解析 + worker_threads）、`src/extract`（WASM tree-sitter 符号/调用点）、`src/facts`（三端事实）、`src/engine`（diff/plan/compound/claims/docs/eval）、`src/wiki`（页面/索引/日志/verify）、`src/mcp`、`src/agents`、`grammars/`（WASM）、`skills/codewiki/`、`test/`（含 `test/golden/`）、`legacy-go/`（原 Go 实现）。

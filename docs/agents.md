@@ -57,7 +57,7 @@ kb install-skills ../app                      # 旧命令，保留为别名：.c
 
 - **指令块**放在 `<!-- codewiki:begin … -->` 和 `<!-- codewiki:end -->` 之间，原地替换。块外的内容不会动。重复运行时文件逐字节不变，每一项都报告 `unchanged`。
 - 指令块的内容就是按“问题类型 → 首选动作”整理的表格（路由用 `kb routes`，testID 用 `kb lint-tid --pages`，跨端差异用 `kb parity`，过时文档用 `kb conflicts`，改文件前用 `kb context <file>`）。表格里的工具名按 agent 调整：Claude 写成 `Bash:` / `Read` / `Grep`，其他 agent 写成 `Run:` / `Read` / `Search`，并说明 MCP 工具 `kb_*` 也能用。
-- **Skills**：kb 自带的 4 个 skill 符合 [Agent Skills](https://agentskills.io) 规范，同一份文件同时供 Claude、Codex 和 Gemini 使用。
+- **Skill**：kb 自带唯一的 `codewiki` skill（SKILL.md 路由 + `references/*.md`），符合 [Agent Skills](https://agentskills.io) 规范，同一份文件同时供 Claude、Codex 和 Gemini 使用。
 - **MCP 的 JSON 配置**（`.mcp.json`、`.gemini/settings.json`、`.cursor/mcp.json`）：先解析，只设置 `mcpServers.codewiki` 这一个键，其他键保留（大数字也不会丢精度）。文件带注释、不是合法 JSON 时直接跳过并提示，不会重写。
 - **MCP 的 TOML 配置**（`.codex/config.toml`）：追加一张由 `# codewiki:begin/end` 标记包住的 `[mcp_servers.codewiki]` 表。如果用户已经在标记之外自己写了同名的表，就跳过。
 - MCP 命令写成 `kb mcp --root <仓库绝对路径>`。如果配置要提交到仓库，用 `--mcp-root .` 改成相对路径。
