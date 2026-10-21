@@ -1,0 +1,495 @@
+{
+ "repo": "element-hq/element-x-android",
+ "url": "https://github.com/element-hq/element-x-android",
+ "commit": "85b63e571afc448068164d865285e11385e18723",
+ "platform_roots": {
+  "android": [
+   "app",
+   "appnav",
+   "features",
+   "libraries"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "android",
+   "route_id": "OnBoardingNode",
+   "symbol": "OnBoardingNode",
+   "file": "features/login/impl/src/main/kotlin/io/element/android/features/login/impl/screens/onboarding/OnBoardingNode.kt",
+   "kind": "appyx-node",
+   "note": "@ContributesNode Appyx leaf Node (screen = Node+Presenter+View)"
+  },
+  {
+   "platform": "android",
+   "route_id": "LoginWithClassicNode",
+   "symbol": "LoginWithClassicNode",
+   "file": "features/login/impl/src/main/kotlin/io/element/android/features/login/impl/screens/classic/loginwithclassic/LoginWithClassicNode.kt",
+   "kind": "appyx-node",
+   "note": "@ContributesNode Appyx leaf Node (screen = Node+Presenter+View)"
+  },
+  {
+   "platform": "android",
+   "route_id": "LogoutNode",
+   "symbol": "LogoutNode",
+   "file": "features/logout/impl/src/main/kotlin/io/element/android/features/logout/impl/LogoutNode.kt",
+   "kind": "appyx-node",
+   "note": "@ContributesNode Appyx leaf Node (screen = Node+Presenter+View)"
+  },
+  {
+   "platform": "android",
+   "route_id": "ConfirmAccountProviderNode",
+   "symbol": "ConfirmAccountProviderNode",
+   "file": "features/login/impl/src/main/kotlin/io/element/android/features/login/impl/screens/confirmaccountprovider/ConfirmAccountProviderNode.kt",
+   "kind": "appyx-node",
+   "note": "@ContributesNode Appyx leaf Node (screen = Node+Presenter+View)"
+  },
+  {
+   "platform": "android",
+   "route_id": "PreferencesRootNode",
+   "symbol": "PreferencesRootNode",
+   "file": "features/preferences/impl/src/main/kotlin/io/element/android/features/preferences/impl/root/PreferencesRootNode.kt",
+   "kind": "appyx-node",
+   "note": "@ContributesNode Appyx leaf Node (screen = Node+Presenter+View)"
+  },
+  {
+   "platform": "android",
+   "route_id": "RoomDetailsNode",
+   "symbol": "RoomDetailsNode",
+   "file": "features/roomdetails/impl/src/main/kotlin/io/element/android/features/roomdetails/impl/RoomDetailsNode.kt",
+   "kind": "appyx-node",
+   "note": "@ContributesNode Appyx leaf Node (screen = Node+Presenter+View)"
+  },
+  {
+   "platform": "android",
+   "route_id": "MessagesNode",
+   "symbol": "MessagesNode",
+   "file": "features/messages/impl/src/main/kotlin/io/element/android/features/messages/impl/MessagesNode.kt",
+   "kind": "appyx-node",
+   "note": "@ContributesNode Appyx leaf Node (screen = Node+Presenter+View)"
+  },
+  {
+   "platform": "android",
+   "route_id": "UserProfileNode",
+   "symbol": "UserProfileNode",
+   "file": "features/userprofile/impl/src/main/kotlin/io/element/android/features/userprofile/impl/root/UserProfileNode.kt",
+   "kind": "appyx-node",
+   "note": "@ContributesNode Appyx leaf Node (screen = Node+Presenter+View)"
+  },
+  {
+   "platform": "android",
+   "route_id": "ReportRoomNode",
+   "symbol": "ReportRoomNode",
+   "file": "features/reportroom/impl/src/main/kotlin/io/element/android/features/reportroom/impl/ReportRoomNode.kt",
+   "kind": "appyx-node",
+   "note": "@ContributesNode Appyx leaf Node (screen = Node+Presenter+View)"
+  },
+  {
+   "platform": "android",
+   "route_id": "SetupPinNode",
+   "symbol": "SetupPinNode",
+   "file": "features/lockscreen/impl/src/main/kotlin/io/element/android/features/lockscreen/impl/setup/pin/SetupPinNode.kt",
+   "kind": "appyx-node",
+   "note": "@ContributesNode Appyx leaf Node (screen = Node+Presenter+View)"
+  },
+  {
+   "platform": "android",
+   "route_id": "NotificationSettingsNode",
+   "symbol": "NotificationSettingsNode",
+   "file": "features/preferences/impl/src/main/kotlin/io/element/android/features/preferences/impl/notifications/NotificationSettingsNode.kt",
+   "kind": "appyx-node",
+   "note": "@ContributesNode Appyx leaf Node (screen = Node+Presenter+View)"
+  },
+  {
+   "platform": "android",
+   "route_id": "QrCodeIntroNode",
+   "symbol": "QrCodeIntroNode",
+   "file": "features/login/impl/src/main/kotlin/io/element/android/features/login/impl/screens/qrcode/intro/QrCodeIntroNode.kt",
+   "kind": "appyx-node",
+   "note": "@ContributesNode Appyx leaf Node (screen = Node+Presenter+View)"
+  },
+  {
+   "platform": "android",
+   "route_id": "ThreadedMessagesNode",
+   "symbol": "ThreadedMessagesNode",
+   "file": "features/messages/impl/src/main/kotlin/io/element/android/features/messages/impl/threads/ThreadedMessagesNode.kt",
+   "kind": "appyx-node",
+   "note": "@ContributesNode Appyx leaf Node (screen = Node+Presenter+View)"
+  },
+  {
+   "platform": "android",
+   "route_id": "AnalyticsOptInNode",
+   "symbol": "AnalyticsOptInNode",
+   "file": "features/analytics/impl/src/main/kotlin/io/element/android/features/analytics/impl/AnalyticsOptInNode.kt",
+   "kind": "appyx-node",
+   "note": "@ContributesNode Appyx leaf Node (screen = Node+Presenter+View)"
+  },
+  {
+   "platform": "android",
+   "route_id": "RoomMemberDetailsNode",
+   "symbol": "RoomMemberDetailsNode",
+   "file": "features/roomdetails/impl/src/main/kotlin/io/element/android/features/roomdetails/impl/members/details/RoomMemberDetailsNode.kt",
+   "kind": "appyx-node",
+   "note": "@ContributesNode Appyx leaf Node (screen = Node+Presenter+View)"
+  },
+  {
+   "platform": "android",
+   "route_id": "DependencyLicensesListNode",
+   "symbol": "DependencyLicensesListNode",
+   "file": "features/licenses/impl/src/main/kotlin/io/element/android/features/licenses/impl/list/DependencyLicensesListNode.kt",
+   "kind": "appyx-node",
+   "note": "@ContributesNode Appyx leaf Node (screen = Node+Presenter+View)"
+  },
+  {
+   "platform": "android",
+   "route_id": "SignedOutNode",
+   "symbol": "SignedOutNode",
+   "file": "features/signedout/impl/src/main/kotlin/io/element/android/features/signedout/impl/SignedOutNode.kt",
+   "kind": "appyx-node",
+   "note": "@ContributesNode Appyx leaf Node (screen = Node+Presenter+View)"
+  },
+  {
+   "platform": "android",
+   "route_id": "ModerationAndSafetyNode",
+   "symbol": "ModerationAndSafetyNode",
+   "file": "features/preferences/impl/src/main/kotlin/io/element/android/features/preferences/impl/moderation/ModerationAndSafetyNode.kt",
+   "kind": "appyx-node",
+   "note": "@ContributesNode Appyx leaf Node (screen = Node+Presenter+View)"
+  },
+  {
+   "platform": "android",
+   "route_id": "SecureBackupRootNode",
+   "symbol": "SecureBackupRootNode",
+   "file": "features/securebackup/impl/src/main/kotlin/io/element/android/features/securebackup/impl/root/SecureBackupRootNode.kt",
+   "kind": "appyx-node",
+   "note": "@ContributesNode Appyx leaf Node (screen = Node+Presenter+View)"
+  },
+  {
+   "platform": "android",
+   "route_id": "MainActivity",
+   "symbol": "MainActivity",
+   "file": "app/src/main/kotlin/io/element/android/x/MainActivity.kt",
+   "kind": "activity",
+   "optional": true
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "android",
+   "symbol": "RootFlowNode",
+   "file": "appnav/src/main/kotlin/io/element/android/appnav/RootFlowNode.kt",
+   "reason": "Appyx ParentNode/flow container (backstack host), not a leaf screen",
+   "borderline": true
+  },
+  {
+   "platform": "android",
+   "symbol": "LoggedInFlowNode",
+   "file": "appnav/src/main/kotlin/io/element/android/appnav/LoggedInFlowNode.kt",
+   "reason": "flow container",
+   "borderline": true
+  },
+  {
+   "platform": "android",
+   "symbol": "LoggedInFlowNode.NavTarget.Placeholder",
+   "file": "appnav/src/main/kotlin/io/element/android/appnav/LoggedInFlowNode.kt",
+   "reason": "placeholder NavTarget (empty)"
+  },
+  {
+   "platform": "android",
+   "symbol": "RoomFlowNode.NavTarget.Loading",
+   "file": "appnav/src/main/kotlin/io/element/android/appnav/room/RoomFlowNode.kt",
+   "reason": "loading state NavTarget"
+  },
+  {
+   "platform": "android",
+   "symbol": "JoinedRoomFlowNode.NavTarget.Loaded",
+   "file": "appnav/src/main/kotlin/io/element/android/appnav/room/joined/JoinedRoomFlowNode.kt",
+   "reason": "state NavTarget wrapping child flow"
+  },
+  {
+   "platform": "android",
+   "symbol": "HomeFlowNode",
+   "file": "features/home/impl/src/main/kotlin/io/element/android/features/home/impl/HomeFlowNode.kt",
+   "reason": "flow node (container)",
+   "borderline": true
+  }
+ ],
+ "deeplinks": [
+  {
+   "platform": "android",
+   "scheme": "elementx",
+   "host": "open",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "notification deep link intent-filter; parsed by libraries/deeplink DefaultDeeplinkParser (HOST=\"open\")"
+  },
+  {
+   "platform": "android",
+   "scheme": "@string/login_redirect_scheme",
+   "host": "",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "OAuth redirect; resValue in app/build.gradle.kts = io.element.android(.debug)",
+   "resolved_scheme": "io.element.android"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "app.element.io",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "autoVerify"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "develop.element.io",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "autoVerify"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "staging.element.io",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "autoVerify"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "mobile.element.io",
+   "path": "/element/",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "autoVerify android:path"
+  },
+  {
+   "platform": "android",
+   "scheme": "matrix",
+   "host": "",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "scheme-only"
+  },
+  {
+   "platform": "android",
+   "scheme": "element",
+   "host": "user",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "element://user"
+  },
+  {
+   "platform": "android",
+   "scheme": "element",
+   "host": "room",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "element://room"
+  }
+ ],
+ "testids": [
+  {
+   "platform": "android",
+   "tid": "onboarding-sign_in",
+   "file": "libraries/testtags/src/main/kotlin/io/element/android/libraries/testtags/TestTags.kt",
+   "line": 18,
+   "note": "value declared as TestTag(\"...\") in central TestTags object; applied via Modifier.testTag(TestTags.x) (semantics testTag + testTagsAsResourceId)",
+   "use_file": "features/login/impl/src/main/kotlin/io/element/android/features/login/impl/screens/onboarding/OnBoardingView.kt",
+   "use_line": 306,
+   "alt_files": [
+    "features/login/impl/src/main/kotlin/io/element/android/features/login/impl/screens/onboarding/OnBoardingView.kt"
+   ]
+  },
+  {
+   "platform": "android",
+   "tid": "login-continue",
+   "file": "libraries/testtags/src/main/kotlin/io/element/android/libraries/testtags/TestTags.kt",
+   "line": 26,
+   "note": "value declared as TestTag(\"...\") in central TestTags object; applied via Modifier.testTag(TestTags.x) (semantics testTag + testTagsAsResourceId)",
+   "use_file": "features/login/impl/src/main/kotlin/io/element/android/features/login/impl/screens/classic/loginwithclassic/LoginWithClassicView.kt",
+   "use_line": 168,
+   "alt_files": [
+    "features/login/impl/src/main/kotlin/io/element/android/features/login/impl/screens/classic/loginwithclassic/LoginWithClassicView.kt"
+   ]
+  },
+  {
+   "platform": "android",
+   "tid": "login-password",
+   "file": "libraries/testtags/src/main/kotlin/io/element/android/libraries/testtags/TestTags.kt",
+   "line": 25,
+   "note": "value declared as TestTag(\"...\") in central TestTags object; applied via Modifier.testTag(TestTags.x) (semantics testTag + testTagsAsResourceId)",
+   "use_file": "features/deactivation/impl/src/main/kotlin/io/element/android/features/deactivation/impl/AccountDeactivationView.kt",
+   "use_line": 268,
+   "alt_files": [
+    "features/deactivation/impl/src/main/kotlin/io/element/android/features/deactivation/impl/AccountDeactivationView.kt"
+   ]
+  },
+  {
+   "platform": "android",
+   "tid": "verification-recovery_key",
+   "file": "libraries/testtags/src/main/kotlin/io/element/android/libraries/testtags/TestTags.kt",
+   "line": 31,
+   "note": "value declared as TestTag(\"...\") in central TestTags object; applied via Modifier.testTag(TestTags.x) (semantics testTag + testTagsAsResourceId)",
+   "use_file": "features/securebackup/impl/src/main/kotlin/io/element/android/features/securebackup/impl/setup/views/RecoveryKeyView.kt",
+   "use_line": 208,
+   "alt_files": [
+    "features/securebackup/impl/src/main/kotlin/io/element/android/features/securebackup/impl/setup/views/RecoveryKeyView.kt"
+   ]
+  },
+  {
+   "platform": "android",
+   "tid": "sign-out-submit",
+   "file": "libraries/testtags/src/main/kotlin/io/element/android/libraries/testtags/TestTags.kt",
+   "line": 38,
+   "note": "value declared as TestTag(\"...\") in central TestTags object; applied via Modifier.testTag(TestTags.x) (semantics testTag + testTagsAsResourceId)",
+   "use_file": "features/logout/impl/src/main/kotlin/io/element/android/features/logout/impl/LogoutView.kt",
+   "use_line": 153,
+   "alt_files": [
+    "features/logout/impl/src/main/kotlin/io/element/android/features/logout/impl/LogoutView.kt"
+   ]
+  },
+  {
+   "platform": "android",
+   "tid": "change_server-server",
+   "file": "libraries/testtags/src/main/kotlin/io/element/android/libraries/testtags/TestTags.kt",
+   "line": 43,
+   "note": "value declared as TestTag(\"...\") in central TestTags object; applied via Modifier.testTag(TestTags.x) (semantics testTag + testTagsAsResourceId)",
+   "use_file": "features/login/impl/src/main/kotlin/io/element/android/features/login/impl/screens/confirmaccountprovider/ConfirmAccountProviderView.kt",
+   "use_line": 173,
+   "alt_files": [
+    "features/login/impl/src/main/kotlin/io/element/android/features/login/impl/screens/confirmaccountprovider/ConfirmAccountProviderView.kt"
+   ]
+  },
+  {
+   "platform": "android",
+   "tid": "home_screen-settings",
+   "file": "libraries/testtags/src/main/kotlin/io/element/android/libraries/testtags/TestTags.kt",
+   "line": 48,
+   "note": "value declared as TestTag(\"...\") in central TestTags object; applied via Modifier.testTag(TestTags.x) (semantics testTag + testTagsAsResourceId)",
+   "use_file": "features/home/impl/src/main/kotlin/io/element/android/features/home/impl/components/HomeTopBar.kt",
+   "use_line": 346,
+   "alt_files": [
+    "features/home/impl/src/main/kotlin/io/element/android/features/home/impl/components/HomeTopBar.kt"
+   ]
+  },
+  {
+   "platform": "android",
+   "tid": "settings-user_profile",
+   "file": "libraries/testtags/src/main/kotlin/io/element/android/libraries/testtags/TestTags.kt",
+   "line": 54,
+   "note": "value declared as TestTag(\"...\") in central TestTags object; applied via Modifier.testTag(TestTags.x) (semantics testTag + testTagsAsResourceId)",
+   "use_file": "features/preferences/impl/src/main/kotlin/io/element/android/features/preferences/impl/root/PreferencesRootView.kt",
+   "use_line": 114,
+   "alt_files": [
+    "features/preferences/impl/src/main/kotlin/io/element/android/features/preferences/impl/root/PreferencesRootView.kt"
+   ]
+  },
+  {
+   "platform": "android",
+   "tid": "room_detail-avatar",
+   "file": "libraries/testtags/src/main/kotlin/io/element/android/libraries/testtags/TestTags.kt",
+   "line": 59,
+   "note": "value declared as TestTag(\"...\") in central TestTags object; applied via Modifier.testTag(TestTags.x) (semantics testTag + testTagsAsResourceId)",
+   "use_file": "features/roomdetails/impl/src/main/kotlin/io/element/android/features/roomdetails/impl/RoomDetailsView.kt",
+   "use_line": 497,
+   "alt_files": [
+    "features/roomdetails/impl/src/main/kotlin/io/element/android/features/roomdetails/impl/RoomDetailsView.kt"
+   ]
+  },
+  {
+   "platform": "android",
+   "tid": "login-email_username",
+   "file": "libraries/testtags/src/main/kotlin/io/element/android/libraries/testtags/TestTags.kt",
+   "line": 24,
+   "note": "value declared as TestTag(\"...\") in central TestTags object; applied via Modifier.testTag(TestTags.x) (semantics testTag + testTagsAsResourceId)"
+  }
+ ],
+ "apis": [
+  {
+   "method": "POST",
+   "path": "_matrix/push/v1/notify",
+   "file": "libraries/push/impl/src/main/kotlin/io/element/android/libraries/push/impl/pushgateway/PushGatewayAPI.kt",
+   "note": "@POST(PushGatewayConfig.URI_PUSH_GATEWAY_PREFIX_PATH + \"notify\") - constant concatenation"
+  },
+  {
+   "method": "GET",
+   "path": "_matrix/push/v1/notify",
+   "file": "libraries/pushproviders/unifiedpush/src/main/kotlin/io/element/android/libraries/pushproviders/unifiedpush/network/UnifiedPushApi.kt"
+  }
+ ],
+ "claims": [
+  {
+   "id": "C1",
+   "text": "Style enforced by Editor config; Hard wrap at 160 chars",
+   "source": "AGENTS.md",
+   "label": "verified",
+   "evidence": ".editorconfig:7 max_line_length = 160"
+  },
+  {
+   "id": "C2",
+   "text": "We use Timber for logging. Never use android.util.Log",
+   "source": "AGENTS.md",
+   "label": "conflict",
+   "evidence": "libraries/androidutils/src/main/kotlin/io/element/android/libraries/androidutils/browser/ConsoleMessageLogger.kt:11 imports android.util.Log",
+   "note": "may only use Log priority constants; strictness debatable"
+  },
+  {
+   "id": "C3",
+   "text": "New English strings go in temporary.xml",
+   "source": "AGENTS.md",
+   "label": "verified",
+   "evidence": "libraries/ui-strings/src/main/res/values/temporary.xml"
+  },
+  {
+   "id": "C4",
+   "text": "Exactly one pr- label (see .github/release.yml)",
+   "source": "AGENTS.md",
+   "label": "verified",
+   "evidence": ".github/release.yml"
+  },
+  {
+   "id": "C5",
+   "text": "Update Docs TOC: ./gradlew generateDocsToc",
+   "source": "AGENTS.md",
+   "label": "verified",
+   "evidence": "build.gradle.kts:214"
+  },
+  {
+   "id": "C6",
+   "text": "Format: ./gradlew ktlintFormat",
+   "source": "AGENTS.md",
+   "label": "verified",
+   "evidence": "build.gradle.kts:61 org.jlleitschuh.gradle.ktlint"
+  },
+  {
+   "id": "C7",
+   "text": "We use Appyx for navigation and Molecule for Presenters",
+   "source": "AGENTS.md",
+   "label": "verified",
+   "evidence": "gradle/libs.versions.toml:43 appyx, :204 molecule-runtime"
+  },
+  {
+   "id": "C8",
+   "text": "We use Metro for DI; Use @ContributesNode(RoomScope::class) for Appyx Nodes",
+   "source": "AGENTS.md",
+   "label": "verified",
+   "evidence": "features/messages/impl/src/main/kotlin/io/element/android/features/messages/impl/MessagesNode.kt"
+  },
+  {
+   "id": "C9",
+   "text": "Features follow a 3-module structure: api, impl, test",
+   "source": "AGENTS.md",
+   "label": "verified",
+   "evidence": "features/login/{api,impl,test}"
+  },
+  {
+   "id": "C10",
+   "text": "Android Matrix client (Compose UI + matrix-rust-sdk)",
+   "source": "AGENTS.md",
+   "label": "verified",
+   "evidence": "libraries/rustsdk"
+  }
+ ],
+ "notes": "Appyx navigation: 122 @ContributesNode nodes; sample of 19 leaf Nodes. Route identity in Appyx is the NavTarget sealed member inside a FlowNode - those are labelled as not_screens when they are state placeholders. testTags are declared centrally (TestTags.kt TestTag(\"...\")) and applied elsewhere; label file = declaration, alt_files = use site; either matches. Most HTTP goes through matrix-rust-sdk (not visible). Clone reused read-only from oss2."
+}

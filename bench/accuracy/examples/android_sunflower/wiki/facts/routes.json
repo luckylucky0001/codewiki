@@ -1,0 +1,5 @@
+{"version":1,"routes":[
+ {"platform":"android","route_id":"plantdetail/:plantId","pattern":"plantDetail/{plantId}","deeplink":null,"file":"/abs/sunflower/app/src/main/java/com/google/samples/apps/sunflower/compose/Screen.kt","symbol":"Screen.PlantDetail"},
+ {"platform":"android","route_id":"HomeScreen","pattern":"","deeplink":null,"file":"app/src/main/java/com/google/samples/apps/sunflower/compose/home/HomeScreen.kt","symbol":"HomeScreen"},
+ {"platform":"android","route_id":"GardenScreenPreview","pattern":"","deeplink":null,"file":"app/src/main/java/com/google/samples/apps/sunflower/compose/garden/GardenScreen.kt","symbol":"GardenScreenPreview"},
+ {"platform":"android","route_id":"GardenActivity","file":"app/src/main/java/com/google/samples/apps/sunflower/GardenActivity.kt","symbol":"GardenActivity","deeplink":"sunflower://garden"}]}

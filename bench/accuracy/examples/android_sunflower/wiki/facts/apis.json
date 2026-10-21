@@ -1,0 +1,1 @@
+{"version":1,"apis":[{"platform":"android","method":"GET","path":"https://api.unsplash.com/search/photos?query={query}","file":"api/UnsplashService.kt","symbol":"searchPhotos"}]}

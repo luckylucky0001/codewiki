@@ -1,0 +1,422 @@
+{
+ "repo": "mastodon/mastodon-ios",
+ "url": "https://github.com/mastodon/mastodon-ios",
+ "commit": "cd37d472213aeb7879b108f8c4189b6b722b0ab8",
+ "platform_roots": {
+  "ios": [
+   "Mastodon",
+   "MastodonSDK",
+   "MastodonIntent",
+   "ShareActionExtension",
+   "NotificationService",
+   "WidgetExtension"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "ios",
+   "route_id": "WelcomeViewController",
+   "symbol": "WelcomeViewController",
+   "file": "Mastodon/Scene/Onboarding/Welcome/WelcomeViewController.swift",
+   "kind": "uikit-vc",
+   "scene_case": "welcome",
+   "note": "SceneCoordinator.Scene.welcome -> WelcomeViewController"
+  },
+  {
+   "platform": "ios",
+   "route_id": "MastodonPickServerViewController",
+   "symbol": "MastodonPickServerViewController",
+   "file": "Mastodon/Scene/Onboarding/PickServer/MastodonPickServerViewController.swift",
+   "kind": "uikit-vc",
+   "scene_case": "mastodonPickServer",
+   "note": "SceneCoordinator.Scene.mastodonPickServer -> MastodonPickServerViewController"
+  },
+  {
+   "platform": "ios",
+   "route_id": "MastodonRegisterViewController",
+   "symbol": "MastodonRegisterViewController",
+   "file": "Mastodon/Scene/Onboarding/Register/MastodonRegisterViewController.swift",
+   "kind": "uikit-vc",
+   "scene_case": "mastodonRegister",
+   "note": "SceneCoordinator.Scene.mastodonRegister -> MastodonRegisterViewController"
+  },
+  {
+   "platform": "ios",
+   "route_id": "MastodonServerRulesViewController",
+   "symbol": "MastodonServerRulesViewController",
+   "file": "Mastodon/Scene/Onboarding/ServerRules/MastodonServerRulesViewController.swift",
+   "kind": "uikit-vc",
+   "scene_case": "mastodonServerRules",
+   "note": "SceneCoordinator.Scene.mastodonServerRules -> MastodonServerRulesViewController"
+  },
+  {
+   "platform": "ios",
+   "route_id": "MastodonConfirmEmailViewController",
+   "symbol": "MastodonConfirmEmailViewController",
+   "file": "Mastodon/Scene/Onboarding/ConfirmEmail/MastodonConfirmEmailViewController.swift",
+   "kind": "uikit-vc",
+   "scene_case": "mastodonConfirmEmail",
+   "note": "SceneCoordinator.Scene.mastodonConfirmEmail -> MastodonConfirmEmailViewController"
+  },
+  {
+   "platform": "ios",
+   "route_id": "MastodonLoginViewController",
+   "symbol": "MastodonLoginViewController",
+   "file": "Mastodon/Scene/Onboarding/Login/MastodonLoginViewController.swift",
+   "kind": "uikit-vc",
+   "scene_case": "mastodonLogin",
+   "note": "SceneCoordinator.Scene.mastodonLogin -> MastodonLoginViewController"
+  },
+  {
+   "platform": "ios",
+   "route_id": "PolicyTableViewController",
+   "symbol": "PolicyTableViewController",
+   "file": "Mastodon/Scene/Onboarding/Privacy/PrivacyTableViewController.swift",
+   "kind": "uikit-vc",
+   "scene_case": "mastodonPrivacyPolicies",
+   "note": "SceneCoordinator.Scene.mastodonPrivacyPolicies -> PolicyTableViewController"
+  },
+  {
+   "platform": "ios",
+   "route_id": "MastodonResendEmailViewController",
+   "symbol": "MastodonResendEmailViewController",
+   "file": "Mastodon/Scene/Onboarding/ResendEmail/MastodonResendEmailViewController.swift",
+   "kind": "uikit-vc",
+   "scene_case": "mastodonResendEmail",
+   "note": "SceneCoordinator.Scene.mastodonResendEmail -> MastodonResendEmailViewController"
+  },
+  {
+   "platform": "ios",
+   "route_id": "ReportViewController",
+   "symbol": "ReportViewController",
+   "file": "Mastodon/Scene/Report/Report/ReportViewController.swift",
+   "kind": "uikit-vc",
+   "scene_case": "report",
+   "note": "SceneCoordinator.Scene.report -> ReportViewController"
+  },
+  {
+   "platform": "ios",
+   "route_id": "ReportServerRulesViewController",
+   "symbol": "ReportServerRulesViewController",
+   "file": "Mastodon/Scene/Report/ReportServerRules/ReportServerRulesViewController.swift",
+   "kind": "uikit-vc",
+   "scene_case": "reportServerRules",
+   "note": "SceneCoordinator.Scene.reportServerRules -> ReportServerRulesViewController"
+  },
+  {
+   "platform": "ios",
+   "route_id": "ReportStatusViewController",
+   "symbol": "ReportStatusViewController",
+   "file": "Mastodon/Scene/Report/ReportStatus/ReportStatusViewController.swift",
+   "kind": "uikit-vc",
+   "scene_case": "reportStatus",
+   "note": "SceneCoordinator.Scene.reportStatus -> ReportStatusViewController"
+  },
+  {
+   "platform": "ios",
+   "route_id": "ReportSupplementaryViewController",
+   "symbol": "ReportSupplementaryViewController",
+   "file": "Mastodon/Scene/Report/ReportSupplementary/ReportSupplementaryViewController.swift",
+   "kind": "uikit-vc",
+   "scene_case": "reportSupplementary",
+   "note": "SceneCoordinator.Scene.reportSupplementary -> ReportSupplementaryViewController"
+  },
+  {
+   "platform": "ios",
+   "route_id": "ReportResultViewController",
+   "symbol": "ReportResultViewController",
+   "file": "Mastodon/Scene/Report/ReportResult/ReportResultViewController.swift",
+   "kind": "uikit-vc",
+   "scene_case": "reportResult",
+   "note": "SceneCoordinator.Scene.reportResult -> ReportResultViewController"
+  },
+  {
+   "platform": "ios",
+   "route_id": "ComposeViewController",
+   "symbol": "ComposeViewController",
+   "file": "Mastodon/Scene/Compose/ComposeViewController.swift",
+   "kind": "uikit-vc",
+   "note": "presented from SceneDelegate mastodon://post"
+  },
+  {
+   "platform": "ios",
+   "route_id": "MastodonMainTabView",
+   "symbol": "MastodonMainTabView",
+   "file": "Mastodon/In Progress New Layout and Datamodel/MastodonMainTabView.swift",
+   "kind": "swiftui-root",
+   "note": "root UIHostingController in SceneCoordinator"
+  },
+  {
+   "platform": "ios",
+   "route_id": "TimelineListView",
+   "symbol": "TimelineListView",
+   "file": "Mastodon/In Progress New Layout and Datamodel/Timeline/TimelineListView.swift",
+   "kind": "swiftui-destination",
+   "note": "MastodonNavigationDestination.timeline"
+  },
+  {
+   "platform": "ios",
+   "route_id": "ProfileView",
+   "symbol": "ProfileView",
+   "file": "Mastodon/In Progress New Layout and Datamodel/Profile/ProfileView.swift",
+   "kind": "swiftui-destination",
+   "note": "MastodonNavigationDestination.profile / .myProfile"
+  },
+  {
+   "platform": "ios",
+   "route_id": "SettingsNavigationView",
+   "symbol": "SettingsNavigationView",
+   "file": "Mastodon/In Progress New Layout and Datamodel/Common Components/Views/Settings/SettingsRootView.swift",
+   "kind": "swiftui-destination",
+   "note": ".settings sheet"
+  },
+  {
+   "platform": "ios",
+   "route_id": "ProfileEditingView",
+   "symbol": "ProfileEditingView",
+   "file": "Mastodon/In Progress New Layout and Datamodel/Profile/ProfileEditingView.swift",
+   "kind": "swiftui-destination",
+   "note": "MastodonNavigationDestination.editProfile"
+  },
+  {
+   "platform": "ios",
+   "route_id": "DonationFlowView",
+   "symbol": "DonationFlowView",
+   "file": "Mastodon/In Progress New Layout and Datamodel/Common Components/Views/Settings/Donations/DonationFlowView.swift",
+   "kind": "swiftui-destination"
+  },
+  {
+   "platform": "ios",
+   "route_id": "ExploreRootView",
+   "symbol": "ExploreRootView",
+   "file": "Mastodon/In Progress New Layout and Datamodel/ExploreRootView.swift",
+   "kind": "swiftui-destination",
+   "note": "Explore tab root"
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "ios",
+   "symbol": "MastodonRegisterView_Previews",
+   "file": "Mastodon/Scene/Onboarding/Register/MastodonRegisterView.swift",
+   "reason": "PreviewProvider"
+  },
+  {
+   "platform": "ios",
+   "symbol": "MastodonConfirmEmailViewController_Previews",
+   "file": "Mastodon/Scene/Onboarding/ConfirmEmail/MastodonConfirmEmailViewController.swift",
+   "reason": "PreviewProvider"
+  },
+  {
+   "platform": "ios",
+   "symbol": "AutoCompleteViewController",
+   "file": "MastodonSDK/Sources/MastodonUI/Scene/ComposeContent/AutoComplete/AutoCompleteViewController.swift",
+   "reason": "child VC embedded inside ComposeContentViewController"
+  },
+  {
+   "platform": "ios",
+   "symbol": "ComposeContentViewController",
+   "file": "MastodonSDK/Sources/MastodonUI/Scene/ComposeContent/ComposeContentViewController.swift",
+   "reason": "child content VC embedded in ComposeViewController"
+  },
+  {
+   "platform": "ios",
+   "symbol": "MastodonUISnapshotTests",
+   "file": "MastodonUITests/MastodonUISnapshotTests.swift",
+   "reason": "UI test class"
+  },
+  {
+   "platform": "ios",
+   "symbol": "PickServerEmptyStateView_Previews",
+   "file": "Mastodon/Scene/Onboarding/PickServer/View/PickServerEmptyStateView.swift",
+   "reason": "PreviewProvider"
+  }
+ ],
+ "deeplinks": [
+  {
+   "platform": "ios",
+   "scheme": "mastodon",
+   "host": "",
+   "path": "",
+   "file": "Mastodon/Info.plist",
+   "source": "CFBundleURLSchemes"
+  },
+  {
+   "platform": "ios",
+   "scheme": "mastodon",
+   "host": "post",
+   "path": "",
+   "file": "Mastodon/Supporting Files/SceneDelegate.swift",
+   "source": "scene(_:openURLContexts:) switch url.host"
+  },
+  {
+   "platform": "ios",
+   "scheme": "mastodon",
+   "host": "profile",
+   "path": "/{acct}",
+   "file": "Mastodon/Supporting Files/SceneDelegate.swift",
+   "source": "url.host == profile"
+  },
+  {
+   "platform": "ios",
+   "scheme": "mastodon",
+   "host": "status",
+   "path": "/{id}",
+   "file": "Mastodon/Supporting Files/SceneDelegate.swift",
+   "source": "url.host == status"
+  },
+  {
+   "platform": "ios",
+   "scheme": "mastodon",
+   "host": "search",
+   "path": "?query=",
+   "file": "Mastodon/Supporting Files/SceneDelegate.swift",
+   "source": "url.host == search"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "mastodon.social",
+   "path": "",
+   "file": "Mastodon/Mastodon.entitlements",
+   "source": "associated-domains applinks"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "mastodon.online",
+   "path": "",
+   "file": "Mastodon/Mastodon.entitlements",
+   "source": "associated-domains applinks"
+  }
+ ],
+ "testids": [],
+ "apis": [
+  {
+   "method": "GET",
+   "path": "/api/v1/bookmarks",
+   "file": "MastodonSDK/Sources/MastodonSDK/API/Mastodon+API+Bookmarks.swift"
+  },
+  {
+   "method": "POST",
+   "path": "/api/v1/accounts",
+   "file": "MastodonSDK/Sources/MastodonSDK/API/Mastodon+API+Account+Credentials.swift",
+   "note": "register"
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/accounts/verify_credentials",
+   "file": "MastodonSDK/Sources/MastodonSDK/API/Mastodon+API+Account+Credentials.swift"
+  },
+  {
+   "method": "PATCH",
+   "path": "/api/v1/accounts/update_credentials",
+   "file": "MastodonSDK/Sources/MastodonSDK/API/Mastodon+API+Account+Credentials.swift"
+  },
+  {
+   "method": "POST",
+   "path": "/api/v1/emails/confirmations",
+   "file": "MastodonSDK/Sources/MastodonSDK/API/Mastodon+API+Account+Email.swift"
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/accounts/relationships",
+   "file": "MastodonSDK/Sources/MastodonSDK/API/Mastodon+API+Account+Friendship.swift"
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/blocks",
+   "file": "MastodonSDK/Sources/MastodonSDK/API/Mastodon+API+Account+Friendship.swift"
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/lists",
+   "file": "MastodonSDK/Sources/MastodonSDK/API/Mastdoon+API+Lists.swift"
+  },
+  {
+   "method": "POST",
+   "path": "/api/v1/lists/{id}/accounts",
+   "file": "MastodonSDK/Sources/MastodonSDK/API/Mastdoon+API+Lists.swift"
+  },
+  {
+   "method": "DELETE",
+   "path": "/api/v1/lists/{id}/accounts",
+   "file": "MastodonSDK/Sources/MastodonSDK/API/Mastdoon+API+Lists.swift"
+  }
+ ],
+ "claims": [
+  {
+   "id": "C1",
+   "text": "Requirements: iOS 18.0+",
+   "source": "Documentation/Setup.md",
+   "label": "verified",
+   "evidence": "MastodonSDK/Package.swift .iOS(\"18.0\"); project IPHONEOS_DEPLOYMENT_TARGET 18.6"
+  },
+  {
+   "id": "C2",
+   "text": "This app uses SwiftGen for Code Generation",
+   "source": "Documentation/Setup.md",
+   "label": "verified",
+   "evidence": "swiftgen.yml"
+  },
+  {
+   "id": "C3",
+   "text": "install ruby (we use the version defined in .ruby-version)",
+   "source": "Documentation/Setup.md",
+   "label": "verified",
+   "evidence": ".ruby-version"
+  },
+  {
+   "id": "C4",
+   "text": "We use the MVVM architecture to construct the whole app",
+   "source": "Documentation/How-it-works.md",
+   "label": "verified",
+   "evidence": "Mastodon/Scene/Report/Report/ReportViewModel.swift (ViewModel classes throughout)"
+  },
+  {
+   "id": "C5",
+   "text": "MastodonSDK contains CoreDataStack, MastodonAsset, MastodonCommon, MastodonCore, MastodonExtension, MastodonLocalization, MastodonSDK, MastodonUI",
+   "source": "Documentation/How-it-works.md",
+   "label": "verified",
+   "evidence": "MastodonSDK/Sources/"
+  },
+  {
+   "id": "C6",
+   "text": "App uses Core Data as the backend to persist all entities from the server",
+   "source": "Documentation/How-it-works.md",
+   "label": "verified",
+   "evidence": "MastodonSDK/Sources/CoreDataStack/CoreData.xcdatamodeld",
+   "note": "doc itself warns of refactor toward no CoreData; still present"
+  },
+  {
+   "id": "C7",
+   "text": "There are some views already transformed to SwiftUI likes MastodonRegisterView and ReportReasonView",
+   "source": "Documentation/How-it-works.md",
+   "label": "verified",
+   "evidence": "Mastodon/Scene/Onboarding/Register/MastodonRegisterView.swift; Mastodon/Scene/Report/ReportReason/ReportReasonView.swift"
+  },
+  {
+   "id": "C8",
+   "text": "Targets: Mastodon, NotificationService, ShareActionExtension, MastodonIntent",
+   "source": "Documentation/How-it-works.md",
+   "label": "verified",
+   "evidence": "NotificationService/, ShareActionExtension/, MastodonIntent/"
+  },
+  {
+   "id": "C9",
+   "text": "The app uses AutoLayout with UIStackView to place [timeline post components]",
+   "source": "Documentation/How-it-works.md",
+   "label": "conflict",
+   "evidence": "Mastodon/In Progress New Layout and Datamodel/Timeline/TimelineListView.swift (timeline now SwiftUI)",
+   "note": "doc header warns it is obsolete; timeline is SwiftUI TimelineListView"
+  },
+  {
+   "id": "C10",
+   "text": "This project is released under the GPL-3 License",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "LICENSE"
+  }
+ ],
+ "notes": "Hybrid UIKit (SceneCoordinator.Scene enum -> VC) + SwiftUI (MastodonNavigationDestination enum + navigationDestination). route_id for UIKit is the VC class; scene_case gives the enum case as alternate id. NO accessibilityIdentifier anywhere: testids intentionally empty (UI tests use localized labels like app.buttons[\"Log In\"] which are NOT testIDs) -> any extracted testid is a false positive. API paths are appendingPathComponent onto endpointURL \"https://{domain}/api/v1/\" so label paths include /api/v1 prefix; scorer strips /api/vN prefix when comparing."
+}

@@ -1,0 +1,337 @@
+{
+ "repo": "android/nowinandroid",
+ "url": "https://github.com/android/nowinandroid",
+ "commit": "a49ed253d75e61a2b6ab80a8da677b57437b08eb",
+ "platform_roots": {
+  "android": [
+   "app",
+   "feature",
+   "core",
+   "sync"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "android",
+   "route_id": "ForYouNavKey",
+   "symbol": "ForYouNavKey",
+   "file": "feature/foryou/api/src/main/kotlin/com/google/samples/apps/nowinandroid/feature/foryou/api/navigation/ForYouNavKey.kt",
+   "kind": "nav3-navkey",
+   "screen_fn": "ForYouScreen",
+   "screen_file": "feature/foryou/impl/src/main/kotlin/com/google/samples/apps/nowinandroid/feature/foryou/impl/ForYouScreen.kt"
+  },
+  {
+   "platform": "android",
+   "route_id": "SearchNavKey",
+   "symbol": "SearchNavKey",
+   "file": "feature/search/api/src/main/kotlin/com/google/samples/apps/nowinandroid/feature/search/api/navigation/SearchNavKey.kt",
+   "kind": "nav3-navkey",
+   "screen_fn": "SearchScreen"
+  },
+  {
+   "platform": "android",
+   "route_id": "BookmarksNavKey",
+   "symbol": "BookmarksNavKey",
+   "file": "feature/bookmarks/api/src/main/kotlin/com/google/samples/apps/nowinandroid/feature/bookmarks/api/navigation/BookmarksNavKey.kt",
+   "kind": "nav3-navkey",
+   "screen_fn": "BookmarksScreen"
+  },
+  {
+   "platform": "android",
+   "route_id": "TopicNavKey",
+   "symbol": "TopicNavKey",
+   "file": "feature/topic/api/src/main/kotlin/com/google/samples/apps/nowinandroid/feature/topic/api/navigation/TopicNavKey.kt",
+   "kind": "nav3-navkey",
+   "screen_fn": "TopicScreen",
+   "args": [
+    "id"
+   ]
+  },
+  {
+   "platform": "android",
+   "route_id": "InterestsNavKey",
+   "symbol": "InterestsNavKey",
+   "file": "feature/interests/api/src/main/kotlin/com/google/samples/apps/nowinandroid/feature/interests/api/navigation/InterestsNavKey.kt",
+   "kind": "nav3-navkey",
+   "screen_fn": "InterestsScreen"
+  },
+  {
+   "platform": "android",
+   "route_id": "ForYouScreen",
+   "symbol": "ForYouScreen",
+   "file": "feature/foryou/impl/src/main/kotlin/com/google/samples/apps/nowinandroid/feature/foryou/impl/ForYouScreen.kt",
+   "kind": "compose-screen",
+   "alt_of": "ForYouNavKey"
+  },
+  {
+   "platform": "android",
+   "route_id": "SearchScreen",
+   "symbol": "SearchScreen",
+   "file": "feature/search/impl/src/main/kotlin/com/google/samples/apps/nowinandroid/feature/search/impl/SearchScreen.kt",
+   "kind": "compose-screen",
+   "alt_of": "SearchNavKey"
+  },
+  {
+   "platform": "android",
+   "route_id": "BookmarksScreen",
+   "symbol": "BookmarksScreen",
+   "file": "feature/bookmarks/impl/src/main/kotlin/com/google/samples/apps/nowinandroid/feature/bookmarks/impl/BookmarksScreen.kt",
+   "kind": "compose-screen",
+   "alt_of": "BookmarksNavKey"
+  },
+  {
+   "platform": "android",
+   "route_id": "TopicScreen",
+   "symbol": "TopicScreen",
+   "file": "feature/topic/impl/src/main/kotlin/com/google/samples/apps/nowinandroid/feature/topic/impl/TopicScreen.kt",
+   "kind": "compose-screen",
+   "alt_of": "TopicNavKey"
+  },
+  {
+   "platform": "android",
+   "route_id": "InterestsScreen",
+   "symbol": "InterestsScreen",
+   "file": "feature/interests/impl/src/main/kotlin/com/google/samples/apps/nowinandroid/feature/interests/impl/InterestsScreen.kt",
+   "kind": "compose-screen",
+   "alt_of": "InterestsNavKey"
+  },
+  {
+   "platform": "android",
+   "route_id": "SettingsDialog",
+   "symbol": "SettingsDialog",
+   "file": "feature/settings/impl/src/main/kotlin/com/google/samples/apps/nowinandroid/feature/settings/impl/SettingsDialog.kt",
+   "kind": "compose-dialog",
+   "note": "shown as dialog from NiaApp, not a nav destination; counted as screen-ish",
+   "optional": true
+  },
+  {
+   "platform": "android",
+   "route_id": "MainActivity",
+   "symbol": "MainActivity",
+   "file": "app/src/main/kotlin/com/google/samples/apps/nowinandroid/MainActivity.kt",
+   "kind": "activity"
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "android",
+   "symbol": "LoadingStatePreview",
+   "file": "feature/bookmarks/impl/src/main/kotlin/com/google/samples/apps/nowinandroid/feature/bookmarks/impl/BookmarksScreen.kt",
+   "reason": "@Preview"
+  },
+  {
+   "platform": "android",
+   "symbol": "EmptyStatePreview",
+   "file": "feature/bookmarks/impl/src/main/kotlin/com/google/samples/apps/nowinandroid/feature/bookmarks/impl/BookmarksScreen.kt",
+   "reason": "@Preview"
+  },
+  {
+   "platform": "android",
+   "symbol": "InterestsScreen (test helper)",
+   "file": "feature/interests/impl/src/androidTest/kotlin/com/google/samples/apps/nowinandroid/feature/interests/impl/InterestsScreenTest.kt",
+   "reason": "private test helper composable with same name as real screen"
+  },
+  {
+   "platform": "android",
+   "symbol": "NewsResourceCardExpanded",
+   "file": "core/ui/src/main/kotlin/com/google/samples/apps/nowinandroid/core/ui/NewsResourceCard.kt",
+   "reason": "reusable card component"
+  },
+  {
+   "platform": "android",
+   "symbol": "NiaTopAppBar",
+   "file": "core/designsystem/src/main/kotlin/com/google/samples/apps/nowinandroid/core/designsystem/component/TopAppBar.kt",
+   "reason": "design-system component"
+  },
+  {
+   "platform": "android",
+   "symbol": "SettingsDialogSectionTitle",
+   "file": "feature/settings/impl/src/main/kotlin/com/google/samples/apps/nowinandroid/feature/settings/impl/SettingsDialog.kt",
+   "reason": "private sub-composable"
+  }
+ ],
+ "deeplinks": [
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "www.nowinandroid.apps.samples.google.com",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "MainActivity intent-filter"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "www.nowinandroid.apps.samples.google.com",
+   "path": "/foryou/{linkedNewsResourceId}",
+   "file": "core/notifications/src/main/kotlin/com/google/samples/apps/nowinandroid/core/notifications/SystemTrayNotifier.kt",
+   "source": "DEEP_LINK_BASE_PATH used in notification PendingIntent",
+   "optional": true
+  }
+ ],
+ "testids": [
+  {
+   "platform": "android",
+   "tid": "forYou:feed",
+   "file": "feature/foryou/impl/src/main/kotlin/com/google/samples/apps/nowinandroid/feature/foryou/impl/ForYouScreen.kt",
+   "line": 172
+  },
+  {
+   "platform": "android",
+   "tid": "search:newsResources",
+   "file": "feature/search/impl/src/main/kotlin/com/google/samples/apps/nowinandroid/feature/search/impl/SearchScreen.kt",
+   "line": 307
+  },
+  {
+   "platform": "android",
+   "tid": "searchTextField",
+   "file": "feature/search/impl/src/main/kotlin/com/google/samples/apps/nowinandroid/feature/search/impl/SearchScreen.kt",
+   "line": 532
+  },
+  {
+   "platform": "android",
+   "tid": "bookmarks:loading",
+   "file": "feature/bookmarks/impl/src/main/kotlin/com/google/samples/apps/nowinandroid/feature/bookmarks/impl/BookmarksScreen.kt",
+   "line": 158
+  },
+  {
+   "platform": "android",
+   "tid": "bookmarks:feed",
+   "file": "feature/bookmarks/impl/src/main/kotlin/com/google/samples/apps/nowinandroid/feature/bookmarks/impl/BookmarksScreen.kt",
+   "line": 185
+  },
+  {
+   "platform": "android",
+   "tid": "bookmarks:empty",
+   "file": "feature/bookmarks/impl/src/main/kotlin/com/google/samples/apps/nowinandroid/feature/bookmarks/impl/BookmarksScreen.kt",
+   "line": 225
+  },
+  {
+   "platform": "android",
+   "tid": "loadingWheel",
+   "file": "core/designsystem/src/main/kotlin/com/google/samples/apps/nowinandroid/core/designsystem/component/LoadingWheel.kt",
+   "line": 116
+  },
+  {
+   "platform": "android",
+   "tid": "niaTopAppBar",
+   "file": "core/designsystem/src/main/kotlin/com/google/samples/apps/nowinandroid/core/designsystem/component/TopAppBar.kt",
+   "line": 73
+  },
+  {
+   "platform": "android",
+   "tid": "NiaNavItem",
+   "file": "app/src/main/kotlin/com/google/samples/apps/nowinandroid/ui/NiaApp.kt",
+   "line": 184
+  },
+  {
+   "platform": "android",
+   "tid": "topic:${viewModel.topicId}",
+   "file": "feature/topic/impl/src/main/kotlin/com/google/samples/apps/nowinandroid/feature/topic/impl/TopicScreen.kt",
+   "line": 89,
+   "dynamic": true
+  },
+  {
+   "platform": "android",
+   "tid": "newsResourceCard:${userNewsResource.id}",
+   "file": "core/ui/src/main/kotlin/com/google/samples/apps/nowinandroid/core/ui/NewsResourceCard.kt",
+   "line": 123,
+   "dynamic": true
+  }
+ ],
+ "apis": [
+  {
+   "method": "GET",
+   "path": "topics",
+   "file": "core/network/src/main/kotlin/com/google/samples/apps/nowinandroid/core/network/retrofit/RetrofitNiaNetwork.kt"
+  },
+  {
+   "method": "GET",
+   "path": "newsresources",
+   "file": "core/network/src/main/kotlin/com/google/samples/apps/nowinandroid/core/network/retrofit/RetrofitNiaNetwork.kt"
+  },
+  {
+   "method": "GET",
+   "path": "changelists/topics",
+   "file": "core/network/src/main/kotlin/com/google/samples/apps/nowinandroid/core/network/retrofit/RetrofitNiaNetwork.kt"
+  },
+  {
+   "method": "GET",
+   "path": "changelists/newsresources",
+   "file": "core/network/src/main/kotlin/com/google/samples/apps/nowinandroid/core/network/retrofit/RetrofitNiaNetwork.kt"
+  }
+ ],
+ "claims": [
+  {
+   "id": "C1",
+   "text": "On app startup, a WorkManager job to sync all repositories is enqueued",
+   "source": "docs/ArchitectureLearningJourney.md",
+   "label": "verified",
+   "evidence": "sync/work/src/main/kotlin/com/google/samples/apps/nowinandroid/sync/initializers/SyncInitializer.kt:30"
+  },
+  {
+   "id": "C2",
+   "text": "The user data repository obtains UserData from a local data source backed by Proto DataStore",
+   "source": "docs/ArchitectureLearningJourney.md",
+   "label": "verified",
+   "evidence": "core/datastore-proto"
+  },
+  {
+   "id": "C3",
+   "text": "OfflineFirstNewsRepository calls RetrofitNiaNetwork to execute the actual API request using Retrofit",
+   "source": "docs/ArchitectureLearningJourney.md",
+   "label": "verified",
+   "evidence": "core/data/src/main/kotlin/com/google/samples/apps/nowinandroid/core/data/repository/OfflineFirstNewsRepository.kt:48"
+  },
+  {
+   "id": "C4",
+   "text": "OfflineFirstNewsRepository syncs the remote data with NewsResourceDao",
+   "source": "docs/ArchitectureLearningJourney.md",
+   "label": "verified",
+   "evidence": "core/database/src/main/kotlin/com/google/samples/apps/nowinandroid/core/database/dao/NewsResourceDao.kt:35"
+  },
+  {
+   "id": "C5",
+   "text": "The data flow is achieved using streams, implemented using Kotlin Flows",
+   "source": "docs/ArchitectureLearningJourney.md",
+   "label": "verified",
+   "evidence": "core/data/src/main/kotlin/com/google/samples/apps/nowinandroid/core/data/repository/OfflineFirstNewsRepository.kt"
+  },
+  {
+   "id": "C6",
+   "text": "Now In Android uses Roborazzi to run screenshot tests",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "gradle/libs.versions.toml:61 roborazzi"
+  },
+  {
+   "id": "C7",
+   "text": "screenshot tests NiaAppScreenSizesScreenshotTests verify navigation on different screen sizes",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "app/src/testDemo/kotlin/com/google/samples/apps/nowinandroid/ui/NiaAppScreenSizesScreenshotTests.kt"
+  },
+  {
+   "id": "C8",
+   "text": "The baseline profile for this app is located at app/src/main/baseline-prof.txt",
+   "source": "README.md",
+   "label": "conflict",
+   "evidence": "app/build.gradle.kts:136 baselineProfile(projects.benchmarks) (generated by plugin; file not in repo)"
+  },
+  {
+   "id": "C9",
+   "text": "Find all tests written using Macrobenchmark in the benchmarks module",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "benchmarks/"
+  },
+  {
+   "id": "C10",
+   "text": "The app uses Hilt for dependency injection",
+   "source": "README.md/docs (Architecture)",
+   "label": "verified",
+   "evidence": "app/build.gradle.kts:24 nowinandroid.hilt"
+  }
+ ],
+ "notes": "Navigation 3 (NavKey + entry<Key>{...} in *EntryProvider.kt); api/impl split per feature. Both NavKey and Screen composable are labelled; the scorer treats entries with alt_of as aliases of the same route (a hit on either counts once). Settings is a Dialog. Retrofit paths are relative to base URL. Clone reused read-only from oss2."
+}

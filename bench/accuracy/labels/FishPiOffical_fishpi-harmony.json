@@ -1,0 +1,359 @@
+{
+ "repo": "FishPiOffical/fishpi-harmony",
+ "url": "https://github.com/FishPiOffical/fishpi-harmony",
+ "commit": "591cd1254817a7ace28ac5a436774e3f511f8e69",
+ "platform_roots": {
+  "harmony": [
+   "entry"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "harmony",
+   "route_id": "ChatRoom",
+   "symbol": "ChatRoomBuilder",
+   "file": "entry/src/main/ets/pages/Chats/ChatRoom.ets",
+   "kind": "router_map",
+   "struct": "ChatRoom",
+   "map_file": "entry/src/main/resources/base/profile/route_map.json",
+   "note": "system routerMap in route_map.json (module.json5 routerMap: $profile:route_map)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "Chat",
+   "symbol": "ChatBuilder",
+   "file": "entry/src/main/ets/pages/Chats/ChatPrivate.ets",
+   "kind": "router_map",
+   "struct": "Chat",
+   "map_file": "entry/src/main/resources/base/profile/route_map.json",
+   "note": "system routerMap in route_map.json (module.json5 routerMap: $profile:route_map)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "RedPacket",
+   "symbol": "RedPacketBuilder",
+   "file": "entry/src/main/ets/pages/RedPacket/Index.ets",
+   "kind": "router_map",
+   "struct": "RedPacket",
+   "map_file": "entry/src/main/resources/base/profile/route_map.json",
+   "note": "system routerMap in route_map.json (module.json5 routerMap: $profile:route_map)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "RedPacketOpen",
+   "symbol": "RedPacketOpenBuilder",
+   "file": "entry/src/main/ets/pages/RedPacket/Open.ets",
+   "kind": "router_map",
+   "struct": "RedPacketOpen",
+   "map_file": "entry/src/main/resources/base/profile/route_map.json",
+   "note": "system routerMap in route_map.json (module.json5 routerMap: $profile:route_map)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "ArticleList",
+   "symbol": "ArticleListBuilder",
+   "file": "entry/src/main/ets/pages/Article/Index.ets",
+   "kind": "router_map",
+   "struct": "ArticleList",
+   "map_file": "entry/src/main/resources/base/profile/route_map.json",
+   "note": "system routerMap in route_map.json (module.json5 routerMap: $profile:route_map)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "BreezeList",
+   "symbol": "BreezemoonListBuilder",
+   "file": "entry/src/main/ets/pages/Breezemoon/Index.ets",
+   "kind": "router_map",
+   "struct": "BreezeList",
+   "map_file": "entry/src/main/resources/base/profile/route_map.json",
+   "note": "system routerMap in route_map.json (module.json5 routerMap: $profile:route_map)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "Article",
+   "symbol": "ArticleBuilder",
+   "file": "entry/src/main/ets/pages/Article/ArticleDetail.ets",
+   "kind": "router_map",
+   "struct": "ArticleDetail",
+   "map_file": "entry/src/main/resources/base/profile/route_map.json",
+   "note": "system routerMap in route_map.json (module.json5 routerMap: $profile:route_map)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "Privacy",
+   "symbol": "PrivacyBuilder",
+   "file": "entry/src/main/ets/pages/Profile/Privacy.ets",
+   "kind": "router_map",
+   "struct": "Privacy",
+   "map_file": "entry/src/main/resources/base/profile/route_map.json",
+   "note": "system routerMap in route_map.json (module.json5 routerMap: $profile:route_map)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "User",
+   "symbol": "UserBuilder",
+   "file": "entry/src/main/ets/pages/User/Index.ets",
+   "kind": "router_map",
+   "struct": "User",
+   "map_file": "entry/src/main/resources/base/profile/route_map.json",
+   "note": "system routerMap in route_map.json (module.json5 routerMap: $profile:route_map)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "Notice",
+   "symbol": "NoticeBuilder",
+   "file": "entry/src/main/ets/pages/Notice/Index.ets",
+   "kind": "router_map",
+   "struct": "Notice",
+   "map_file": "entry/src/main/resources/base/profile/route_map.json",
+   "note": "system routerMap in route_map.json (module.json5 routerMap: $profile:route_map)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/Index",
+   "symbol": "Index",
+   "file": "entry/src/main/ets/pages/Index.ets",
+   "kind": "main_pages",
+   "note": "@Entry; hosts Navigation(pathStack)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "Home",
+   "symbol": "Home",
+   "file": "entry/src/main/ets/pages/Home.ets",
+   "kind": "embedded-root",
+   "optional": true,
+   "note": "rendered inside Index when logged in (not via router)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "Login",
+   "symbol": "Login",
+   "file": "entry/src/main/ets/pages/Login.ets",
+   "kind": "embedded-root",
+   "optional": true,
+   "note": "rendered inside Index when logged out"
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "harmony",
+   "symbol": "PrivacyDialog",
+   "file": "entry/src/main/ets/pages/PrivacyDialog.ets",
+   "reason": "dialog component"
+  },
+  {
+   "platform": "harmony",
+   "symbol": "NoticeList",
+   "file": "entry/src/main/ets/pages/Notice/NoticeList.ets",
+   "reason": "list sub-component inside Notice page"
+  },
+  {
+   "platform": "harmony",
+   "symbol": "ChatItem",
+   "file": "entry/src/main/ets/pages/Chats/ChatItem.ets",
+   "reason": "list item"
+  },
+  {
+   "platform": "harmony",
+   "symbol": "Role",
+   "file": "entry/src/main/ets/pages/Profile/Role.ets",
+   "reason": "badge component"
+  },
+  {
+   "platform": "harmony",
+   "symbol": "ListButton",
+   "file": "entry/src/main/ets/pages/Profile/ListButton.ets",
+   "reason": "row component"
+  },
+  {
+   "platform": "harmony",
+   "symbol": "NavItem",
+   "file": "entry/src/main/ets/layout/main/nav/navItem.ets",
+   "reason": "nav bar item that calls router.pushUrl with a variable route"
+  }
+ ],
+ "deeplinks": [
+  {
+   "platform": "harmony",
+   "scheme": "https",
+   "host": "fishpi.cn",
+   "path": "/article/{id}",
+   "file": "entry/src/main/ets/libs/utils.ets",
+   "source": "in-app URL dispatcher pushToAppUrl() -> pushPathByName(Article); NOT an OS-registered deep link",
+   "optional": true,
+   "kind": "in-app-url"
+  },
+  {
+   "platform": "harmony",
+   "scheme": "https",
+   "host": "fishpi.cn",
+   "path": "/tag/{tag}",
+   "file": "entry/src/main/ets/libs/utils.ets",
+   "source": "pushToAppUrl -> ArticleList",
+   "optional": true,
+   "kind": "in-app-url"
+  },
+  {
+   "platform": "harmony",
+   "scheme": "https",
+   "host": "fishpi.cn",
+   "path": "/cr",
+   "file": "entry/src/main/ets/libs/utils.ets",
+   "source": "pushToAppUrl -> ChatRoom",
+   "optional": true,
+   "kind": "in-app-url"
+  }
+ ],
+ "testids": [],
+ "apis": [
+  {
+   "method": "GET",
+   "path": "/api/user",
+   "file": "entry/src/main/ets/service/user.ets",
+   "note": "defHttp.<method><T>(path) wrapper (axios-like), base https://fishpi.cn"
+  },
+  {
+   "method": "POST",
+   "path": "/chat-room/send",
+   "file": "entry/src/main/ets/service/chatroom.ets",
+   "note": "defHttp.<method><T>(path) wrapper (axios-like), base https://fishpi.cn"
+  },
+  {
+   "method": "POST",
+   "path": "/chat-room/red-packet/open",
+   "file": "entry/src/main/ets/service/redpacket.ets",
+   "note": "defHttp.<method><T>(path) wrapper (axios-like), base https://fishpi.cn"
+  },
+  {
+   "method": "GET",
+   "path": "/notifications/unread/count",
+   "file": "entry/src/main/ets/service/notice.ets",
+   "note": "defHttp.<method><T>(path) wrapper (axios-like), base https://fishpi.cn"
+  },
+  {
+   "method": "POST",
+   "path": "/api/getKey",
+   "file": "entry/src/main/ets/service/fishpi.ets",
+   "note": "defHttp.<method><T>(path) wrapper (axios-like), base https://fishpi.cn"
+  },
+  {
+   "method": "POST",
+   "path": "/comment",
+   "file": "entry/src/main/ets/service/comment.ets",
+   "note": "defHttp.<method><T>(path) wrapper (axios-like), base https://fishpi.cn"
+  },
+  {
+   "method": "POST",
+   "path": "/breezemoon",
+   "file": "entry/src/main/ets/service/breezemoon.ets",
+   "note": "defHttp.<method><T>(path) wrapper (axios-like), base https://fishpi.cn"
+  },
+  {
+   "method": "PUT",
+   "path": "/article/update",
+   "file": "entry/src/main/ets/service/article.ets",
+   "note": "template literal with suffix"
+  },
+  {
+   "method": "POST",
+   "path": "/point/transfer",
+   "file": "entry/src/main/ets/service/user.ets",
+   "note": "defHttp.<method><T>(path) wrapper (axios-like), base https://fishpi.cn"
+  },
+  {
+   "method": "GET",
+   "path": "/users/emotions",
+   "file": "entry/src/main/ets/service/user.ets",
+   "note": "defHttp.<method><T>(path) wrapper (axios-like), base https://fishpi.cn"
+  },
+  {
+   "method": "GET",
+   "path": "/api/article/{id}",
+   "file": "entry/src/main/ets/service/article.ets",
+   "note": "`/api/article/${id}?p=..`"
+  },
+  {
+   "method": "GET",
+   "path": "http://music.163.com/api/song/detail/",
+   "file": "entry/src/main/ets/components/Message/Music.ets",
+   "note": "absolute 3rd-party URL with template params",
+   "optional": true
+  }
+ ],
+ "claims": [
+  {
+   "id": "C1",
+   "text": "支持聊天室与私聊",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "entry/src/main/ets/pages/Chats/ChatRoom.ets; entry/src/main/ets/pages/Chats/ChatPrivate.ets"
+  },
+  {
+   "id": "C2",
+   "text": "支持文章浏览评论",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "entry/src/main/ets/pages/Article/ArticleDetail.ets; entry/src/main/ets/service/comment.ets"
+  },
+  {
+   "id": "C3",
+   "text": "支持清风明月浏览发布",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "entry/src/main/ets/pages/Breezemoon/Index.ets; entry/src/main/ets/service/breezemoon.ets POST /breezemoon"
+  },
+  {
+   "id": "C4",
+   "text": "关注/转账等用户功能",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "entry/src/main/ets/service/user.ets:96 /point/transfer"
+  },
+  {
+   "id": "C5",
+   "text": "消息通知与提醒",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "entry/src/main/ets/pages/Notice/Index.ets"
+  },
+  {
+   "id": "C6",
+   "text": "可以先在 Release (./release) 下载最新版本的 hap 文件",
+   "source": "README.md",
+   "label": "conflict",
+   "evidence": "no ./release directory in repo",
+   "note": "link likely meant GitHub Releases page"
+  },
+  {
+   "id": "C7",
+   "text": "摸鱼派 APP 客户端 鸿蒙Next 版本",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "entry/src/main/module.json5 (deviceTypes phone/tablet/2in1)"
+  },
+  {
+   "id": "C8",
+   "text": "需要网络权限 ohos.permission.INTERNET",
+   "source": "(implicit; module.json5)",
+   "label": "verified",
+   "evidence": "entry/src/main/module.json5 requestPermissions",
+   "synthetic": true
+  },
+  {
+   "id": "C9",
+   "text": "通过 hdc app install fishpi.hap 安装",
+   "source": "README.md",
+   "label": "unverifiable",
+   "evidence": "(tooling)"
+  },
+  {
+   "id": "C10",
+   "text": "Flutter 版本由 @Yui 开发",
+   "source": "README.md",
+   "label": "unverifiable",
+   "evidence": "(external repo)"
+  }
+ ],
+ "notes": "HarmonyOS NEXT community app. Routes in route_map.json (NOT router_map.json). The Navigation .navDestination() builder in Index.ets is a no-op logger - real resolution is through the system routerMap. No OS-level deep links (skills only entity.system.home); pushToAppUrl handles fishpi.cn URLs in-app (optional). No .id() testIDs. Clone reused read-only from oss2."
+}

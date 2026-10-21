@@ -1,0 +1,23 @@
+#!/bin/bash
+# Full pipeline on every labelled repo, outputs outside the clones.
+#   ACC_REPOS=<dir>[:<dir>...] bench/accuracy/bin/run.sh <out-dir> [label-name ...]
+# Per repo: kb compound --llm template --full; kb discover-docs; kb ingest --manifest --llm template.
+# Builds the TypeScript kb first (set KB=<binary> to use another kb, e.g. the Go one). JOBS=n parallel repos.
+set -u
+HERE=$(cd "$(dirname "$0")" && pwd); ACC=$(dirname "$HERE"); REPO=$(cd "$ACC/../.." && pwd)
+OUT=${1:?out dir}; shift; mkdir -p "$OUT"; OUT=$(cd "$OUT" && pwd)
+if [ -z "${KB:-}" ]; then (cd "$REPO" && npm run build >/dev/null) || exit 1; KB="node $REPO/dist/cli.js"; fi
+NAMES=("$@"); [ ${#NAMES[@]} -eq 0 ] && NAMES=($(cd "$ACC/labels" && ls *.json | sed 's/\.json$//'))
+one() {
+  local N=$1 D="$OUT/$1" R; mkdir -p "$D"
+  R=$(node "$HERE/mkcfg.mjs" "$ACC/labels/$N.json" "$D") || return 1
+  local A="--root $R --config $D/codewiki.yaml"
+  { date -u; echo "repo=$R"; S0=$SECONDS
+    timeout 1500 $KB compound $A --llm template --full; echo "compound exit $? at $((SECONDS-S0))s"
+    $KB discover-docs $A --json > "$D/docs.json"; echo "discover exit $?"
+    timeout 900 $KB ingest --manifest "$D/docs.json" $A --llm template; echo "ingest exit $? at $((SECONDS-S0))s"
+    git -C "$R" status --porcelain | head; date -u; } > "$D/run.log" 2>&1
+  echo "$N: $(grep -h 'exit' "$D/run.log" | tr '\n' ' ')"
+}
+export -f one; export OUT HERE ACC KB
+printf '%s\n' "${NAMES[@]}" | xargs -P "${JOBS:-2}" -I{} bash -c 'one {}'
