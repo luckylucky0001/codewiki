@@ -406,6 +406,7 @@ interface PathCand {
   rel?: string; // the document directory for relative links
   breadcrumb?: boolean;
   quoted?: boolean;
+  pinned?: boolean;
 }
 
 export function prosePaths(text: string, source: string): PathCand[] {
@@ -417,8 +418,8 @@ export function prosePaths(text: string, source: string): PathCand[] {
     let t = m[2]!;
     const gh = /^https?:\/\/github\.com\/[^/]+\/[^/]+\/(?:blob|tree)\/([^/]+)\/([^#?]+)/.exec(t);
     if (gh) {
-      if (/^[0-9a-f]{7,40}$/.test(gh[1]!) || /^v?\d/.test(gh[1]!)) continue; // pinned commit / tag: historical
-      out.push({ p: decodeURIComponent(gh[2]!), strong: true });
+      // pinned commit / tag: historical, so a missing path is no conflict (it can still verify)
+      out.push({ p: decodeURIComponent(gh[2]!), strong: !(/^[0-9a-f]{7,40}$/.test(gh[1]!) || /^v?\d/.test(gh[1]!)), pinned: /^[0-9a-f]{7,40}$/.test(gh[1]!) || /^v?\d/.test(gh[1]!) });
       continue;
     }
     if (/^[a-z][a-z0-9+.-]*:/i.test(t) || t.startsWith('#') || t.startsWith('/')) continue;
@@ -470,6 +471,7 @@ function pathRules(k: Checker, c: Claim, out: RuleOut): void {
       verifiedf(out, `路径 \`${cd.p}\` 存在（${hit}）`);
       continue;
     }
+    if (cd.pinned) continue;
     if (k.gitignored(p) || /(^|\/)(build|out|dist|DerivedData|\.gradle)\//.test(p) || /^[/~]/.test(cd.p)) continue; // generated output / absolute machine paths
     const segs = p.split('/');
     if (/\b(e\.g\.|for example|such as|create|copy|add|rename|generate|download)\b|例如|比如|新建|创建|复制|生成/i.test(c.text.slice(0, Math.max(0, c.text.indexOf(cd.p))))) continue;
@@ -589,6 +591,7 @@ function enumeratedCount(k: Checker, c: Claim, text: string, out: RuleOut): void
 const depStop = new Set(
   'nodejs node deno bun browser browsers jvm npm yarn pnpm mvvm mvc mvi mvp viper tdd bdd clean git github gitlab gradle xcode android ios macos ipados watchos tvos kotlin swift java javascript typescript json xml sql rest http https api apis material english the a an our this that it we you markdown yaml objectivec objective c cpp rust go ruby python homebrew'.split(' '),
 );
+const firstStop = new Set(['nodejs', 'node', 'deno', 'bun', 'browser', 'browsers', 'the', 'our', 'this']);
 const depAlias: Record<string, string[]> = { cocoapods: ['podfile'], swiftpm: ['packageswift'], 'swift package manager': ['packageswift'], spm: ['packageswift'] };
 
 function depPresent(k: Checker, name: string, strict = false): string {
@@ -622,10 +625,13 @@ function dependencyRules(k: Checker, c: Claim, out: RuleOut): void {
   // "Kermit - Logging", "Koin - Dependency Injection" list items
   const dm = /^([A-Z][\w.+-]*(?: [A-Z][\w.+-]*)?)\s+(?:[-–—]\s+[A-Z]|\((?:[a-z][\w ]*)\)\s*$)/.exec(plain.trim());
   if (dm) names.push([dm[1]!, false]);
+  // "Turbine is a small testing library for …"
+  const im = /^([A-Z][\w.+-]*)\s+is\s+an?\s+(?:[\w-]+\s+){0,3}(?:library|framework|tool|plugin|SDK|package)\b/.exec(plain.trim());
+  if (im) names.push([im[1]!, false]);
   const seen = new Set<string>();
   for (let [nm, may, strict] of names) {
     nm = nm.replace(/[.,;:]+$/, '');
-    if (seen.has(nm) || depStop.has(nm.toLowerCase()) || depStop.has(alnum(nm)) || depStop.has(alnum(nm.split(/\s/)[0]!))) continue;
+    if (seen.has(nm) || depStop.has(nm.toLowerCase()) || depStop.has(alnum(nm)) || firstStop.has(alnum(nm.split(/\s/)[0]!))) continue;
     seen.add(nm);
     // a library link is checked against build/lock files, imports and file names only (a constant
     // that merely starts with the vendor name is not the dependency)
@@ -664,6 +670,11 @@ function identifierRules(k: Checker, c: Claim, out: RuleOut): void {
   for (const m of c.text.matchAll(/(?:^|[\s(`])((?::[a-z][\w-]*)+)(?=$|[\s),.`])/g)) {
     const d = m[1]!.slice(1).replace(/:/g, '/');
     if (ix.dirs.includes(d) || ix.dirs.some((x) => x.endsWith('/' + d))) verifiedf(out, `Gradle 模块 \`${m[1]}\` 存在（${d}）`);
+  }
+  // annotations: `@ContributesNode(RoomScope::class)`
+  for (const m of c.text.matchAll(/@([A-Z]\w{3,})\b/g)) {
+    const hit = k.findSymbols(m[1]!)[0]?.id || k.tokenSearch(m[1]!);
+    if (hit) verifiedf(out, `注解 \`@${m[1]}\` 在代码中使用（${hit}）`);
   }
   // UPPER_SNAKE keys and dotted member paths (TIVI_TMDB_API_KEY, KsApi.Secrets.isOSS)
   for (const m of text.matchAll(/\b([A-Z][A-Z0-9]+(?:_[A-Z0-9]+){2,}|[A-Za-z]\w*(?:\.[A-Za-z]\w*){1,3})\b/g)) {
