@@ -8,7 +8,7 @@ import { getSym } from '../model.js';
 import { cmpStr, fields, regexQuoteMeta } from '../util/go.js';
 import { scanInjection } from './safety.js';
 import { containerKinds, sortedKeys } from './graphutil.js';
-import { valueRules } from './valuecheck.js';
+import { proseRules, valueRules } from './valuecheck.js';
 
 export const ClaimVerified = 'verified';
 export const ClaimConflict = 'conflict';
@@ -74,7 +74,23 @@ export function extractClaims(source: string, raw: string, content: string): Cla
   const feature = path.posix.basename(path.posix.dirname(source)).toUpperCase();
   let kiroReq = '';
   let inCode = false;
-  content.split('\n').forEach((line, i) => {
+  const proseDoc = proseSource(source);
+  const lines = content.split('\n');
+  const consumed = new Set<number>();
+  let listIntro = '';
+  // a wrapped prose paragraph continues on following plain lines (not headings, lists, tables, fences)
+  const continuation = (i: number): string => {
+    let out = '';
+    for (let j = i + 1; j < lines.length; j++) {
+      const u = lines[j]!.trim();
+      if (!u || /^(#|>|\||```|<|!\[)/.test(u) || reBullet.test(lines[j]!) || reFR.test(u) || reMust.test(u) || reEARS.test(u)) break;
+      out += ' ' + u.replace(reMdStripG, '');
+      consumed.add(j);
+    }
+    return out;
+  };
+  lines.forEach((line, i) => {
+    if (consumed.has(i)) return;
     const t = line.trim();
     if (t.startsWith('```')) {
       inCode = !inCode;
@@ -86,9 +102,13 @@ export function extractClaims(source: string, raw: string, content: string): Cla
       kiroReq = km[1]!;
       return;
     }
-    if (t.startsWith('#') || t.startsWith('>')) return;
+    if (t.startsWith('#') || t.startsWith('>')) {
+      listIntro = '';
+      return;
+    }
     let text = t.replace(reMdStripG, '').trim();
     const bm = reBullet.exec(text);
+    if (!bm) listIntro = /[:：]$/.test(text) && text.length < 160 ? text : '';
     if (bm) text = bm[1]!;
     let c: Claim;
     const fr = reFR.exec(text);
@@ -102,7 +122,20 @@ export function extractClaims(source: string, raw: string, content: string): Cla
     } else if (reEARS.test(text)) c = { id: '', text, style: 'ears' } as Claim;
     else if (reMust.test(text)) c = { id: '', text, style: 'must' } as Claim;
     else if (reBullet.test(t) && (text.includes('`') || reAPIPath.test(text) || reAPI.test(text))) c = { id: '', text, style: 'statement' } as Claim;
-    else return;
+    else {
+      // ordinary prose (README / AGENTS / docs): one claim per checkable sentence
+      if (!proseDoc || t.startsWith('|') || t.startsWith('<') || t.startsWith('![')) return;
+      let para = text + continuation(i);
+      // a bare list item takes its list's lead-in ("We make heavy use of the following projects:")
+      if (bm && listIntro && para.length < 120) para = listIntro + ' ' + para;
+      for (const sentence of splitSentences(para)) if (checkableProse(sentence)) push({ id: '', text: sentence, style: 'prose' } as Claim, i);
+      return;
+    }
+    push(c, i);
+  });
+  return out;
+
+  function push(c: Claim, i: number): void {
     if (!c.id) c.id = slug + '-' + shortHash(fields(c.text).join(' '));
     if (seen.has(c.id)) c.id = `${c.id}-${i + 1}`;
     seen.add(c.id);
@@ -112,8 +145,39 @@ export function extractClaims(source: string, raw: string, content: string): Cla
     const f = scanInjection(c.text);
     if (f.length) c.suspicious = f[0]!.pattern;
     out.push({ id: c.id, source: c.source, raw: c.raw, line: c.line, text: c.text, style: c.style, ...(c.suspicious ? { suspicious: c.suspicious } : {}) });
-  });
+  }
+}
+
+/** Docs whose ordinary prose is checked: READMEs, agent guides and docs/ (not specs, plans or archives). */
+export function proseSource(source: string): boolean {
+  const l = source.toLowerCase();
+  if (historicalDoc(source) || /(^|\/)(specs?|\.kiro|openspec|adr|adrs|decisions|changelog[^/]*|release[^/]*notes?)(\/|\.|$)/.test(l)) return false;
+  const base = path.posix.basename(l);
+  return /^(readme|agents|claude|gemini|contributing|architecture|setup|how-it-works)[^/]*\.md$/.test(base) || /(^|\/)(docs?|documentation)\//.test(l);
+}
+
+/** Split a markdown line into sentences (keeps links, versions and "e.g." intact). */
+export function splitSentences(text: string): string[] {
+  const out: string[] = [];
+  for (const part of text.split(/(?<=[。！？；])|(?<=[a-z0-9)\]`'"][.!?])\s+(?=[A-Z\[`*])/)) {
+    const s = part.trim();
+    if (s) out.push(s);
+  }
   return out;
+}
+
+/** A prose sentence worth checking: it names something the code can confirm or refute. */
+export function checkableProse(s: string): boolean {
+  if (s.length < 12 || s.length > 400) return false;
+  if (/[:：]$/.test(s) && !/\d/.test(s)) return false; // a list lead-in; its items carry the claims
+  if (/\[[^\]]+\]\([^)]+\)/.test(s) || s.includes('`')) return true;
+  if (/(?:^|\s)(?:\.{1,2}\/)?[\w@.-]+\/[\w@.-]+/.test(s.replace(/[a-z]+:\/\/\S+/gi, ''))) return true;
+  if (/\b[A-Z][a-z0-9]+(?:[A-Z][a-z0-9]*)+\b|\b[a-z]+(?:[A-Z][a-z0-9]+)+\b/.test(s)) return true;
+  if (/\b\d+\s+(modules|targets|screenshots|screens|stores|services|packages)\b/i.test(s)) return true;
+  if (/\b(heavy use of|we use|uses|using|built (with|on|upon)|depends on|powered by|relies on)\s+(the\s+)?[A-Z]/.test(s)) return true;
+  if (/\.\/gradlew|\bmake\s+[a-z]|\bbash\s+\S+\.sh|\bnpm (run|test)|\bswift (build|test)/.test(s)) return true;
+  if (/^[A-Z][\w.+-]*(?: [A-Z][\w.+-]*)?\s+[-–—]\s+[A-Z]/.test(s)) return true;
+  return false;
 }
 
 export function normAPIPath(p: string): string {
@@ -127,7 +191,7 @@ export function normLit(s: string): string {
   return s.replace(/[ \t\n\r\v\f]/g, '').replaceAll('"', "'");
 }
 
-const reFileName = /^[\w./-]+\.(json5?|ets|kt|kts|java|swift|xml|plist|md|ya?ml|js|ts|gradle|m|mm|h|xctestplan|xcconfig|storyboard|xib|entitlements|strings|sh|rb|py|toml|properties)$/;
+const reFileName = /^[\w./-]+\.(xcodeproj|xcworkspace|xcstrings|json5?|ets|kt|kts|java|swift|xml|plist|md|ya?ml|js|ts|gradle|m|mm|h|xctestplan|xcconfig|storyboard|xib|entitlements|strings|sh|rb|py|toml|properties)$/;
 const rePlaceholderPath = /[<{]|\bv?X\.Y\.Z\b|\bYYYY|\bxxx\b/;
 const reCreate = /(\bcreate( a| an| the)?( new)?( file)?|新建|创建)\s*$/i;
 const reExample = /(e\.g\.?,?|for example,?|such as|例如|比如)\s*\(?$/i;
@@ -421,6 +485,7 @@ export class Checker {
 
   appScheme(scheme: string): boolean {
     if ((this.F.routes ?? []).some((r) => r.deeplink.startsWith(scheme + '://'))) return true;
+    if (((this.F as Facts & { deeplinks?: { scheme: string }[] }).deeplinks ?? []).some((d) => d.scheme === scheme)) return true;
     return Object.values(this.F.schemes ?? {}).some((ss) => ss.includes(scheme));
   }
 
@@ -476,11 +541,13 @@ export class Checker {
       for (const r of this.F.routes ?? []) if (r.file === s.file) routes.add(r.route_id);
     };
     const apiSeen = new Set<string>();
-    for (const m of text.matchAll(reAPIG)) {
+    // prose: URLs and file-system paths (`features/location/api/src/…`) are not API claims
+    const apiText = c.style === 'prose' ? text.replace(/[a-z][a-z0-9+.-]*:\/\/\S+/gi, ' ').replace(/[\w.@-]+(?:\/[\w.@{}-]+)+/g, (m) => (m.startsWith('/') ? m : ' ')) : text;
+    for (const m of apiText.matchAll(reAPIG)) {
       apiSeen.add(normAPIPath(m[2]!));
       this.checkAPI(m[1]!, m[2]!, anchors, evidence, st);
     }
-    for (const m of text.matchAll(reAPIPathG)) {
+    for (const m of apiText.matchAll(reAPIPathG)) {
       if (!apiSeen.has(normAPIPath(m[1]!))) {
         apiSeen.add(normAPIPath(m[1]!));
         this.checkAPI('', m[1]!, anchors, evidence, st);
@@ -498,6 +565,8 @@ export class Checker {
           routes.add(r.route_id);
         }
       }
+      const declared = ((this.F as Facts & { deeplinks?: { scheme: string; host: string; path: string }[] }).deeplinks ?? []).filter((d) => d.scheme === m[1]);
+      if (!found && declared.length && (pat === '' || declared.some((d) => (d.host + d.path).replace(/^\/+/, '') && pat.startsWith((d.host + d.path).replace(/^\/+/, ''))))) found = true;
       if (found) {
         st.verified = true;
         evidence.push(`deeplink \`${m[1]}://${pat}\` 存在`);
@@ -548,6 +617,7 @@ export class Checker {
           evidence.push(`文件 \`${span}\` 存在（${f}）`);
         } else if (rePlaceholderPath.test(span)) evidence.push(`\`${span}\` 是带占位符的路径模板，不核对`);
         else if (reCreate.test(before)) evidence.push(`文件 \`${span}\` 由读者新建（文档要求创建），不算冲突`);
+        else if (c.style === 'prose' && (!span.includes('/') || /^[/~]/.test(span) || /(^|\/)build\//.test(span) || /\b(create|copy|add|rename|generate)\b|新建|创建|复制/i.test(before))) evidence.push(`\`${span}\` 是通用文件名或由读者创建，不判冲突`);
         else if (this.gitignored(span)) evidence.push(`文件 \`${span}\` 不在仓库中，但被 .gitignore 忽略（密钥/生成文件），不算冲突`);
         else {
           st.conflict = true;
@@ -578,7 +648,10 @@ export class Checker {
             evidence.push(`\`${span}\` 由文档示例代码从外部包 \`${pkg}\` 导入，不在本仓库中`);
             continue;
           }
-          if (name.includes('.') && isPascal(first) && !builtinTypes.has(first) && this.tokenSearch(first) === '' && this.findSymbols(first).length === 0) {
+          if (c.style === 'prose') {
+            // descriptive prose: a name we cannot find is not evidence enough for a conflict
+            if (looksLikeCodeIdent(span)) evidence.push(`\`${span}\` 在代码中找不到（无法确定性判断）`);
+          } else if (name.includes('.') && isPascal(first) && !builtinTypes.has(first) && this.tokenSearch(first) === '' && this.findSymbols(first).length === 0) {
             st.conflict = true;
             evidence.push(`符号 \`${span}\` 在代码中不存在（类型 \`${first}\` 也不存在）`);
           } else if (this.missingProjectType(text, span)) {
@@ -626,7 +699,16 @@ export class Checker {
       }
     }
     for (const r of this.F.routes ?? []) if (r.route_id.length > 3 && text.includes(r.route_id) && this.routeRe(r.route_id).test(text)) routes.add(r.route_id);
-    const vr = valueRules(this, c, numericChecked);
+    const pr = proseRules(this, c);
+    if (pr.conflict || pr.verified) {
+      st.conflict ||= pr.conflict;
+      st.verified ||= pr.verified;
+      evidence.push(...pr.evidence);
+      for (const a of pr.anchors) anchors.add(a);
+    }
+    // the quantity / constant / behaviour rules were built for normative statements; descriptive prose
+    // mentions numbers and names too loosely for them
+    const vr = c.style === 'prose' ? { conflict: false, verified: false, evidence: [] as string[], anchors: [] as string[] } : valueRules(this, c, numericChecked);
     if (vr.conflict || vr.verified) {
       st.conflict ||= vr.conflict;
       st.verified ||= vr.verified;

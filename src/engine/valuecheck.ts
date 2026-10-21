@@ -320,3 +320,361 @@ export function valueRules(k: Checker, c: Claim, numericChecked: boolean): RuleO
   if (c.style !== 'statement' && (k.F.routes?.length ?? 0) + (k.F.testids?.length ?? 0) > 0) behaviours(k, text, out);
   return out;
 }
+
+// ---------------------------------------------------------------------------------------------
+// Prose rules: paths, counts, dependencies, commands and identifiers in ordinary README/docs prose.
+// Conflicts only on deterministic evidence: a repo path that does not exist (markdown links into
+// the repo, own-repo GitHub blob/tree links on a moving branch, multi-segment paths whose first
+// directory exists), a count of modules/targets/screenshots or an enumerated set that is clearly
+// off, and a named dependency that appears nowhere in build files, imports or code.
+
+interface RepoIndex {
+  files: string[];
+  dirs: string[];
+  byBase: Map<string, string[]>;
+  top: Set<string>;
+  build: string; // normalised (lower-case alnum) text of build / lock files
+  buildFiles: string[];
+}
+const repoIndexes = new WeakMap<Checker, RepoIndex>();
+const skipDirs = new Set(['.git', 'node_modules', 'oh_modules', 'build', 'wiki', '.kb-work', 'Pods', '.gradle', 'DerivedData', '.build', '.idea', 'dist']);
+const buildFileRe = /(^|\/)(Package\.swift|Package\.resolved|Podfile(\.lock)?|Cartfile(\.resolved)?|[^/]*\.gradle(\.kts)?|libs\.versions\.toml|oh-package(-lock)?\.json5|package\.json|project\.pbxproj|Gemfile|Makefile)$/;
+const alnum = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '');
+
+function repoIndex(k: Checker): RepoIndex {
+  let ix = repoIndexes.get(k);
+  if (ix) return ix;
+  ix = { files: [], dirs: [], byBase: new Map(), top: new Set(), build: '', buildFiles: [] };
+  const builds: string[] = [];
+  const add = (rel: string) => {
+    const b = path.posix.basename(rel);
+    const a = ix!.byBase.get(b);
+    if (a) a.push(rel);
+    else ix!.byBase.set(b, [rel]);
+  };
+  let budget = 300000;
+  const rec = (dir: string, rel: string) => {
+    let ents: fs.Dirent[];
+    try {
+      ents = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const e of ents) {
+      if (--budget < 0) return;
+      const r = rel ? rel + '/' + e.name : e.name;
+      if (!rel) ix!.top.add(e.name);
+      if (e.isDirectory()) {
+        if (skipDirs.has(e.name)) continue;
+        ix!.dirs.push(r);
+        add(r);
+        rec(path.join(dir, e.name), r);
+      } else {
+        ix!.files.push(r);
+        add(r);
+        if (buildFileRe.test(r)) {
+          try {
+            if (fs.statSync(path.join(dir, e.name)).size < 4 << 20) builds.push(fs.readFileSync(path.join(dir, e.name), 'utf8'));
+            ix!.buildFiles.push(r);
+          } catch {
+            /* unreadable */
+          }
+        }
+      }
+    }
+  };
+  rec(k.Dir, '');
+  ix.build = alnum(builds.join('\n'));
+  repoIndexes.set(k, ix);
+  return ix;
+}
+
+function pathExists(ix: RepoIndex, p: string, anywhere: boolean): string {
+  p = p.replace(/^\.\//, '').replace(/\/+$/, '');
+  if (!p) return '.';
+  const b = path.posix.basename(p);
+  for (const c of ix.byBase.get(b) ?? []) if (c === p || (anywhere && c.endsWith('/' + p))) return c;
+  return '';
+}
+
+const placeholderRe = /[<>{}*$~%]|\bv?X\.Y(\.Z)?\b|YYYY|\bxxx\b|\.\.\.|(^|\/)(foo|bar|baz|my-?app|your[\w-]*|path\/to)(\/|\.|$)|(^|\/)(path|file|name|something|module|feature|component)\.[\w.]+$/i;
+const fileExtRe = /\.[A-Za-z0-9]{1,10}$/;
+
+interface PathCand {
+  p: string;
+  strong: boolean; // a link into this repo: a missing target is a stale path
+  rel?: string; // the document directory for relative links
+  breadcrumb?: boolean;
+  quoted?: boolean;
+}
+
+export function prosePaths(text: string, source: string): PathCand[] {
+  const out: PathCand[] = [];
+  const docDir = path.posix.dirname(source);
+  let rest = text;
+  for (const m of text.matchAll(/\[([^\]]*)\]\(([^)\s]+)\)/g)) {
+    rest = rest.replace(m[0], ' ' + m[1] + ' ');
+    let t = m[2]!;
+    const gh = /^https?:\/\/github\.com\/[^/]+\/[^/]+\/(?:blob|tree)\/([^/]+)\/([^#?]+)/.exec(t);
+    if (gh) {
+      if (/^[0-9a-f]{7,40}$/.test(gh[1]!) || /^v?\d/.test(gh[1]!)) continue; // pinned commit / tag: historical
+      out.push({ p: decodeURIComponent(gh[2]!), strong: true });
+      continue;
+    }
+    if (/^[a-z][a-z0-9+.-]*:/i.test(t) || t.startsWith('#') || t.startsWith('/')) continue;
+    t = t.replace(/[#?].*$/, '');
+    if (!t || /(^|\/)(tree|blob|commit|pull|issues|releases|compare)(\/|$)/.test(t)) continue;
+    try {
+      t = decodeURIComponent(t);
+    } catch {
+      /* keep */
+    }
+    out.push({ p: t, strong: true, rel: docDir });
+  }
+  rest = rest.replace(/[a-z][a-z0-9+.-]*:\/\/\S+/gi, ' ');
+  for (const m of rest.matchAll(/(?:^|[\s`'"(（:：])((?:\.{1,2}\/)?[A-Za-z0-9_@.-]+(?:\/[A-Za-z0-9_@.-]+)+\/?)(?=$|[\s`'"),，。;；:：])/g)) {
+    out.push({ p: m[1]!.replace(/[.,]+$/, ''), strong: false });
+  }
+  // Xcode-style breadcrumbs: `Sources > WMFData > Services` (segments may contain spaces)
+  for (const m of rest.matchAll(/(`?)([A-Z][\w-]*(?: [\w-]+)*)((?:\s+>\s+[\w-]+(?: [\w-]+)*)+)(`?)/g)) {
+    const segs = [m[2]!, ...m[3]!.split('>').slice(1)].map((s) => s.trim());
+    if (segs.length >= 2) out.push({ p: segs.join('/'), strong: false, breadcrumb: true, quoted: m[1] === '`' && m[4] === '`' });
+  }
+  return out;
+}
+
+function pathRules(k: Checker, c: Claim, out: RuleOut): void {
+  const cands = prosePaths(c.text, c.source);
+  if (!cands.length) return;
+  const ix = repoIndex(k);
+  const seen = new Set<string>();
+  for (const cd of cands) {
+    if (seen.has(cd.p) || placeholderRe.test(cd.p) || cd.p.includes('://')) continue;
+    seen.add(cd.p);
+    const p = cd.p.replace(/^\.\//, '').replace(/\/+$/, '');
+    if (!p || p.startsWith('../') && !cd.rel) continue;
+    let hit = '';
+    if (cd.breadcrumb) {
+      // the last segment may run into prose ("… > Environment directory"): try its word prefixes
+      const segs = p.split('/');
+      const words = segs[segs.length - 1]!.split(' ');
+      for (let w = words.length; w >= 1 && !hit; w--) hit = pathExists(ix, [...segs.slice(0, -1), words.slice(0, w).join(' ')].join('/'), true);
+      if (!hit && !(cd.quoted && words.length === 1)) continue;
+    } else if (cd.rel !== undefined) {
+      const joined = path.posix.normalize(path.posix.join(cd.rel, p));
+      if (joined.startsWith('..')) continue; // points outside the repo
+      // links written against another base still count when the path exists somewhere in the repo
+      hit = pathExists(ix, joined, false) || pathExists(ix, p.replace(/^(\.\.\/)+/, ''), true);
+    } else hit = pathExists(ix, p, true);
+    if (hit) {
+      verifiedf(out, `路径 \`${cd.p}\` 存在（${hit}）`);
+      continue;
+    }
+    if (k.gitignored(p) || /(^|\/)(build|out|dist|DerivedData|\.gradle)\//.test(p) || /^[/~]/.test(cd.p)) continue; // generated output / absolute machine paths
+    const segs = p.split('/');
+    if (/\b(e\.g\.|for example|such as|create|copy|add|rename|generate|download)\b|例如|比如|新建|创建|复制|生成/i.test(c.text.slice(0, Math.max(0, c.text.indexOf(cd.p))))) continue;
+    let stale = false;
+    if (cd.strong) stale = true;
+    else if (cd.breadcrumb) stale = pathExists(ix, segs.slice(0, -1).join('/'), true) !== '' && segs.length >= 3 && !!cd.quoted;
+    else {
+      // a plain path: its first directory must exist at the root (or it starts with ./) and it must look
+      // like a file path or a deep directory path, not prose like "iOS/macOS" or "TV/Wear"
+      const firstOk = ix.top.has(segs[0]!) && ix.dirs.includes(segs[0]!);
+      const shape = fileExtRe.test(segs[segs.length - 1]!) || segs.length >= 3 || cd.p.startsWith('./');
+      stale = (firstOk || cd.p.startsWith('./')) && shape && segs.length >= 2;
+    }
+    if (stale) conflictf(out, `文档引用的路径 \`${cd.p}\` 在仓库中不存在（过时路径）`);
+  }
+}
+
+// counts -------------------------------------------------------------------------------------
+
+const wordNum: Record<string, number> = { two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
+
+function moduleCounts(k: Checker): number[] {
+  const ix = repoIndex(k);
+  const counts: number[] = [];
+  let all = 0, nonTest = 0, gradle = 0, ohos = 0;
+  for (const f of ix.buildFiles) {
+    let b = '';
+    try {
+      b = fs.readFileSync(path.join(k.Dir, f), 'utf8');
+    } catch {
+      continue;
+    }
+    if (f.endsWith('Package.swift')) {
+      for (const m of b.matchAll(/\.(testTarget|target|executableTarget|binaryTarget|macro|plugin)\(\s*\n?\s*name:/g)) {
+        all++;
+        if (m[1] !== 'testTarget') nonTest++;
+      }
+    } else if (/settings\.gradle(\.kts)?$/.test(f)) gradle += (b.match(/["']:[\w:-]+["']/g) ?? []).length;
+  }
+  try {
+    const bp = fs.readFileSync(path.join(k.Dir, 'build-profile.json5'), 'utf8');
+    ohos = (bp.match(/\bsrcPath\s*:/g) ?? []).length;
+  } catch {
+    /* none */
+  }
+  for (const n of [all, nonTest, gradle, ohos]) if (n > 0) counts.push(n);
+  return counts;
+}
+
+function countOk(n: number, actual: number, qual: string): boolean {
+  if (/more than|over|超过/.test(qual)) return actual > n;
+  if (qual) return Math.abs(actual - n) <= Math.max(1, n * 0.2);
+  return actual === n;
+}
+
+function countRules(k: Checker, c: Claim, out: RuleOut): void {
+  const text = c.text.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1');
+  if (/\b(additional|other|extra|new|more|besides|another)\b|之外|另外|新增/i.test(text)) return;
+  for (const m of text.matchAll(/\b(?:(nearly|about|around|approximately|almost|roughly|over|more than|~)\s+)?(\d{1,5})\s+(modules|targets|screenshots)\b/gi)) {
+    const n = +m[2]!, qual = (m[1] ?? '').toLowerCase(), noun = m[3]!.toLowerCase();
+    let actual: number[] = [];
+    if (noun === 'screenshots') {
+      const ix = repoIndex(k);
+      const shots = ix.files.filter((f) => /\.png$/i.test(f) && /(^|\/)[^/]*(snapshot|screenshot)[^/]*\//i.test(f)).length;
+      if (shots) actual = [shots];
+    } else actual = moduleCounts(k);
+    if (!actual.length) continue;
+    if (actual.some((a) => countOk(n, a, qual))) verifiedf(out, `数量 ${m[0]} 与仓库一致（${actual.join('/')}）`);
+    else conflictf(out, `文档写 ${m[0]}，仓库中实际为 ${actual.join(' / ')}（数量过时）`);
+  }
+  enumeratedCount(k, c, text, out);
+}
+
+/** "We have 3 stores: a, b, c" (or the list in the bullets that follow): the listed identifiers are
+ * properties of one type; count that type's properties with the same name suffix. */
+function enumeratedCount(k: Checker, c: Claim, text: string, out: RuleOut): void {
+  const m = /\b(\d{1,2}|two|three|four|five|six|seven|eight|nine|ten)\s+([a-z]+)s\b[^.:：]{0,30}[:：]\s*(.*)$/i.exec(text);
+  if (!m) return;
+  const n = /^\d+$/.test(m[1]!) ? +m[1]! : wordNum[m[1]!.toLowerCase()]!;
+  let names = [...(m[3] ?? '').matchAll(/\b([a-z][A-Za-z0-9]*[A-Z][A-Za-z0-9]*)\b/g)].map((x) => x[1]!);
+  if (names.length < 2) {
+    // the list follows as bullets in the document
+    let lines: string[] = [];
+    try {
+      lines = fs.readFileSync(path.join(k.Dir, c.source), 'utf8').split('\n').slice(c.line, c.line + n + 4);
+    } catch {
+      return;
+    }
+    names = [];
+    for (const l of lines) {
+      if (/^\s*#/.test(l)) break;
+      if (!/^\s*[-*+]|^\s*\d+\./.test(l)) continue;
+      const im = /\b([a-z][A-Za-z0-9]*[A-Z][A-Za-z0-9]*)\b/.exec(l.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1'));
+      if (im) names.push(im[1]!);
+    }
+  }
+  if (names.length < 2) return;
+  const suf = /([A-Z][a-z0-9]+)$/.exec(names[0]!)?.[1] ?? '';
+  if (!suf || !suf.toLowerCase().startsWith(m[2]!.toLowerCase().slice(0, 4)) || !names.every((x) => x.endsWith(suf))) return;
+  const parents = new Map<string, number>();
+  for (const nm of names) for (const s of k.findSymbols(nm)) if (s.parent && s.kind === 'property') parents.set(s.parent, (parents.get(s.parent) ?? 0) + 1);
+  const best = [...parents].filter(([, v]) => v === names.length).map(([p]) => p);
+  if (!best.length) return;
+  // every type that declares all listed names is a candidate; a conflict needs all of them to disagree
+  const found = best.map((b) => ({ owner: getSym(k.G, b), names: [...new Set(k.G.symbols.filter((s) => s.parent === b && s.kind === 'property' && s.name.endsWith(suf) && /^[a-z]/.test(s.name)).map((s) => s.name))] }));
+  const ok = found.find((f) => f.names.length === n);
+  if (ok) verifiedf(out, `${ok.owner?.qual ?? ''} 中有 ${n} 个 *${suf}：${ok.names.join(', ')}`);
+  else if (names.length <= n && found.every((f) => f.names.length > n)) {
+    const f = found.sort((a, b) => b.names.length - a.names.length)[0]!;
+    conflictf(out, `文档说有 ${n} 个 ${m[2]}s，代码中 ${f.owner?.qual ?? ''} 有 ${f.names.length} 个：${f.names.join(', ')}`);
+  }
+  for (const f of found) if (f.owner) out.anchors.push(f.owner.id);
+}
+
+// dependencies -------------------------------------------------------------------------------
+
+const depStop = new Set(
+  'nodejs node deno bun browser browsers jvm npm yarn pnpm mvvm mvc mvi mvp viper tdd bdd clean git github gitlab gradle xcode android ios macos ipados watchos tvos kotlin swift java javascript typescript json xml sql rest http https api apis material english the a an our this that it we you markdown yaml objectivec objective c cpp rust go ruby python homebrew'.split(' '),
+);
+const depAlias: Record<string, string[]> = { cocoapods: ['podfile'], swiftpm: ['packageswift'], 'swift package manager': ['packageswift'], spm: ['packageswift'] };
+
+function depPresent(k: Checker, name: string, strict = false): string {
+  const ix = repoIndex(k);
+  const n = alnum(name);
+  if (n.length < 3) return 'short';
+  if (ix.build.includes(n)) return 'build files';
+  for (const a of depAlias[name.toLowerCase()] ?? []) if (ix.files.some((f) => alnum(path.posix.basename(f)) === a)) return 'build files';
+  for (const fi of Object.values(k.G.files)) if ((fi.imports ?? []).some((i) => alnum(i).includes(n))) return 'imports';
+  if (strict) return ix.files.some((f) => alnum(path.posix.basename(f)).startsWith(n)) ? 'file names' : '';
+  if (k.tokenSearch(name.replace(/\s+/g, '')) || k.findSymbols(name).length) return 'code';
+  if (ix.files.some((f) => alnum(f).includes(n))) return 'file names';
+  return '';
+}
+
+function dependencyRules(k: Checker, c: Claim, out: RuleOut): void {
+  const names: [string, boolean, boolean?][] = []; // [name, conflict allowed, strict (library link)]
+  const text = c.text;
+  // a bullet that is just a link to a library repo, e.g. "[Appboy](https://github.com/Appboy/Appboy-segment-ios)"
+  const lm = /^(?:[^\[\]]*[:：]\s*)?\[([A-Z][\w.+ -]{1,40})\]\(https?:\/\/(?:github\.com|gitlab\.com|bitbucket\.org)\/[^/]+\/([^/)#?]+)\/?\)\s*$/.exec(text.trim());
+  if (lm) names.push([lm[1]!.trim(), true, true]);
+  const plain = text.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/`/g, '');
+  for (const m of plain.matchAll(/\b(heavy use of|makes? use of|we use|uses|using|built (?:with|on|upon)|depends? on|powered by|relies on)\s+(?:the\s+)?([A-Z][\w.+-]*(?:\s[A-Z][\w.+-]*)?)(?![\w.+-]*\s+(?:architecture|pattern|approach|style|principles|conventions|language|branch|APIs?|SDKs?|features?|support|runtime|versions?|environments?))/g))
+    names.push([m[2]!, /heavy use|make use|makes use|depends? on|relies on/.test(m[1]!)]); // "uses X" alone only verifies
+  // "Kermit - Logging", "Koin - Dependency Injection" list items
+  const dm = /^([A-Z][\w.+-]*(?: [A-Z][\w.+-]*)?)\s+[-–—]\s+[A-Z]/.exec(plain.trim());
+  if (dm) names.push([dm[1]!, false]);
+  const seen = new Set<string>();
+  for (let [nm, may, strict] of names) {
+    nm = nm.replace(/[.,;:]+$/, '');
+    if (seen.has(nm) || depStop.has(nm.toLowerCase()) || depStop.has(alnum(nm)) || depStop.has(alnum(nm.split(/\s/)[0]!))) continue;
+    seen.add(nm);
+    // a library link is checked against build/lock files, imports and file names only (a constant
+    // that merely starts with the vendor name is not the dependency)
+    const where = depPresent(k, nm, strict);
+    if (where === 'short') continue;
+    if (where) verifiedf(out, `依赖/技术 \`${nm}\` 出现在${where === 'build files' ? '构建文件' : where === 'imports' ? ' import' : where === 'code' ? '代码' : '文件名'}中`);
+    else if (may && repoIndex(k).buildFiles.length) conflictf(out, `文档称使用 \`${nm}\`，但构建文件、import 和代码中都没有它（依赖已移除或改名）`);
+  }
+}
+
+// commands and identifiers ------------------------------------------------------------------
+
+function commandRules(k: Checker, c: Claim, out: RuleOut): void {
+  const ix = repoIndex(k);
+  for (const m of c.text.matchAll(/\bmake\s+([a-z][\w-]*)/g)) {
+    let mk = '';
+    try {
+      mk = fs.readFileSync(path.join(k.Dir, 'Makefile'), 'utf8');
+    } catch {
+      continue;
+    }
+    if (new RegExp('^' + regexQuoteMeta(m[1]!) + '\\s*:', 'm').test(mk)) verifiedf(out, `Makefile 目标 \`${m[1]}\` 存在`);
+  }
+  for (const m of c.text.matchAll(/\.\/gradlew\s+((?::[\w-]+)+|[\w-]+)/g)) {
+    if (!ix.files.includes('gradlew')) continue;
+    const mod = /^:([\w-]+)/.exec(m[1]!);
+    if (!mod || ix.dirs.includes(mod[1]!) || ix.dirs.some((d) => d.endsWith('/' + mod[1]))) verifiedf(out, `gradle 命令 \`${m[0]}\` 的模块存在`);
+  }
+}
+
+function identifierRules(k: Checker, c: Claim, out: RuleOut): void {
+  const text = c.text.replace(reCodeG, ' ').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[a-z]+:\/\/\S+/g, ' ');
+  let n = 0;
+  for (const m of text.matchAll(/\b([A-Z][a-z0-9]+(?:[A-Z][a-z0-9]*)+|[a-z]+(?:[A-Z][a-z0-9]+)+)\b/g)) {
+    if (n >= 3) break;
+    const name = m[1]!;
+    if (name.length < 5 || builtinTypesLower.has(name.toLowerCase())) continue;
+    const syms = k.findSymbols(name);
+    const hit = syms.length ? syms[0]!.id : k.tokenSearch(name);
+    if (hit) {
+      n++;
+      out.anchors.push(hit);
+      verifiedf(out, `\`${name}\` 出现在代码中（${hit}）`);
+    }
+  }
+}
+const builtinTypesLower = new Set(['javascript', 'typescript', 'github', 'gitlab', 'macos', 'ipados', 'watchos', 'tvos', 'cocoapods', 'swiftui', 'uikit', 'appkit', 'iphone', 'ipad', 'youtube', 'testflight', 'playstore', 'appstore']);
+
+/** Rules for ordinary prose claims (any style): stale paths, counts, dependencies, commands, identifiers. */
+export function proseRules(k: Checker, c: Claim): RuleOut {
+  const out: RuleOut = { conflict: false, verified: false, evidence: [], anchors: [] };
+  pathRules(k, c, out);
+  countRules(k, c, out);
+  dependencyRules(k, c, out);
+  commandRules(k, c, out);
+  if (c.style === 'prose') identifierRules(k, c, out);
+  return out;
+}
