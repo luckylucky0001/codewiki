@@ -585,14 +585,14 @@ kb eval --doc my-old-spec.md --golden my-labels.yaml                    # 任意
 | element-x-android | 22,161 | 176（Appyx，176/179） | 11.0 / 1.7 s | 667 MB |
 | kotlinconf-app（KMP） | 1,442 | 25（25/25，parity 0 假缺口） | 0.6 / 0.07 s | 51 MB |
 | IceCubesApp | 6,058 | 44 | 1.9 / 0.22 s | 109 MB |
-| kickstarter/ios-oss | 37,731 | 124（URL 路由表 39/39，UIKit 屏幕 76） | 13.9 / 2.2 s | 567 MB |
-| wikipedia-ios | 31,452 | 157（UIKit 屏幕，28 条导航边） | 12.4 / 1.8 s | 542 MB |
-| NetNewsWire | 12,528 | 31（UIKit / AppKit 屏幕） | 4.0 / 0.40 s | 186 MB |
+| kickstarter/ios-oss | 37,731 | 120（URL 路由表 39/39，UIKit 屏幕 72） | 13.9 / 2.2 s | 596 MB |
+| wikipedia-ios | 31,452 | 146（UIKit 屏幕，28 条导航边） | 12.4 / 1.8 s | 538 MB |
+| NetNewsWire | 12,528 | 30（UIKit / AppKit 屏幕） | 4.0 / 0.40 s | 212 MB |
 | HarmonyOS-Cases | 20,141 | 191 | 6.3 / 0.9 s | 377 MB |
 | app_samples | 51,342 | 416 | 18.3 / 3.2 s | 886 MB |
 | NextE | 19,921 | 58（页面 51/51） | 8.1 / 1.0 s | 386 MB |
 
-第 7 轮验证中修复了 24 个问题，每个都配了最小片段回归测试，主要包括：
+第 7 轮验证中修复了 25 个问题，每个都配了最小片段回归测试，主要包括：
 
 - **路由召回**：
   - nav-graph XML；
@@ -620,7 +620,7 @@ kb eval --doc my-old-spec.md --golden my-labels.yaml                    # 任意
 
 - 自定义导航框架（DroidconKotlin）不支持；
 - Objective-C 不解析；
-- UIKit 屏幕中约 17% 是嵌入式子控制器；
+- UIKit 屏幕中约 10% 是嵌入式子控制器（排除 `addChild` / embed 子控制器之前是 17%）；
 - UIKit 导航边只覆盖直接类型和局部赋值；
 - URL handler 中的深链没有实现。
 

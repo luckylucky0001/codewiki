@@ -67,9 +67,9 @@
 | IceCubesApp | Swift | 432 | 99.5% | 6,058 | 44 | 28 + 14 + 2 个 UIKit | 0 | 78 | 1.9 / 0.22 s | 2.7 s | 109 MB | 49 / 4.7 KB | PASS | 22 / 0 |
 | sample-food-truck | Swift | 82 | 97.6% | 1,180 | 10 | 10/11 | 0 | 0 | 0.5 / 0.06 s | 0.5 s | 33 MB | 15 / 1.5 KB | PASS | 4 / 1（0） |
 | clean-architecture-swiftui | Swift | 63 | 90.5% | 788 | 1 | 1/2 | 0 | 0 | 0.25 / 0.03 s | 0.3 s | 26 MB | 6 / 0.8 KB | PASS | 2 / 0 |
-| NetNewsWire | Swift（另有 10 个 .m 未解析） | 728 | 97.9% | 12,528 | 31（UIKit/AppKit 屏幕，4 条边） | 抽样 10/10 | 0 | 8 | 4.0 / 0.40 s | 4.5 s | 186 MB | 36 / 3.6 KB | PASS | 13 / 0 |
-| kickstarter/ios-oss | Swift | 2,080 | 92.5% | 37,731 | 124（深链 41 + UIKit 76 + SwiftUI 7；49 条边） | 深链 39/39，UIKit 抽样 8/10 | 0 | 19 | 13.9 / 2.2 s | 21.1 s | 567 MB | 113 / 10.0 KB | PASS | 6 / 0 |
-| wikipedia-ios | Swift（另有 208 个 .m 未解析） | 1,449 | 98.3% | 31,452 | 157（UIKit 屏幕，28 条边） | 抽样 9/10 | 28 | 1 | 12.4 / 1.8 s | 14.3 s | 542 MB | 162 / 1.4 KB（分层） | PASS | 150 / 1（0） |
+| NetNewsWire | Swift（另有 10 个 .m 未解析） | 728 | 97.9% | 12,528 | 30（UIKit/AppKit 屏幕，4 条边） | 抽样 10/10 | 0 | 8 | 4.0 / 0.40 s | 5.0 s | 212 MB | 34 / 3.4 KB | PASS | 13 / 0 |
+| kickstarter/ios-oss | Swift | 2,080 | 92.5% | 37,731 | 120（深链 41 + UIKit 72 + SwiftUI 7；48 条边） | 深链 39/39，UIKit 抽样 8/10 | 0 | 19 | 13.9 / 2.2 s | 16.0 s | 596 MB | 108 / 9.6 KB | PASS | 6 / 0 |
+| wikipedia-ios | Swift（另有 208 个 .m 未解析） | 1,449 | 98.3% | 31,452 | 146（UIKit 屏幕，28 条边） | 抽样 8/10 | 28 | 1 | 12.4 / 1.8 s | 13.0 s | 538 MB | 150 / 15.5 KB | PASS | 150 / 1（0） |
 | HarmonyOS-Cases | ArkTS 1,952 + TS 314 | 2,267 | 100% | 20,141 | 191 | 抽查 15/15 | 1,437 | 7 | 6.3 / 0.9 s | 7.0 s | 377 MB | 193 / 1.3 KB（分层） | PASS | 180 / 0 |
 | app_samples（sparse） | ArkTS 1,828 + TS/JS 784 | 2,612 | 100% | 51,342 | 416 | 抽查 12/12 | 2,674 | 1 | 18.3 / 3.2 s | 20.1 s | 886 MB | 421 / 4.1 KB（分层） | PASS | 67 / 0 |
 | agc 模板（sparse） | ArkTS 2,286 + TS 149 | 2,437 | 99.5% | 18,460 | 252 | router_map 143/143 | 34 | 8 | 7.0 / 1.0 s | 7.7 s | 353 MB | 166 / 3.3 KB（分层） | PASS | 2 / 0 |
@@ -117,9 +117,9 @@
 | IceCubesApp | 28 个 `RouterDestination` case，加 14 个 `NavigationLink(destination:)` 设置页 | 42 | — |
 | sample-food-truck | 9 个 `Panel` case、订单详情、甜甜圈详情 | 10 | 甜甜圈详情的 `navigationDestination` 闭包会构造多个视图，按规则不猜 |
 | clean-architecture-swiftui | 国家详情、邻国详情 | 1 | `NavigationLink(destination: self.neighbourDetailsView(...))` 是方法调用 |
-| kickstarter/ios-oss | `allRoutes` 路由表中的 39 条 URL（不含 `/`）；随机 10 个 `*ViewController` 类 | 深链 39；UIKit 8/10（全部 77 个中识别 75 个） | 未识别的 2 个是有意排除的：`RootTabBarViewController` 是容器，`WebViewController` 是被多个类继承的基类 |
-| NetNewsWire | 随机 10 个 `*ViewController` 类 | 10/10（全部 31 个中识别 30 个） | — |
-| wikipedia-ios | 随机 10 个 `*ViewController` 类 | 9/10（全部 147 个中识别 134 个） | 未识别的类是共享基类（`WMFScrollViewController`），或者父类定义在 Objective-C 中 |
+| kickstarter/ios-oss | `allRoutes` 路由表中的 39 条 URL（不含 `/`）；随机 10 个 `*ViewController` 类 | 深链 39；UIKit 8/10（全部 77 个中识别 71 个） | 未识别的 2 个是有意排除的：`RootTabBarViewController` 是容器，`WebViewController` 是被多个类继承的基类 |
+| NetNewsWire | 随机 10 个 `*ViewController` 类 | 10/10（全部 31 个中识别 29 个） | — |
+| wikipedia-ios | 随机 10 个 `*ViewController` 类 | 8/10（全部 147 个中识别 123 个） | 未识别：共享基类 `WMFScrollViewController`；`WelcomePageViewController` 只通过 `addChild` 嵌入引导分页（#25）；其余类的父类定义在 Objective-C 中 |
 | NextE | 51 个 `NavDestination` / `HdsNavDestination` 页面组件 | 51 个页面文件都有路由锚定（共 58 条路由；其中 `LayoutSettingsPage` 锚在它承载的 `ColumnDensity` 目的地上） | — |
 | SweetVideo | 24 个 `NavDestination` 页面 | 24 | — |
 | fishpi-harmony | `$profile:route_map` 中 10 条，加 1 个 NavDestination 页 | 11 | — |
@@ -372,9 +372,9 @@
 
   | 项目 | 路由 | 边 |
   |---|---|---|
-  | NetNewsWire | 0 → 31 | 4 |
-  | wikipedia-ios | 0 → 157 | 28 |
-  | kickstarter | 48 → 124 | 49 |
+  | NetNewsWire | 0 → 31（#25 之后为 30） | 4 |
+  | wikipedia-ios | 0 → 157（#25 之后为 146） | 28 |
+  | kickstarter | 48 → 124（#25 之后为 120） | 49（#25 之后为 48） |
   | IceCubesApp | 42 → 44 | — |
 
   - 召回：随机抽 10 个 `*ViewController` 类，NetNewsWire 10/10、wikipedia 9/10、kickstarter 8/10。未识别的都是有意排除的基类或容器，或者父类在 Objective-C 中。
@@ -385,6 +385,27 @@
 
 - 问题：增量 compound 时，如果某条路由消失（例如某个基类不再算作屏幕），它的功能页会被规划成没有 route id 的 feature 任务。模板写入器随后生成 `pages/features/.md`，verify 拒绝发布。
 - 修复：这类页面改为刷新仍然存在的锚点。
+
+**25. 嵌入式子控制器不算屏幕**（UIKit 屏幕的精度）
+
+- 规则：一个视图控制器如果没有任何入边，并且满足以下任一条件，就不算屏幕：
+  - 只通过 `addChild` / `addChildViewController` / `embed` 加入；
+  - 是 storyboard containerView `embed` segue 的目的地；
+  - 名字以 `AccessoryViewController` 或 `CellViewController` 结尾。
+
+  入边包括 push、present、show、segue、`instantiateViewController`、`rootViewController:`，以及 storyboard 的 initial / rootViewController relationship。
+- 先试过的方案：名字规则同时覆盖 Inspector 和 Container。这会让 NetNewsWire 的召回抽样从 10/10 掉到 7/10（`FolderInspectorViewController`、`TimelineContainerViewController` 等是真正的面板 / 屏幕），超过“每个仓库最多掉 1 个”的约束，所以只保留了 Accessory 和 Cell。
+- 效果：
+
+  | 指标 | 修复前 → 修复后 |
+  |---|---|
+  | 同一组 30 个屏幕样本中的假屏幕 | 5 → 3（17% → 10%），25 个真屏幕全部保留 |
+  | 召回抽样 NetNewsWire | 10/10 → 10/10 |
+  | 召回抽样 wikipedia | 9/10 → 8/10（`WelcomePageViewController` 是 `addChild` 嵌入的引导页） |
+  | 召回抽样 kickstarter | 8/10 → 8/10 |
+  | 路由 NetNewsWire | 31 → 30 |
+  | 路由 wikipedia | 157 → 146 |
+  | 路由 kickstarter | 124 → 120 |
 
 ## 规模
 
@@ -439,7 +460,7 @@
 ## 不支持 / 局限
 
 - **UIKit / AppKit（#23）的精度**：
-  - 从 3 个仓库各随机抽 10 个屏幕，其中 5 个（约 17%）是嵌入式子控制器，而不是完整屏幕。例子：NetNewsWire 的 `NNW3OpenPanelAccessoryViewController`、`NothingInspectorViewController`；wikipedia 的 `PageHistoryComparisonSelectionViewController`、`WelcomeAnimationViewController`；kickstarter 的 `PagedContainerViewController`。
+  - 从 3 个仓库各随机抽 10 个屏幕，#25 之前有 5 个（17%）是嵌入式子控制器而不是完整屏幕，#25 之后剩 3 个（10%）：`NothingInspectorViewController`、`PageHistoryComparisonSelectionViewController`、`PagedContainerViewController`。它们既没有通过 `addChild` 等方式加入，名字也不符合规则。
   - 边只覆盖直接类型或同函数内的局部赋值。通过协调器方法、工厂函数或属性间接跳转的情况不覆盖。目前识别出的边数：NetNewsWire 4 条、wikipedia 28 条、kickstarter 49 条。
   - 父类定义在 Objective-C 中的控制器识别不到。
   - URL handler（`application(_:open:)`、`scene(_:openURLContexts:)`）中的深链没有实现。原因是 NetNewsWire 和 wikipedia 的 handler 都不使用字面量路径：前者按 scheme 前缀和 `WidgetDeepLink` 枚举判断，后者转交给 `NSUserActivity`。kickstarter 的深链来自路由表（#11）。
