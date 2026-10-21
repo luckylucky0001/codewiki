@@ -40,6 +40,7 @@ export async function runJobs(jobs: Job[], cache: ScanCache | undefined, want?: 
   if (process.env.KB_WORKERS) workers = Math.max(1, parseInt(process.env.KB_WORKERS, 10) || 1);
   if (misses.length < MIN_PARALLEL) workers = 1;
   workers = Math.max(1, Math.min(workers, misses.length));
+  if (misses.length === 0) return { results, workers: 1 };
   if (workers === 1) {
     await initParsers();
     const ps = new Parsers();

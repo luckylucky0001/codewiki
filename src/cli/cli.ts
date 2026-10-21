@@ -15,6 +15,7 @@ import { agentRows, installAgents, parseAgents } from './install.js';
 import { serveMCP } from '../mcp/server.js';
 import { formatEval, runEval } from '../engine/eval.js';
 import { postMergeScript, postReceiveScript } from './hook.js';
+import { runBench } from './bench.js';
 import { fixIndex, subIndexesCurrent, verifyWiki, type Report } from '../wiki/verify.js';
 import { appendLog, initWiki, renderIndex } from '../wiki/layout.js';
 import { type Page, findPage, loadPages, writeFileAtomic } from '../wiki/page.js';
@@ -1073,6 +1074,26 @@ register({
     fs.mkdirSync(hooks, { recursive: true });
     fs.writeFileSync(target, script, { mode: 0o755 });
     a.emit({ mode, ok: true, path: target }, () => a.out(`installed ${target}\n`));
+    return ExitOK;
+  },
+});
+
+register({
+  name: 'bench', usage: '[--synthetic N] [--keep dir] | --root <repo> [--config f]', summary: 'measure cold vs warm (cached) scan time on a synthetic or real repo',
+  flags: { synthetic: ['int', 'generate a synthetic repo with N files', 0], keep: ['string', 'write the synthetic repo here instead of a temp dir', ''], workers: ['int', 'parser worker threads (0 = auto)', 0] },
+  async run(a, f) {
+    const n = Number(f.synthetic) || 0;
+    let cfg: Config | null = null;
+    if (n <= 0) {
+      const c = a.cfgOrFail();
+      if (typeof c === 'number') return c;
+      cfg = c;
+    }
+    const out = await runBench(cfg, n, String(f.keep || ''), Number(f.workers) || 0);
+    a.emit(out, () => {
+      a.out(`${out.root}: ${out.files} files, ${out.symbols} symbols, ${out.parse_failures} parse failures, ${out.workers} workers, cache ${(out.cache_bytes / (1 << 20)).toFixed(1)} MiB\n`);
+      for (const r of out.runs) a.out(`  ${r.name.padEnd(18)} ${String(r.duration_ms).padStart(7)} ms  parsed=${r.parsed} cache_hits=${r.cache_hits}\n`);
+    });
     return ExitOK;
   },
 });
