@@ -227,6 +227,9 @@ JSON), and measures stability after dropping 1 % of core symbols. Results (Go v1
 | HarmonyOS Cases (CommonAppDevelopment) | 12,947 / 1,815 | 1 hvigor (L1 collapsed) | 2 | – / 172 / 28 | 5 / 40 / 40 | 169 | 164 | 0.96 / 1.00 | 1.00 |
 | kickstarter ios-oss | 37,731 / 2,577 | 10 (Xcode + 8 SwiftPM) | 3 | 9 / 33 / 254 | 5 / 25 / 40 | 25 | 648 | 0.89 / 0.97 | 1.00 |
 | IceCubesApp | 6,058 / 539 | 14 (Xcode + SwiftPM packages) | 3 | 14 / 35 / 29 | 9 / 20 / 27 | 30 | 101 | 0.97 / 0.99 | 1.00 |
+| kotlinconf-app (KMP) | 1,442 / 544 | 2 (Gradle + Xcode iosApp) | 3 | 2 / 8 / 47 | 8 / 26 / 37 | 5 | 128 | – | – |
+| wikipedia-ios | 31,452 / 2,020 | 5 (Xcode 11 targets + 4 SwiftPM) | 3 | 5 / 19 / 211 | 6 / 22 / 40 | 11 | 634 | – | – |
+| fishpi-harmony | 1,004 / 203 | 1 hvigor | 2 | – / 2 / 17 | 7 / 29 / 39 | 1 | 48 | – | – |
 
 All runs deterministic; no cluster outside 3–40. "Build ms" covers core-graph construction,
 PageRank, clustering and finalize (detection adds 25–260 ms). A small edit through
