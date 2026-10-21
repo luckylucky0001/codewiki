@@ -387,7 +387,12 @@ TypeScript 版（Node 22，WASM 语法，同一 4 核容器，2026-10-21）：
 | 合成 3000 | 3000 | 21000 | 3493 ms | 774 ms | 1253 ms | 3550 / 1227 / 1366 ms |
 | HarmonyOS-Cases（`kb scan` 全进程墙钟） | 2267 | 20141 | 5.7 s | 2.2 s | — | 5.2 s / 1.1 s |
 
-引用解析现在分片在 worker_threads 上并行：图只序列化一次，放进 SharedArrayBuffer 供各 worker 读取，输出与串行版逐字节一致。在 Cases 的热扫描上，`scanRepo` 从 2.05 s 降到 1.85 s（4 个 worker），只快了约 10%，离 Go 的约 1.1 s 还远。剩下的时间主要花在 resolve pass（约 550 ms）、扫描缓存的 v8 反序列化（约 350 ms）和 GC（约 290 ms）上，见 [docs/validation-v2.md](docs/validation-v2.md) §4。
+热扫描做了两项优化，输出都与无缓存扫描逐字节一致：
+
+- **并行引用解析**：引用解析分片在 worker_threads 上并行。图只序列化一次，放进 SharedArrayBuffer 供各 worker 读取。
+- **引用缓存**：解析出的引用写进扫描缓存，键是所有输入文件的 hash。文件全部未变时直接复用，不再解析。
+
+在 Cases 上，`scanRepo` 热扫描从 2.05 s 降到 **1.25 s**：并行解析快约 10%，引用缓存再省约 0.6 s。`kb scan` 整个进程约 2.1 s，其中约 0.6 s 是 facts 抽取，0.6 s 是读取缓存（gunzip 加 v8 反序列化，62 MB）。Go 版约 1.1 s。见 [docs/validation-v2.md](docs/validation-v2.md) §4。
 
 ```bash
 kb bench --synthetic 3000                       # 合成仓库，临时目录

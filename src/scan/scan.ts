@@ -7,7 +7,7 @@ import v8 from 'node:v8';
 import { createHash } from 'node:crypto';
 import type { Config, Platform } from '../config/config.js';
 import { absRoot, shadowed, wikiPath } from '../config/config.js';
-import { GraphVersion, type Graph, type Symbol, type ParseFailure } from '../model.js';
+import { GraphVersion, reindexGraph, type Graph, type Symbol, type ParseFailure } from '../model.js';
 import { langForPath, Parsers, initParsers } from '../extract/lang.js';
 import { parseFile, type Call, type FileResult } from '../extract/extract.js';
 import { fingerprint } from '../extract/fingerprint.js';
@@ -21,6 +21,8 @@ export interface Stats {
   cache_hits: number;
   workers: number;
   duration_ms: number;
+  /** references reused from the scan cache (no file changed since they were resolved) */
+  refs_cached?: boolean;
 }
 
 export interface ScanResult {
@@ -159,7 +161,29 @@ export async function scan(cfg: Config, dir: string, opt: ScanOptions = {}): Pro
   if (opt.cache) opt.cache.prune(seen);
   g.symbols.sort((a, b) => cmpStr(a.id, b.id));
   g.parse_failures.sort((a, b) => cmpStr(a.file, b.file));
-  await resolveRefsParallel(g);
+  // resolved references are a pure function of the parsed files: reuse them when every input is unchanged
+  const refsKey = createHash('sha256');
+  refsKey.update(cacheVersion() + '\n');
+  jobs.forEach((j, i) => refsKey.update(`${j.rel}\0${j.prel}\0${j.lang}\0${j.platform}\0${results[i]!.hash}\0${results[i]!.err ?? ''}\n`));
+  const key = refsKey.digest('hex');
+  const cached = opt.cache?.refs;
+  if (cached && cached.key === key) {
+    for (const s of g.symbols) {
+      const r = cached.refs[s.id];
+      if (r) s.refs = r.slice();
+      else delete s.refs;
+    }
+    reindexGraph(g);
+    res.stats.refs_cached = true;
+  } else {
+    await resolveRefsParallel(g);
+    if (opt.cache) {
+      const refs: Record<string, string[]> = {};
+      for (const s of g.symbols) if (s.refs?.length) refs[s.id] = s.refs.slice();
+      opt.cache.refs = { key, refs };
+      opt.cache.dirty = true;
+    }
+  }
   res.stats.duration_ms = Date.now() - start;
   return res;
 }
@@ -182,15 +206,18 @@ interface CacheEntry {
 
 export class ScanCache {
   entries = new Map<string, CacheEntry>();
+  /** resolved references of the last scan, keyed by its inputs */
+  refs?: { key: string; refs: Record<string, string[]> };
   dirty = false;
   constructor(public version = cacheVersion()) {}
 
   static load(p: string): ScanCache {
     const c = new ScanCache();
     try {
-      const raw = v8.deserialize(zlib.gunzipSync(fs.readFileSync(p))) as { version: string; entries: Record<string, CacheEntry> };
+      const raw = v8.deserialize(zlib.gunzipSync(fs.readFileSync(p))) as { version: string; entries: Record<string, CacheEntry>; refs?: ScanCache['refs'] };
       if (raw.version !== c.version) return c;
       for (const [k, v] of Object.entries(raw.entries)) c.entries.set(k, v);
+      if (raw.refs) c.refs = raw.refs;
     } catch {
       /* missing or incompatible: empty cache */
     }
@@ -201,7 +228,7 @@ export class ScanCache {
     if (!this.dirty) return;
     fs.mkdirSync(path.dirname(p), { recursive: true });
     const tmp = p + '.tmp~';
-    const obj = { version: this.version, entries: Object.fromEntries(this.entries) };
+    const obj = { version: this.version, entries: Object.fromEntries(this.entries), ...(this.refs ? { refs: this.refs } : {}) };
     fs.writeFileSync(tmp, zlib.gzipSync(v8.serialize(obj), { level: 1 }));
     fs.renameSync(tmp, p);
     this.dirty = false;

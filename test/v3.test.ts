@@ -58,6 +58,26 @@ describe('wave 3', () => {
   });
 });
 
+describe('scan refs cache', () => {
+  it('reuses resolved references only when no input changed, with identical results', async () => {
+    const { detectedConfig } = await import(path.join(repo, 'dist/config/config.js'));
+    const { scan, ScanCache } = await import(path.join(repo, 'dist/scan/scan.js'));
+    const root = path.join(repo, 'examples/minishop');
+    const cfg = detectedConfig(root);
+    const h = (g: { symbols: { id: string; refs?: string[] }[] }) => JSON.stringify(g.symbols.map((s) => [s.id, s.refs ?? []]));
+    const cache = new ScanCache();
+    const a = await scan(cfg, root, { cache });
+    expect(a.stats.refs_cached).toBeUndefined();
+    const b = await scan(cfg, root, { cache });
+    expect(b.stats.refs_cached).toBe(true);
+    expect(h(b.graph)).toBe(h(a.graph));
+    cache.refs!.key = 'stale';
+    const c = await scan(cfg, root, { cache });
+    expect(c.stats.refs_cached).toBeUndefined();
+    expect(h(c.graph)).toBe(h(a.graph));
+  });
+});
+
 describe('cli output', () => {
   it('large --json output is not cut when stdout is a pipe', async () => {
     const { spawnSync } = await import('node:child_process');

@@ -131,16 +131,21 @@ Measured on HarmonyOS-Cases warm scans (4-core container):
 | slice of 1/4 (index build ~130 + passes) | 165–435 |
 | whole `scanRepo`, fresh process, `KB_WORKERS=1` / `2` / `4` | 2007–2108 / 1913–1928 / 1842–1863 |
 
-**Result:** the warm scan is about 8–10% faster with 4 workers (2.05 s → 1.85 s), not close to Go's ~1.1 s. The measurements were taken while another agent's accuracy runs kept the load average at 3–11. Each worker also starts with a cold JIT and rebuilds the name indexes, about 130 ms. The CPU profile of a warm serial scan shows where the rest goes:
+**Result of parallelization alone:** the warm scan is about 8–10% faster with 4 workers (2.05 s → 1.85 s). Each worker starts with a cold JIT and rebuilds the name indexes (about 130 ms), and the measurements were taken while another agent's runs kept the load average at 3–11.
 
-| part of the warm serial scan | ms |
+**Second change: a resolved-refs cache.** The references are a pure function of the parsed inputs, so the scan cache now also stores them. The key is sha256 over cache version + (path, platform-relative path, lang, platform, content hash, error) of every file. When nothing changed, the refs are reused and no resolution runs; any change triggers a full parallel resolve.
+
+On Cases this gives identical refs to an uncached scan (same hash), and the tests cover reuse, invalidation and identity. Warm `scanRepo` drops to **1.21–1.33 s**, down from 2.05 s before both changes.
+
+A full `kb scan` process takes about 2.1–2.3 s. The CPU profile shows where it goes:
+
+| part of a full warm `kb scan` | ms |
 |---|---|
-| resolve `pass` | 554 |
-| v8 deserialize of the scan cache | 347 |
-| GC | 291 |
-| zlib | 114 |
+| `extractFacts` (owned by the facts work) | 630 |
+| cache load: gunzip 230 + v8 deserialize of 62 MB 365 | ~600 |
+| directory walk + hashing | ~290 |
 
-The next steps are a cheaper cache format (per-file lazy deserialize) and lower allocation in `pass`, not more threads.
+Go's warm scan takes about 1.1 s. To get closer, the next steps are a smaller or lazier cache format and facts extraction from cached per-file results.
 
 ## Reproduce
 
