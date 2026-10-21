@@ -14,7 +14,7 @@
   :root { --ink: #1f2937; --muted: #6b7280; --line: #e5e7eb; --accent: #2563eb; --accent-soft: #eff6ff; --code: #f6f8fa; --warn: #b45309; --ok: #047857; }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: #fff; }
-  body { font-family: "WenQuanYi Zen Hei", "Noto Sans CJK SC", sans-serif; color: var(--ink); font-size: 9.5pt; line-height: 1.55; }
+  body { font-family: "WenQuanYi Zen Hei", "Noto Sans CJK SC", sans-serif; color: var(--ink); font-size: 9.5pt; line-height: 1.5; }
   h1, h2, h3 { line-height: 1.3; margin: 0; }
   section.chapter { break-before: page; }
   h2 { font-size: 17pt; margin: 0 0 4mm; padding-bottom: 2mm; border-bottom: 1.2pt solid var(--accent); }
@@ -42,6 +42,7 @@
   figcaption { font-size: 8pt; color: var(--muted); text-align: center; margin-top: 1mm; }
   svg text { font-family: "WenQuanYi Zen Hei", sans-serif; }
   .ok { color: var(--ok); font-weight: bold; }
+  .nums td:nth-child(3), .nums td:nth-child(4), .nums td:nth-child(5), .nums td:nth-child(7), .nums td:nth-child(8) { white-space: nowrap; }
   .bad { color: #b91c1c; font-weight: bold; }
   /* cover */
   .cover { height: 255mm; display: flex; flex-direction: column; justify-content: space-between; }
@@ -68,7 +69,7 @@
       <li>核心能力：命令一览</li>
       <li>使用方法：安装、配置、CI、skills、多 Agent 支持</li>
       <li>Demo 操作流程与评测（含真实 agent 使用 skills）</li>
-      <li>真实项目验证与性能（5 个开源项目 + axios）</li>
+      <li>真实项目验证与性能（23 个公开仓库）</li>
       <li>最佳实践与引用</li>
       <li>局限与路线图</li>
     </ol>
@@ -100,7 +101,7 @@
   <div><b>24</b><span>kb 子命令（全部支持 --json）</span></div>
   <div><b>7</b><span>tree-sitter 语言：Kotlin/Java/Swift/ArkTS/JS/TS/TSX</span></div>
   <div><b>4</b><span>Agent Skills：compound / ingest / query / lint</span></div>
-  <div><b>109</b><span>Go 测试函数（单元、集成、评测、安全、真实 agent CLI），vet / gofmt 均无告警</span></div>
+  <div><b>120</b><span>Go 测试函数（单元、集成、评测、安全、真实 agent CLI），vet / gofmt 均无告警</span></div>
 </div>
 </section>
 
@@ -271,6 +272,8 @@ status: current            # current | stale | outdated-doc
   <li><code>kb install</code> 会提示 Codex 的两个坑：<code>AGENTS.override.md</code> 会取代 AGENTS.md，超过 32 KiB 的部分会被截断。</li>
   <li>真实 Claude（haiku）：<code>kb compound --agent claude</code> 完成 2 个任务，花费 $0.032；<code>kb ingest --agent claude</code> 用 1 个任务、花费 $0.0075，找出 2 处文档冲突。安装后的问答首选 kb 命令，只开放 MCP 时也能完成。</li>
   <li>A/B 对比 <code>--agent claude</code> 与 <code>--agent all</code>（18 次运行）：两组都没有读取其他 agent 的文件，首个动作相同，花费相同。</li>
+  <li><code>demo/codex-mock-demo.sh</code> 区分了真实环节和 mock 环节。<b>真实</b>的有：codex 二进制、provider 配置、沙箱、<code>exec_command</code> 工具、<code>--json</code> 事件流、kb 的 prompt、守卫和 verify。<b>mock</b> 的只有模型输出。</li>
+  <li>这次运行发现并修复了一个 bug：agent 的 stdout 和 stderr 由两个 goroutine 并发写入同一个日志，事件行会丢失，或者被 stderr 从中间截断拼接。修复方法是每个流按行缓冲，只把整行写入日志。用 <code>-race -count=50</code> 验证过。</li>
 </ul>
 </section>
 
@@ -327,40 +330,40 @@ status: current            # current | stale | outdated-doc
 <!-- ============ 6 ============ -->
 <section class="chapter" style="break-before:auto; margin-top:6mm">
 <h2><span class="num">6</span>真实项目验证与性能</h2>
-<h3>6.1 公开开源项目（只读浅克隆，详见 docs/validation.md）</h3>
-<table>
-  <tr><th>项目</th><th>平台</th><th>文件</th><th>符号</th><th>路由</th><th>testID / API</th><th>冷 / 热扫描</th></tr>
-  <tr><td>android/nowinandroid</td><td>Kotlin · Navigation 3</td><td>311</td><td>1,748</td><td>5</td><td>14 / 4</td><td>690 / 97 ms</td></tr>
-  <tr><td>Dimillian/IceCubesApp</td><td>SwiftUI</td><td>432</td><td>6,058</td><td>28</td><td>0 / 78</td><td>2,245 / 274 ms</td></tr>
-  <tr><td>HarmonyOS-Cases/Cases</td><td>ArkTS · router_map</td><td>2,267</td><td>20,141</td><td>88</td><td>1,437 / 7</td><td>9,105 / 853 ms</td></tr>
-  <tr><td>openharmony app_samples（sparse）</td><td>ArkTS</td><td>2,612</td><td>51,342</td><td>10</td><td>2,674 / 1</td><td>32,043 / 3,935 ms</td></tr>
-  <tr><td>arkTS_universal_starter</td><td>ArkTS</td><td>80</td><td>863</td><td>0</td><td>1 / 0</td><td>399 / 33 ms</td></tr>
+<h3>6.1 公开开源项目：23 个仓库（第 7 轮，最终代码全部重跑，详见 docs/validation.md）</h3>
+<p>所有仓库都以只读方式浅克隆，wiki 写到仓库之外。覆盖 Android 7 个（Compose、nav-graph、Appyx、KMP）、iOS 6 个（SwiftUI、UIKit/AppKit）、HarmonyOS 9 个（router_map、main_pages、Navigation），另有 axios 1 个。每个仓库都执行了 init、scan、bench、compound、verify、routes、parity 和 ingest。下表列出其中有代表性的 10 个。</p>
+<table class="nums" style="break-inside:auto; font-size:7.9pt">
+  <tr><th>项目</th><th>技术栈</th><th>文件</th><th>符号</th><th>路由</th><th>召回（与 grep 基准对照）</th><th>冷 / 热扫描</th><th>峰值 RSS</th></tr>
+  <tr><td>element-x-android</td><td>Kotlin · Appyx</td><td>4,355</td><td>22,161</td><td>176</td><td>176/179</td><td>11.0 / 1.7 s</td><td>667 MB</td></tr>
+  <tr><td>compose-samples</td><td>Compose（6 个应用）</td><td>364</td><td>2,831</td><td>30</td><td>30/30</td><td>1.4 / 0.16 s</td><td>75 MB</td></tr>
+  <tr><td>kotlinconf-app</td><td>KMP</td><td>263</td><td>1,442</td><td>25</td><td>25/25；parity 假缺口 25→0</td><td>0.6 / 0.07 s</td><td>51 MB</td></tr>
+  <tr><td>IceCubesApp</td><td>SwiftUI</td><td>432</td><td>6,058</td><td>44</td><td>42/42</td><td>1.9 / 0.22 s</td><td>109 MB</td></tr>
+  <tr><td>kickstarter/ios-oss</td><td>UIKit + 深链表</td><td>2,080</td><td>37,731</td><td>120</td><td>深链 39/39；UIKit 抽样 8/10</td><td>13.9 / 2.2 s</td><td>596 MB</td></tr>
+  <tr><td>wikipedia-ios</td><td>UIKit + ObjC</td><td>1,449</td><td>31,452</td><td>146</td><td>UIKit 抽样 8/10</td><td>12.4 / 1.8 s</td><td>538 MB</td></tr>
+  <tr><td>NetNewsWire</td><td>UIKit / AppKit</td><td>728</td><td>12,528</td><td>30</td><td>抽样 10/10</td><td>4.0 / 0.40 s</td><td>212 MB</td></tr>
+  <tr><td>NextE</td><td>ArkTS · Navigation</td><td>725</td><td>19,921</td><td>58</td><td>页面 51/51</td><td>8.1 / 1.0 s</td><td>386 MB</td></tr>
+  <tr><td>agc 模板（sparse）</td><td>ArkTS · router_map</td><td>2,437</td><td>18,460</td><td>252</td><td>router_map 143/143</td><td>7.0 / 1.0 s</td><td>353 MB</td></tr>
+  <tr><td>app_samples（sparse）</td><td>OpenHarmony</td><td>2,612</td><td>51,342</td><td>416</td><td>抽查 12/12</td><td>18.3 / 3.2 s</td><td>886 MB</td></tr>
 </table>
 <div class="kpi">
-  <div><b>100%</b><span>Kotlin 无错解析（311 个文件）</span></div>
-  <div><b>99.5%</b><span>Swift（431 个文件，2 个失败）</span></div>
-  <div><b>100%</b><span>ArkTS（3858 个文件；语法补丁前 99.9%）</span></div>
-  <div><b>100%</b><span>TS/JS（1102 个文件）</span></div>
+  <div><b>23/23</b><span>kb verify PASS（compound 后、ingest 后各验证一次）</span></div>
+  <div><b>98.7 / 95.8 / 99.4%</b><span>Kotlin / Swift / ArkTS 无错解析率（TS·JS 99.9%）</span></div>
+  <div><b>187 → 3</b><span>假冲突（新增 17 个仓库的冲突总数 191 → 6，其中 3 个是真冲突）</span></div>
+  <div><b>25</b><span>项修复，每项都有最小片段回归测试</span></div>
 </div>
-<p>ArkTS 原有 4 个失败文件，都是 ArkUI 属性调用参数中带尾逗号（<code>.tabBar(x,)</code>）。我们修补了 vendored 的 <code>grammar.js</code>，用 tree-sitter-cli 0.24.4（ABI 14）重新生成 parser，之后为 <b>0 个失败</b>；上游报告的解析率约为 94%。另外新增了 API 抽取适配器：Ktor、OkHttp、Alamofire、Moya / Endpoint 枚举、<code>@ohos/axios</code>、RCP。适配后 API 抽取数量为：nowinandroid 0→4，IceCubesApp 0→<b>78</b>，Cases 5→7。验证过程中还修复了 5 个问题：</p>
+<p><b>25 项修复</b>：<code>kb init</code> 平台检测与 KMP 重叠根；新增路由来源（nav-graph XML、Compose 路由引用、Appyx NavTarget、HarmonyOS main_pages / <code>$profile</code> / pushPathByName / NavDestination、SwiftUI 的三种写法、URL 路由表）；多应用仓库锚错模块；KMP 的 parity 假缺口；规模（热扫描从 O(R²) 降到 O(R)，ingest 建立索引，页面设 token 预算，大 wiki 使用分层 index，graph 以 gzip 存储）；假冲突识别；符号链接根；路由消失后的功能页处理。</p>
+<p><b>UIKit / AppKit（#23、#25）</b>：识别 <code>*ViewController</code> 屏幕和导航边。</p>
 <ul>
-  <li>Kotlin 类型安全导航 <code>composable&lt;T&gt;</code> / <code>entry&lt;T&gt;</code>：tree-sitter 会把 <code>entry&lt;K&gt; {}</code> 误解析为比较表达式；</li>
-  <li>SwiftUI <code>navigationDestination(for:)</code> 使用带关联值的路由枚举；</li>
-  <li>router_map 中悬空的 buildFunction，属于上游仓库 bug，现在报 warning，不再阻断发布；</li>
-  <li><code>file://</code> 被误当成深链；</li>
-  <li>符号解析误选了测试代码。</li>
+  <li>屏幕数：NetNewsWire 0→30，wikipedia-ios 0→146，kickstarter 48→120；</li>
+  <li>边数：4 / 28 / 48；</li>
+  <li>召回抽样：10/10、8/10、8/10；</li>
+  <li>精度：3 个仓库各抽 10 个屏幕，#25 排除“没有被导航到的嵌入式子控制器”后，误判为屏幕的比例从 <b>17%（5/30）降到 10%（3/30）</b>。</li>
 </ul>
-<p>nowinandroid、IceCubesApp、HarmonyOS-Cases 上的完整 <code>kb compound</code> 都通过了 verify，其中 HarmonyOS-Cases 生成了 95 个页面、618 个锚点。</p>
+<p>边只覆盖直接类型和同函数内的局部赋值。父类定义在 Objective-C 中的控制器，以及 URL handler 中的深链，暂不支持。</p>
+<p><b>规模</b>：热扫描大致随符号数线性增长，5 万符号约 3 s（同机对比，修复前 10.2 s）。峰值 RSS 约 17 KB / 符号，在 8 GB 的 CI 机器上 30 万符号以内是安全的。ingest：NextE 3,351 条断言耗时 21 s。</p>
+<p><b>未支持</b>：自定义导航框架（DroidconKotlin、Decompose、Voyager）；Objective-C。Kotlin 2.x 的 when 守卫、Swift 自定义运算符、ArkTS 的 <code>Repeat.each</code> 嵌套组合会导致解析失败，但符号仍会尽量抽取。</p>
 <h3>6.2 axios（JavaScript，只读）</h3>
-<p>扫描 70 个文件、323 个符号，发现 149 份文档。template 核对 174 条断言：verified 89，<b>conflict 0</b>（误报从 38 降到 0）。AGENTS.md 中“默认 adapter <code>['xhr','http','fetch']</code>”被 verified，锚点为 <code>web://lib/defaults/index.js#defaults</code>。claude 核对 AGENTS.md 发现 3 处规范与实现背离，例如规范要求 “never raw <code>Error</code>”，但 <code>toFormData.js</code> 中 <code>new Error('Circular reference detected')</code>。</p>
-<h3>6.3 扫描性能（<code>kb bench</code>，4 核）</h3>
-<table>
-  <tr><th>仓库</th><th>文件 / 符号</th><th>冷扫描</th><th>热扫描（缓存全命中）</th><th>1% 文件变化</th></tr>
-  <tr><td>合成仓库（Kotlin / Swift / ArkTS 各 1000 个文件）</td><td>3000 / 21000</td><td>3711 ms</td><td>463 ms</td><td>974 ms</td></tr>
-  <tr><td>axios 全仓</td><td>243 / 1009</td><td>993 ms</td><td>69 ms</td><td>—</td></tr>
-</table>
-<p><b>ingest 扩展性（第 6 轮）</b>：app_samples（5.1 万个符号）上 ingest 超过 13 分钟。pprof 显示原因是每个代码片段都要对所有符号跑一次正则。改为“每个文件只分词一次，token → 最小覆盖符号”的索引后，扫描缓存就绪时 <b>26 s</b>，冷启动 83 s。</p>
-<p>缓存按文件内容 sha256 寻址，缓存版本由抽取器指纹自动派生（嵌入的源码、节点表和语法 ABI）。</p>
+<p>扫描 243 个文件、1,009 个符号，识别出 105 个 API。411 条断言中冲突为 <b>0</b>：#21 修复了 8 条假冲突，原因是 <code>MockAdapter</code> 来自外部包。claude 模式核对 AGENTS.md，发现 3 处规范与实现不一致，例如 <code>toFormData.js</code> 中使用了 <code>new Error(...)</code>，违反“never raw Error”的约定。</p>
 </section>
 
 <!-- ============ 7 ============ -->
@@ -384,8 +387,6 @@ status: current            # current | stale | outdated-doc
 <ul>
   <li>手工修改 hash 让 verify 变绿，会破坏“知识与代码一致”的保证。应该运行 <code>kb compound</code>。</li>
   <li>wiki 自身的提交又触发 compound。用 <code>paths-ignore: wiki/**</code> 加 <code>[skip ci]</code> 避免。</li>
-  <li>路由在运行时拼接，无法静态求值。应把路由表保持为常量、枚举或 router_map。</li>
-  <li>多个页面都锚定同一个共享符号，导致大面积 stale。改由 shared-components / navigation 概念页承担。</li>
   <li>verify 通过不代表文档正确。还要看 <code>_conflicts.md</code> 和 <code>kb parity</code>。</li>
 </ul>
 </section>
@@ -396,20 +397,18 @@ status: current            # current | stale | outdated-doc
 <h3>当前局限</h3>
 <ul>
   <li><b>cgo</b>：tree-sitter 语法为 C 代码，构建需要 C 编译器。Swift 语法会产生无害的编译警告，可用 <code>CGO_CFLAGS=-w</code> 屏蔽。</li>
-  <li><b>语法覆盖</b>：ArkUI 尾逗号已通过语法补丁修复；Swift 有 2 个文件仍解析失败，写法是 <code>(@Sendable (T) -&gt; Void).self</code> 和 <code>if await x.y {</code>。第 5 轮复查过，上游 main <code>9e3b87f</code> 也没有修复，所以不升级。失败会记入 <code>parse_failures</code>，不会中断扫描。修改 vendored 语法后需要同时更新 <code>GrammarHash</code>，有测试强制检查。</li>
+  <li><b>语法覆盖</b>：23 个仓库合计的无错解析率为 Kotlin 98.7%、Swift 95.8%、ArkTS 99.4%。导致失败的写法包括 Kotlin 2.x 的 when 守卫、Swift 自定义运算符和 <code>associatedtype … where</code>、ArkTS 的 <code>Repeat.each</code> 嵌套组合，均属上游语法的限制。Objective-C 不解析。失败会记入 <code>parse_failures</code>，不会中断扫描。修改 vendored 语法后要同时更新 <code>GrammarHash</code>，有测试强制检查。</li>
   <li><b>引用解析</b>：基于名称、作用域和 import，没有完整的类型推断，也不建立跨平台的边。</li>
   <li><b>facts 启发式</b>：API 抽取依赖适配器，目前覆盖 Retrofit / Ktor / OkHttp / Alamofire / Moya / Endpoint 枚举 / http / @ohos/axios / RCP / axios。完全自研、动态拼接 URL 的网络层仍识别不到；注入检测是基于规则的，属于纵深防御的一层，不能保证全部拦截。</li>
   <li><b>多 Agent</b>：Codex 和 Gemini 在本环境只能连 mock 模型，所以它们写页面的质量没有实测；Cursor 和 Copilot 只依据文档。</li>
   <li><b>断言核对</b>：template 在盲测集上的 conflict recall 只有 0.33，修复后为 0.58，所以它只能作为初筛。平台范围、功能是否存在这类语义判断需要 claude 模式（盲测 recall 0.92），单个任务约 30–60 s。</li>
 </ul>
 <h3>路线图</h3>
-<table>
-  <tr><th style="width:12%">阶段</th><th>内容</th></tr>
-  <tr><td>短期</td><td>可选接入 SCIP / LSP 作为精确引用源；更多网络层适配器（Retrofit 动态 URL、Apollo GraphQL）；<code>kb parity --strict</code> 接入 CI；为 template 增加 flows 页</td></tr>
-  <tr><td>中期</td><td>与 e2epilot 双向打通：按 <code>changed_route_ids</code> 只重跑受影响的流程，并把测试结果回写到 requirements；扩大 golden set，覆盖真实项目</td></tr>
-  <tr><td>长期</td><td>多仓库 / 多 wiki 联邦检索；从 PR 评论中吸收人工知识（需经 verify 才能沉淀）；支持更多语言（Dart、C++）</td></tr>
-</table>
-<div class="note">仓库结构：<code>cmd/kb</code> · <code>internal/extract</code>（tree-sitter）· <code>internal/scan</code>（并行扫描、缓存、引用解析）· <code>internal/facts</code> · <code>internal/engine</code>（diff / plan / compound / claims / parity / impact / eval）· <code>internal/wiki</code> · <code>internal/cli</code>（含 MCP）· <code>internal/grammars/arkts</code> · <code>skills/</code> · <code>examples/</code> · <code>demo/</code> · <code>docs/</code></div>
+<ul>
+  <li><b>短期</b>：可选接入 SCIP / LSP 作为精确引用源；增加网络层适配器（Retrofit 动态 URL、Apollo GraphQL）；支持 Decompose / Voyager 导航；URL handler 深链；<code>kb parity --strict</code> 接入 CI。</li>
+  <li><b>中期</b>：与 e2epilot 双向打通，只重跑受 <code>changed_route_ids</code> 影响的流程，并把测试结果回写到 requirements；用真实模型评测 Codex / Gemini 后端的写作质量。</li>
+  <li><b>长期</b>：多仓库 / 多 wiki 联邦检索；从 PR 评论中吸收人工知识，经 verify 后才沉淀；支持 Dart、C++、Objective-C。</li>
+</ul>
 </section>
 
 </body>
