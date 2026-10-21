@@ -1,0 +1,536 @@
+// The compound pipeline: scan → diff → plan → writers → verify → atomic publish.
+import fs from 'node:fs';
+import path from 'node:path';
+import zlib from 'node:zlib';
+import { createHash } from 'node:crypto';
+import { execFileSync, spawnSync } from 'node:child_process';
+import type { Config } from '../config/config.js';
+import { wikiPath } from '../config/config.js';
+import { GraphVersion, type Facts, type Graph, type Anchor, getSym, graphJSON, reindexGraph } from '../model.js';
+import { scan, scanRepo, type ScanResult } from '../scan/scan.js';
+import { extractFacts } from '../facts/facts.js';
+import { renderFacts } from '../facts/render.js';
+import { goJSON, cmpStr } from '../util/go.js';
+import { type Page, loadPages, parsePage, renderPage, writeFileAtomic, idFromPath, StatusCurrent } from '../wiki/page.js';
+import { appendLog, initWiki } from '../wiki/layout.js';
+import { fixIndex, verifyWiki, type Report } from '../wiki/verify.js';
+import { computeImpact, diffGraphs, loadRoutes, loadTestIDs, type Diff } from './diff.js';
+import { buildPlan, ConflictsPage, VerdictsFile, OpRecheck, type Plan, type Task } from './plan.js';
+import { NavigationPage, SharedPage, routeIDs } from './anchors.js';
+import { ParityPage, computeParity, renderParity } from './parity.js';
+import { platformsOf, templateConcept, templateFeature, templateOverview } from './template.js';
+import { buildPrompt } from './prompt.js';
+import { short, shortHead } from './graphutil.js';
+
+export const PromptVersion = '2026-10-20.1';
+
+export interface Options {
+  cfg: Config;
+  llm: string; // template | cmd
+  llmCmd?: string;
+  agent?: string;
+  base?: string;
+  full?: boolean;
+  dryRun?: boolean;
+  fallback?: boolean;
+  maxTasks?: number;
+  kind?: string;
+  log?: (s: string) => void;
+  date?: string;
+  kbPath?: string;
+  keep?: boolean;
+}
+
+export interface TaskResult {
+  id: string;
+  page: string;
+  op: string;
+  writer: string;
+  agent?: string;
+  status: string;
+  reverted?: string[];
+  error?: string;
+  millis: number;
+}
+
+export interface Result {
+  run_id: string;
+  kind: string;
+  base: string;
+  head: string;
+  mode: string;
+  llm: string;
+  agent?: string;
+  plan: Plan;
+  diff: Diff;
+  tasks: TaskResult[];
+  verify?: Report;
+  published: boolean;
+  changed: string[];
+  work_dir?: string;
+  message: string;
+}
+
+export interface Analysis {
+  scan: ScanResult;
+  graph: Graph;
+  old: Graph;
+  facts: Facts;
+  diff: Diff;
+  plan: Plan;
+  pages: Page[];
+}
+
+export function gitHead(root: string): string {
+  try {
+    return execFileSync('git', ['-C', root, 'rev-parse', 'HEAD'], { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+  } catch {
+    return '';
+  }
+}
+
+export function loadGraph(p: string): Graph | null {
+  let raw: string;
+  try {
+    raw = zlib.gunzipSync(fs.readFileSync(p + '.gz')).toString('utf8');
+  } catch {
+    try {
+      raw = fs.readFileSync(p, 'utf8');
+    } catch {
+      return null;
+    }
+  }
+  try {
+    const g = JSON.parse(raw) as Graph;
+    g.symbols ??= [];
+    g.files ??= {};
+    g.parse_failures ??= [];
+    reindexGraph(g);
+    return g;
+  } catch {
+    return null;
+  }
+}
+
+function writeGraph(kbDir: string, g: Graph): void {
+  writeFileAtomic(path.join(kbDir, 'graph.json.gz'), zlib.gzipSync(goJSON(graphJSON(g)), { level: 1 }));
+  fs.rmSync(path.join(kbDir, 'graph.json'), { force: true });
+}
+
+export async function scanRevision(cfg: Config, sha: string): Promise<ScanResult> {
+  const tmp = fs.mkdtempSync(path.join((await import('node:os')).tmpdir(), 'kb-base-'));
+  try {
+    const r = spawnSync('sh', ['-c', `git -C '${cfg.root}' archive '${sha}' | tar -x -C '${tmp}'`], { encoding: 'utf8' });
+    if (r.status !== 0) throw new Error(`git archive ${sha}: ${r.stderr}`);
+    const res = await scan(cfg, tmp);
+    res.graph.commit = sha;
+    return res;
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
+function mergeGitChanges(root: string, base: string, head: string, wikiDir: string, files: string[]): string[] {
+  if (!base || !head || base === head) return files;
+  let out: string;
+  try {
+    out = execFileSync('git', ['-C', root, 'diff', '--name-only', base, head], { stdio: ['ignore', 'pipe', 'ignore'] }).toString();
+  } catch {
+    return files;
+  }
+  const set = new Set(files);
+  const wd = wikiDir.replace(/\/+$/, '') + '/';
+  for (const l of out.trim().split('\n')) if (l && !l.startsWith(wd)) set.add(l);
+  return [...set].sort(cmpStr);
+}
+
+/** Whether raw/docs holds ingested documents. */
+export function hasRawDocs(wikiDir: string): boolean {
+  try {
+    const m = JSON.parse(fs.readFileSync(path.join(wikiDir, 'raw', 'manifest.json'), 'utf8'));
+    return Array.isArray(m.docs) && m.docs.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+export async function analyze(o: Options): Promise<Analysis> {
+  const cfg = o.cfg;
+  const res = await scanRepo(cfg);
+  res.graph.commit = gitHead(cfg.root) || undefined;
+  const facts = extractFacts(cfg, res);
+  let old: Graph | null = null;
+  if (o.base) old = (await scanRevision(cfg, o.base)).graph;
+  else old = loadGraph(path.join(wikiPath(cfg), '.kb', 'graph.json'));
+  const diff = diffGraphs(old, res.graph);
+  computeImpact(diff, old, res.graph, loadRoutes(wikiPath(cfg)), loadTestIDs(wikiPath(cfg)), facts);
+  diff.changed_files = mergeGitChanges(cfg.root, diff.base, res.graph.commit ?? '', cfg.wiki_dir, diff.changed_files);
+  const oldG = old ?? { version: 0, symbols: [], files: {}, parse_failures: [] };
+  const [pages] = loadPages(wikiPath(cfg));
+  const plan = buildPlan({ cfg, diff, old: oldG, cur: res.graph, facts, pages, forceFull: !!o.full, hasDocs: hasRawDocs(wikiPath(cfg)) });
+  if (o.kind === 'ingest') {
+    let keep = plan.tasks.filter((t) => t.kind === 'conflicts');
+    if (!keep.length) keep = [{ id: 't01-_conflicts', op: OpRecheck, kind: 'conflicts', page: ConflictsPage, title: '文档核对', write_set: [VerdictsFile], reasons: [{ code: 'ingest' }], context: [], priority: 0 }];
+    plan.tasks = keep;
+    plan.mode = 'ingest';
+    plan.reason = 'check ingested documents against code';
+  }
+  for (const t of plan.tasks) if (t.kind === 'conflicts') t.write_set = [VerdictsFile];
+  return { scan: res, graph: res.graph, old: oldG, facts, diff, plan, pages };
+}
+
+export function expectedFacts(cfg: Config, g: Graph, f: Facts): Map<string, string> {
+  const plats = cfg.platforms.map((p) => p.name);
+  const out = renderFacts(f, g, plats);
+  out.set(ParityPage, renderParity(computeParity(g, f, plats)));
+  return out;
+}
+
+const pad2 = (n: number) => String(n).padStart(2, '0');
+function runStamp(d = new Date()): string {
+  return `${d.getUTCFullYear()}${pad2(d.getUTCMonth() + 1)}${pad2(d.getUTCDate())}T${pad2(d.getUTCHours())}${pad2(d.getUTCMinutes())}${pad2(d.getUTCSeconds())}`;
+}
+export const today = () => new Date().toISOString().slice(0, 10);
+
+function lock(dir: string, name: string): () => void {
+  fs.mkdirSync(dir, { recursive: true });
+  const p = path.join(dir, name);
+  for (let i = 0; i < 2; i++) {
+    try {
+      fs.writeFileSync(p, `${process.pid}\n`, { flag: 'wx' });
+      return () => fs.rmSync(p, { force: true });
+    } catch {
+      try {
+        if (Date.now() - fs.statSync(p).mtimeMs > 3600_000) {
+          fs.rmSync(p, { force: true });
+          continue;
+        }
+      } catch {
+        continue;
+      }
+      throw new Error('another kb run holds ' + p + ' (delete it if stale)');
+    }
+  }
+  throw new Error('could not acquire lock ' + p);
+}
+
+function copyDir(src: string, dst: string): void {
+  fs.cpSync(src, dst, { recursive: true });
+}
+
+export function snapshot(dir: string): Map<string, string> {
+  const m = new Map<string, string>();
+  const rec = (d: string) => {
+    let ents: fs.Dirent[];
+    try {
+      ents = fs.readdirSync(d, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const e of ents) {
+      const p = path.join(d, e.name);
+      if (e.isDirectory()) rec(p);
+      else {
+        try {
+          m.set(path.relative(dir, p).split(path.sep).join('/'), createHash('sha256').update(fs.readFileSync(p)).digest('hex'));
+        } catch {
+          /* vanished */
+        }
+      }
+    }
+  };
+  rec(dir);
+  return m;
+}
+
+export function changedFiles(a: Map<string, string>, b: Map<string, string>): string[] {
+  const out = new Set<string>();
+  for (const [k, v] of b) if (a.get(k) !== v) out.add(k);
+  for (const k of a.keys()) if (!b.has(k)) out.add(k);
+  return [...out].sort(cmpStr);
+}
+
+function writeJSON(p: string, v: unknown): void {
+  writeFileAtomic(p, goJSON(v, '  ') + '\n');
+}
+
+function publish(staging: string, wikiDir: string, work: string): void {
+  const prev = path.join(work, 'wiki.prev');
+  if (fs.existsSync(wikiDir)) fs.renameSync(wikiDir, prev);
+  try {
+    fs.renameSync(staging, wikiDir);
+  } catch (e) {
+    if (fs.existsSync(prev)) fs.renameSync(prev, wikiDir);
+    throw e;
+  }
+}
+
+/** Check anchors recorded in facts/requirements.json. */
+export function verifyRequirements(wikiDir: string, g: Graph, rep: Report): void {
+  let b: string;
+  try {
+    b = fs.readFileSync(path.join(wikiDir, 'facts', 'requirements.json'), 'utf8');
+  } catch {
+    return;
+  }
+  let doc: { requirements?: { id: string; anchors?: Anchor[] | null }[] };
+  try {
+    doc = JSON.parse(b);
+  } catch {
+    rep.errors.push({ code: 'E_REQUIREMENTS', page: 'facts/requirements.json', detail: 'invalid JSON' });
+    rep.ok = false;
+    return;
+  }
+  for (const r of doc.requirements ?? []) {
+    for (const a of r.anchors ?? []) {
+      rep.anchors++;
+      const s = getSym(g, a.sym);
+      if (!s || s.hash !== a.hash) {
+        rep.errors.push({ code: 'E_REQ_ANCHOR_STALE', page: 'facts/requirements.json', detail: 'requirement ' + r.id + ' anchor is stale (re-run kb compound / kb ingest)', sym: a.sym });
+        rep.ok = false;
+      }
+    }
+  }
+}
+
+class TaskEnv {
+  constructor(public o: Options, public a: Analysis, public staging: string, public work: string, public graphPath: string, public head: string) {}
+
+  platforms(): string[] {
+    return this.o.cfg.platforms.map((p) => p.name);
+  }
+
+  writePage(pg: Page): void {
+    writeFileAtomic(path.join(this.staging, pg.path), renderPage(pg));
+  }
+
+  run(t: Task, writer: string): TaskResult {
+    const start = Date.now();
+    const tr: TaskResult = { id: t.id, page: t.page, op: t.op, writer, status: 'ok', millis: 0 };
+    try {
+      if (writer === 'template') this.runTemplate(t);
+      else {
+        if (this.o.agent) tr.agent = this.o.agent;
+        const reverted = this.runCmd(t);
+        if (reverted.length) {
+          tr.reverted = reverted;
+          tr.status = 'violation';
+          tr.error = 'reverted writes outside write set: ' + reverted.join(', ');
+        }
+      }
+    } catch (e) {
+      tr.status = 'failed';
+      tr.error = (e as Error).message;
+    }
+    tr.millis = Date.now() - start;
+    return tr;
+  }
+
+  runTemplate(t: Task): void {
+    const { graph: g, facts: f } = this.a;
+    const c = short(this.head);
+    switch (t.kind) {
+      case 'feature':
+        return this.writePage(templateFeature(g, f, t.route_id!, c));
+      case 'overview':
+        return this.writePage(templateOverview(f, this.platforms(), c));
+      case 'concept':
+        if (t.page === NavigationPage || t.page === SharedPage) return this.writePage(templateConcept(g, f, t.page, c));
+        return this.restamp(t);
+      case 'conflicts':
+        throw new Error('document checking (kb ingest) is not available in this build yet');
+      default:
+        return this.restamp(t);
+    }
+  }
+
+  restamp(t: Task): void {
+    const b = fs.readFileSync(path.join(this.staging, t.page), 'utf8');
+    const [pg, err] = parsePage(t.page, b);
+    if (err) throw err;
+    const src: Anchor[] = [];
+    for (const a of pg.front.sources ?? []) {
+      const s = getSym(this.a.graph, a.sym);
+      if (s) src.push({ sym: s.id, hash: s.hash });
+    }
+    pg.front.sources = src.length ? src : undefined;
+    pg.front.status = StatusCurrent;
+    pg.front.source_commit = short(this.head);
+    this.writePage(pg);
+  }
+
+  runCmd(t: Task): string[] {
+    const cmdline = this.o.llmCmd || this.o.cfg.llm.cmd;
+    const prompt = buildPrompt({ g: this.a.graph, f: this.a.facts, srcDir: this.a.scan.dir, staging: this.staging, head: this.head, platforms: this.platforms() }, t);
+    const tdir = path.join(this.work, 'tasks');
+    fs.mkdirSync(tdir, { recursive: true });
+    fs.writeFileSync(path.join(tdir, t.id + '.prompt.md'), prompt);
+    const before = snapshot(this.staging);
+    const saved = new Map<string, Buffer>();
+    for (const f of before.keys()) {
+      try {
+        saved.set(f, fs.readFileSync(path.join(this.staging, f)));
+      } catch {
+        /* ignore */
+      }
+    }
+    const timeout = (this.o.cfg.llm.timeout_sec > 0 ? this.o.cfg.llm.timeout_sec : 600) * 1000;
+    const env: NodeJS.ProcessEnv = { ...process.env, KB_ROOT: this.o.cfg.root, KB_GRAPH: this.graphPath, KB_TASK: t.id };
+    if (this.o.kbPath) env.PATH = path.dirname(this.o.kbPath) + path.delimiter + (process.env.PATH ?? '');
+    const r = spawnSync('sh', ['-c', cmdline], { cwd: this.staging, input: prompt, env, timeout, maxBuffer: 64 << 20 });
+    fs.writeFileSync(path.join(tdir, t.id + '.log'), Buffer.concat([r.stdout ?? Buffer.alloc(0), r.stderr ?? Buffer.alloc(0)]));
+    const after = snapshot(this.staging);
+    const allowed = new Set(t.write_set);
+    const reverted: string[] = [];
+    for (const f of changedFiles(before, after)) {
+      if (allowed.has(f)) continue;
+      reverted.push(f);
+      const p = path.join(this.staging, f);
+      const b = saved.get(f);
+      if (b) {
+        fs.mkdirSync(path.dirname(p), { recursive: true });
+        fs.writeFileSync(p, b);
+      } else fs.rmSync(p, { force: true });
+    }
+    if (r.error || r.status !== 0) {
+      const why = r.error ? r.error.message : `exit status ${r.status}`;
+      throw Object.assign(new Error(`llm command failed: ${why} (see ${path.join(tdir, t.id + '.log')})`), { reverted });
+    }
+    this.postProcess(t);
+    return reverted;
+  }
+
+  postProcess(t: Task): void {
+    let b: string;
+    try {
+      b = fs.readFileSync(path.join(this.staging, t.page), 'utf8');
+    } catch {
+      throw new Error(`LLM did not write ${t.page}`);
+    }
+    const [pg, err] = parsePage(t.page, b);
+    if (err) throw new Error(`LLM output ${t.page}: ${err.message}`);
+    const ctx = new Set(t.context);
+    const src: Anchor[] = [];
+    const seen = new Set<string>();
+    for (const a of pg.front.sources ?? []) {
+      const s = getSym(this.a.graph, a.sym);
+      if (!s) throw new Error(`LLM anchored unknown symbol ${a.sym}`);
+      if (seen.has(s.id)) continue;
+      seen.add(s.id);
+      src.push({ sym: a.sym, hash: ctx.has(s.id) || a.hash !== s.hash ? s.hash : a.hash });
+    }
+    if (!src.length && t.kind !== 'overview') for (const id of t.context) src.push({ sym: id, hash: getSym(this.a.graph, id)!.hash });
+    pg.front.sources = src.length ? src : undefined;
+    pg.front.id = idFromPath(t.page);
+    if (!pg.front.title) pg.front.title = t.title;
+    if (t.kind) pg.front.kind = t.kind;
+    if (t.route_id) {
+      pg.front.routes = [t.route_id];
+      pg.front.platforms = platformsOf(this.a.facts, t.route_id);
+    }
+    if (t.kind === 'overview') pg.front.routes = routeIDs(this.a.facts);
+    pg.front.source_commit = short(this.head);
+    pg.front.status = StatusCurrent;
+    this.writePage(pg);
+  }
+}
+
+function advanceBaseline(wikiDir: string, g: Graph, head: string, llm: string): void {
+  const kb = path.join(wikiDir, '.kb');
+  writeGraph(kb, g);
+  writeJSON(path.join(kb, 'state.json'), { last_sha: head, graph_version: GraphVersion, prompt_version: PromptVersion, llm, updated_at: new Date().toISOString().replace(/\.\d+Z$/, 'Z') });
+}
+
+export async function compound(o: Options): Promise<Result> {
+  o.kind ||= 'compound';
+  o.date ||= today();
+  const log = o.log ?? (() => {});
+  const cfg = o.cfg;
+  const a = await analyze(o);
+  const head = a.graph.commit ?? '';
+  const runID = runStamp() + '-' + (head ? short(head) : 'nogit');
+  const r: Result = { run_id: runID, kind: o.kind, base: a.diff.base, head, mode: a.plan.mode, llm: o.llm, plan: a.plan, diff: a.diff, tasks: [], published: false, changed: [], message: '' };
+  if (o.agent) r.agent = o.agent;
+  log(`kb ${o.kind}: head=${shortHead(head)} base=${short(a.diff.base)} mode=${a.plan.mode} tasks=${a.plan.tasks.length} (${a.plan.reason})`);
+  if (o.dryRun) {
+    r.message = 'dry-run: nothing written';
+    return r;
+  }
+  const wikiDir = wikiPath(cfg);
+  const workRoot = path.join(path.dirname(wikiDir), '.kb-work');
+  const work = path.join(workRoot, runID);
+  const staging = path.join(work, 'wiki');
+  fs.mkdirSync(work, { recursive: true });
+  const unlock = lock(workRoot, 'lock-' + path.basename(wikiDir));
+  try {
+    r.work_dir = work;
+    if (fs.existsSync(wikiDir)) copyDir(wikiDir, staging);
+    else initWiki(staging, false);
+    const before = snapshot(staging);
+    const expected = expectedFacts(cfg, a.graph, a.facts);
+    for (const [rel, b] of expected) writeFileAtomic(path.join(staging, rel), b);
+    const graphPath = path.join(work, 'graph.json');
+    fs.writeFileSync(graphPath, goJSON(graphJSON(a.graph), ' '));
+    const env = new TaskEnv(o, a, staging, work, graphPath, head);
+    for (const t of a.plan.tasks) {
+      let writer = o.llm;
+      if (o.maxTasks && o.maxTasks > 0 && t.priority > o.maxTasks && writer !== 'template') writer = 'template';
+      let tr = env.run(t, writer);
+      if (tr.status !== 'ok' && o.fallback && writer !== 'template') {
+        log(`  task ${t.id} failed (${tr.error}); falling back to template writer`);
+        const tr2 = env.run(t, 'template');
+        tr2.error = 'fallback after: ' + tr.error;
+        tr = tr2;
+      }
+      r.tasks.push(tr);
+      log(`  [${tr.status}] ${t.op.padEnd(8)} ${t.page.padEnd(34)} ${tr.writer} ${tr.error ?? ''}`);
+    }
+    fixIndex(staging);
+    r.changed = changedFiles(before, snapshot(staging));
+    if (r.changed.length === 0 && o.kind === 'compound' && a.plan.mode === 'noop') {
+      r.message = 'noop: wiki already up to date';
+      if (head && head !== a.diff.base) {
+        try {
+          advanceBaseline(wikiDir, a.graph, head, o.llm);
+          r.message = 'noop: wiki already up to date (baseline advanced to ' + short(head) + ')';
+        } catch {
+          /* keep message */
+        }
+      }
+      r.verify = verifyWiki(wikiDir, a.graph, expected);
+      verifyRequirements(wikiDir, a.graph, r.verify);
+      if (!o.keep) fs.rmSync(work, { recursive: true, force: true });
+      delete r.work_dir;
+      return r;
+    }
+    const bullets = r.tasks.map((tr) => `${tr.op} \`${tr.page}\` (${tr.writer}, ${tr.status})`);
+    appendLog(staging, o.date, o.kind, `${short(head)} ${a.plan.mode}, ${r.tasks.length} task(s), ${r.changed.length} file(s) changed`, bullets);
+    if (o.kind === 'compound') {
+      fs.mkdirSync(path.join(staging, '.kb'), { recursive: true });
+      writeGraph(path.join(staging, '.kb'), a.graph);
+      writeJSON(path.join(staging, '.kb', 'state.json'), { last_sha: head, graph_version: GraphVersion, prompt_version: PromptVersion, llm: o.llm, updated_at: new Date().toISOString().replace(/\.\d+Z$/, 'Z') });
+    }
+    writeJSON(path.join(staging, '.kb', 'plan.json'), a.plan);
+    const rep = verifyWiki(staging, a.graph, expected);
+    verifyRequirements(staging, a.graph, rep);
+    r.verify = rep;
+    writeJSON(path.join(staging, '.kb', 'update_record.json'), {
+      base_sha: a.diff.base, changed: r.changed, date: o.date, head_sha: head, kind: o.kind, llm: o.llm, mode: a.plan.mode, reason: a.plan.reason, run_id: runID, tasks: r.tasks, verify_errors: rep.errors.length, verify_ok: rep.ok,
+    });
+    r.changed = changedFiles(before, snapshot(staging));
+    if (!rep.ok) {
+      r.message = `verify failed with ${rep.errors.length} error(s); staging kept at ${staging}; wiki NOT published`;
+      return r;
+    }
+    publish(staging, wikiDir, work);
+    r.published = true;
+    r.message = `published ${r.changed.length} changed file(s) to ${wikiDir}`;
+    if (!o.keep) {
+      fs.rmSync(work, { recursive: true, force: true });
+      delete r.work_dir;
+    }
+    return r;
+  } finally {
+    unlock();
+  }
+}
