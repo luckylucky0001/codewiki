@@ -27,10 +27,11 @@ describe('prose claim extraction', () => {
     expect(cs.map((c) => c.text)).toEqual(['We use view models to isolate effects in `Library/ViewModels`.', 'We make heavy use of: [Apollo](https://github.com/apollographql/apollo-ios)']);
     expect(cs.every((c) => c.style === 'prose')).toBe(true);
   });
-  it('path candidates: own-repo links on a branch, relative links, breadcrumbs; pinned links skipped', () => {
+  it('path candidates: own-repo links on a branch, relative links, breadcrumbs; pinned links never stale', () => {
     const ps = prosePaths('[a](https://github.com/o/r/blob/main/app/A.kt) [b](https://github.com/o/r/blob/69e9d862b5/app/B.kt) [c](../x/C.md) `Sources > Data > Services`', 'docs/r.md');
     expect(ps.map((p) => [p.p, p.strong, p.rel ?? '', !!p.breadcrumb])).toEqual([
       ['app/A.kt', true, '', false],
+      ['app/B.kt', false, '', false], // pinned commit: may verify, never a stale-path conflict
       ['../x/C.md', true, 'docs', false],
       ['Sources/Data/Services', false, '', true],
     ]);
