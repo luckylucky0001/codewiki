@@ -13,6 +13,7 @@ import { type Result, analyze, compound, expectedFacts, gitHead, loadGraph, toda
 import { agentCommand, registry } from '../agents/agents.js';
 import { agentRows, installAgents, parseAgents } from './install.js';
 import { serveMCP } from '../mcp/server.js';
+import { formatEval, runEval } from '../engine/eval.js';
 import { fixIndex, subIndexesCurrent, verifyWiki, type Report } from '../wiki/verify.js';
 import { appendLog, initWiki, renderIndex } from '../wiki/layout.js';
 import { type Page, findPage, loadPages, writeFileAtomic } from '../wiki/page.js';
@@ -992,6 +993,36 @@ register({
   name: 'mcp', usage: '[--root repo]', summary: 'stdio MCP server exposing search/get/context/anchor/status/parity/conflicts/routes as tools',
   async run(a) {
     return serveMCP((argv, out) => run(argv, out), path.resolve(a.root), a.config, Version);
+  },
+});
+
+register({
+  name: 'eval', usage: '[--golden examples/minishop-eval/golden.yaml] [--doc a.md,b.md] [--llm template|claude]', summary: 'evaluate claim verification and plan impact against a labelled golden set (precision/recall)',
+  flags: { golden: ['string', 'golden set (YAML)', 'examples/minishop-eval/golden.yaml'], ...backendFlags('claim checker / writer'), 'min-accuracy': ['string', 'exit 1 when claim accuracy is below this', '0'], doc: ['string', 'comma-separated documents to add to the project copy and ingest (instead of its own docs)', ''] },
+  async run(a, f) {
+    let cfg: Config;
+    try {
+      cfg = a.loadCfg();
+    } catch {
+      cfg = defaultConfig();
+    }
+    let be;
+    try {
+      be = resolveBackend(f, cfg);
+    } catch (e) {
+      return a.fail(ExitUsage, e as Error);
+    }
+    let golden = String(f.golden);
+    if (!path.isAbsolute(golden)) golden = path.join(a.root, golden);
+    const extra = String(f.doc || '').split(',').map((d) => d.trim()).filter(Boolean).map((d) => path.resolve(d));
+    let rep;
+    try {
+      rep = await runEval({ goldenPath: golden, llm: be.mode, llmCmd: be.cmd, agent: be.agent, kbPath: process.argv[1], log: a.log, extraDocs: extra });
+    } catch (e) {
+      return a.fail(ExitInternal, e as Error);
+    }
+    a.emit(rep, () => a.out(formatEval(rep)));
+    return rep.claim_accuracy < Number(f['min-accuracy'] || 0) ? ExitStale : ExitOK;
   },
 });
 
