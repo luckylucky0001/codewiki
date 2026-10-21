@@ -611,10 +611,16 @@ function dependencyRules(k: Checker, c: Claim, out: RuleOut): void {
   const lm = /^(?:[^\[\]]*[:：]\s*)?\[([A-Z][\w.+ -]{1,40})\]\(https?:\/\/(?:github\.com|gitlab\.com|bitbucket\.org)\/[^/]+\/([^/)#?]+)\/?\)\s*$/.exec(text.trim());
   if (lm) names.push([lm[1]!.trim(), true, true]);
   const plain = text.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/`/g, '');
-  for (const m of plain.matchAll(/\b(heavy use of|makes? use of|we use|uses|using|built (?:with|on|upon)|depends? on|powered by|relies on)\s+(?:the\s+)?([A-Z][\w.+-]*(?:\s[A-Z][\w.+-]*)?)(?![\w.+-]*\s+(?:architecture|pattern|approach|style|principles|conventions|language|branch|APIs?|SDKs?|features?|support|runtime|versions?|environments?))/g))
-    names.push([m[2]!, /heavy use|make use|makes use|depends? on|relies on/.test(m[1]!)]); // "uses X" alone only verifies
+  for (const m of plain.matchAll(/\b([Hh]eavy use of|[Mm]akes? use of|[Ww]e use|[Uu]ses|[Uu]sing|[Bb]uilt (?:with|on|upon|in)|[Bb]ased on|[Dd]epends? on|[Pp]owered by|[Rr]elies on)\s+(?:the\s+)?([A-Za-z][\w.+-]*(?:\s[A-Z][\w.+-]*)?)(?![\w.+-]*\s+(?:architecture|pattern|approach|style|principles|conventions|language|branch|APIs?|SDKs?|features?|support|runtime|versions?|environments?))/g)) {
+    // "uses X" alone only verifies; a lower-case name ("ktlint") must appear in build files
+    if (/^[a-z]/.test(m[2]!)) {
+      if (!depStop.has(m[2]!) && !/^(a|an|this|that|its|it|our|your|their|some|many|one|two|streams?|data|code)$/.test(m[2]!) && repoIndex(k).build.includes(alnum(m[2]!)) && alnum(m[2]!).length >= 4) verifiedf(out, `工具/依赖 \`${m[2]}\` 出现在构建文件中`);
+      continue;
+    }
+    names.push([m[2]!, /heavy use|make use|makes use|depends? on|relies on/i.test(m[1]!)]);
+  }
   // "Kermit - Logging", "Koin - Dependency Injection" list items
-  const dm = /^([A-Z][\w.+-]*(?: [A-Z][\w.+-]*)?)\s+[-–—]\s+[A-Z]/.exec(plain.trim());
+  const dm = /^([A-Z][\w.+-]*(?: [A-Z][\w.+-]*)?)\s+(?:[-–—]\s+[A-Z]|\((?:[a-z][\w ]*)\)\s*$)/.exec(plain.trim());
   if (dm) names.push([dm[1]!, false]);
   const seen = new Set<string>();
   for (let [nm, may, strict] of names) {
@@ -653,6 +659,23 @@ function commandRules(k: Checker, c: Claim, out: RuleOut): void {
 function identifierRules(k: Checker, c: Claim, out: RuleOut): void {
   const text = c.text.replace(reCodeG, ' ').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[a-z]+:\/\/\S+/g, ' ');
   let n = 0;
+  const ix = repoIndex(k);
+  // gradle module paths (`:ui:i18n` -> ui/i18n)
+  for (const m of c.text.matchAll(/(?:^|[\s(`])((?::[a-z][\w-]*)+)(?=$|[\s),.`])/g)) {
+    const d = m[1]!.slice(1).replace(/:/g, '/');
+    if (ix.dirs.includes(d) || ix.dirs.some((x) => x.endsWith('/' + d))) verifiedf(out, `Gradle 模块 \`${m[1]}\` 存在（${d}）`);
+  }
+  // UPPER_SNAKE keys and dotted member paths (TIVI_TMDB_API_KEY, KsApi.Secrets.isOSS)
+  for (const m of text.matchAll(/\b([A-Z][A-Z0-9]+(?:_[A-Z0-9]+){2,}|[A-Za-z]\w*(?:\.[A-Za-z]\w*){1,3})\b/g)) {
+    const name = m[1]!;
+    if (name.includes('.') && (/^[a-z]+\.[a-z]+$/.test(name) || fileExtRe.test(name) && !/[A-Z]/.test(name.split('.').pop()!))) continue;
+    const syms = k.findSymbols(name);
+    const hit = syms.length ? syms[0]!.id : !name.includes('.') ? k.tokenSearch(name) : '';
+    if (hit) {
+      out.anchors.push(hit);
+      verifiedf(out, `\`${name}\` 出现在代码中（${hit}）`);
+    } else if (!name.includes('.') && ix.build.includes(alnum(name))) verifiedf(out, `\`${name}\` 出现在构建配置中`);
+  }
   for (const m of text.matchAll(/\b([A-Z][a-z0-9]+(?:[A-Z][a-z0-9]*)+|[a-z]+(?:[A-Z][a-z0-9]+)+)\b/g)) {
     if (n >= 3) break;
     const name = m[1]!;
