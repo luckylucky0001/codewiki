@@ -26,15 +26,18 @@ type Reason struct {
 
 // Task is one unit of LLM work with an explicit write set.
 type Task struct {
-	ID       string   `json:"id"`
-	Op       string   `json:"op"`
-	Kind     string   `json:"kind"` // feature | overview | conflicts
-	Page     string   `json:"page"`
-	Title    string   `json:"title"`
-	RouteID  string   `json:"route_id,omitempty"`
-	WriteSet []string `json:"write_set"`
-	Reasons  []Reason `json:"reasons"`
-	Context  []string `json:"context"` // symbol ids whose bodies are given to the writer
+	Knowledge bool     `json:"knowledge,omitempty"`
+	Questions []string `json:"questions,omitempty"`
+	Scope     []string `json:"scope,omitempty"`
+	ID        string   `json:"id"`
+	Op        string   `json:"op"`
+	Kind      string   `json:"kind"` // feature | overview | conflicts
+	Page      string   `json:"page"`
+	Title     string   `json:"title"`
+	RouteID   string   `json:"route_id,omitempty"`
+	WriteSet  []string `json:"write_set"`
+	Reasons   []Reason `json:"reasons"`
+	Context   []string `json:"context"` // symbol ids whose bodies are given to the writer
 	// Priority is the task's rank for the LLM budget (1 = most valuable).
 	Priority int `json:"priority"`
 }
@@ -289,7 +292,7 @@ func BuildPlan(in PlanInput) *Plan {
 				continue
 			}
 			_, isAdded := added[id]
-			if isAdded || pg.Front.Kind == "concept" {
+			if isAdded {
 				reasons = append(reasons, Reason{Code: "anchor_added", Sym: id})
 			}
 		}

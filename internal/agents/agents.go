@@ -159,6 +159,12 @@ var neutralTools = ToolWords{Run: "Run:", Read: "Read", Grep: "Search",
 	Intro: "Run `kb ...` commands in a shell (or call the `codewiki` MCP tools `kb_*` when configured); read and search files with your normal file tools."}
 
 var registry = map[string]*Adapter{
+	"trae-cn": {
+		Name: "trae-cn", Display: "TRAE CN",
+		SkillsDir: ".trae/skills", Tools: neutralTools, ConsumerLvl: DocsOnly,
+		MCPHint: "use the IDE MCP settings to register kb mcp --root <repo>",
+		Notes:   "Project skill path verified against https://docs.trae.cn/ide_skills; no bundled headless backend. Use kb-compound IDE file handoff; actual IDE execution requires separate validation.",
+	},
 	"claude": {
 		Name: "claude", Display: "Claude Code",
 		Argv: func(o BackendOpts) []string {

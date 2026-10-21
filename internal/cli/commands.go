@@ -172,6 +172,14 @@ Exit 1 when verification fails (nothing is published).`,
 			fs.Bool("fallback", false, "fall back to the template writer when an LLM task fails")
 			fs.Int("max-llm-tasks", 0, "cap LLM tasks per run (rest use template); 0 = unlimited")
 			fs.Bool("keep-work", false, "keep .kb-work/<run> (prompts, logs, staging)")
+			fs.Bool("knowledge", false, "agent-plan module and business-flow knowledge pages")
+			fs.Bool("replan", false, "refresh the agent-authored knowledge plan")
+			fs.Int("workers", 1, "isolated concurrent knowledge writers (1-8)")
+			fs.String("knowledge-pages", "", "force selected knowledge pages (comma-separated paths)")
+			fs.String("retire-pages", "", "archive and remove obsolete pages; publication requires valid remaining links")
+			fs.String("retire-reason", "", "required evidence-based reason for retiring pages")
+			fs.String("feedback", "", "review findings for selected knowledge writers (read-only text file)")
+			fs.String("resume-result", "", "reuse successful knowledge tasks from a completed run JSON with identical source graph")
 		},
 		run: cmdCompound})
 	register(&command{name: "verify", usage: "[--fix-index]", summary: "CI gate: anchors match HEAD, symbols exist, no dead links/orphans, index complete, facts fresh",
@@ -560,6 +568,12 @@ func resolveBackend(fs *flag.FlagSet, cfg *config.Config) (llmBackend, error) {
 	if agentName != "" && llmSet && llm == "template" {
 		return llmBackend{}, usageError{"--agent and --llm template are mutually exclusive"}
 	}
+	if strFlag(fs, "llm-cmd") != "" && llm == "template" {
+		if llmSet {
+			return llmBackend{}, usageError{"--llm-cmd and --llm template are mutually exclusive"}
+		}
+		llm = "cmd"
+	}
 	mode, err := llmMode(llm)
 	if err != nil {
 		return llmBackend{}, err
@@ -630,7 +644,7 @@ func cmdCompound(a *app, fs *flag.FlagSet, _ []string) int {
 	}
 	o := &engine.Options{Cfg: cfg, LLM: be.mode, LLMCmd: be.cmd, Agent: be.agent, ParseUsage: be.parse, Base: strFlag(fs, "base"), Full: boolFlag(fs, "full"),
 		DryRun: boolFlag(fs, "dry-run"), Fallback: boolFlag(fs, "fallback"), MaxTasks: intFlag(fs, "max-llm-tasks"),
-		Keep: boolFlag(fs, "keep-work"), Log: a.stderr, KBPath: kbPath(), Kind: "compound"}
+		RetirePages: strFlag(fs, "retire-pages"), RetireReason: strFlag(fs, "retire-reason"), ResumeResult: strFlag(fs, "resume-result"), KnowledgePages: strFlag(fs, "knowledge-pages"), FeedbackFile: strFlag(fs, "feedback"), Knowledge: boolFlag(fs, "knowledge"), Replan: boolFlag(fs, "replan"), Workers: intFlag(fs, "workers"), Keep: boolFlag(fs, "keep-work"), Log: a.stderr, KBPath: kbPath(), Kind: "compound"}
 	r, err := engine.Compound(o)
 	if err != nil {
 		return a.fail(ExitInternal, err)

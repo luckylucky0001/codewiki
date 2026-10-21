@@ -49,7 +49,6 @@ func TemplateFeature(g *model.Graph, f *model.Facts, rid, commit string) *wiki.P
 			fmt.Fprintf(&b, "| %s | `%s` | `%s` | `%s` |\n", r.Platform, r.Pattern, r.Deeplink, r.Symbol)
 		}
 	}
-	b.WriteString("\n测试注入参数：`?token=<t>&cart=<sku,sku>`（见各端 deeplink 处理代码）。\n")
 	// testIDs
 	var tids []string
 	for _, t := range f.TestIDs {
@@ -117,7 +116,7 @@ func TemplateFeature(g *model.Graph, f *model.Facts, rid, commit string) *wiki.P
 func TemplateOverview(f *model.Facts, platforms []string, commit string) *wiki.Page {
 	rids := routeIDs(f)
 	var b strings.Builder
-	b.WriteString("# 总览：三端路由矩阵\n\n> 由 facts 确定性生成（`kb compound`）。每个功能页覆盖一个 `route_id`，三端共享同一 pattern 与 deeplink。\n\n")
+	b.WriteString("# 总览：自动抽取的路由事实\n\n> 由 facts 确定性生成（`kb compound`）。每个功能页覆盖一个 `route_id`；各平台实际覆盖以表格为准。自动事实为零不代表没有业务能力。\n\n")
 	b.WriteString("| route_id | pattern | " + strings.Join(platforms, " | ") + " | 页面 |\n|---|---|" + strings.Repeat("---|", len(platforms)) + "---|\n")
 	for _, rid := range rids {
 		pattern := ""
@@ -140,7 +139,7 @@ func TemplateOverview(f *model.Facts, platforms []string, commit string) *wiki.P
 		}
 	}
 	if len(schemes) > 0 {
-		fmt.Fprintf(&b, "\n深链 scheme：`%s`；测试态注入：`?token=<t>&cart=<sku,sku>`。\n", strings.Join(sortedKeys(schemes), "`, `"))
+		fmt.Fprintf(&b, "\n深链 scheme：`%s`。\n", strings.Join(sortedKeys(schemes), "`, `"))
 	}
 	fmt.Fprintf(&b, "\n规模：%d 条路由、%d 个 testID、%d 个接口调用点。三端差异见 [parity.md](parity.md)。机器可读：[routes.json](../facts/routes.json) · [testids.json](../facts/testids.json) · [apis.json](../facts/apis.json)\n", len(f.Routes), len(f.TestIDs), len(f.APIs))
 	pg := &wiki.Page{Path: OverviewPage, HasFM: true, Body: b.String()}
