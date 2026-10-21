@@ -342,8 +342,31 @@ depth 3; L0 1 · L1 2 · L2 2 · L3 9</code></pre>
   <tr><td>热扫描（Cases，20141 个符号）</td><td>三项改动：引用解析并行；按全部输入 hash 缓存解析结果；facts 结果缓存，并把 call sites 拆成单独文件按需加载。<code>kb scan</code> 整个进程从 2.2–2.9 s 降到 1.15–1.33 s（load 约 11.5），Go 版约 1.1 s。结果逐字节一致，有测试覆盖。</td></tr>
   <tr><td>链接检查与 <code>verify --docs</code></td><td>反引号路径只在形如路径（以 <code>./</code> <code>../</code> 开头，或带已知扩展名、首段目录存在）时才检查，跳过代码片段、glob、占位符和兄弟仓库路径。NextE 的坏链从 506 降到 288，抽样精度 19/20。<code>verify --docs</code> 只在 kb 拥有的内容出错时失败；人写正文里的坏链列为 <code>human_review_candidates</code>，加 <code>--strict</code> 才算失败。</td></tr>
   <tr><td>e2epilot 互通</td><td>用新 clone 构建 e2e，对 TS 版 minishop facts 运行 <code>seed / path / graph invalidate / impact --codewiki-diff / trace</code>，全部 exit 0。新字段 <code>name</code> / <code>deeplinks</code> 向后兼容。</td></tr>
-  <tr><td>抽取准确率（训练集）</td><td><code>bench/accuracy</code> 的 16 个标注仓库，从 Go 到 TS：routes 51.6% → 98.6%、deeplinks 4.8% → 92.4%、testIDs 55.6% → 95.8%、APIs 18.1% → 96.2%、not_screen FP 12.8% → 7.0%。规则是对着这批仓库调的，留出集结果另行给出。</td></tr>
 </table>
+<h3>5.5 抽取准确率与泛化（训练集 vs 盲测，详见 <code>bench/accuracy/</code>）</h3>
+<p><b>训练集</b>指 16 个标注仓库，规则是对着它们调出来的。<b>heldout2</b> 是 10 个新仓库：B 列是第一次盲测；之后按 B 漏掉的条目类别补了通用规则得到 D，所以 D 在这套集上不再算盲测。<b>heldout3</b> 是 4 个从未参与调优的仓库，D 在其上是真盲测；这 4 个仓库几乎没有深链和 testID，所以只衡量 routes、APIs 和误报。</p>
+<table class="nums">
+  <tr><th>指标</th><th>训练集（D）</th><th>heldout2 盲测（B）</th><th>heldout2 调整后（D，非盲）</th><th><b>heldout3 盲测（D）</b></th><th>heldout3 Go 基线</th></tr>
+  <tr><td>routes recall</td><td>98.6%</td><td>85.3%</td><td>90.9%</td><td><b>48.4%</b></td><td>42.2%</td></tr>
+  <tr><td>not_screen FP</td><td>7.0%</td><td>12.2%</td><td>8.2%</td><td><b>13.3%</b></td><td>0%</td></tr>
+  <tr><td>deeplinks recall</td><td>92.4%</td><td>100%</td><td>100%</td><td>n/a</td><td>n/a</td></tr>
+  <tr><td>testIDs recall</td><td>95.8%</td><td>59.5%</td><td>94.6%</td><td>n/a</td><td>n/a</td></tr>
+  <tr><td>APIs recall</td><td>96.2%</td><td>33.3%</td><td>38.1%</td><td><b>19.7%</b></td><td>16.7%</td></tr>
+</table>
+<div class="warn"><b>结论：规则抽取的泛化能力很差。</b>遇到没见过的写法时，整类条目会全部漏掉，例如 Navigation 3 的 <code>NavKey</code> 路由、有具名路由时被忽略的 <code>main_pages</code>、Ktor 调用、自封装的 ArkTS HTTP 工具、OkHttp 模板 URL。训练集上的高分不能当成通用准确率。接入新仓库时，应先跑一遍盲测，再补规则。</div>
+<p><b>LLM 兜底</b>（<code>kb facts suggest --agent claude</code> / <code>kb compound --llm-facts</code>，默认关闭）：先挑出规则几乎没抽到东西的导航类、网络类文件，交给 agent 提出候选。每条候选都要经过确定性核对才写入：</p>
+<ul>
+  <li>证据必须原文出现在给定行 ±5 行内，路由名或路径片段也必须出现在这个范围内；不通过的一律丢弃。</li>
+  <li>写入的条目带 <code>"source":"llm"</code>；与规则结果冲突时以规则为准；结果按文件 hash 缓存。</li>
+</ul>
+<p>在 heldout3 上做了一次真盲测（haiku，总成本约 $0.16），结果见下表。这次共采纳路由候选 93 条、API 候选 23 条，核对拒绝 17 条。三点注意：LLM 额外写入、标注里没有的条目无法评分；KMP 仓库的 API 仍是 0/20；关闭开关时，训练集输出与之前逐字节相同。</p>
+<table class="nums" style="break-inside:avoid">
+  <tr><th>指标</th><th>仅规则</th><th>规则 + LLM</th></tr>
+  <tr><td>routes recall</td><td>48.4%</td><td><b>89.1%</b></td></tr>
+  <tr><td>APIs recall</td><td>19.7%</td><td><b>39.4%</b></td></tr>
+  <tr><td>not_screen FP</td><td>13.3%</td><td>13.3%</td></tr>
+</table>
+<p><b>断言（claims）</b>：从 README / docs 正文里抽取可核对的说法，并做确定性检查，包括失效路径、数量、依赖和导入。训练集上，断言覆盖率从 23.7% 升到 <b>73.8%</b>（118/160），冲突召回从 0/18 升到 <b>9/18</b>。这两个都是<b>训练集数字</b>。</p>
 </section>
 
 <!-- ============ 6 ============ -->
@@ -369,15 +392,7 @@ depth 3; L0 1 · L1 2 · L2 2 · L3 9</code></pre>
 <p>每一步 verify 都通过，最终得到 <b>24 个页面、377 个锚点</b>。<code>kb parity</code> 报告 <code>max_cart_items</code> 三端分别为 <code>50 / 99 / 50</code>。在修改 <code>BackButton</code> 的单测中，只有 shared-components 页被重新检查。</p>
 <h3>6.3 评测：<code>kb eval</code>（开发集 33 条 / 盲测集 31 条）</h3>
 <p><b>开发集</b>（<code>golden.yaml</code>）有 33 条断言，并标注了每个变更集应该重检的页面；第 5 轮的规则就是看着它写的。<b>盲测集</b>（<code>heldout/</code>）由另一个 agent 编写，它没有读过规则代码，写了一份新的旧文档，共 31 条断言。</p>
-<table>
-  <tr><th>数据集 · 检查器</th><th>准确率</th><th>conflict P / R</th><th>verified P / R</th></tr>
-  <tr><td>开发集 · template 第 4 轮</td><td>0.82</td><td>1.00 / 0.56</td><td>0.88 / 0.92</td></tr>
-  <tr><td>开发集 · template 第 5 轮</td><td>0.97</td><td>1.00 / 1.00</td><td>1.00 / 0.96</td></tr>
-  <tr><td><b>盲测集 · template 第 5 轮（盲测）</b></td><td><b>0.58</b></td><td><b>0.80 / 0.33</b></td><td>0.64 / 0.69</td></tr>
-  <tr><td><b>盲测集 · claude（盲测）</b></td><td><b>0.74</b></td><td><b>1.00 / 0.92</b></td><td>1.00 / 0.46</td></tr>
-  <tr><td>盲测集 · template 第 6 轮修复后（已非盲测）</td><td>0.81</td><td>1.00 / 0.58</td><td>0.80 / 0.92</td></tr>
-  <tr><td>plan 影响页面（开发集，micro）</td><td colspan="3">precision 0.82 / recall <b>1.00</b>：没有漏检，多出的 2 页属于保守重检</td></tr>
-</table>
+<p>开发集上 template 第 5 轮准确率 0.97；盲测集上 template 0.58（conflict recall 0.33），claude 0.74（conflict recall 0.92）；plan 影响页面 recall 1.00。</p>
 <p><b>结论：第 5 轮的规则过拟合了开发集</b>，盲测下只能抓到三分之一的过时说法。第 6 轮只修了盲测集暴露出的通用 bug：注入检测把正常的接口文档行（例如 Bearer 请求头）误判为外发；数量规则只认紧挨着的数字，也不区分 200KB 这类带单位的值；不存在的项目式类型名（如 <code>…PageBuilder</code>）被放过；构建配置（<code>compileSdk</code>）没有纳入核对。平台范围类、功能不存在类断言属于语义判断，交给 claude 模式。修复后在 5 个真实仓库上复跑，冲突误报都是 0。每条规则都需要盲测集来约束。</p>
 <h3>6.4 真实 agent 使用 skills · 6.5 claude 模式</h3>
 <p><code>demo/skills-demo.sh</code>：haiku 问“购物车上限三端分别是多少”时触发 kb-query，调用 <code>kb parity</code>，5 轮、$0.008 答出 50 / 99 / 50；问“wiki 是否与代码一致”时触发 kb-lint，17 轮，全程只读。claude 模式下每次 compound 最多分配 2 个 LLM 任务，所有步骤 verify 通过，写集以外的写入会被自动回滚。</p>
@@ -401,16 +416,6 @@ depth 3; L0 1 · L1 2 · L2 2 · L3 9</code></pre>
 <h2><span class="num">7</span>真实项目验证与性能</h2>
 <h3>7.1 公开开源项目：23 个仓库（第 7 轮，最终代码全部重跑，详见 docs/validation.md）</h3>
 <p>所有仓库都以只读方式浅克隆，wiki 写到仓库之外。覆盖 Android 7 个（Compose、nav-graph、Appyx、KMP）、iOS 6 个（SwiftUI、UIKit/AppKit）、HarmonyOS 9 个（router_map、main_pages、Navigation），另有 axios 1 个。每个仓库都执行了 init、scan、bench、compound、verify、routes、parity 和 ingest。下表列出其中有代表性的 10 个。</p>
-<table class="nums" style="break-inside:auto; font-size:7.9pt">
-  <tr><th>项目</th><th>技术栈</th><th>文件</th><th>符号</th><th>路由</th><th>召回（与 grep 基准对照）</th><th>冷 / 热扫描</th><th>峰值 RSS</th></tr>
-  <tr><td>element-x-android</td><td>Kotlin · Appyx</td><td>4,355</td><td>22,161</td><td>176</td><td>176/179</td><td>11.0 / 1.7 s</td><td>667 MB</td></tr>
-  <tr><td>kotlinconf-app</td><td>KMP</td><td>263</td><td>1,442</td><td>25</td><td>25/25；parity 假缺口 25→0</td><td>0.6 / 0.07 s</td><td>51 MB</td></tr>
-  <tr><td>kickstarter/ios-oss</td><td>UIKit + 深链表</td><td>2,080</td><td>37,731</td><td>120</td><td>深链 39/39；UIKit 抽样 8/10</td><td>13.9 / 2.2 s</td><td>596 MB</td></tr>
-  <tr><td>wikipedia-ios</td><td>UIKit + ObjC</td><td>1,449</td><td>31,452</td><td>146</td><td>UIKit 抽样 8/10</td><td>12.4 / 1.8 s</td><td>538 MB</td></tr>
-  <tr><td>NextE</td><td>ArkTS · Navigation</td><td>725</td><td>19,921</td><td>58</td><td>页面 51/51</td><td>8.1 / 1.0 s</td><td>386 MB</td></tr>
-  <tr><td>app_samples（sparse）</td><td>OpenHarmony</td><td>2,612</td><td>51,342</td><td>416</td><td>抽查 12/12</td><td>18.3 / 3.2 s</td><td>886 MB</td></tr>
-  <tr><td colspan="8">另有 compose-samples、IceCubesApp、NetNewsWire、agc 模板等 13 个仓库，见 docs/validation.md</td></tr>
-</table>
 <div class="kpi">
   <div><b>23/23</b><span>kb verify PASS（compound 后、ingest 后各验证一次）</span></div>
   <div><b>98.7 / 95.8 / 99.4%</b><span>Kotlin / Swift / ArkTS 无错解析率（TS·JS 99.9%）</span></div>
@@ -452,9 +457,8 @@ depth 3; L0 1 · L1 2 · L2 2 · L3 9</code></pre>
 <h3>当前局限</h3>
 <ul>
   <li><b>运行时</b>：TypeScript 版用 web-tree-sitter 加载随包发布的 WASM 语法，不需要 C 编译器；冷扫描比旧 Go 版慢（见 README 性能表），热扫描靠内容 hash 缓存。修改语法源码后需重新编译 WASM 并更新 <code>GrammarHash</code>，有测试强制检查。</li>
-  <li><b>语法覆盖</b>：23 个仓库合计的无错解析率为 Kotlin 98.7%、Swift 95.8%、ArkTS 99.4%。失败多为上游语法限制（Kotlin 2.x when 守卫、Swift 自定义运算符等）。Objective-C 不解析。失败会记入 <code>parse_failures</code>，不会中断扫描。修改 vendored 语法后要同时更新 <code>GrammarHash</code>，有测试强制检查。</li>
   <li><b>引用解析</b>：基于名称、作用域和 import，没有完整的类型推断，也不建立跨平台的边。</li>
-  <li><b>facts 启发式</b>：API 抽取依赖适配器，目前覆盖 Retrofit / Ktor / OkHttp / Alamofire / Moya / Endpoint 枚举 / http / @ohos/axios / RCP / axios。完全自研、动态拼接 URL 的网络层仍识别不到；注入检测是基于规则的，属于纵深防御的一层，不能保证全部拦截。</li>
+  <li><b>facts 启发式</b>：规则抽取在没见过的写法上泛化很差（见 5.5），需要盲测和 LLM 兜底配合。</li>
   <li><b>多级目录 / SFK</b>：template 模式的节点摘要和文档条目是确定性的“目录式”文字，叙述质量要靠 <code>--llm claude</code> / <code>--agent</code>；L1 项目探测依赖构建标记（Gradle / SwiftPM / Xcode / hvigor），自研构建系统只能按平台启发式；SFK 的 adopted 文件只追加，不会改写人写的过时句子（只在 <code>kb docs stale-specs</code> / <code>kb conflicts</code> 中报告）。</li>
   <li><b>断言核对</b>：template 在盲测集上的 conflict recall 只有 0.33，修复后为 0.58，所以它只能作为初筛。平台范围、功能是否存在这类语义判断需要 claude 模式（盲测 recall 0.92），单个任务约 30–60 s。</li>
 </ul>

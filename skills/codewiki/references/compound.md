@@ -25,6 +25,9 @@ the write set you are given.
 kb status --json                     # what is stale?
 kb plan --json                       # affected pages, reasons, write sets (also wiki/.kb/plan.json)
 kb compound --llm claude --fallback  # or --llm template for an offline, deterministic run
+kb facts suggest --agent claude      # optional: LLM fallback for routes/APIs the rules missed; each suggestion
+                                     # must quote evidence found within ±5 lines and is tagged "source":"llm"
+kb compound --llm-facts              # run that fallback as part of compound (off by default)
 kb verify                            # exit 0 = wiki matches HEAD
 ```
 

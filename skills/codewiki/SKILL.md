@@ -62,6 +62,8 @@ kb status            # exit 1 = stale pages
 kb plan --json       # tasks + write sets (dry, no writes with --dry-run)
 kb compound --llm template           # offline deterministic writer
 kb compound --agent claude --fallback --max-llm-tasks 5   # coding agent per task
+kb facts suggest --agent claude --model haiku            # rules found few routes/APIs: LLM proposes, kb verifies evidence (±5 lines)
+kb compound --llm-facts                                   # same fallback inside compound (off by default; entries tagged source: llm)
 kb verify
 ```
 
