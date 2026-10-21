@@ -299,9 +299,9 @@ e2e impact --changed-routes "$ROUTES" --requirements wiki/facts/requirements.jso
 
 ## 增量扫描缓存与性能
 
-`kb` 在 `wiki/.kb/cache/scan.gob.gz` 中按文件保存解析结果（键 = 仓库相对路径 + 内容 sha256 + 语言/平台；缓存版本由抽取器指纹自动派生：`internal/extract` 的 Go 源码通过 `go:embed` 计入 hash，再加上各语言节点表、语法 ABI 版本与 node kind 数量，因此改了抽取器而忘记手动 bump 也不会读到旧缓存），未变化的文件不再调用 tree-sitter；删除的文件会被清理。解析在 `GOMAXPROCS` 个 goroutine 上并行（每个 worker 自己的 parser），引用解析为索引查找（线性）。缓存目录由 `kb init` 加入 `.gitignore`，CI 模板用 `actions/cache` 持久化；`KB_NO_CACHE=1` 可禁用。
+`kb` 在 `wiki/.kb/cache/scan.v8.gz` 中按文件保存解析结果（键 = 仓库相对路径 + 内容 sha256 + 语言/平台；缓存版本由抽取器指纹自动派生：`src/extract` 的编译产物、各语言节点表与语法 WASM 计入 hash，因此改了抽取器而忘记手动 bump 也不会读到旧缓存），未变化的文件不再调用 tree-sitter；删除的文件会被清理。缓存未命中 ≥150 个文件时，解析在 worker_threads 上并行（每个 worker 自己加载 WASM 语法与 parser），引用解析为索引查找（线性）。缓存目录由 `kb init` 加入 `.gitignore`，CI 模板用 `actions/cache` 持久化；`KB_NO_CACHE=1` 可禁用。
 
-`kb bench` 测量冷/热扫描（4 核容器，Go 1.24，2026-10-20 实测）：
+`kb bench` 测量冷/热扫描（4 核容器；下表为旧 Go 版 2026-10-20 实测，TypeScript 版对照见表后）：
 
 | 仓库 | 文件 | 符号 | 冷扫描（无缓存） | 热扫描（全命中） | 1% 文件变化 |
 |---|---|---|---|---|---|
@@ -309,6 +309,13 @@ e2e impact --changed-routes "$ROUTES" --requirements wiki/facts/requirements.jso
 | axios `lib/**/*.js` + `index.js` | 70 | 323 | 191 ms | 25 ms | — |
 | axios 全仓（含 tests、`.d.ts`、examples） | 243 | 1009 | 993 ms | 69 ms | — |
 | examples/minishop（三端） | 42 | 214 | 91 ms | 8 ms | — |
+
+TypeScript 版（Node 22，WASM 语法，同一 4 核容器，2026-10-21）：
+
+| 仓库 | 文件 | 符号 | 冷扫描 | 热扫描 | 1% 变化 | 同机 Go |
+|---|---|---|---|---|---|---|
+| 合成 3000 | 3000 | 21000 | 3493 ms | 774 ms | 1253 ms | 3550 / 1227 / 1366 ms |
+| HarmonyOS-Cases（`kb scan` 全进程墙钟） | 2267 | 20141 | 5.7 s | 2.2 s | — | 5.2 s / 1.1 s |
 
 ```bash
 kb bench --synthetic 3000                       # 合成仓库，临时目录
