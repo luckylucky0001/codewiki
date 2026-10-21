@@ -918,6 +918,12 @@ class Ctx {
     const rbf = new Map<string, string>();
     for (const r of this.f.routes!) rbf.set(r.file, r.route_id);
     const seen = new Set<string>();
+    const push = (platform: string, tid: string, file: string, line: number) => {
+      const k = platform + '|' + tid + '|' + file + '|' + line;
+      if (seen.has(k)) return;
+      seen.add(k);
+      this.f.testids!.push({ platform, tid, route_id: rbf.get(file) ?? '', file, line });
+    };
     for (const file of this.sortedFiles()) {
       const fi = this.g.files[file]!;
       for (const call of this.calls(file)) {
@@ -940,15 +946,93 @@ class Ctx {
             ok = call.callee === 'getByTestId';
         }
         if (!ok) continue;
-        const [v, any] = this.eval(fi.platform, call.args[0]!.parts);
-        if (!any) continue;
-        const tid = v.dynamic ? v.prefix : v.s;
+        let [v, any] = this.eval(fi.platform, call.args[0]!.parts);
+        if (!any) {
+          // constant objects: `testTag(TestTags.signIn)` with `val signIn = TestTag("sign-in")`
+          const parts = call.args[0]!.parts ?? [];
+          const w = parts.length === 1 && parts[0]!.ref ? this.wrappedConst(fi.platform, parts[0]!.ref, file) : '';
+          if (!w) continue;
+          v = { s: w, dynamic: false, prefix: w };
+        }
+        // dynamic ids are recorded by their literal prefix; with no prefix keep the template (`{tagPrefix}_carousel`)
+        const tid = v.dynamic ? v.prefix || (/[A-Za-z0-9]/.test(v.s.replace(/\{[^}]*\}/g, '')) ? v.s : '') : v.s;
         if (tid === '') continue;
-        const k = fi.platform + '|' + tid + '|' + file + '|' + call.line;
-        if (seen.has(k)) continue;
-        seen.add(k);
-        this.f.testids!.push({ platform: fi.platform, tid, route_id: rbf.get(file) ?? '', file, line: call.line });
+        push(fi.platform, tid, file, call.line);
       }
+    }
+    this.assignedTestIDs(push);
+    this.resourceIDsUsedByTests(push);
+  }
+
+  /** Value of a constant initialised through a one-string wrapper (`TestTag("x")`, `Tag(id = "x")`). */
+  wrappedConst(platform: string, ref: string, near: string): string {
+    const name = lastSeg(ref);
+    const s = this.findSymNear(platform, name, near, 'property', 'const', 'variable', 'case');
+    if (!s) return '';
+    const m = /=\s*[A-Z]\w*\(\s*(?:\w+\s*=\s*)?"((?:[^"\\$]|\\.)+)"\s*\)/.exec(this.symbolSource(s));
+    return m ? m[1]! : '';
+  }
+
+  /** Assignments instead of calls: Swift `x.accessibilityIdentifier = …`, Compose `testTag = …`. */
+  assignedTestIDs(push: (platform: string, tid: string, file: string, line: number) => void): void {
+    for (const file of this.sortedFiles()) {
+      const fi = this.g.files[file]!;
+      const re = fi.lang === 'swift' ? /\.accessibilityIdentifier\s*=\s*([^\n;]+)/g : fi.lang === 'kotlin' ? /\btestTag\s*=\s*([^\n;]+)/g : null;
+      if (!re) continue;
+      const lines = this.fileLines(file);
+      if (!lines.some((l) => re.source.startsWith('\\.access') ? l.includes('accessibilityIdentifier') : l.includes('testTag'))) continue;
+      lines.forEach((l, i) => {
+        for (const m of l.matchAll(re)) {
+          const rhs = m[1]!.trim().replace(/\s*(\/\/.*)?$/, '');
+          let tid = '';
+          const lit = /^"((?:[^"\\]|\\.)*)"$/.exec(rhs);
+          if (lit) tid = lit[1]!.includes('\\(') ? '' : lit[1]!;
+          else if (/^[A-Za-z_][\w.]*$/.test(rhs) && constLikeRef(rhs)) {
+            const [v, ok] = this.lookup(fi.platform, rhs);
+            tid = ok ? v : this.wrappedConst(fi.platform, rhs, file);
+          }
+          if (tid) push(fi.platform, tid, file, i + 1);
+        }
+      });
+    }
+  }
+
+  /** Android resource ids that tests look views up by (any `R.id.x` in a call argument inside a test
+   * source, e.g. Espresso `withId(R.id.x)`), recorded at their layout declaration. */
+  resourceIDsUsedByTests(push: (platform: string, tid: string, file: string, line: number) => void): void {
+    const used = new Map<string, Set<string>>();
+    for (const file of this.sortedFiles()) {
+      const fi = this.g.files[file]!;
+      if ((fi.lang !== 'kotlin' && fi.lang !== 'java') || !isTestPath(file)) continue;
+      for (const call of this.calls(file)) {
+        for (const a of call.args ?? [])
+          for (const m of a.text.matchAll(/\bR\.id\.(\w+)/g)) {
+            let u = used.get(fi.platform);
+            if (!u) used.set(fi.platform, (u = new Set()));
+            u.add(m[1]!);
+          }
+      }
+    }
+    if (!used.size) return;
+    for (const p of this.cfg.platforms) {
+      const u = used.get(p.name);
+      if (!u) continue;
+      const root = path.join(this.res.dir, p.root);
+      walkDir(root, (fp, name, isDir) => {
+        if (isDir) return !(skipResDir(name) || (name.startsWith('.') && fp !== root));
+        if (!name.endsWith('.xml') || !/\/res\/layout[^/]*$/.test(path.dirname(fp).split(path.sep).join('/'))) return;
+        const rel = path.relative(this.res.dir, fp).split(path.sep).join('/');
+        if (shadowed(this.cfg, p, rel) || isTestPath(rel)) return;
+        let b: string;
+        try {
+          b = fs.readFileSync(fp, 'utf8');
+        } catch {
+          return;
+        }
+        b.split('\n').forEach((l, i) => {
+          for (const m of l.matchAll(/android:id="@\+id\/(\w+)"/g)) if (u.has(m[1]!)) push(p.name, m[1]!, rel, i + 1);
+        });
+      });
     }
   }
 
