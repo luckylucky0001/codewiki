@@ -48,3 +48,5 @@ deeplinks 92.4% (97/105)、testids 95.8% (69/72)、apis 96.2% (101/105)、API mu
 ## 附：Ktor URL builder 规则（ab53565）复测（heldout3，仅规则，非盲测）
 
 `ktorBuilderPaths` 加入后，heldout3 仅规则成绩不变：routes 48.4%、APIs 19.7%、FP 13.3%。Shopping-By-KMP 的 API 仍为 0/20。看源码的调用形态后找到了原因：它用的是 `url { takeFrom(BASE_URL); encodedPath += MainService.NOTIFICATIONS }`，路径通过 `+=` 追加，追加的值是伴生对象里的常量，而当前规则只认 `encodedPath = "<字面量>"`。下一步：支持 `encodedPath +=`、`path(CONST)`，并从伴生对象或 `object` 中解析常量。补上之后，heldout3 的成绩只能算非盲测。
+
+**更新（22578cc）**：`ktorBuilderPaths` 现在能通过 `Ctx.lookup` 解析常量，支持 `encodedPath =`/`+=`、`path(X)`、`appendPathSegments(X)` 这几种写法。heldout3 只用规则的 APIs 从 **19.7% 升到 50.0%**，routes 保持 48.4%，FP 保持 13.3%。训练集各项不降，16 个仓库全部通过 verify。这项修复是看了 heldout3 源码的调用写法后做的，所以这个数字不算盲测。
