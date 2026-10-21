@@ -52,9 +52,11 @@ export function templateFeature(g: Graph, f: Facts, rid: string, commit: string)
   }
   const plats = [...byPlat.keys()].sort(cmpStr);
   for (const p of plats) b += `**${p}**\n\n${byPlat.get(p)!.join('\n')}\n\n`;
-  b += '## 相关页面\n\n- [总览](../overview.md)\n- [导航与深链](../concepts/navigation.md) · [共享组件](../concepts/shared-components.md)\n';
-  for (const p of plats) b += `- [${p} routes facts](../../facts/${p}/routes.md)\n`;
   const page = featurePage(rid);
+  // route ids may contain '/', nesting the page deeper than pages/features/
+  const up = '../'.repeat(page.split('/').length - 2);
+  b += `## 相关页面\n\n- [总览](${up}overview.md)\n- [导航与深链](${up}concepts/navigation.md) · [共享组件](${up}concepts/shared-components.md)\n`;
+  for (const p of plats) b += `- [${p} routes facts](${up}../facts/${p}/routes.md)\n`;
   return {
     path: page, hasFM: true, body: b,
     front: { id: idFromPath(page), title: routeTitle(rid), kind: 'feature', platforms: platformsOf(f, rid), routes: [rid], sources: syms.map((id) => ({ sym: id, hash: getSym(g, id)!.hash })), source_commit: commit, status: StatusCurrent },

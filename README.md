@@ -158,7 +158,57 @@ docs:
 | `kb bench [--synthetic N]` | 冷/热扫描基准（合成仓库或 `--root` 指定的真实仓库） |
 | `kb eval [--llm …]` | 用人工标注的 golden set 评测断言核对与 plan 影响面（precision/recall） |
 | `kb hook install --mode post-receive\|post-merge [--repo <git dir>]` | 安装 git 钩子：服务端 push 到 master 或客户端 merge 后自动 compound（串行 + 追平） |
-| `kb mcp` | stdio MCP server（JSON-RPC 2.0），工具：`kb_search`、`kb_get`、`kb_context`、`kb_anchor`、`kb_status`、`kb_parity`、`kb_conflicts` |
+| `kb mcp` | stdio MCP server（JSON-RPC 2.0），工具：`kb_search`、`kb_get`、`kb_context`、`kb_anchor`、`kb_status`、`kb_parity`、`kb_conflicts`、`kb_routes` |
+| `kb tree build\|show\|explain <symbol\|file>\|patch <ops.json>` | 多级目录：`wiki/module_tree.json`（L0 仓库 → L1 项目 → L2 模块 → L3 功能簇）的构建/展示/定位/受校验的 rename·merge·split |
+| `kb docs scope\|status\|compound\|stale-specs\|adr\|debt` | 仓库 `docs/` 与 `<project>/docs/` 的所有权工作流（SFK）：人写内容逐字节不变 |
+| `kb links [paths…]` / `kb verify --docs` | docs 链接检查（只报告）；owned 条目的 Source 是否仍存在 |
+
+`kb agents install|skills|mcp|list|hook` 是 `install` / `install-skills` / `mcp` / `agents` / `hook` 的分组别名；只有一个 CLI（`kb`），新能力都是子命令。
+
+## 多级目录（模块树，v2）
+
+`kb compound` 每次都会构建（首次 / `--full`）或修复（增量）`wiki/module_tree.json`，并生成分层页面：
+
+| 层 | 节点 | 页面 | 索引 |
+|---|---|---|---|
+| L0 | 仓库 | `pages/overview.md`（v1 三端路由矩阵 + 项目表 / 依赖图） | `index.md` 的“模块树”一节 |
+| L1 | 项目（Gradle settings、Package.swift、Xcode、hvigor；无标记时按平台启发式） | `pages/<p>/overview.md` | `pages/<p>/index.md` |
+| L2 | 构建模块（Gradle module、SwiftPM/Xcode target、HAP/HAR/HSP） | `pages/<p>/<m>/overview.md` | `pages/<p>/<m>/index.md` |
+| L3 | 功能簇（核心符号图 Leiden 聚类，模块超过 `tree.budget_tokens` 才拆） | `pages/<holder>/<slug>.md` | — |
+
+- 只有一个项目 / 一个模块时自动折叠该层；簇 id 稳定（Jaccard 继承），增量修复走规则链（rename → delete → same_file → same_dir → neighbor_majority → misc），`tau_grow` / `tau_tree` 触发重聚类 / 重建。
+- 每页 frontmatter 增加 `level`、`tree_node`、`parent`、`summary`、`importance`、`children_digest`（父页）或 `sources`（叶页）。正文中由 kb 维护的块：`kb:breadcrumb`、`kb:children`（子页表 + 摘要）、`kb:symbols`（L4 符号表）、`kb:routes`（关联功能页）、`kb:diagram`（mermaid：项目 / 模块依赖 / 导航 / 簇关系，带 hash）、`kb:sources`（`Sources: path:起-止`）。LLM 只写块外的叙述，块在写后由 kb 覆盖。
+- 写作自底向上：叶页读源码，父页只读子页摘要；子摘要变化 → `children_digest` 变化 → 父页 stale。template 模式全部确定性生成。
+- `kb verify` 额外检查：树文件可解析、每个节点页面存在、kb 块与 mermaid hash 新鲜（`E_KB_BLOCK_STALE`）、`children_digest` 与树一致（`E_TREE_STALE`）。
+- 每层 `index.md` 与分层 `llms.txt` 由 kb 渲染；`kb tree explain <symbol|file>` 告诉 agent 某段代码在哪一页。
+
+```bash
+kb compound --llm template && kb tree show
+kb tree explain android/app/src/main/java/com/minishop/ui/cart/CartViewModel.kt
+```
+
+小仓库（如 minishop）可在 `codewiki.yaml` 里设 `tree: {budget_tokens: 2000}` 让模块拆成 L3 簇；`demo/run.sh` 就是这样得到 L0 → L1 → L3 三层的。
+
+## 文档所有权（SFK）：`kb docs`
+
+`wiki/` 归 kb 所有；仓库 `docs/` 与各项目 `<project>/docs/` 是**人机共写**的。核心承诺：**人写的内容一个字节都不改、不删、不重排**（`checkHumanContentPreserved` 在每次写入前校验）。详见 [docs/ownership.md](docs/ownership.md)。
+
+- **作用域**：一个 repository + 若干 project（`apps/*` 等容器目录、`android/ ios/ harmony/`、`codewiki.yaml scopes.projects`）；`--project id`、`--no-root-write`、`--no-root-read`。
+- **文件状态**：`new`（只用已验证条目新建）、`managed`（frontmatter `last_compound_scan`：按 key 替换 / 追加）、`skeleton`（只剩标题和 TODO/TBD 占位：去占位、按节插入）、`adopted`（有任何人写内容：只追加）、`frozen`（`.kb/docs-schema-extra.yaml` 里 `enabled: false` 或未登记的自定义文档：一字不动）。
+- **条目来源**：template 模式从 facts、模块树和 specs 确定性生成架构 / 模块图、导航、接口契约、testID、设计模式、功能目录、spec 索引、需求条目，每条带 `**Source**: \`path\` [Code Direct] [Verified]`；`--agent …` 时 agent 按契约格式补充条目，kb 校验来源、路由和预算后才合并。
+- **归属**：根证据或 ≥2 个选中项目的匹配证据 → 仓库 docs（各项目只写一行 `xref:` 交叉引用）；单项目证据 → 该项目 docs；跨项目取值不同 → 仓库条目标记 parity 差异。
+- **spec 信任**：`**Status**:` Implemented / Verified / Archived 可信；Draft 只能产出 `[Unconfirmed]` 需求条目；`specs/` 永不写入。`kb docs stale-specs` 报告过期 Draft、从未 Verified 的 Implemented、与代码冲突的 Implemented。
+- **ADR / 技术债**：`kb docs adr`、`kb docs debt` 默认只给提案，`--write` 才新建 `docs/adr/NNNN-*.md` / 追加 `docs/tech-debt.md` 的 `TD-NNN` 行；已有 ADR 永不编辑。
+- 状态：`.kb/docs-state.json`（每个作用域的增量基准）、`.kb/run-state.json`（`--resume` / `--restart`）。
+
+```bash
+kb docs scope && kb docs status
+kb docs compound --dry-run && kb docs compound
+kb docs stale-specs; kb docs adr; kb docs debt --write
+kb links && kb verify --docs
+```
+
+`demo/docs-demo.sh`（示例 `examples/monorepo`）演示首次运行（adopted / skeleton / new）、人写内容逐字节保留的证明、无变化重跑为 noop、代码变更后的增量运行、ADR / 技术债提案、过期 spec 与链接检查；输出见 `demo/sample-output/docs/SUMMARY.md`。
 
 ## Wiki 布局
 
