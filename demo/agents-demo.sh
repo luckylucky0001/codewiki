@@ -20,7 +20,8 @@ MODEL="${AGENTS_MODEL:-haiku}"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 mkdir -p "$OUT" "$WORK/bin"
-( cd "$ROOT" && CGO_CFLAGS="${CGO_CFLAGS:--O2 -w}" go build -o "$WORK/bin/kb" ./cmd/kb )
+( cd "$ROOT" && { [ -d node_modules ] || npm ci --ignore-scripts >/dev/null; } && npm run --silent build )
+mkdir -p "$(dirname "$WORK/bin/kb")" && printf '#!/bin/sh\nexec node "%s/dist/cli.js" "$@"\n' "$(cd "$ROOT" && pwd)" >"$WORK/bin/kb" && chmod +x "$WORK/bin/kb"
 export PATH="$WORK/bin:$PATH"
 REPO="$WORK/minishop"
 cp -r "$ROOT/examples/minishop" "$REPO"

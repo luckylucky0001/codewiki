@@ -12,7 +12,8 @@ ROOT="$(cd "$HERE/.." && pwd)"
 OUT="${1:-$ROOT/demo/output/hook-$(date -u +%Y%m%dT%H%M%SZ)}"
 rm -rf "$OUT"; mkdir -p "$OUT/bin"
 KB="$OUT/bin/kb"
-( cd "$ROOT" && CGO_CFLAGS="${CGO_CFLAGS:--O2 -w}" go build -o "$KB" ./cmd/kb )
+( cd "$ROOT" && { [ -d node_modules ] || npm ci --ignore-scripts >/dev/null; } && npm run --silent build )
+mkdir -p "$(dirname "$KB")" && printf '#!/bin/sh\nexec node "%s/dist/cli.js" "$@"\n' "$(cd "$ROOT" && pwd)" >"$KB" && chmod +x "$KB"
 log() { printf '\n== %s\n' "$*" | tee -a "$OUT/transcript.txt" >&2; }
 run() { echo "\$ $*" >>"$OUT/transcript.txt"; "$@" >>"$OUT/transcript.txt" 2>&1; }
 gitc() { git -c user.name="dev" -c user.email="dev@codewiki.local" -c commit.gpgsign=false "$@"; }

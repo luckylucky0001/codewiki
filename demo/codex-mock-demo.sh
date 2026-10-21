@@ -7,7 +7,7 @@
 #       --json event stream), kb (prompt, untrusted-data wrapping, write-set guard, post-processing,
 #       verify, publish, usage parsing). MOCKED: only the model (demo/mock-model/mock_openai_responses.py
 #       scripts its turns: write the task's write set + one file outside it, then say "done").
-# Needs: go, git, python3, jq, codex. No network, no API key.
+# Needs: node, git, python3, jq, codex. No network, no API key.
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/.." && pwd)"
@@ -19,7 +19,8 @@ WORK="$(mktemp -d)"
 cleanup() { [ -n "${MOCK_PID:-}" ] && kill "$MOCK_PID" 2>/dev/null || true; rm -rf "$WORK"; }
 trap cleanup EXIT
 mkdir -p "$OUT" "$WORK/bin" "$WORK/codex-home"
-( cd "$ROOT" && CGO_CFLAGS="${CGO_CFLAGS:--O2 -w}" go build -o "$WORK/bin/kb" ./cmd/kb )
+( cd "$ROOT" && { [ -d node_modules ] || npm ci --ignore-scripts >/dev/null; } && npm run --silent build )
+mkdir -p "$(dirname "$WORK/bin/kb")" && printf '#!/bin/sh\nexec node "%s/dist/cli.js" "$@"\n' "$(cd "$ROOT" && pwd)" >"$WORK/bin/kb" && chmod +x "$WORK/bin/kb"
 ln -s "$CODEX" "$WORK/bin/codex"
 export PATH="$WORK/bin:$PATH" CODEX_HOME="$WORK/codex-home" NO_PROXY="127.0.0.1,localhost" no_proxy="127.0.0.1,localhost"
 cat >"$CODEX_HOME/config.toml" <<TOML

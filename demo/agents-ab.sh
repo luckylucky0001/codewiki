@@ -12,7 +12,8 @@ MODEL="${AB_MODEL:-haiku}"
 REPEAT="${AB_REPEAT:-1}"
 WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
 mkdir -p "$OUT" "$WORK/bin"
-( cd "$ROOT" && CGO_CFLAGS="${CGO_CFLAGS:--O2 -w}" go build -o "$WORK/bin/kb" ./cmd/kb )
+( cd "$ROOT" && { [ -d node_modules ] || npm ci --ignore-scripts >/dev/null; } && npm run --silent build )
+mkdir -p "$(dirname "$WORK/bin/kb")" && printf '#!/bin/sh\nexec node "%s/dist/cli.js" "$@"\n' "$(cd "$ROOT" && pwd)" >"$WORK/bin/kb" && chmod +x "$WORK/bin/kb"
 export PATH="$WORK/bin:$PATH"
 g() { git -c user.name=demo -c user.email=demo@codewiki.local "$@"; }
 QS=(
