@@ -1202,6 +1202,17 @@ class Ctx {
     }
     this.endpointEnums(add);
     this.composedAPIs(add);
+    for (const file of this.sortedFiles()) {
+      const fi = this.g.files[file]!;
+      if (fi.lang !== 'swift' || isTestPath(file) || !this.fileLines(file).some((l) => /^import\s+URLRouting\b/.test(l))) continue;
+      for (const r of urlRoutingRoutes(this.fileLines(file).join('\n'))) {
+        const [p, ok] = normPath(r.path);
+        if (!ok) continue;
+        let sym = '';
+        for (const s of this.g.symbols) if (s.file === file && s.start_line <= r.line && s.end_line >= r.line && (!sym || s.start_line >= (getSym(this.g, sym)?.start_line ?? 0))) sym = s.id;
+        add({ platform: fi.platform, method: r.method, path: p, file, symbol: sym });
+      }
+    }
   }
 
   fileLines(file: string): string[] {
@@ -1997,6 +2008,115 @@ class Ctx {
     this.f.entries?.sort((a: Entry, b: Entry) => cmpStr(a.platform + a.kind + a.name, b.platform + b.kind + b.name));
     for (const k of Object.keys(this.schemes)) this.schemes[k]!.sort(cmpStr);
   }
+}
+
+/** Routes declared with swift-url-routing's parser DSL: `Route(.case(…)) { Method.post; Path { "api"; "x" } }`,
+ * nested through `OneOf { Route … }` and router variables / properties mounted inside a parent Route.
+ * Returns leaf routes with the concatenated path and the nearest declared method (GET otherwise). */
+export function urlRoutingRoutes(text: string): { method: string; path: string; line: number }[] {
+  // matching braces / parens outside string literals
+  const match = new Map<number, number>();
+  const st: number[] = [];
+  let inStr = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inStr) {
+      if (c === '\\') i++;
+      else if (c === '"' || c === '\n') inStr = false;
+      continue;
+    }
+    if (c === '"') inStr = true;
+    else if (c === '/' && text[i + 1] === '/') {
+      const e = text.indexOf('\n', i);
+      i = e < 0 ? text.length : e;
+    } else if (c === '{' || c === '(') st.push(i);
+    else if (c === '}' || c === ')') {
+      const o = st.pop();
+      if (o !== undefined) match.set(o, i);
+    }
+  }
+  const lineOf = (i: number) => text.slice(0, i).split('\n').length;
+  interface Blk { start: number; end: number; parent?: Blk; kids: Blk[]; segs: string[]; method: string; mounts: string[]; line: number }
+  const routes: Blk[] = [];
+  for (const m of text.matchAll(/\bRoute\s*\(/g)) {
+    const po = m.index! + m[0].length - 1;
+    const pc = match.get(po);
+    if (pc === undefined) continue;
+    let j = pc + 1;
+    while (j < text.length && /[ \t]/.test(text[j]!)) j++;
+    const b: Blk = { start: m.index!, end: pc, kids: [], segs: [], method: '', mounts: [], line: lineOf(m.index!) };
+    if (text[j] === '{' && match.has(j)) b.end = match.get(j)!;
+    routes.push(b);
+  }
+  if (!routes.length) return [];
+  const inside = (i: number, b: Blk) => i > b.start && i < b.end;
+  const owner = (i: number): Blk | undefined => {
+    let best: Blk | undefined;
+    for (const r of routes) if (inside(i, r) && (!best || r.start > best.start)) best = r;
+    return best;
+  };
+  for (const r of routes) {
+    r.parent = owner(r.start);
+    r.parent?.kids.push(r);
+  }
+  for (const m of text.matchAll(/\bPath\s*\{/g)) {
+    const o = m.index! + m[0].length - 1;
+    const c = match.get(o);
+    const r = owner(m.index!);
+    if (c === undefined || !r) continue;
+    const body = text.slice(o + 1, c);
+    const alt = /\bOneOf\b/.test(body);
+    const segs: string[] = [];
+    for (const raw of body.split(/[\n;]/)) {
+      const t = raw.trim();
+      if (!t || t === '}' || /^OneOf\s*\{?$/.test(t)) continue;
+      const lit = /^"([^"]*)"$/.exec(t);
+      if (lit) {
+        segs.push(lit[1]!);
+        if (alt) break;
+      } else if (!alt) segs.push('{' + (/^(\w+)/.exec(t)?.[1] ?? 'param') + '}');
+    }
+    r.segs.push(...segs);
+  }
+  for (const m of text.matchAll(/\bMethod\.(get|post|put|patch|delete|head)\b/gi)) {
+    const r = owner(m.index!);
+    if (r && !r.method) r.method = m[1]!.toUpperCase();
+  }
+  // router variables / computed properties, and where they are mounted
+  const vars = new Map<string, Blk[]>();
+  const ranges: [string, number, number][] = [];
+  for (const m of text.matchAll(/\b(?:let|var)\s+(\w+)\s*(?::[^={\n]*)?(=\s*(?:OneOf|Route)\b[^{]*\{|\{)/g)) {
+    const o = m.index! + m[0].length - 1;
+    const c = match.get(o);
+    if (c !== undefined) ranges.push([m[1]!, m.index!, c]);
+  }
+  for (const [name, a, c] of ranges) {
+    const nested = ranges.filter(([n, x, y]) => n !== name && x > a && y <= c);
+    const top = routes.filter((r) => r.start >= a && r.start < c && !(r.parent && r.parent.start >= a) && !nested.some(([, x, y]) => r.start >= x && r.start < y));
+    if (top.length) vars.set(name, top);
+  }
+  // a mount = the router name used as a statement (own line, or alone in `{ … }`) owned by that Route
+  for (const name of vars.keys())
+    for (const m of text.matchAll(new RegExp('(^|[{;\\n])[ \\t]*(?:self\\.)?' + name + '[ \\t]*(?=$|[};\\n])', 'gm'))) {
+      const r = owner(m.index! + m[1]!.length);
+      if (r && !r.mounts.includes(name)) r.mounts.push(name);
+    }
+  const mounted = new Set<Blk>();
+  for (const r of routes) for (const n of r.mounts) for (const k of vars.get(n) ?? []) mounted.add(k);
+  const out: { method: string; path: string; line: number }[] = [];
+  const emit = (r: Blk, prefix: string[], method: string, depth: number) => {
+    if (depth > 8) return;
+    const segs = [...prefix, ...r.segs];
+    const meth = r.method || method;
+    const kids = [...r.kids, ...r.mounts.flatMap((n) => vars.get(n) ?? [])];
+    if (!kids.length) {
+      if (segs.length) out.push({ method: meth || 'GET', path: '/' + segs.join('/'), line: r.line });
+      return;
+    }
+    for (const k of kids) emit(k, segs, meth, depth + 1);
+  };
+  for (const r of routes) if (!r.parent && !mounted.has(r)) emit(r, [], '', 0);
+  return out;
 }
 
 /** HTTP verbs a function body uses (builder calls, method labels, HTTPMethod enums, post* helpers). */
