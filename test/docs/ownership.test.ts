@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { classifyFile, isKnowledgeLayerFile, isPlaceholderLine, isSkeleton, lineBudget } from '../../src/docs/ownership.js';
+import { classifyFile, isInstallPointerFile, isKnowledgeLayerFile, isPlaceholderLine, isSkeleton, lineBudget } from '../../src/docs/ownership.js';
 
 describe('classifyFile', () => {
   it('disabled wins over everything', () => {
@@ -61,10 +61,27 @@ describe('budgets & knowledge layer', () => {
     expect(lineBudget('adopted')).toBe(100);
     expect(lineBudget('disabled')).toBe(0);
   });
-  it('knowledge-layer files', () => {
-    expect(isKnowledgeLayerFile('AGENTS.md')).toBe(true);
-    expect(isKnowledgeLayerFile('apps/x/CLAUDE.md')).toBe(true);
-    expect(isKnowledgeLayerFile('.github/copilot-instructions.md')).toBe(true);
-    expect(isKnowledgeLayerFile('docs/architecture.md')).toBe(false);
+  it('knowledge-layer files: <docs_root>/adr/** and <docs_root>/tech-debt.md only', () => {
+    const roots = ['docs', 'apps/x/docs'];
+    expect(isKnowledgeLayerFile('docs/adr/0001-x.md', roots)).toBe(true);
+    expect(isKnowledgeLayerFile('apps/x/docs/adr/sub/0002-y.md', roots)).toBe(true);
+    expect(isKnowledgeLayerFile('docs/tech-debt.md', roots)).toBe(true);
+    expect(isKnowledgeLayerFile('apps/x/docs/tech-debt.md', roots)).toBe(true);
+    expect(isKnowledgeLayerFile('docs/architecture.md', roots)).toBe(false);
+    expect(isKnowledgeLayerFile('docs/adr', roots)).toBe(false);
+    expect(isKnowledgeLayerFile('apps/y/docs/tech-debt.md', roots)).toBe(false);
+    expect(isKnowledgeLayerFile('AGENTS.md', roots)).toBe(false);
+    expect(isKnowledgeLayerFile('CLAUDE.md', roots)).toBe(false);
+    expect(isKnowledgeLayerFile('.github/copilot-instructions.md', roots)).toBe(false);
+  });
+  it('install pointer files are excluded unless under a docs root', () => {
+    const roots = ['docs', 'apps/x/docs'];
+    expect(isInstallPointerFile('AGENTS.md', roots)).toBe(true);
+    expect(isInstallPointerFile('apps/x/CLAUDE.md', roots)).toBe(true);
+    expect(isInstallPointerFile('.github/copilot-instructions.md', roots)).toBe(true);
+    expect(isInstallPointerFile('llms.txt', roots)).toBe(true);
+    expect(isInstallPointerFile('.cursor/rules/a.mdc', roots)).toBe(true);
+    expect(isInstallPointerFile('docs/AGENTS.md', roots)).toBe(false);
+    expect(isInstallPointerFile('docs/architecture.md', roots)).toBe(false);
   });
 });

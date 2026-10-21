@@ -48,9 +48,43 @@
 | `skeleton` | 去掉 frontmatter 后只剩标题和客观占位符：空行、`TODO`、`TBD`、`待补充`、`[DESCRIPTION]` / `[大写占位]`、`{CONTENT}` / `{大写占位}`、纯模板 HTML 注释、空列表项、分隔线 | 删除占位行，保留全部标题（含文件标题），按节插入条目 |
 | `adopted` | 其余（有任何真实的人类内容，包括 `TODO: 具体说明`） | **只追加**带来源的条目和目录链接行；已存在的 key 一律不动；`[Pending]` 不插入 |
 
-frontmatter：kb 只拥有 `last_compound_scan`、`compound_scan_mode`、`compound_source_commit`（codewiki 扩展），其他键逐字保留。**只有真的写了内容才刷新**（noop 不刷新）。知识层文件（`AGENTS.md`、`CLAUDE.md`、`GEMINI.md`、`.github/copilot-instructions.md`、`llms*.txt` 等，`isKnowledgeLayerFile()`）永远不加 frontmatter。
+frontmatter：kb 只拥有 `last_compound_scan`、`compound_scan_mode`、`compound_source_commit`（codewiki 扩展），其他键逐字保留。**只有真的写了内容才刷新**（noop 不刷新）。
+
+**知识层文件**（SFK 定义，`isKnowledgeLayerFile(path, docsRoots)`）只有两类：`<docs_root>/adr/**`（ADR）与 `<docs_root>/tech-debt.md`。它们由各自的生成器维护（§6），永远不加 frontmatter。
+
+`AGENTS.md`、`CLAUDE.md`、`GEMINI.md`、`.github/copilot-instructions.md`、`llms*.txt`、`.cursor/rules` 等是 `kb install` 写的**指针文件**，不属于知识层，也不在 docs 作用域内：它们被排除在 docs 清单之外（`isInstallPointerFile()`）；只有当它们位于某个 docs_root 之下时，才作为普通人类文档对待。
 
 行数预算（`lineBudget()`）：`new`/`skeleton` 首次写入 ≤150 行，`managed`/`adopted` 追加 ≤100 行；超出时在条目边界截断并报告 `truncated`。
+
+## 2.5 维度 schema 与激活
+
+内置 schema（`src/docs/schema.ts` 的 `DefaultSchema`，可用 `mergeSchema()` 按 id 覆盖或追加）面向移动端 monorepo。`output_path` 相对 owner 根（仓库根或项目根），开头的 `docs/` 映射到该作用域的 docs_root：
+
+| id | 文件 | 作用域 | requirement-oriented（允许 Draft） | 说明 |
+|---|---|---|---|---|
+| `architecture` | `docs/architecture.md` | repo, project | 否 | 架构总览 / 模块图 |
+| `design-patterns` | `docs/design-patterns.md` | repo, project | 否 | MVVM、Repository、Coordinator、DI 等 |
+| `coding-standards` | `docs/coding-standards.md` | repo, project | 否 | lint / format 配置所体现的规范 |
+| `navigation` | `docs/navigation.md` | project | 否 | 页面 / 路由 / 深链（来自 facts） |
+| `api-contracts` | `docs/contracts.md` | repo, project | 否 | 接口契约、共享模型、错误码 |
+| `testing` | `docs/testing.md` | repo, project | 否 | 测试布局、testID 约定 |
+| `product-specs` | `docs/product-specs.md` | repo, project | 是 | spec 索引（只链接，不复制正文） |
+| `features` | `docs/features.md` | repo, project | 是 | 功能目录 |
+| `requirements` | `docs/requirements.md` | repo, project | 是 | 需求模式 / 业务规则 |
+| `constitution` | `docs/constitution.md` | repo, project | 否 | **constitution 例外**：owned 块 + Evidence，只接受可信证据 |
+| `service-topology` | `docs/service-topology.md` | repo, project | 否 | 仅在有后端时激活（`detectBackend()`） |
+
+每个维度还声明 `probe_paths`（激活探针）和 `evidence`（允许的证据种类）。
+
+**激活**（`activateDimensions()`，每个作用域一次）：用户 `disable` 优先 → 作用域不匹配则不激活 → `force`、已存在的输出文件、探针命中、本次产生了条目，任一满足即激活。`service-topology` 没有后端且没有已存在文件时不激活。
+
+**null passthrough**（`planDimensionWrites()`）：激活但没有条目 → 已存在的文件 `leave`（不动），不存在的文件 `skip-null`（不建文件、不写标题、不写 TODO）。
+
+**额外 schema 登记**（`.kb/docs-schema-extra.yaml`）：
+- `discoverExtraDocs()` 找出 docs_root 下没有被任何维度覆盖的 `.md`，知识层文件除外。docs_root 下的指针文件也会被收录。
+- 每条记录为 `target_root`、`output_path`（相对 target_root）、`target`（取首个标题，否则取首段，≤120 字符）、`enabled`。
+- `updateExtraSchema()` 只追加新条目、只补空的 `target`，保留用户的修改与注释。
+- `enabled: false` 表示该文件**逐字节不动**：`isFrozenDoc()` 返回 true，既不合并也不写入。未登记的未知文件同样视为冻结。
 
 ## 3. 条目所有权标记
 
@@ -106,6 +140,7 @@ frontmatter：kb 只拥有 `last_compound_scan`、`compound_scan_mode`、`compou
 
 ## 8. 增量与运行状态
 
+- **增量基准（codewiki 扩展 `.kb/docs-state.json`）**：`{ "<scope_id>": { "last_scan_commit": "<sha>", "last_scan_date": "YYYY-MM-DD" } }`。每次成功运行（包括没有写任何内容的 noop 运行）后由 `recordScopeScan()` 记录；`resolveScanBase()` 优先使用它。原因：SFK 的基准只来自 frontmatter，而 frontmatter 只在写入内容时刷新，noop 运行永远推进不了基准。文件不存在或该作用域没有记录时，回退到 SFK 规则：
 - `earliestScanBase()`：作用域内 managed 文件中最早的 `last_compound_scan`（及其 `compound_source_commit`）。
 - `computeScopeChanges(git, scopes)`：git 以函数注入。有 commit 基准 → `git diff --name-status -M <base> HEAD`；否则 `git log --since=<date> --name-status -M`；再并上 `git diff`、`git diff --cached`、`git status --porcelain`；rename 两端都计入。文件按最深项目根归属，否则归 repository；根 `specs/` 变更对所有作用域都可见。非 git、浅克隆且缺基准、无 managed 文件 → `full`。
 - `.kb/run-state.json`（`runstate.ts`）：`decideResume()` —— 同一 HEAD 且未完成 → resume；`--restart` 或 HEAD 变化 → restart；上次已完成 → fresh。agent 结果契约（`contract.ts`）：按 `=== <目标文件> [维度] ===` 分组的条目 + 末行 `COMPOUND_META {"status":"done|continuation","remaining_scope":[…]}`；`routeAgentResult()` 保证仓库级结果只写根 docs、项目级结果只写本项目 docs、来源在 agent 白名单之外的条目被拒绝、按 150/100 行预算在条目边界截断。

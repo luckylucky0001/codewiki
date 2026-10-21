@@ -359,6 +359,7 @@ export function updateExtraSchema(existing: string | null, discovered: ExtraEntr
   const doc = existing && existing.trim() ? YAML.parseDocument(existing) : YAML.parseDocument('version: 1\nentries: []\n');
   if (!doc.has('entries') || !YAML.isSeq(doc.get('entries'))) doc.set('entries', doc.createNode([]));
   const seq = doc.get('entries') as YAML.YAMLSeq;
+  if (seq.items.length === 0) seq.flow = false;
   const have = new Map<string, YAML.YAMLMap>();
   for (const it of seq.items) {
     if (!YAML.isMap(it)) continue;

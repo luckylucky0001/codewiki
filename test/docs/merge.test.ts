@@ -71,7 +71,7 @@ describe('new files', () => {
     expect(parseFrontmatter(r.text!)).toMatchObject({ compound_source_commit: '8c1d2e4' });
   });
   it('knowledge-layer files never get frontmatter', () => {
-    const r = run(null, [entry('A', 'a.kt')], { knowledgeLayer: true, title: 'Agents' });
+    const r = run(null, [entry('A', 'a.kt')], { knowledgeLayer: true, title: 'Agents', path: 'docs/tech-debt.md' });
     expect(r.text!.startsWith('# Agents\n')).toBe(true);
   });
 });
