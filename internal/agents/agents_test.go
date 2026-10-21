@@ -41,7 +41,7 @@ func TestBackendCommands(t *testing.T) {
 			t.Fatalf("%s: unexpected --model: %q", c.agent, cmd)
 		}
 	}
-	for _, n := range []string{"cursor", "copilot", "generic"} {
+	for _, n := range []string{"cursor", "copilot", "generic", "trae-cn"} {
 		a, _ := Get(n)
 		if a.Backend() {
 			t.Fatalf("%s should have no built-in backend", n)
@@ -54,7 +54,7 @@ func TestBackendCommands(t *testing.T) {
 
 func TestParseList(t *testing.T) {
 	all, err := ParseList("all")
-	if err != nil || len(all) != 6 || all[0].Name != "claude" {
+	if err != nil || len(all) != 7 || all[0].Name != "claude" {
 		t.Fatalf("all: %v %v", all, err)
 	}
 	two, _ := ParseList("codex, Claude,codex")

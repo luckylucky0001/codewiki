@@ -19,7 +19,7 @@ import (
 )
 
 func init() {
-	register(&command{name: "install", usage: "--agent claude,codex,gemini,cursor,copilot,generic|all [--target repo] [--mcp] [--dry-run]",
+	register(&command{name: "install", usage: "--agent claude,codex,gemini,cursor,copilot,trae-cn,generic|all [--target repo] [--mcp] [--dry-run]",
 		summary: "make coding agents use the wiki: instructions block, skills and (with --mcp) MCP registration per agent",
 		help: `Per agent (only the files that agent reads):
   claude   CLAUDE.md block, .claude/skills/,  --mcp: .mcp.json
@@ -27,6 +27,7 @@ func init() {
   gemini   GEMINI.md block, .agents/skills/,  --mcp: .gemini/settings.json
   cursor   .cursor/rules/codewiki.mdc (alwaysApply), --mcp: .cursor/mcp.json
   copilot  .github/copilot-instructions.md block, --mcp: printed instructions only
+  trae-cn  .trae/skills/ (IDE-hosted workflow; no headless backend assumed)
   generic  AGENTS.md block, .agents/skills/
 Blocks are delimited by <!-- codewiki:begin --> … <!-- codewiki:end --> and replaced in
 place; content outside the markers is never touched. JSON configs are parsed and only

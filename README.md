@@ -42,6 +42,10 @@ flowchart LR
 | 理解层 | LLM（`kb-compound` skill，或离线 template writer） | `pages/features/*`、`pages/overview.md`、`pages/_conflicts.md` … |
 | 校验层 | `kb verify`（CI 门禁） | 锚点 hash 全部匹配 HEAD、符号存在、无死链、无孤儿页、index 覆盖、facts 新鲜 |
 
+## 复杂仓库的业务知识沉淀
+
+使用 `kb compound --knowledge --agent codex --workers 3 --keep-work`：由 agent 阅读源码并规划模块页、跨模块业务链路，再由写作 agent 深入取证。计划保存模块映射、待回答问题和增量监视范围；不依赖路由识别成功，也不允许用模板充当业务知识。新增模块用 `--replan`。验收和边界见 [Agent 知识规划](docs/agent-knowledge.md)。
+
 ## 安装
 
 需要 Go 1.24 与 C 编译器（tree-sitter 语法通过 cgo 编译）。
@@ -700,3 +704,5 @@ DEMO_LLM=template demo/run.sh           # 端到端 demo
 ```
 
 目录：`cmd/kb`（入口）、`internal/extract`（tree-sitter 符号/调用点）、`internal/scan`（遍历 + 引用解析）、`internal/facts`（三端事实）、`internal/engine`（diff/plan/compound/claims/docs）、`internal/wiki`（页面/索引/日志/verify）、`internal/cli`、`skills/`、`examples/`、`demo/`、`internal/grammars/arkts`（vendored ArkTS 语法 + cgo binding）。
+
+客户使用 TRAE CN 时：`kb install --agent trae-cn` 安装项目 skill，并按 [通用 IDE 交接流程](skills/kb-compound/references/ide-handoff.md) 执行。无需安装 Codex；TRAE 安装适配不表示已经完成 IDE 实跑验收。

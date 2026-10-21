@@ -1,12 +1,13 @@
 ---
 name: kb-query
-description: Answer questions about the app from the code-anchored codewiki LLM Wiki instead of grepping. Which docs, specs or requirements are outdated / wrong / contradict the code ("哪些文档过时", "旧文档哪些说法不对", "需求和代码不一致") - run `kb conflicts` FIRST (every doc claim is already checked against code, with file:line, code evidence and a fix); do not re-read the docs by hand. Aggregation questions about routes / pages / testIDs ("how many routes per module", "dangling buildFunction", "which pages set testIDs", "most used testIDs") - run `kb routes`, `kb routes --dangling`, `kb lint-tid --pages`, `kb lint-tid --top 10` FIRST. Also features, routes, deep links, testIDs, HTTP APIs, constants/limits and how they differ across Android, iOS and HarmonyOS (e.g. "购物车上限三端分别是多少", "X 在三端怎么实现", "引用出处") - via `kb search`, `kb get`, `kb context <file>`, `kb parity` and facts/*.json, citing symbol ids. Use for any question about app behaviour or cross-platform values, before modifying a source file, or when another agent (e.g. an e2e test generator) needs routes/testids/apis.
+description: Answer app behavior, module responsibilities, business flows, state and recovery questions from a code-anchored CodeWiki. Use kb search/get/context and module/flow pages with evidence citations. For outdated document claims use kb conflicts; for route/testID/API counts use facts commands; for cross-platform constants use kb parity. Check freshness, distinguish missing evidence from missing functionality, and inspect source when ordinary query work requires it. Wiki-only acceptance tests must stay isolated from source and expected answers.
 ---
 
 # kb-query
 
-The wiki is cheaper and more reliable than re-reading the whole repo: every page is anchored
-to symbol hashes that CI verifies against HEAD.
+Use the wiki as a focused entry point to code evidence. Current anchor hashes do
+not by themselves prove that prose is correct or complete; preserve the distinction
+between structural verification, semantic review and runtime tests.
 
 ## Prerequisite: is the repo initialized?
 
@@ -47,6 +48,26 @@ Machine-readable facts (schema v1, shared with e2epilot):
 - `wiki/facts/testids.json` — `platform, tid, route_id, file, line` (dynamic ids by prefix, e.g. `product_item_`)
 - `wiki/facts/apis.json` — `platform, method, path, file, symbol`
 - `wiki/facts/requirements.json` — requirement → anchors / route_ids traceability
+
+## Business questions across modules
+
+For module responsibilities, execution chains, state changes or recovery, consult
+`pages/overview.md` and the module mappings in `.kb/knowledge-plan.json`, then
+search both `pages/flows/` and `pages/modules/`. Sparse route facts do not mean
+business behavior is absent.
+
+Before answering, split the user's question into its explicit subquestions:
+conditions, state, ordering, exceptions and completion guarantees. Find support
+for each one, rather than stopping after a relevant page or class name. Follow
+cross-page evidence when a flow delegates storage, networking or device behavior;
+a local omission may be explained in the responsible module page. Distinguish
+request submission from persistence, physical deletion and remote acknowledgement.
+
+When the wiki still lacks evidence, state the precise unknown. For ordinary query
+work, inspect current source if available and identify that additional evidence;
+for a wiki-only acceptance test, do not read source or expected answers. Do not
+turn an enum, a field list or a method name into an unsupported behavioral promise.
+Cite the page passage and source symbol supporting each important conclusion.
 
 ## Rules
 

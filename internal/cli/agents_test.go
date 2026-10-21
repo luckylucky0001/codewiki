@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strings"
 	"testing"
@@ -40,6 +41,8 @@ func TestResolveBackend(t *testing.T) {
 		usageErr  bool
 	}{
 		{nil, nil, "template", "", "", false},
+		{[]string{"--llm-cmd", "python3 bridge.py"}, nil, "cmd", "python3 bridge.py", "", false},
+		{[]string{"--llm-cmd", "python3 bridge.py", "--llm", "template"}, nil, "", "", "", true},
 		{[]string{"--llm", "template"}, withAgent, "template", "", "", false},
 		{[]string{"--agent", "codex"}, nil, "cmd", "codex exec --sandbox workspace-write", "codex", false},
 		{[]string{"--llm", "gemini"}, nil, "cmd", "gemini --skip-trust --approval-mode auto_edit", "gemini", false},
@@ -458,7 +461,7 @@ func TestInstallCodexAgentsMDWarnings(t *testing.T) {
 func TestAgentsCommand(t *testing.T) {
 	dir := t.TempDir()
 	code, v := runJSON(t, dir, "agents")
-	if code != 0 || len(v["agents"].([]any)) != 6 {
+	if code != 0 || len(v["agents"].([]any)) != 7 {
 		t.Fatal(v)
 	}
 	for _, a := range v["agents"].([]any) {
@@ -517,5 +520,27 @@ func TestAgentTaskLogKeepsStdoutAndStderr(t *testing.T) {
 		if u, _ := tk.(map[string]any)["usage"].(map[string]any); u == nil || u["input_tokens"] != float64(7) {
 			t.Fatalf("usage: %v", tk)
 		}
+	}
+}
+
+func TestInstallTraeSkillHandoff(t *testing.T) {
+	dir := t.TempDir()
+	code, _, errOut := run(t, dir, "install", "--agent", "trae-cn")
+	if code != 0 {
+		t.Fatal(errOut)
+	}
+	for _, rel := range []string{".trae/skills/kb-compound/SKILL.md", ".trae/skills/kb-compound/references/ide-handoff.md", ".trae/skills/kb-compound/scripts/file-agent.py"} {
+		if _, err := os.Stat(filepath.Join(dir, rel)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := os.Stat(filepath.Join(dir, "AGENTS.md")); !os.IsNotExist(err) {
+		t.Fatal("TRAE install assumed unsupported instructions discovery")
+	}
+	first := readTree(t, dir)
+	run(t, dir, "install", "--agent", "trae-cn")
+	second := readTree(t, dir)
+	if !reflect.DeepEqual(first, second) {
+		t.Fatal("TRAE install not idempotent")
 	}
 }

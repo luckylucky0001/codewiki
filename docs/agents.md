@@ -22,6 +22,7 @@ kb agents                                                     # 查看支持矩�
 | **Gemini CLI** | `gemini --skip-trust --approval-mode auto_edit --output-format json -p '…'`（完整 prompt 从 stdin 读入） | `GEMINI.md` | `.agents/skills/` | `.gemini/settings.json`（`trust: true`） | 后端和消费者都是**真二进制 / mock 模型** |
 | **Cursor** | 无适配器，用 `--llm-cmd` | `.cursor/rules/codewiki.mdc`（`alwaysApply: true`） | — | `.cursor/mcp.json` | **仅文档** |
 | **GitHub Copilot** | 无适配器，用 `--llm-cmd` | `.github/copilot-instructions.md` | — | 打印手工配置说明 | **仅文档** |
+| **TRAE CN** | IDE file handoff; no bundled headless command | Skill only | `.trae/skills/` | Manual setup | Documented path and installation tested; IDE model run pending |
 | **generic**（任何支持 AGENTS.md 的 agent） | 使用 `llm.cmd` 或 `--llm-cmd` | `AGENTS.md` | `.agents/skills/` | 打印 `kb mcp --root <repo>` | **仅文档** |
 
 验证等级的含义：
@@ -231,3 +232,7 @@ steps:
 - Codex 和 Gemini 在本环境没能连真实模型，后端写作质量没有实测，只验证了参数、工具调用、事件格式、沙箱和写集合守卫。
 - Cursor 和 Copilot 只做了消费者文件，验证等级是“仅文档”；它们的 headless CLI 需要用 `--llm-cmd` 自行接入。
 - JSON 合并后会按 2 空格缩进重排键的顺序（只在确实有变化时写回）。
+
+## TRAE CN IDE workflow
+
+Run `kb install --agent trae-cn`. Use the current IDE agent with [the shared skill handoff](../skills/kb-compound/references/ide-handoff.md); Codex installation and parallel subagents are optional. The project skill path follows [official TRAE CN documentation](https://docs.trae.cn/ide_skills), checked 2026-10-21. Installation tests do not establish an actual IDE model run.
