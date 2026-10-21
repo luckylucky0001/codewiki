@@ -15,6 +15,10 @@ afterAll(() => {
 });
 
 async function factsOf(files: Record<string, string>) {
+  return (await factsAndGraph(files)).facts;
+}
+
+async function factsAndGraph(files: Record<string, string>) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kb-gen-'));
   tmps.push(dir);
   for (const [rel, body] of Object.entries(files)) {
@@ -22,7 +26,8 @@ async function factsOf(files: Record<string, string>) {
     fs.writeFileSync(path.join(dir, rel), body);
   }
   const cfg = detectedConfig(dir);
-  return extractFacts(cfg, await scan(cfg, cfg.root, {}));
+  const res = await scan(cfg, cfg.root, {});
+  return { facts: extractFacts(cfg, res), graph: res.graph };
 }
 
 describe('Decompose navigation', () => {
@@ -99,6 +104,11 @@ describe('Objective-C', () => {
     expect(ios).not.toContain('photo_cell');
     expect(ios).not.toContain('x');
     expect(f.testids!.map((t) => t.tid)).toContain('settings_table');
+    // file-only anchor: no dangling symbol id (kb verify E_SYMBOL_UNKNOWN), class name kept as `name`
+    const st = f.routes!.find((r) => r.route_id === 'settings') as { symbol: string; name?: string; file: string };
+    expect(st.symbol).toBe('');
+    expect(st.name).toBe('SettingsViewController');
+    expect(st.file).toBe('ios/App/SettingsViewController.h');
   });
 });
 
@@ -391,5 +401,32 @@ class Repo(private val http: Http) {
     expect(apis).toContain('POST /feed/like');
     expect(apis).toContain('POST /messages/send');
     expect(apis.some((a) => a.includes('{p}') || a.includes('{path}'))).toBe(false);
+  });
+});
+
+describe('round 5: testID sources', () => {
+  it('storyboard / xib identifiers, bare UIKit assignment, Compose testId wrappers', async () => {
+    const f = await factsOf({
+      'ios/App/Main.storyboard': '<document>\n<button id="a1">\n  <accessibility key="accessibilityConfiguration" identifier="sb_login"/>\n</button>\n</document>\n',
+      'ios/App/Badge.swift': 'import UIKit\nfinal class BadgeView: UIView {\n  init() {\n    super.init(frame: .zero)\n    accessibilityIdentifier = "badge_view"\n  }\n}\n',
+      'android/app/src/main/java/a/Ui.kt': '@Composable\nfun Ui() {\n  Text("x", modifier = Modifier.testId("ui_text"))\n}\n',
+    });
+    const tids = f.testids!.map((t) => t.tid);
+    expect(tids).toEqual(expect.arrayContaining(['sb_login', 'badge_view', 'ui_text']));
+  });
+});
+
+describe('facts symbol ids resolve in the graph (kb verify gate)', () => {
+  it('every non-empty route / API symbol emitted by the new recognisers exists', async () => {
+    const { facts, graph } = await factsAndGraph({
+      'ios/App/Info.plist': '<plist><dict><key>UILaunchStoryboardName</key><string>Launch</string></dict></plist>',
+      'ios/App/AboutViewController.h': '@interface AboutViewController : UIViewController\n@end\n',
+      'ios/App/AboutViewController.m': '@implementation AboutViewController\n- (void)load {\n  NSURLRequest *r = [NSURLRequest requestWithURL:[NSURL URLWithString:@"https://x.org/api/about"]];\n  [[NSURLSession sharedSession] dataTaskWithRequest:r];\n}\n@end\n',
+      'android/app/src/main/kotlin/a/Root.kt': 'class Root {\n  private val nav = StackNavigation<Config>()\n  val stack = childStack(source = nav, serializer = Config.serializer(), childFactory = ::child)\n  private fun child(c: Config, ctx: ComponentContext): Child = when (c) {\n    is Config.Home -> Child.Home(HomeComponent(ctx))\n  }\n  @Serializable sealed class Config {\n    @Serializable data object Home : Config()\n  }\n}\nclass HomeComponent(ctx: ComponentContext)\n',
+    });
+    const ids = new Set(graph.symbols.map((s) => s.id));
+    const syms = [...facts.routes!.map((r) => r.symbol), ...facts.apis!.map((a) => a.symbol)].filter(Boolean);
+    expect(facts.routes!.map((r) => r.route_id)).toEqual(expect.arrayContaining(['about', 'Home']));
+    for (const s of syms) expect(ids.has(s), s).toBe(true);
   });
 });

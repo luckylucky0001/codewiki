@@ -12,7 +12,7 @@ import type { ScanResult } from '../scan/scan.js';
 import { walkDir } from '../scan/scan.js';
 import { cmpStr, cut, trimChars, trimPrefix, trimSuffix, trimSpace } from '../util/go.js';
 import { xmlTokens } from './xml.js';
-import { decomposeRoutes, objc, swiftEnumTestIDs, bindingIDsUsedByTests, bindingName, concatPaths, arktsWrapperAPIs, netBodyNativeRe } from './general.js';
+import { decomposeRoutes, objc, swiftEnumTestIDs, bindingIDsUsedByTests, bindingName, concatPaths, arktsWrapperAPIs, netBodyNativeRe, ibTestIDs } from './general.js';
 
 /** A deep link declared by the app (manifest intent-filter, plist URL scheme, applinks entitlement,
  * module.json5 skills.uris, nav-graph deepLink or an in-code URL route table). */
@@ -1021,7 +1021,8 @@ export class Ctx {
         switch (fi.lang) {
           case 'kotlin':
           case 'java':
-            ok = call.callee === 'testTag';
+            // `testTag`, plus app wrappers named like it (`Modifier.testId("x")`, `testIdentifier(...)`)
+            ok = call.callee === 'testTag' || /^(?:testId|testID|testIdentifier|testTagId|testTagAsId)$/.test(call.callee);
             break;
           case 'swift':
             ok = call.callee === 'accessibilityIdentifier';
@@ -1060,6 +1061,7 @@ export class Ctx {
     }
     this.assignedTestIDs(push);
     swiftEnumTestIDs(this, push);
+    ibTestIDs(this, push);
     this.resourceIDsUsedByTests(push);
   }
 
@@ -1076,10 +1078,11 @@ export class Ctx {
   assignedTestIDs(push: (platform: string, tid: string, file: string, line: number) => void): void {
     for (const file of this.sortedFiles()) {
       const fi = this.g.files[file]!;
-      const re = fi.lang === 'swift' ? /\.accessibilityIdentifier\s*=\s*([^\n;]+)/g : fi.lang === 'kotlin' ? /\btestTag\s*=\s*([^\n;]+)/g : null;
+      // `x.accessibilityIdentifier = …` and the bare form inside a view subclass (`accessibilityIdentifier = "x"`)
+      const re = fi.lang === 'swift' ? /(?:\.|(?<![\w.])(?=accessibilityIdentifier))accessibilityIdentifier\s*=\s*([^\n;]+)/g : fi.lang === 'kotlin' ? /\btestTag\s*=\s*([^\n;]+)/g : null;
       if (!re) continue;
       const lines = this.fileLines(file);
-      if (!lines.some((l) => re.source.startsWith('\\.access') ? l.includes('accessibilityIdentifier') : l.includes('testTag'))) continue;
+      if (!lines.some((l) => (fi.lang === 'swift' ? l.includes('accessibilityIdentifier') : l.includes('testTag')))) continue;
       lines.forEach((l, i) => {
         for (const m of l.matchAll(re)) {
           const rhs = m[1]!.trim().replace(/\s*(\/\/.*)?$/, '');
@@ -2127,7 +2130,8 @@ export class Ctx {
       if (!r.deeplink && r.deeplinks?.length && r.deeplinks[0]!.includes('://')) r.deeplink = r.deeplinks[0]!;
       if (!r.deeplink && !this.noDerive.has(r) && (this.schemes[r.platform]?.length ?? 0) === 1 && this.schemeInScope(r)) r.deeplink = this.deeplink(r.platform, r.pattern);
       const i = r.symbol.lastIndexOf('#');
-      r.name = i >= 0 ? lastSeg(r.symbol.slice(i + 1)) || r.route_id : r.route_id;
+      // file-only anchors (no symbol in the graph, e.g. Objective-C screens) keep the name they were given
+      r.name = i >= 0 ? lastSeg(r.symbol.slice(i + 1)) || r.route_id : r.name || r.route_id;
       if (r.deeplinks) {
         const d = r.deeplinks;
         delete r.deeplinks;

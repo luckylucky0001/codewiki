@@ -175,11 +175,6 @@ export function objc(c: Ctx): void {
   if (!files.length) return;
   files.sort((a, b) => (a.rel < b.rel ? -1 : a.rel > b.rel ? 1 : 0));
   const plat = 'ios';
-  const prefix = (rel: string) => {
-    const p = c.cfg.platforms.find((x) => x.name === plat && (rel === x.root || rel.startsWith(x.root.replace(/\/$/, '') + '/') || x.root === '.' || x.root === ''));
-    if (!p || p.root === '.' || p.root === '') return rel;
-    return rel.slice(p.root.replace(/\/$/, '').length + 1);
-  };
   // class -> super (Objective-C plus Swift classes)
   const sup = new Map<string, string>();
   const decl = new Map<string, { rel: string; line: number }>();
@@ -209,7 +204,9 @@ export function objc(c: Ctx): void {
     const rid = screenIDObjC(n);
     if (have.has(plat + '|' + rid)) continue;
     have.add(plat + '|' + rid);
-    c.f.routes!.push({ platform: plat, route_id: rid, pattern: rid, deeplink: '', file: d.rel, symbol: plat + '://' + prefix(d.rel) + '#' + n });
+    // file-only anchor: Objective-C has no symbols in the graph, so a symbol id here would be dangling
+    // (kb verify E_SYMBOL_UNKNOWN on the generated facts pages); `name` carries the class name instead
+    c.f.routes!.push({ platform: plat, route_id: rid, pattern: rid, deeplink: '', file: d.rel, symbol: '', name: n } as Route);
     c.noDerive.add(c.f.routes![c.f.routes!.length - 1]!);
   }
   for (const f of files) {
@@ -560,5 +557,37 @@ export function arktsWrapperAPIs(c: Ctx, add: (a: { platform: string; method: st
       }
       add({ platform: fi.platform, method: httpVerbs.has(method) ? method : 'GET', path: p, file, symbol: call.enclosing });
     }
+  }
+}
+
+// ---------------------------------------------------------------- Interface Builder testIDs
+
+/** Accessibility identifiers set in Interface Builder: `<accessibility key="accessibilityConfiguration" identifier="x"/>`. */
+export function ibIdentifiers(xml: string): { tid: string; line: number }[] {
+  const out: { tid: string; line: number }[] = [];
+  xml.split('\n').forEach((l, i) => {
+    for (const m of l.matchAll(/<accessibility\b[^>]*\bidentifier="([^"]+)"/g)) out.push({ tid: m[1]!, line: i + 1 });
+  });
+  return out;
+}
+
+export function ibTestIDs(c: Ctx, push: (platform: string, tid: string, file: string, line: number) => void): void {
+  for (const p of c.cfg.platforms) {
+    if (p.name !== 'ios') continue;
+    const root = path.join(c.res.dir, p.root);
+    walkDir(root, (fp, name, isDir) => {
+      if (isDir) return !(objcSkipDir(name) || (name.startsWith('.') && fp !== root));
+      if (!name.endsWith('.storyboard') && !name.endsWith('.xib')) return;
+      const rel = path.relative(c.res.dir, fp).split(path.sep).join('/');
+      if (shadowed(c.cfg, p, rel) || isTestPath(rel)) return;
+      let b: string;
+      try {
+        b = fs.readFileSync(fp, 'utf8');
+      } catch {
+        return;
+      }
+      if (!b.includes('<accessibility')) return;
+      for (const t of ibIdentifiers(b)) push(p.name, t.tid, rel, t.line);
+    });
   }
 }
