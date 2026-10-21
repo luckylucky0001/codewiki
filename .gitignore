@@ -10,3 +10,7 @@ demo/output/
 tmp/
 # local dev probes
 internal/tsdump*/
+
+# TypeScript build
+node_modules/
+dist/
