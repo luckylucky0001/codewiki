@@ -129,7 +129,8 @@ export function renderPage(p: Page): string {
 
 /** Per-level tree index pages (pages/<p>/index.md, pages/<p>/<m>/index.md) are rendered by kb, like index.md. */
 export function isTreeIndexPath(rel: string): boolean {
-  return rel.startsWith('pages/') && rel.endsWith('/index.md');
+  // v1 directories never hold tree indexes (a route id may be literally `index`)
+  return rel.startsWith('pages/') && rel.endsWith('/index.md') && !/^pages\/(features|concepts|flows|decisions)\//.test(rel);
 }
 
 export function idFromPath(rel: string): string {

@@ -153,6 +153,12 @@ export function treeBlocks(t: ModuleTree, n: TreeNode, g: Graph, facts: Facts): 
   }
   const rl = (n.routes ?? []).filter((r) => (facts.routes ?? []).some((x) => x.route_id === r));
   if (rl.length) out.push({ name: 'routes', body: `## 相关功能页\n\n${rl.map((r) => `- [${r}](${tree.relLink(n.page, featurePage(r))})`).join('\n')}` });
+  if (n.kind === 'module' || n.kind === 'project') {
+    // reverse build dependencies: kb-owned so they stay current when another module adds a dependency
+    const users: TreeNode[] = [];
+    tree.walk(t.root, (x) => void (x.deps?.includes(n.id) && users.push(x)));
+    if (users.length) out.push({ name: 'dependents', body: `## 被依赖（${users.length} 个模块）\n\n${users.sort((a, b) => cmpStr(a.id, b.id)).map((d) => `- [${esc(d.title)}](${tree.relLink(n.page, d.page)})`).join('\n')}` });
+  }
   for (const d of tree.nodeDiagrams(t, n.id, facts)) out.push({ name: 'diagram', body: '```mermaid\n' + d.mermaid + '\n```', attrs: { id: d.id, hash: sha12(d.mermaid) } });
   if (syms.length) {
     const lines = syms.map((s) => `\`${s.file}:${s.start_line}-${s.end_line}\``);
@@ -195,9 +201,15 @@ export function finalizeTreePage(text: string, t: ModuleTree, n: TreeNode, g: Gr
   f.status = StatusCurrent;
   let body = pg.body;
   if (!/^# /m.test(body)) body = `# ${n.title}\n\n` + body;
-  for (const b of treeBlocks(t, n, g, facts)) body = tree.upsertKbBlock(body, b.name, b.body, b.attrs ?? {});
+  const blocks = treeBlocks(t, n, g, facts);
+  for (const b of blocks) body = tree.upsertKbBlock(body, b.name, b.body, b.attrs ?? {});
+  // drop kb blocks that no longer apply (e.g. a module lost its last dependent)
+  const names = new Set(blocks.map((b) => b.name));
+  for (const name of ['children', 'symbols', 'routes', 'dependents', 'sources']) {
+    if (!names.has(name)) body = body.replace(new RegExp(`\\n*<!-- kb:${name}(?:\\s[^>]*)?-->[\\s\\S]*?<!-- /kb:${name} -->\\n?`, 'g'), '\n');
+  }
   // drop kb blocks of diagrams that no longer exist
-  const want = new Set(treeBlocks(t, n, g, facts).filter((b) => b.name === 'diagram').map((b) => b.attrs!.id));
+  const want = new Set(blocks.filter((b) => b.name === 'diagram').map((b) => b.attrs!.id));
   body = body.replace(/\n*<!-- kb:diagram (?:[^>]*?\s)?id=(\S+)[^>]*-->[\s\S]*?<!-- \/kb:diagram -->\n?/g, (m, id: string) => (want.has(id) ? m : '\n'));
   pg.body = body;
   pg.hasFM = true;

@@ -1,0 +1,36 @@
+{
+ "version": 1,
+ "note": "Architecture questions on element-x-android (268 Gradle modules), where the module hierarchy (L1 project → L2 Gradle module → L3 cluster) should help. Ground truth from the raw build.gradle.kts files with bench/agent-qa/elementx-groundtruth.py (independent of kb).",
+ "suffix": "只读，不要修改任何文件。请简洁回答，给出模块路径（如 :features:login:impl）、数字和依据。",
+ "questions": [
+  {
+   "id": "E1-login-impl-deps",
+   "prompt": ":features:login:impl 模块直接依赖了哪些项目内模块（build.gradle.kts 里的 projects.*，任何配置都算）？给出数量和清单。",
+   "must": ["\\b25\\b", "oauth", "qrcode", "session.?storage", "login:api"],
+   "min": 4
+  },
+  {
+   "id": "E2-qrcode-dependents",
+   "prompt": "哪些模块直接依赖 :libraries:qrcode？",
+   "must": ["linknewdevice", "login:impl"],
+   "must_not": ["roomdetails:impl", "messages:impl"]
+  },
+  {
+   "id": "E3-call-impl-purpose",
+   "prompt": ":features:call:impl 这个模块是做什么的？它的主要组成部分有哪些？",
+   "must": ["画中画|picture.?in.?picture|\\bPiP\\b", "ActiveCallManager|active.?call|活动通话|当前通话|通话管理", "Element ?Call|WebView|webview|Widget|widget"],
+   "min": 2
+  },
+  {
+   "id": "E4-most-deps-feature",
+   "prompt": "features 下所有 :features:*:impl 模块中，哪个模块直接依赖的项目内模块最多？有多少个？第二名是谁？",
+   "must": ["messages:impl", "\\b69\\b", "preferences:impl"],
+   "min": 2
+  },
+  {
+   "id": "E5-matrix-api-fanin",
+   "prompt": "有多少个模块直接依赖 :libraries:matrix:api（在 build.gradle.kts 里引用 projects.libraries.matrix.api）？",
+   "must": ["\\b14[4-9]\\b|\\b15[0-1]\\b"]
+  }
+ ]
+}

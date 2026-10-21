@@ -212,9 +212,14 @@ export function discoverScopes(fsv: ScopeFs, opts: DiscoverOptions = {}): ScopeP
       else unresolved.push(c.root);
     }
   } else {
+    // a root Gradle settings / HarmonyOS app (AppScope) makes container children modules of that one build,
+    // unless the child is an independent build itself
+    const buildRoots = ['settings.gradle', 'settings.gradle.kts', 'AppScope/app.json5', 'hvigor/hvigor-config.json5'];
+    const rootIsBuild = buildRoots.some((f) => fsv.isFile(f));
+    const moduleOfRoot = (d: string) => rootIsBuild && !buildRoots.some((f) => fsv.isFile(joinPath(d, f)));
     for (const c of ContainerDirs) {
       if (!fsv.isDir(c) || fsv.isSymlink(c) || excluded(c, ex)) continue;
-      for (const d of childDirs(fsv, c, ex)) add(d, 'container');
+      for (const d of childDirs(fsv, c, ex)) if (!moduleOfRoot(d)) add(d, 'container');
     }
     for (const name of fsv.readdir('')) {
       const plat = MobileDirs[name.toLowerCase()];

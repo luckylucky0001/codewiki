@@ -150,6 +150,10 @@ export function clusterHolder(ctx: BuildContext, holder: TreeNode, m: LayerModul
   delete holder.core;
 }
 
+/** v1 page directories (pages/features/… etc.) are not available as top-level tree ids. */
+const V1Dirs = new Set(['features', 'concepts', 'flows', 'decisions', 'facts', 'raw', 'index']);
+const topSafe = (slug: string, kind: string) => (V1Dirs.has(slug) ? `${slug}-${kind}` : slug);
+
 /** Builds the full tree (L0–L3) from scratch, inheriting cluster ids/slugs/titles from input.prev. */
 export type ClusterFn = (ctx: BuildContext, holder: TreeNode, m: LayerModule, prev: PrevCluster[] | undefined) => void;
 
@@ -161,7 +165,7 @@ export function buildTree(input: TreeInput, ctx: BuildContext = prepare(input), 
   const holders = new Map<string, TreeNode>(); // module key → node
   const projNodes: TreeNode[] = [];
   for (const p of layering.projects) {
-    const pid = single ? '' : p.slug;
+    const pid = single ? '' : topSafe(p.slug, 'project');
     const pn: TreeNode = single
       ? root
       : { id: pid, level: 1, kind: 'project', title: p.title, slug: p.slug, page: `pages/${pid}/overview.md`, index: `pages/${pid}/index.md` };
@@ -173,7 +177,7 @@ export function buildTree(input: TreeInput, ctx: BuildContext = prepare(input), 
       let h: TreeNode;
       if (p.modules.length === 1) h = pn; // L2 collapses into its project
       else {
-        const id = pid ? `${pid}/${m.slug}` : m.slug;
+        const id = pid ? `${pid}/${m.slug}` : topSafe(m.slug, 'module');
         h = { id, level: 2, kind: 'module', title: m.name === '(root)' ? `${p.title} (root)` : m.name, slug: m.slug, page: `pages/${id}/overview.md` };
         mods.push(h);
       }

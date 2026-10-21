@@ -1,0 +1,59 @@
+// wave 3: real-repo fixes (scopes of a single Gradle build, platform one level down, v1/tree path
+// collisions), docs agent output parsing, parallel reference resolution.
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { createHash } from 'node:crypto';
+import { describe, expect, it } from 'vitest';
+import { discoverScopes, nodeScopeFs } from '../src/docs/index.js';
+import { detect } from '../src/config/config.js';
+import { isTreeIndexPath } from '../src/wiki/page.js';
+import { agentText } from '../src/engine/docsflow.js';
+
+const repo = path.resolve(__dirname, '..');
+const mk = (files: Record<string, string>) => {
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kbv3-'));
+  for (const [f, c] of Object.entries(files)) {
+    fs.mkdirSync(path.dirname(path.join(d, f)), { recursive: true });
+    fs.writeFileSync(path.join(d, f), c);
+  }
+  return d;
+};
+
+describe('wave 3', () => {
+  it('container children of a root Gradle build are modules, not projects', () => {
+    const d = mk({ 'settings.gradle.kts': '', 'services/analytics/build.gradle.kts': '', 'services/push/build.gradle.kts': '', 'docs/a.md': '# a' });
+    expect(discoverScopes(nodeScopeFs(d)).projects.map((p) => p.root)).toEqual([]);
+    const m = mk({ 'apps/shop/settings.gradle': '', 'apps/web/package.json': '{}' });
+    expect(discoverScopes(nodeScopeFs(m)).projects.map((p) => p.root).sort()).toEqual(['apps/shop', 'apps/web']);
+  });
+
+  it('detects a HarmonyOS app one directory down when the root has no platform', () => {
+    const d = mk({ 'README.md': '# x', 'CommonAppDevelopment/build-profile.json5': '{}', 'CommonAppDevelopment/AppScope/app.json5': '{}' });
+    expect(detect(d)).toEqual([{ name: 'harmony', root: 'CommonAppDevelopment' }]);
+  });
+
+  it('a route id named index is a feature page, not a tree index', () => {
+    expect(isTreeIndexPath('pages/features/index.md')).toBe(false);
+    expect(isTreeIndexPath('pages/android/index.md')).toBe(true);
+  });
+
+  it('unwraps agent JSON output (claude result / gemini response) and passes text through', () => {
+    expect(agentText('{"type":"result","result":"=== docs/a.md [features] ===\\nx"}')).toBe('=== docs/a.md [features] ===\nx');
+    expect(agentText('{"response":"hello"}')).toBe('hello');
+    expect(agentText('=== plain ===')).toBe('=== plain ===');
+  });
+
+  it('parallel reference resolution is identical to the serial pass', async () => {
+    const { detectedConfig } = await import(path.join(repo, 'dist/config/config.js'));
+    const { scan } = await import(path.join(repo, 'dist/scan/scan.js'));
+    const { resolveRefs, resolveRefsParallel } = await import(path.join(repo, 'dist/scan/resolve.js'));
+    const root = path.join(repo, 'examples/minishop');
+    const res = await scan(detectedConfig(root), root);
+    const h = () => createHash('sha1').update(JSON.stringify(res.graph.symbols.map((s: { id: string; refs?: string[] }) => [s.id, s.refs ?? []]))).digest('hex');
+    resolveRefs(res.graph);
+    const serial = h();
+    expect(await resolveRefsParallel(res.graph, 3, 0)).toBe(3);
+    expect(h()).toBe(serial);
+  });
+});

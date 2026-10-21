@@ -161,3 +161,38 @@ AGENT_QUESTIONS=bench/agent-qa/questions-cases-agg.json AGENT_REPS=2 AGENT_MAX_T
 | B：只有源码 | 9/10 | 14.0 | $0.126 | 46 s | — |
 
 逐题 turns（A / B）：G1 9 / 14，G2 10 / 20，G3 8.5 / 20.5，G4 4 / 4.5，G5 18.5 / 11。G4 没有专门命令。A 组 turns 少 29%，费用少 32%，耗时慢 13%（新 clone 的第一次 kb 调用要约 6 s 生成缓存）。上面各节是逐轮演进的记录，可视为附录。结果见 `demo/sample-output/agent-bench-cases-agg/final/`。基准累计花费约 $1.85。
+
+## 架构类问题：element-x-android（第 10 轮，多级目录）
+
+多级目录（L1 项目 → L2 Gradle 模块 → L3 功能簇，模块页列出项目内依赖）应该对“模块之间是什么关系”这类问题有帮助。这一轮在 element-x-android 上验证这个假设。该仓库有 268 个 Gradle 模块，A 组的 wiki 有 822 页，树深 3：L2 263 个、L3 404 个。
+
+问题集是 `questions-elementx-arch.json`，共 5 题：
+
+- E1：`:features:login:impl` 依赖哪些模块；
+- E2：谁依赖 `:libraries:qrcode`；
+- E3：`:features:call:impl` 是做什么的；
+- E4：哪个 feature impl 模块的依赖最多；
+- E5：`:libraries:matrix:api` 被多少个模块依赖。
+
+标准答案由 `elementx-groundtruth.py` 直接解析 `build.gradle.kts` 得出，不依赖 kb，结果见 `demo/sample-output/agent-bench-elementx-arch/groundtruth.txt`。另外核对了 kb 自己的输出：E1 的 25 个依赖与 kb 模块页“依赖”一节完全一致。
+
+设置：haiku，每题每组 2 次，turn 上限 40。A 组有 wiki、codewiki skill 和 CLAUDE.md / AGENTS.md 指引块。B 组只有源码，但保留仓库自带的 AGENTS.md / CLAUDE.md，只删掉 kb 指引块（`run.sh` 已改成这样，避免 B 组连仓库原有的说明都丢掉）。总花费 $0.14。
+
+```bash
+AGENT_QUESTIONS=bench/agent-qa/questions-elementx-arch.json AGENT_REPS=2 AGENT_MAX_TURNS=40 bench/agent-qa/run.sh <element-x 的副本，含 wiki>
+```
+
+| | 通过 | 检查点 | 平均 turns | 总费用 | 平均耗时 | 用到 kb 的运行 | 读了 wiki 的运行 |
+|---|---|---|---|---|---|---|---|
+| A：wiki + skill + 指引块 | 10/10 | 28/28 | **5.9** | **$0.064** | **21 s** | 4/10 | 3/10 |
+| B：只有源码 | 10/10 | 27/28 | 7.8 | $0.078 | 25 s | — | — |
+
+**结论如实写：A 组更省，但不能归功于多级目录。**
+
+- 两组准确率相同。A 组平均 turns 少 24%，费用少 18%，耗时少 16%。
+- **依赖类题目（E1、E4、E5）上，A 组 6 次运行都没有用 kb，也没有读 wiki**，而是像 B 组一样直接 grep `build.gradle.kts`。这几题 A 的 turns 更少（E1 6 vs 10，E4 10 vs 14），应视为噪声，不是 wiki 的功劳。原因是依赖关系本来就写在一个文件里，grep 一次就能拿到。
+- 用到 kb 的是 E2 和 E3，各 2 次（`kb search`、`kb context`、`kb tree show`，然后读模块页）。E3（模块是做什么的）A 4 turns，B 6 turns。E2（反向依赖）A 5 turns，B 4.5 turns，因为模块页只列出正向依赖，反向依赖仍然要 grep。
+- 注意：两组的 `--allowedTools` 都没有真正限制 Bash，B 组 20 次 Bash 调用都成功了。所以这组对比实际上是“有 wiki + 指引块”对“没有”，而不是工具权限不同。
+- 下一步：在 L2 页面加上“被依赖”（反向依赖）一节，加一个 `kb tree deps <module>` 命令，并让指引块把“模块依赖 / 反向依赖”映射到这个命令。这一轮没有做。
+
+逐题明细在 `demo/sample-output/agent-bench-elementx-arch/results.md`，每次运行用了哪些工具见同目录的 `usage.txt`，原始 transcript（路径已脱敏）在 `transcripts/`。

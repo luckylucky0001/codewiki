@@ -167,6 +167,22 @@ export function detect(root: string): Platform[] {
       atRoot.harmony = true;
     }
   }
+  if (out.length === 0) {
+    // nothing at the top level: one app project one directory down (e.g. HarmonyOS-Cases/CommonAppDevelopment)
+    let kids: string[] = [];
+    try {
+      kids = fs.readdirSync(root).filter((n) => !n.startsWith('.') && isDir(n)).sort();
+    } catch {
+      /* unreadable */
+    }
+    const has = (d: string, f: string) => exists(path.join(d, f));
+    for (const k of kids) {
+      if (!out.some((p) => p.name === 'harmony') && has(k, 'build-profile.json5') && isDir(path.join(k, 'AppScope'))) out.push({ name: 'harmony', root: k });
+      else if (!out.some((p) => p.name === 'android') && (has(k, 'settings.gradle') || has(k, 'settings.gradle.kts'))) out.push({ name: 'android', root: k });
+      else if (!out.some((p) => p.name === 'ios') && fs.readdirSync(path.join(root, k)).some((n) => n.endsWith('.xcodeproj'))) out.push({ name: 'ios', root: k });
+    }
+    if (out.length) return out;
+  }
   if (Object.keys(atRoot).length === 0 || isDir('web')) dirs('web', 'web', 'src', 'lib');
   return out;
 }

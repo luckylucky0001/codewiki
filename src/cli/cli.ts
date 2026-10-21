@@ -1172,15 +1172,15 @@ register({
         } catch (e) {
           return a.fail(ExitUsage, e as Error);
         }
-        const r = await docsCompound(cfg, { ...scopeOpts, llm: be.mode, llmCmd: be.cmd, agent: be.agent, resume: !!f.resume, restart: !!f.restart, dryRun: !!f['dry-run'], log: a.log });
+        const r = await docsCompound(cfg, { ...scopeOpts, llm: be.mode, llmCmd: be.cmd, agent: be.agent, model: String(f.model || cfg.llm.model || ''), resume: !!f.resume, restart: !!f.restart, dryRun: !!f['dry-run'], log: a.log });
         a.emit(r, () => {
           a.out(`docs compound (${r.run.decision}: ${r.run.reason})${r.dry_run ? ' [dry-run]' : ''}\n`);
           for (const s of r.scopes) a.out(`  scope ${s.id.padEnd(14)} ${s.docs_root} ${s.scan_mode}${s.write ? '' : ' (read-only)'}\n`);
-          for (const x of r.files) a.out(`  ${x.action.padEnd(6)} ${x.state.padEnd(8)} ${x.path} [${x.dimension}] +${x.inserted} ~${x.replaced} =${x.unchanged}${x.pending ? ` pending ${x.pending}` : ''}${x.dropped.length ? ` dropped ${x.dropped.length}` : ''}${x.review.length ? ` REVIEW ${x.review.join('; ')}` : ''}\n`);
+          for (const x of r.files) a.out(`  ${x.action.padEnd(6)} ${x.state.padEnd(8)} ${x.path} [${x.dimension}] +${x.inserted} ~${x.replaced} =${x.unchanged}${x.pending ? ` pending ${x.pending}` : ''}${x.deferred ? ` deferred ${x.deferred} (line budget; next run)` : ''}${x.dropped.length ? ` dropped ${x.dropped.length}` : ''}${x.review.length ? ` REVIEW ${x.review.join('; ')}` : ''}\n`);
           const repo = r.routing.filter((x) => x.dest === 'repo').length;
           a.out(`routing: ${r.routing.length} item(s), ${repo} to repository docs (root evidence or ≥2 projects), ${r.routing.filter((x) => x.parity_diff).length} parity difference(s)\n`);
-          for (const b of r.broken_links) a.out(`  broken link ${b.file}:${b.line} ${b.target} (${b.reason})\n`);
-          if (r.agent) a.out(`agent: ${r.agent.status}, accepted ${r.agent.accepted}, rejected ${r.agent.rejected}\n`);
+          for (const b of r.broken_links) a.out(`  broken link ${b.file}:${b.line} ${b.target} (${b.reason})${(b as { preexisting?: boolean }).preexisting ? " [pre-existing, human content]" : ""}\n`);
+          if (r.agent) a.out(`agent: ${r.agent.status}, accepted ${r.agent.accepted}, rejected ${r.agent.rejected}${r.agent.usage ? ' ' + r.agent.usage : ''}${r.agent.errors.length ? ' — ' + r.agent.errors.join('; ') : ''}\n`);
         });
         return r.ok ? ExitOK : ExitStale;
       }

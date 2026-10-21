@@ -1,0 +1,23 @@
+kb compound: head=35ef4e3 base=dd2d40d mode=incremental tasks=0 (module tree pages changed)
+  [ok] create   pages/shop-ios/mini-shop/overview.md cmd 
+  [ok] create   pages/shop-ios/overview.md         cmd 
+compound 20261021T184621-35ef4e3: base dd2d40d → head 35ef4e3, mode incremental, llm cmd (agent claude)
+mode incremental — module tree pages changed
+changed_route_ids: []; changed_files: 89
+stats: symbols=151 changes=map[unchanged:151] module_ratio=0.00 structural_ratio=0.00 hops=1 propagated=0
+tree repair: depth 3 {"L0":1,"L1":2,"L3":9,"L2":2}; 2 tree page task(s)
+  tree L2 create  pages/shop-ios/mini-shop/overview.md (page_missing)
+  tree L1 create  pages/shop-ios/overview.md (page_missing)
+  task tree-2-shop-ios-mini-shop    ok       cmd  (in 20 / out 9182 tok, cached 494882, $0.0150)
+  task tree-1-shop-ios              ok       cmd  (in 10 / out 5848 tok, cached 224404, $0.0096)
+changed files: 8
+  .kb/graph.json.gz
+  .kb/plan.json
+  .kb/state.json
+  .kb/update_record.json
+  log.md
+  module_tree.json
+  pages/shop-ios/mini-shop/overview.md
+  pages/shop-ios/overview.md
+verify PASS: 33 pages, 201 anchors, 0 errors, 0 warnings
+published 8 changed file(s) to <tmp>/repo/wiki

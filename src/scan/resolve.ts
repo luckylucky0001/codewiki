@@ -1,5 +1,9 @@
 // Scope-aware reference resolution: identifier names -> symbol ids.
+import os from 'node:os';
 import path from 'node:path';
+import v8 from 'node:v8';
+import { Worker } from 'node:worker_threads';
+import { fileURLToPath } from 'node:url';
 import type { Graph, Symbol } from '../model.js';
 import { getSym, reindexGraph } from '../model.js';
 import { cmpStr, cut } from '../util/go.js';
@@ -18,6 +22,20 @@ function push<K, V>(m: Map<K, V[]>, k: K, v: V): void {
  * symbols visible by package / module. Ambiguous names are dropped.
  */
 export function resolveRefs(g: Graph): void {
+  reindexGraph(g);
+  assignRefs(g, 0, computeRefs(g, 0, g.symbols.length));
+}
+
+function assignRefs(g: Graph, lo: number, refs: string[][]): void {
+  refs.forEach((r, k) => {
+    const s = g.symbols[lo + k]!;
+    if (r.length) s.refs = r;
+    else delete s.refs;
+  });
+}
+
+/** Resolved refs for g.symbols[lo, hi). Each symbol depends only on the whole-graph indexes, so slices can run in parallel. */
+export function computeRefs(g: Pick<Graph, 'symbols' | 'files'>, lo: number, hi: number): string[][] {
   const byName = new Map<string, Symbol[]>(); // platform\0name
   const byNameTop = new Map<string, Symbol[]>(); // platform\0name, top-level only
   const byNameMember = new Map<string, Symbol[]>(); // platform\0name, members only
@@ -28,7 +46,6 @@ export function resolveRefs(g: Graph): void {
   const byParent = new Map<string, Symbol[]>(); // platform\0parent\0name
   const byMember = new Map<string, Symbol[]>(); // platform\0name
   const parentName = new Map<Symbol, string>();
-  reindexGraph(g);
   const fileScope = new Map<string, Set<string>>();
   const projectPkgs = new Set<string>();
   const imports = new Map<string, Map<string, string>>();
@@ -204,18 +221,59 @@ export function resolveRefs(g: Graph): void {
     }
     return [...refs].sort(cmpStr);
   };
-  const first = g.symbols.map((s) => pass(s, new Set()));
-  g.symbols.forEach((s, i) => {
+  const out: string[][] = [];
+  for (let i = lo; i < hi; i++) {
+    const s = g.symbols[i]!;
     const scope = new Set<string>();
-    for (const r of first[i]!) {
+    for (const r of pass(s, new Set())) {
       const rs = getS(r);
       if (rs) {
         scope.add(rs.name);
         for (const n of rs.refNames ?? []) scope.add(n);
       }
     }
-    const refs = pass(s, scope);
-    if (refs.length) s.refs = refs;
-    else delete s.refs;
-  });
+    out.push(pass(s, scope));
+  }
+  return out;
+}
+
+const MIN_PARALLEL_SYMBOLS = 4000;
+
+/** resolveRefs on worker_threads: each worker builds the indexes once and resolves one slice; results are identical. */
+export async function resolveRefsParallel(g: Graph, want?: number, minSymbols = MIN_PARALLEL_SYMBOLS): Promise<number> {
+  let workers = want && want > 0 ? want : Math.max(1, Math.min(os.availableParallelism(), 8));
+  if (process.env.KB_WORKERS) workers = Math.max(1, parseInt(process.env.KB_WORKERS, 10) || 1);
+  const n = g.symbols.length;
+  if (n < minSymbols || workers < 2) {
+    resolveRefs(g);
+    return 1;
+  }
+  reindexGraph(g);
+  const symbols = g.symbols.map((s) => ({ id: s.id, name: s.name, platform: s.platform, file: s.file, parent: s.parent, kind: s.kind, refNames: s.refNames, callNames: s.callNames }));
+  const files: Graph['files'] = {};
+  for (const [f, fi] of Object.entries(g.files)) files[f] = { package: fi.package, lang: fi.lang, imports: fi.imports } as Graph['files'][string];
+  // serialize once into shared memory: every worker deserializes in parallel instead of the main
+  // thread structured-cloning the graph once per worker
+  const buf = v8.serialize({ symbols, files });
+  const sab = new SharedArrayBuffer(buf.length);
+  new Uint8Array(sab).set(buf);
+  const url = fileURLToPath(new URL('./resolve-worker.js', import.meta.url));
+  const size = Math.ceil(n / workers);
+  await Promise.all(
+    Array.from({ length: workers }, (_, k) => {
+      const lo = k * size;
+      const hi = Math.min(n, lo + size);
+      if (lo >= hi) return Promise.resolve();
+      return new Promise<void>((resolve, reject) => {
+        const w = new Worker(url, { workerData: { sab, lo, hi } });
+        w.once('message', (refs: string[][]) => {
+          assignRefs(g, lo, refs);
+          void w.terminate();
+          resolve();
+        });
+        w.once('error', reject);
+      });
+    }),
+  );
+  return workers;
 }

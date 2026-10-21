@@ -19,6 +19,14 @@ import { cmpStr } from '../util/go.js';
 import { gitHead, loadGraph, today } from './compound.js';
 import { computeTree, loadTree } from './hier.js';
 import { Checker, extractClaims } from './claims.js';
+import { usageParsers, usageString } from '../agents/agents.js';
+
+/** Default dimensions plus `docs_schema.dimensions` overrides from codewiki.yaml (e.g. point architecture at an existing human doc). */
+export function schemaOf(cfg: Config): Dimension[] {
+  const dims = (cfg.docs_schema as { dimensions?: unknown } | undefined)?.dimensions;
+  if (!Array.isArray(dims)) return D.DefaultSchema;
+  return D.mergeSchema(D.DefaultSchema, dims.filter((d): d is Partial<Dimension> & { id: string } => !!d && typeof (d as { id?: unknown }).id === 'string'));
+}
 
 export interface DocsOptions {
   projects?: string[];
@@ -28,6 +36,8 @@ export interface DocsOptions {
   llm: string; // template | cmd
   llmCmd?: string;
   agent?: string;
+  /** model for the built-in read-only agent command */
+  model?: string;
   resume?: boolean;
   restart?: boolean;
   dryRun?: boolean;
@@ -44,6 +54,8 @@ export interface DocFileResult {
   replaced: number;
   unchanged: number;
   pending: number;
+  /** entries over the per-run line budget, written on the next run */
+  deferred?: number;
   dropped: { key: string; reason: string }[];
   review: string[];
   frozen?: boolean;
@@ -58,7 +70,7 @@ export interface DocsRunResult {
   files: DocFileResult[];
   routing: { key: string; dest: string | null; reason: string; xref?: string[]; parity_diff?: boolean }[];
   broken_links: D.BrokenLink[];
-  agent?: { status: string; accepted: number; rejected: number; errors: string[] };
+  agent?: { status: string; accepted: number; rejected: number; errors: string[]; usage?: string };
 }
 
 // ---------- context ----------
@@ -129,7 +141,7 @@ export async function docsContext(cfg: Config, o: Pick<DocsOptions, 'projects' |
       }
     }
   }
-  return { cfg, root, plan, graph: res.graph, facts, tree: t, schema: D.DefaultSchema, specs, head, files };
+  return { cfg, root, plan, graph: res.graph, facts, tree: t, schema: schemaOf(cfg), specs, head, files };
 }
 
 // ---------- deterministic evidence → entries ----------
@@ -417,6 +429,7 @@ export async function docsCompound(cfg: Config, o: DocsOptions): Promise<DocsRun
   if (o.llm === 'cmd' && o.llmCmd) {
     const ag = runDocsAgent(cx, o, [...items.entries()]);
     res.agent = { status: ag.status, accepted: 0, rejected: ag.rejected, errors: ag.errors };
+    if (ag.usage) res.agent.usage = ag.usage;
     for (const a of ag.accepted) {
       const g = [...items.entries()].find(([k]) => k.startsWith(a.dest + '|'));
       if (g) {
@@ -429,6 +442,7 @@ export async function docsCompound(cfg: Config, o: DocsOptions): Promise<DocsRun
     }
   }
   // verify + merge
+  const originals = new Map<string, string>();
   const ex = exists(root);
   const date = today();
   for (const [k, g] of [...items.entries()].sort((a, b) => cmpStr(a[0], b[0]))) {
@@ -467,10 +481,12 @@ export async function docsCompound(cfg: Config, o: DocsOptions): Promise<DocsRun
     fr.replaced = mr.replaced.length;
     fr.unchanged = mr.unchanged.length;
     fr.pending = mr.markedPending.length;
+    if (mr.truncated.length) fr.deferred = mr.truncated.length;
     fr.dropped.push(...mr.dropped);
     fr.review = mr.review.map((r) => `${(r as { line?: number }).line ?? ''} ${(r as { message?: string; reason?: string }).message ?? (r as { reason?: string }).reason ?? JSON.stringify(r)}`.trim());
     if (mr.action === 'write' && mr.text !== undefined && !o.dryRun) {
       writeText(root, file, mr.text);
+      originals.set(file, text ?? '');
     }
     if (mr.action === 'review') res.ok = false;
     res.files.push(fr);
@@ -480,11 +496,16 @@ export async function docsCompound(cfg: Config, o: DocsOptions): Promise<DocsRun
     }
     log(`  ${fr.action.padEnd(6)} ${fr.state.padEnd(8)} ${file} [${g.dimension}] +${fr.inserted} ~${fr.replaced}${fr.dropped.length ? ` dropped ${fr.dropped.length}` : ''}`);
   }
-  // links in written files
+  // links in written files; a broken link on a line that was already there is the human's, reported but not kb's failure
   const written = res.files.filter((f) => f.action === 'write').map((f) => f.path);
   if (written.length) {
     res.broken_links = linkCheck(root, written, cx.files);
-    if (res.broken_links.length) res.ok = false;
+    for (const b of res.broken_links) {
+      const orig = originals.get(b.file);
+      const line = (readOrNull(root, b.file) ?? '').split('\n')[b.line - 1];
+      if (orig !== undefined && line !== undefined && orig.split('\n').includes(line)) (b as D.BrokenLink & { preexisting?: boolean }).preexisting = true;
+      else res.ok = false;
+    }
   }
   if (!o.dryRun) {
     let s2 = state;
@@ -511,17 +532,92 @@ function runDocsAgent(cx: DocsContext, o: DocsOptions, groups: [string, { scope:
   lines.push('# codewiki docs compound', '', '你在补充人机共写的 docs 条目。只输出下述格式，不要写文件。下面的确定性条目是事实来源（来自代码、facts、模块树和 spec）。', '');
   lines.push('## 输出格式', '', '```', '=== <目标文件> [<维度>] ===', '### <条目标题>', '<1–4 行说明，只描述代码中可验证的事实>', '**Source**: `<仓库相对路径>` [Code Direct]', '', 'COMPOUND_META {"status":"done","remaining_scope":[]}', '```', '');
   lines.push('只能使用下列目标文件与 Source 路径；规格（specs/）只读；Draft 规格不能变成规则。', '');
+  lines.push('做法：对下面每个条目，先用 Read 打开它的 Source 文件，再写 1–3 句**具体**说明（职责、关键参数 / 常量 / 接口、与其他条目的关系）。条目标题与 Source 路径必须原样保留（kb 按标题替换确定性条目），不要只复述标题；读不到依据的条目直接省略。只在全部输出的最后写一次 COMPOUND_META。', '');
   for (const [k, g] of groups) {
     lines.push(`## ${k.slice(0, k.lastIndexOf('|'))} [${g.dimension}]`, '');
     for (const it of g.items.slice(0, 20)) if (it.kind === 'entry') lines.push(`- ${it.heading} — Source \`${it.source.path}\``);
     lines.push('');
   }
-  const r = spawnSync('sh', ['-c', o.llmCmd!], { cwd: cx.root, input: lines.join('\n'), encoding: 'utf8', timeout: (cx.cfg.llm.timeout_sec || 600) * 1000, maxBuffer: 64 << 20 });
-  if (r.status !== 0) return { status: 'failed', accepted: [] as { dest: string; items: CompoundItem[] }[], rejected: 0, errors: [`agent exited ${r.status}`] };
-  const parsed = D.parseAgentResult(r.stdout ?? '');
+  // the docs agent only reads: claude gets a read-only tool set; any agent that still changes the
+  // working tree has its whole result rejected (kb alone writes docs, after verification)
+  const cmd = o.agent === 'claude' ? agentReadOnlyCmd(o.model) : o.llmCmd!;
+  const wikiRel = path.relative(cx.root, wikiPath(cx.cfg)).split(path.sep).join('/');
+  const before = treeFingerprint(cx.root, wikiRel);
+  const r = spawnSync('sh', ['-c', cmd], { cwd: cx.root, input: lines.join('\n'), encoding: 'utf8', timeout: (cx.cfg.llm.timeout_sec || 600) * 1000, maxBuffer: 64 << 20 });
+  const none = [] as { dest: string; items: CompoundItem[] }[];
+  if (r.status !== 0) return { status: 'failed', accepted: none, rejected: 0, errors: [`agent exited ${r.status}`] };
+  const after = treeFingerprint(cx.root, wikiRel);
+  const touched = [...new Set([...before.keys(), ...after.keys()])].filter((f) => before.get(f) !== after.get(f)).sort(cmpStr);
+  if (touched.length) return { status: 'failed', accepted: none, rejected: 0, errors: [`agent modified the working tree (result discarded): ${touched.slice(0, 10).join(', ')}`] };
+  const parsed = D.parseAgentResult(agentText(r.stdout ?? ''));
   const allow = ['', ...cx.files.map((f) => f.split('/')[0]!)];
-  const routed = D.routeAgentResult(parsed.groups, { plan: cx.plan, agent: { kind: 'repo' }, allowlist: [...new Set(allow)].filter(Boolean) });
-  return { status: parsed.meta?.status ?? 'done', accepted: routed.accepted, rejected: routed.rejected.length, errors: parsed.errors };
+  // one call covers every scope: route each destination as the agent of the scope that owns it
+  const allowlist = [...new Set(allow)].filter(Boolean);
+  const accepted: { dest: string; items: CompoundItem[] }[] = [];
+  let rejected = 0;
+  const errors = [...parsed.errors];
+  for (const grp of parsed.groups) {
+    const owner = D.scopeOf(cx.plan, grp.dest);
+    const agent: D.AgentScope = owner !== 'repo' ? { kind: 'project', projectId: owner } : { kind: 'repo' };
+    const routed = D.routeAgentResult([grp], { plan: cx.plan, agent, allowlist });
+    accepted.push(...routed.accepted);
+    rejected += routed.rejected.length;
+    for (const x of routed.rejected.slice(0, 3)) errors.push(`rejected ${x.dest}${(x as { key?: string }).key ? ' ' + (x as { key?: string }).key : ''}: ${x.reason}`);
+  }
+  const up = o.agent ? usageParsers[o.agent] : undefined;
+  const usage = up ? usageString(up(r.stdout ?? '')) : '';
+  return { status: parsed.meta?.status ?? 'done', accepted, rejected, errors, usage };
+}
+
+function agentReadOnlyCmd(model?: string): string {
+  const q = (x: string) => "'" + x.replaceAll("'", "'\\''") + "'";
+  return ['claude', '-p', '--allowedTools', 'Read,Glob,Grep', '--output-format', 'json', ...(model ? ['--model', q(model)] : [])].join(' ');
+}
+
+/** Agent CLIs in JSON mode wrap the answer (claude: {result}, gemini: {response}); plain text passes through. */
+export function agentText(out: string): string {
+  const t = out.trim();
+  if (!t.startsWith('{') && !t.startsWith('[')) return out;
+  let last = '';
+  for (const line of t.startsWith('[') ? [t] : t.split('\n')) {
+    try {
+      const v = JSON.parse(line) as unknown;
+      for (const m of Array.isArray(v) ? v : [v]) {
+        const o = m as Record<string, unknown>;
+        if (typeof o.result === 'string') last = o.result;
+        else if (typeof o.response === 'string') last = o.response;
+        else if (o.type === 'item.completed' && typeof (o.item as Record<string, unknown>)?.text === 'string') last = (o.item as Record<string, string>).text!;
+      }
+    } catch {
+      /* not JSON */
+    }
+  }
+  return last || out;
+}
+
+/** path -> size:mtime of every file outside .git and the wiki (detects writes by a read-only agent). */
+function treeFingerprint(root: string, wikiRel: string): Map<string, string> {
+  const m = new Map<string, string>();
+  const rec = (d: string) => {
+    let ents: fs.Dirent[];
+    try {
+      ents = fs.readdirSync(path.join(root, d), { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const e of ents) {
+      const rel = d ? d + '/' + e.name : e.name;
+      if (e.isDirectory()) {
+        if (e.name === '.git' || e.name === 'node_modules' || rel === wikiRel) continue;
+        rec(rel);
+      } else if (e.isFile()) {
+        const st = fs.statSync(path.join(root, rel), { bigint: true });
+        m.set(rel, `${st.size}:${st.mtimeNs}`);
+      }
+    }
+  };
+  rec('');
+  return m;
 }
 
 // ---------- status / specs / adr / debt ----------
@@ -534,15 +630,15 @@ export async function docsStatus(cfg: Config, o: Pick<DocsOptions, 'projects' | 
   const scopesRef = docsScopes(plan);
   const extraText = readOrNull(root, D.ExtraSchemaFile);
   const extra = D.parseExtraSchema(extraText);
-  const discovered = D.discoverExtraDocs(D.DefaultSchema, scopesRef, files, (p) => readOrNull(root, p));
+  const discovered = D.discoverExtraDocs(schemaOf(cfg), scopesRef, files, (p) => readOrNull(root, p));
   const docsRoots = scopesRef.map((s) => s.docsRoot);
   const out: { path: string; scope: string; state: string; dimension: string | null; frozen: boolean; knowledge_layer: boolean; last_compound_scan?: string; pending: number }[] = [];
   for (const f of files) {
     const sc = scopesRef.filter((s) => f.startsWith(s.docsRoot + '/')).sort((a, b) => b.docsRoot.length - a.docsRoot.length)[0];
     if (!sc) continue;
     const text = readOrNull(root, f);
-    const t = D.resolveDocTarget(f, D.DefaultSchema, scopesRef, extra);
-    const frozen = D.isFrozenDoc(f, D.DefaultSchema, scopesRef, extra);
+    const t = D.resolveDocTarget(f, schemaOf(cfg), scopesRef, extra);
+    const frozen = D.isFrozenDoc(f, schemaOf(cfg), scopesRef, extra);
     const fm = text ? D.parseFrontmatter(text) : null;
     out.push({
       path: f, scope: sc.scope === 'repo' ? 'repo' : plan.projects.find((p) => p.docsRoot === sc.docsRoot)?.id ?? sc.ownerRoot,

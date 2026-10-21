@@ -12,7 +12,7 @@ import { langForPath, Parsers, initParsers } from '../extract/lang.js';
 import { parseFile, type Call, type FileResult } from '../extract/extract.js';
 import { fingerprint } from '../extract/fingerprint.js';
 import { compileGlobs, matchAny } from './glob.js';
-import { resolveRefs } from './resolve.js';
+import { resolveRefsParallel } from './resolve.js';
 import { cmpStr } from '../util/go.js';
 
 export interface Stats {
@@ -159,7 +159,7 @@ export async function scan(cfg: Config, dir: string, opt: ScanOptions = {}): Pro
   if (opt.cache) opt.cache.prune(seen);
   g.symbols.sort((a, b) => cmpStr(a.id, b.id));
   g.parse_failures.sort((a, b) => cmpStr(a.file, b.file));
-  resolveRefs(g);
+  await resolveRefsParallel(g);
   res.stats.duration_ms = Date.now() - start;
   return res;
 }
