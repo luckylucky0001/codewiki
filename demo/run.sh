@@ -60,6 +60,9 @@ gitc add -A && gitc commit -qm "chore: import minishop"
 
 log "kb init"
 kbsave 01-init.txt init
+# minishop is tiny (one module per platform): a small token budget makes kb split the
+# platform modules into L3 feature clusters, so the demo wiki has L0 → L1 → L3 pages
+printf 'tree:\n    budget_tokens: 2000\n' >>"$REPO/codewiki.yaml"
 gitc add -A && gitc commit -qm "chore(wiki): kb init"
 
 log "kb discover-docs + kb ingest (claims verified against code)"
@@ -105,6 +108,8 @@ kbsave 94-lint-tid.txt lint-tid
 kbsave 94-parity.json parity --json
 ( cd "$ROOT" && "$KB" eval --quiet ) >"$OUT/95-eval.txt" 2>&1 || true
 kbsave 95-status.txt status
+kbsave 95-tree.txt tree show
+kbsave 95-tree-explain.txt tree explain android/app/src/main/java/com/minishop/ui/cart/CartViewModel.kt
 kbsave 96-verify.json verify --json
 cp "$REPO/wiki/log.md" "$OUT/97-log.md"
 cp "$REPO/wiki/facts/requirements.json" "$OUT/98-requirements.json"
@@ -164,6 +169,14 @@ log "SUMMARY.md"
   echo '```'
   head -4 "$OUT/95-eval.txt"
   grep -E '^plan impact' "$OUT/95-eval.txt" || true
+  echo '```'
+  echo
+  echo "## Module tree（多级目录）"
+  echo
+  echo '```'
+  tail -1 "$OUT/95-tree.txt"
+  head -14 "$OUT/95-tree.txt"
+  cat "$OUT/95-tree-explain.txt"
   echo '```'
   echo
   echo "## Queries"

@@ -16,6 +16,7 @@ import { serveMCP } from '../mcp/server.js';
 import { formatEval, runEval } from '../engine/eval.js';
 import { postMergeScript, postReceiveScript } from './hook.js';
 import { runBench } from './bench.js';
+import { treeCommand } from './treecmd.js';
 import { fixIndex, indexesCurrent, verifyWiki, type Report } from '../wiki/verify.js';
 import { verifyTree } from '../engine/hier.js';
 import { appendLog, initWiki, renderIndex } from '../wiki/layout.js';
@@ -1099,6 +1100,18 @@ register({
   },
 });
 
+register({
+  name: 'tree', usage: 'build [--rebuild] [--dry-run] | show | explain <symbol-id|file>… | patch <ops.json> [--dry-run]', summary: 'the L0–L3 module tree (module_tree.json): build/repair, show, explain where a symbol or file lives, apply a tree-patch',
+  flags: { rebuild: ['bool', 'build from scratch (ids still inherited by Jaccard matching)', false], 'dry-run': ['bool', 'compute / validate only; write nothing', false] },
+  async run(a, f, args) {
+    const cfg = a.cfgOrDetect();
+    if (typeof cfg === 'number') return cfg;
+    const r = await treeCommand(cfg, args[0] ?? 'show', args.slice(1), { rebuild: !!f.rebuild, dryRun: !!f['dry-run'] });
+    a.emit(r.json, () => a.out(r.text));
+    return r.code;
+  },
+});
+
 const groups: Record<string, Record<string, string>> = {
   agents: { install: 'install', skills: 'install-skills', mcp: 'mcp', list: 'agents', hook: 'hook' },
 };
@@ -1107,6 +1120,7 @@ const sections: [string, string[]][] = [
   ['Wiki pipeline', ['init', 'scan', 'diff', 'plan', 'compound', 'verify', 'status']],
   ['Docs', ['discover-docs', 'ingest', 'conflicts']],
   ['Query', ['search', 'get', 'context', 'anchor', 'routes', 'lint-tid', 'parity']],
+  ['Hierarchy & docs', ['tree', 'docs', 'links']],
   ['Agents & automation (also: kb agents install|skills|mcp|list|hook)', ['install', 'install-skills', 'agents', 'mcp', 'hook']],
   ['Evaluation', ['eval', 'bench']],
 ];
