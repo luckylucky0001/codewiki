@@ -12,7 +12,7 @@ import type { ScanResult } from '../scan/scan.js';
 import { walkDir } from '../scan/scan.js';
 import { cmpStr, cut, trimChars, trimPrefix, trimSuffix, trimSpace } from '../util/go.js';
 import { xmlTokens } from './xml.js';
-import { decomposeRoutes, objc, swiftEnumTestIDs, bindingIDsUsedByTests, bindingName, concatPaths, arktsWrapperAPIs } from './general.js';
+import { decomposeRoutes, objc, swiftEnumTestIDs, bindingIDsUsedByTests, bindingName, concatPaths, arktsWrapperAPIs, netBodyNativeRe } from './general.js';
 
 /** A deep link declared by the app (manifest intent-filter, plist URL scheme, applinks entitlement,
  * module.json5 skills.uris, nav-graph deepLink or an in-code URL route table). */
@@ -801,8 +801,27 @@ export class Ctx {
     // HarmonyOS custom route decorators: @AppRouter({ name: "x/Y" }) (any decorator taking a route `name`)
     for (const s of this.g.symbols) {
       if (s.lang !== 'arkts' || (s.kind !== 'component' && s.kind !== 'struct')) continue;
-      const m = /@(\w*Rout\w*)\(\s*\{[^}]*?\bname\s*:\s*(['"])([^'"]+)\2/.exec(s.signature);
-      if (m) add(s, m[3]!, m[3]!);
+      const m = /@(\w*Rout\w*)\(\s*\{[^}]*?\b(?:name|pageUrl|routeName|path|url)\s*:\s*(['"])([^'"]+)\2/.exec(s.signature);
+      if (m) {
+        add(s, m[3]!, m[3]!);
+        continue;
+      }
+      // constant route names: `@HMRouter({ pageUrl: PageConst.DETAIL })`
+      const c = /@(\w*Rout\w*)\(\s*\{[^}]*?\b(?:name|pageUrl|routeName|path|url)\s*:\s*([A-Za-z_$][\w$.]*)/.exec(s.signature);
+      if (c) {
+        const [v, ok] = this.lookup(s.platform, c[2]!);
+        if (ok && v && !/\s/.test(v)) add(s, v, v);
+      }
+    }
+
+    // Kotlin screen libraries: Voyager `Screen` / `Tab` implementations, Compose Destinations `@Destination` functions
+    for (const s of cls.values()) {
+      if (s.lang !== 'kotlin' || (s.kind !== 'class' && s.kind !== 'object') || !concrete(s)) continue;
+      if (!cls.has(s.platform + '|Screen') && this.inherits(s.platform, s.name, new Set(['Screen', 'Tab'])) && this.importsLib(s, 'voyager')) add(s);
+    }
+    for (const s of this.g.symbols) {
+      if (s.lang !== 'kotlin' || (s.kind !== 'function' && s.kind !== 'composable') || s.parent || isTestPath(s.file)) continue;
+      if (/@Destination\b/.test(s.signature) && (this.g.files[s.file]?.imports ?? []).some((x) => x.includes('ramcosta') || x.includes('composedestinations'))) add(s);
     }
 
     this.swiftUIRoutes(add);
@@ -818,6 +837,19 @@ export class Ctx {
       if (!(c.args ?? []).some((a) => pat.test(a.text))) continue;
       const helper = this.findSymNear(this.g.files[file]!.platform, c.callee, file, 'method', 'function');
       if (helper && helper.file === file && usesChild(helper)) return true;
+    }
+    return false;
+  }
+
+  /** Does `s` (or a class in its supertype chain) live in a file importing `lib`? */
+  importsLib(s: Symbol, lib: string): boolean {
+    const seen = new Set<string>();
+    let cur: Symbol | undefined = s;
+    for (let i = 0; cur && i < 8 && !seen.has(cur.name); i++) {
+      seen.add(cur.name);
+      if ((this.g.files[cur.file]?.imports ?? []).some((x) => x.includes(lib))) return true;
+      const sup: string | undefined = supertypes(cur)[0];
+      cur = sup ? this.classIndex().get(s.platform + '|' + sup) : undefined;
     }
     return false;
   }
@@ -1238,6 +1270,8 @@ export class Ctx {
     this.endpointEnums(add);
     this.composedAPIs(add);
     arktsWrapperAPIs(this, add);
+    // the same wrapper-following for Kotlin / Java / Swift helpers (`func request(_ path: String, method:)`)
+    arktsWrapperAPIs(this, add, ['kotlin', 'java', 'swift'], netBodyNativeRe);
     for (const file of this.sortedFiles()) {
       const fi = this.g.files[file]!;
       if (fi.lang !== 'swift' || isTestPath(file) || !this.fileLines(file).some((l) => /^import\s+URLRouting\b/.test(l))) continue;

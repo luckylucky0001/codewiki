@@ -328,3 +328,68 @@ final class N {
     expect(apis).toContain('POST /profile/avatar');
   });
 });
+
+describe('round 3: screen libraries', () => {
+  it('Voyager screens / tabs, Compose Destinations, ArkTS router decorators with pageUrl / constants', async () => {
+    const f = await factsOf({
+      'android/app/src/main/kotlin/a/Screens.kt': `package a
+import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.tab.Tab
+class DetailsScreen(val id: Int) : Screen {
+  @Composable override fun Content() {}
+}
+object HomeTab : Tab {
+  @Composable override fun Content() {}
+}
+`,
+      'android/app/src/main/kotlin/a/Profile.kt': `package a
+import com.ramcosta.composedestinations.annotation.Destination
+@Destination
+@Composable
+fun ProfileScreen(nav: DestinationsNavigator) {}
+@Composable
+fun NotAScreen() {}
+`,
+      'harmony/entry/src/main/ets/pages/Detail.ets': "const PAGE_SETTINGS = 'settings/Settings';\n@HMRouter({ pageUrl: 'detail/Detail' })\n@Component\nexport struct DetailPage {\n  build() {}\n}\n@HMRouter({ pageUrl: PAGE_SETTINGS })\n@Component\nexport struct SettingsPage {\n  build() {}\n}\n",
+    });
+    const ids = f.routes!.map((r) => r.route_id);
+    expect(ids).toEqual(expect.arrayContaining(['DetailsScreen', 'HomeTab', 'ProfileScreen', 'detail/Detail', 'settings/Settings']));
+    expect(ids).not.toContain('NotAScreen');
+  });
+});
+
+describe('round 4: native HTTP wrappers', () => {
+  it('Swift and Kotlin helpers taking a path are followed to literal call sites', async () => {
+    expect(paramNames('func request<T: Decodable>(_ path: String, method: HTTPMethod = .get) async throws -> T')).toEqual(['path', 'method']);
+    expect(paramNames('public Call get(@Path("id") String path, int page)')).toEqual(['path', 'page']);
+    const f = await factsOf({
+      'ios/App/Client.swift': `import Foundation
+final class APIClient {
+  func request(_ path: String, method: String = "GET") async throws -> Data {
+    var r = URLRequest(url: baseURL.appendingPathComponent(path))
+    r.httpMethod = method
+    return try await URLSession.shared.data(for: r).0
+  }
+}
+final class FeedService {
+  let api = APIClient()
+  func load() async throws { _ = try await api.request("/feed/home") }
+  func like(id: String) async throws { _ = try await api.request("/feed/like", method: "POST") }
+  func other(p: String) async throws { _ = try await api.request(p) }
+}
+`,
+      'android/app/src/main/java/a/Http.kt': `class Http(private val client: HttpClient) {
+  suspend fun post(path: String, body: Any) = client.post(BASE + path) { setBody(body) }
+}
+class Repo(private val http: Http) {
+  suspend fun send() = http.post("/messages/send", Msg())
+}
+`,
+    });
+    const apis = f.apis!.map((a) => a.method + ' ' + a.path);
+    expect(apis).toContain('GET /feed/home');
+    expect(apis).toContain('POST /feed/like');
+    expect(apis).toContain('POST /messages/send');
+    expect(apis.some((a) => a.includes('{p}') || a.includes('{path}'))).toBe(false);
+  });
+});

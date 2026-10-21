@@ -375,7 +375,18 @@ export function paramNames(sig: string): string[] {
     } else cur += ch;
   }
   if (cur.trim()) out.push(cur);
-  return out.map((p) => (/^\s*(?:(?:public|private|protected|readonly)\s+)*\.{0,3}([A-Za-z_$][\w$]*)/.exec(p)?.[1] ?? '')).filter((x) => x !== '');
+  // name = last identifier before the type annotation (TS/Kotlin `url: string`, Swift `_ path: String`,
+  // Java `@Path("id") String path`)
+  return out
+    .map((p) => {
+      let h = p.replace(/@\w+(?:\([^)]*\))?/g, ' ').replace(/=.*$/s, '');
+      const ci = h.indexOf(':');
+      if (ci >= 0) h = h.slice(0, ci);
+      else h = h.replace(/<[^>]*>/g, ' ');
+      const ids = [...h.matchAll(/[A-Za-z_$][\w$]*/g)].map((m) => m[0]).filter((x) => !['public', 'private', 'protected', 'readonly', 'final', 'val', 'var', 'vararg', 'inout', 'let'].includes(x));
+      return ids[ids.length - 1] ?? '';
+    })
+    .filter((x) => x !== '');
 }
 
 /** Object-literal constant tables: `const API = { LOGIN: '/user/login', … }` → {API.LOGIN: '/user/login'}. */
@@ -386,6 +397,8 @@ export function objectConsts(name: string, src: string): Map<string, string> {
   return m;
 }
 
+/** Request-issuing bodies in Kotlin / Java / Swift (wrappers over OkHttp, Ktor, URLSession, Alamofire). */
+export const netBodyNativeRe = /\b(?:newCall|Request\.Builder|HttpRequest|dataTask|URLSession|AF\.request|AF\.upload|httpClient|client\.(?:get|post|put|delete|patch|request)|session\.request)\b/;
 const netBodyRe = /\bcreateHttp\s*\(|\.request\s*\(|\baxios\b|\brcp\.|\bsession\.(?:get|post|put|delete|fetch)\b|\bcreateSession\s*\(|\binstance\.(?:get|post|put|delete|patch|request)\s*\(|\bhttpRequest\.request\b|\bfetch\s*\(/;
 
 interface Wrapper {
@@ -401,8 +414,8 @@ interface Wrapper {
 /** ArkTS / TS HTTP wrappers: functions or methods that issue a request (http.createHttp().request,
  * @ohos/axios, rcp, fetch) with a url/path parameter, followed to call sites passing literals or
  * constants (static fields, `const API = {…}` tables); unresolved arguments are skipped. */
-export function arktsWrapperAPIs(c: Ctx, add: (a: { platform: string; method: string; path: string; file: string; symbol: string }) => void): void {
-  const langs = new Set(['arkts', 'typescript', 'javascript', 'tsx']);
+export function arktsWrapperAPIs(c: Ctx, add: (a: { platform: string; method: string; path: string; file: string; symbol: string }) => void, langList = ['arkts', 'typescript', 'javascript', 'tsx'], netRe = netBodyRe): void {
+  const langs = new Set(langList);
   const fns: Symbol[] = [];
   const objConsts = new Map<string, Map<string, string>>();
   for (const s of c.g.symbols) {
@@ -457,17 +470,18 @@ export function arktsWrapperAPIs(c: Ctx, add: (a: { platform: string; method: st
   // level 0: functions issuing the request themselves
   for (const s of fns) {
     const b = bodyOf.get(s)!;
-    if (!netBodyRe.test(b)) continue;
+    if (!netRe.test(b)) continue;
     const ps = paramNames(s.signature);
     const urlIdx = ps.findIndex((p) => /^(?:url|path|api|apiPath|endpoint|uri|urlPath|relativeUrl|subUrl|action)$/i.test(p));
     if (urlIdx < 0) continue;
     const urlP = ps[urlIdx]!;
     // the url parameter must flow into the request
-    if (!new RegExp('\\b' + urlP + '\\b').test(b.slice(b.indexOf('{')))) continue;
+    const bodyStart = b.indexOf('{') >= 0 ? b.indexOf('{') : b.indexOf(')');
+    if (!new RegExp('\\b' + urlP + '\\b').test(b.slice(Math.max(0, bodyStart)))) continue;
     const methodIdx = ps.findIndex((p) => /^(?:method|httpMethod|requestMethod|type)$/i.test(p));
     let method = methodFromName(s.name);
     if (!method) {
-      const mm = /\bmethod\s*:\s*(?:[\w.]*\.)?['"]?(GET|POST|PUT|DELETE|PATCH|HEAD)\b/i.exec(b) ?? /\b(?:axios|instance|\w*[hH]ttp\w*|request|session)\.(get|post|put|delete|patch)\s*(?:<[^>]*>)?\s*\(/.exec(b);
+      const mm = /\bmethod\s*:\s*(?:[\w.]*\.)?['"]?(GET|POST|PUT|DELETE|PATCH|HEAD)\b/i.exec(b) ?? /\b(?:axios|instance|\w*[hH]ttp\w*|request|session|client)\.(get|post|put|delete|patch)\s*(?:<[^>]*>)?\s*\(/.exec(b);
       if (mm && methodIdx < 0) method = mm[1]!.toUpperCase();
     }
     let base = '';
@@ -534,7 +548,7 @@ export function arktsWrapperAPIs(c: Ctx, add: (a: { platform: string; method: st
       if (!abs && w.base) p = w.base + (p.startsWith('/') ? '' : '/') + p;
       if (!p.startsWith('/')) p = '/' + p;
       p = p.replace(/[?#].*$/, '');
-      if (p === '/' || !/[A-Za-z]/.test(p)) continue;
+      if (p === '/' || !/[A-Za-z]/.test(p) || /\.(?:db|sqlite3?|plist|html?|md|txt|xml|xhtml|png|jpe?g|gif|svg|webp|css|js|json5)$/i.test(p)) continue; // documents / assets
       let method = w.method;
       if (w.methodIdx >= 0 && call.args[w.methodIdx]) {
         const mm = /(GET|POST|PUT|DELETE|PATCH|HEAD)['"]?\s*$/i.exec(call.args[w.methodIdx]!.text);
