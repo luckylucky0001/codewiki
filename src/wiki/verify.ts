@@ -5,7 +5,9 @@ import path from 'node:path';
 import type { Graph } from '../model.js';
 import { getSym } from '../model.js';
 import { cmpStr } from '../util/go.js';
-import { StatusCurrent, StatusOutdatedDoc, StatusStale, idFromPath, loadPages, writeFileAtomic, type Page } from './page.js';
+import { StatusCurrent, StatusOutdatedDoc, StatusStale, idFromPath, isTreeIndexPath, loadPages, writeFileAtomic, type Page } from './page.js';
+import { loadTree, treeIndexFiles, treeIndexSection, treePagePaths } from '../engine/hier.js';
+import { renderLlmsTxt as renderTreeLlms } from '../tree/render.js';
 import { SubIndexDir, renderIndexFiles, renderLLMSTxt } from './layout.js';
 
 export interface Issue {
@@ -64,7 +66,7 @@ export function verifyWiki(wikiDir: string, g: Graph, expectedFacts?: Map<string
       const st = p.front.status ?? '';
       if (!['', StatusCurrent, StatusStale, StatusOutdatedDoc].includes(st)) E({ code: 'E_FRONTMATTER', page: p.path, detail: 'invalid status ' + st });
     }
-    if (p.path.startsWith('pages/') && !p.front.sources?.length && p.front.kind !== 'overview' && !p.front.generated) {
+    if (p.path.startsWith('pages/') && !p.front.sources?.length && p.front.kind !== 'overview' && !p.front.generated && p.front.level === undefined) {
       r.warnings.push(issue({ code: 'W_NO_SOURCES', page: p.path, detail: 'page has no code anchors' }));
     }
     if (p.front.status === StatusStale) {
@@ -103,8 +105,10 @@ export function verifyWiki(wikiDir: string, g: Graph, expectedFacts?: Map<string
   }
   const idxLinks = linkTargets('index.md', idx);
   for (const t of idxLinks) if (!exists(path.join(wikiDir, t))) E({ code: 'E_DEAD_LINK', page: 'index.md', detail: 'link target not found: ' + t, fixable: true });
-  for (const t of [...idxLinks]) {
-    if (!t.startsWith(SubIndexDir + '/')) continue;
+  for (let qi = 0; qi < idxLinks.length; qi++) {
+    const t = idxLinks[qi]!;
+    if (!t.startsWith(SubIndexDir + '/') && !isTreeIndexPath(t)) continue;
+    if (idxLinks.indexOf(t) !== qi) continue;
     let sb: string;
     try {
       sb = fs.readFileSync(path.join(wikiDir, t), 'utf8');
@@ -166,20 +170,75 @@ export function linkTargets(from: string, body: string): string[] {
   return out;
 }
 
+/** Index files kb renders for the wiki: index.md (+ index/*.md), tree indexes, llms.txt. */
+export function renderIndexSet(wikiDir: string, pages: Page[]): Map<string, string> {
+  const t = loadTree(wikiDir);
+  if (!t) {
+    const files = renderIndexFiles(pages);
+    files.set('llms.txt', renderLLMSTxt(pages));
+    return files;
+  }
+  const treePaths = treePagePaths(t);
+  treePaths.delete('pages/overview.md');
+  const v1 = pages.filter((p) => !treePaths.has(p.path));
+  const files = renderIndexFiles(v1);
+  files.set('index.md', files.get('index.md')! + treeIndexSection(t));
+  for (const [k, v] of treeIndexFiles(t)) files.set(k, v);
+  const tl = renderTreeLlms(t).split('\n');
+  let llms = '# codewiki\n\n> Code-anchored knowledge base. Every page lists `sources` (symbol id + hash) verified against HEAD by `kb verify`.\n\n';
+  llms += '## Docs\n\n- [index.md](index.md): layered table of contents\n- [module_tree.json](module_tree.json): L0–L3 module tree\n- [AGENTS.md](AGENTS.md): writing schema\n- [facts/routes.json](facts/routes.json), [facts/testids.json](facts/testids.json), [facts/apis.json](facts/apis.json), [facts/requirements.json](facts/requirements.json): machine-readable facts\n\n';
+  llms += tl.slice(2).join('\n').replace(/^\n+/, '');
+  llms = llms.replace(/\n*$/, '\n');
+  const rest = v1.filter((p) => p.path.startsWith('pages/') && p.path !== 'pages/overview.md');
+  if (rest.length) llms += '\n## Cross-platform views\n\n' + rest.map((p) => `- [${p.front.title}](${p.path})`).join('\n') + '\n';
+  files.set('llms.txt', llms);
+  return files;
+}
+
 export function fixIndex(wikiDir: string): void {
   const [pages] = loadPages(wikiDir);
-  const files = renderIndexFiles(pages);
+  const files = renderIndexSet(wikiDir, pages);
   for (const [rel, b] of files) writeFileAtomic(path.join(wikiDir, rel), b);
   const subDir = path.join(wikiDir, SubIndexDir);
   try {
     for (const f of fs.readdirSync(subDir)) {
       if (f.endsWith('.md') && !files.has(SubIndexDir + '/' + f)) fs.rmSync(path.join(subDir, f));
     }
-    if (files.size === 1) fs.rmdirSync(subDir);
+    if (![...files.keys()].some((k) => k.startsWith(SubIndexDir + '/'))) fs.rmdirSync(subDir);
   } catch {
     /* no sub-index dir */
   }
-  writeFileAtomic(path.join(wikiDir, 'llms.txt'), renderLLMSTxt(pages));
+  // stale tree index pages
+  const rec = (d: string) => {
+    let ents: fs.Dirent[] = [];
+    try {
+      ents = fs.readdirSync(d, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const e of ents) {
+      const p = path.join(d, e.name);
+      if (e.isDirectory()) rec(p);
+      else {
+        const rel = path.relative(wikiDir, p).split(path.sep).join('/');
+        if (isTreeIndexPath(rel) && !files.has(rel)) fs.rmSync(p);
+      }
+    }
+  };
+  rec(path.join(wikiDir, 'pages'));
+}
+
+/** Are all kb-rendered index files current? */
+export function indexesCurrent(wikiDir: string, pages: Page[]): boolean {
+  for (const [rel, b] of renderIndexSet(wikiDir, pages)) {
+    if (rel === 'llms.txt') continue;
+    try {
+      if (fs.readFileSync(path.join(wikiDir, rel), 'utf8') !== b) return false;
+    } catch {
+      return false;
+    }
+  }
+  return true;
 }
 
 export function subIndexesCurrent(wikiDir: string, pages: Page[]): boolean {

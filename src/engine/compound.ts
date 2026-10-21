@@ -20,6 +20,9 @@ import { NavigationPage, SharedPage, routeIDs } from './anchors.js';
 import { ParityPage, computeParity, renderParity } from './parity.js';
 import { platformsOf, templateConcept, templateFeature, templateOverview } from './template.js';
 import { buildPrompt } from './prompt.js';
+import type { ModuleTree } from '../tree/index.js';
+import * as treeLib from '../tree/index.js';
+import { verifyTree, TreeFile, bottomUp, computeTree, finalizeTreePage, loadTree, templateTreePage, treeTasks } from './hier.js';
 import { type Usage, usageAdd, usageEmpty, usageParsers, usageString } from '../agents/agents.js';
 import { short, shortHead } from './graphutil.js';
 import { type DocEntry, allClaims, copyDocs, loadRawManifest, renderConflicts } from './docs.js';
@@ -89,6 +92,8 @@ export interface Analysis {
   diff: Diff;
   plan: Plan;
   pages: Page[];
+  /** v2 hierarchy (absent for ingest runs) */
+  tree?: ModuleTree;
 }
 
 export function gitHead(root: string): string {
@@ -181,7 +186,19 @@ export async function analyze(o: Options): Promise<Analysis> {
     plan.reason = 'check ingested documents against code';
   }
   for (const t of plan.tasks) if (t.kind === 'conflicts') t.write_set = [VerdictsFile];
-  return { scan: res, graph: res.graph, old: oldG, facts, diff, plan, pages };
+  let t: ModuleTree | undefined;
+  if (o.kind !== 'ingest') {
+    const prev = loadTree(wikiPath(cfg));
+    const ct = computeTree(cfg, res.graph, old, facts, prev, !!o.full || !!diff.incompatible || !prev, res.graph.commit ?? '');
+    t = ct.tree;
+    const tasks = treeTasks(t, res.graph, pages);
+    plan.tree = { ...ct.plan, tasks };
+    if (plan.mode === 'noop' && tasks.length) {
+      plan.mode = 'incremental';
+      plan.reason = 'module tree pages changed';
+    }
+  }
+  return { scan: res, graph: res.graph, old: oldG, facts, diff, plan, pages, tree: t };
 }
 
 export function expectedFacts(cfg: Config, g: Graph, f: Facts): Map<string, string> {
@@ -298,6 +315,38 @@ export function verifyRequirements(wikiDir: string, g: Graph, rep: Report): void
   }
 }
 
+const TreeKinds = new Set(['cluster', 'module', 'project']);
+
+/** Child summaries + deterministic draft appended to a tree page prompt (bottom-up writing). */
+function treePromptExtra(t: ModuleTree, task: Task, g: Graph, f: Facts, commit: string): string {
+  const n = treeLib.findNode(t, task.tree_node!)!;
+  let b = '\n## 模块树上下文\n\n';
+  b += `- 节点：\`${n.id}\`（${n.kind}，L${n.level}）\n- 摘要（kb 生成，可在正文中细化）：${n.summary ?? ''}\n`;
+  if (n.children?.length) b += '\n### 子页面摘要（只依据这些摘要写父页，不要读源码）\n\n' + n.children.map((c) => `- [${c.title}](${treeLib.relLink(n.page, c.page)})：${c.summary ?? ''}`).join('\n') + '\n';
+  b += '\n`<!-- kb:… -->` 块（breadcrumb、子页面表、符号表、Sources、mermaid）由 kb 在写后覆盖，不要手写。\n';
+  b += '\n### 确定性草稿\n\n````markdown\n' + templateTreePage(t, n, g, f, commit) + '\n````\n';
+  return b;
+}
+
+/** After the writers: kb blocks + tree frontmatter on every tree page, obsolete tree pages removed. */
+function syncTreePages(staging: string, t: ModuleTree, g: Graph, f: Facts, commit: string): void {
+  const want = new Set<string>();
+  for (const n of bottomUp(t)) {
+    want.add(n.page);
+    const p = path.join(staging, n.page);
+    let text: string;
+    try {
+      text = fs.readFileSync(p, 'utf8');
+    } catch {
+      text = templateTreePage(t, n, g, f, commit);
+    }
+    const next = finalizeTreePage(text, t, n, g, f, commit);
+    if (next !== text || !fs.existsSync(p)) writeFileAtomic(p, next);
+  }
+  const [pages] = loadPages(staging);
+  for (const pg of pages) if (pg.front.tree_node && !want.has(pg.path)) fs.rmSync(path.join(staging, pg.path), { force: true });
+}
+
 function loadRequirements(wikiDir: string): Requirement[] {
   try {
     return (JSON.parse(fs.readFileSync(path.join(wikiDir, 'facts', 'requirements.json'), 'utf8')).requirements as Requirement[]) ?? [];
@@ -377,6 +426,13 @@ class TaskEnv {
       case 'concept':
         if (t.page === NavigationPage || t.page === SharedPage) return this.writePage(templateConcept(g, f, t.page, c));
         return this.restamp(t);
+      case 'cluster':
+      case 'module':
+      case 'project': {
+        const n = treeLib.findNode(this.a.tree!, t.tree_node!)!;
+        writeFileAtomic(path.join(this.staging, t.page), templateTreePage(this.a.tree!, n, g, f, c));
+        return;
+      }
       case 'conflicts':
         this.claims = this.templateClaims();
         writeJSON(path.join(this.staging, VerdictsFile), { version: 1, claims: this.claims.map(claimJSON) });
@@ -466,7 +522,8 @@ class TaskEnv {
     const cmdline = this.o.llmCmd || this.o.cfg.llm.cmd;
     const templ = t.kind === 'conflicts' ? this.templateClaims() : [];
     const pctx = { g: this.a.graph, f: this.a.facts, srcDir: this.a.scan.dir, staging: this.staging, head: this.head, platforms: this.platforms() };
-    const prompt = t.kind === 'conflicts' ? conflictsPrompt(pctx, t, templ) : buildPrompt(pctx, t);
+    let prompt = t.kind === 'conflicts' ? conflictsPrompt(pctx, t, templ) : buildPrompt(pctx, t);
+    if (TreeKinds.has(t.kind) && this.a.tree) prompt += treePromptExtra(this.a.tree, t, this.a.graph, this.a.facts, short(this.head));
     const tdir = path.join(this.work, 'tasks');
     fs.mkdirSync(tdir, { recursive: true });
     fs.writeFileSync(path.join(tdir, t.id + '.prompt.md'), prompt);
@@ -509,7 +566,9 @@ class TaskEnv {
       throw Object.assign(new Error(`llm command failed: ${why} (see ${path.join(tdir, t.id + '.log')})`), { reverted });
     }
     if (t.kind === 'conflicts') this.mergeVerdicts(templ);
-    else this.postProcess(t);
+    else if (TreeKinds.has(t.kind)) {
+      if (!fs.existsSync(path.join(this.staging, t.page))) throw new Error(`LLM did not write ${t.page}`);
+    } else this.postProcess(t);
     return reverted;
   }
 
@@ -593,8 +652,10 @@ export async function compound(o: Options): Promise<Result> {
     const graphPath = path.join(work, 'graph.json');
     fs.writeFileSync(graphPath, goJSON(graphJSON(a.graph), ' '));
     const env = new TaskEnv(o, a, staging, work, graphPath, head);
+    let llmUsed = 0;
     for (const t of a.plan.tasks) {
       let writer = o.llm;
+      if (writer !== 'template' && !(o.maxTasks && o.maxTasks > 0 && t.priority > o.maxTasks)) llmUsed++;
       if (o.maxTasks && o.maxTasks > 0 && t.priority > o.maxTasks && writer !== 'template') writer = 'template';
       let tr = env.run(t, writer);
       if (tr.status !== 'ok' && o.fallback && writer !== 'template') {
@@ -609,6 +670,26 @@ export async function compound(o: Options): Promise<Result> {
       log(`  [${tr.status}] ${t.op.padEnd(8)} ${t.page.padEnd(34)} ${tr.writer} ${tr.error ?? ''}${tr.usage && !usageEmpty(tr.usage) ? ' ' + usageString(tr.usage) : ''}`);
     }
     env.renderClaims();
+    if (a.tree) {
+      writeFileAtomic(path.join(staging, TreeFile), treeLib.serializeTree(a.tree));
+      const tt = a.plan.tree?.tasks ?? [];
+      for (const tk of tt) {
+        const n = treeLib.findNode(a.tree, tk.node)!;
+        const task: Task = { id: `tree-${tk.level}-${n.id.replace(/[^A-Za-z0-9]+/g, '-')}`, op: tk.op === 'create' ? 'create' : 'update', kind: n.kind, page: n.page, title: n.title, write_set: [n.page], reasons: tk.reasons.map((code) => ({ code })), context: n.core ?? [], priority: 0, tree_node: n.id };
+        let writer = o.llm;
+        if (o.maxTasks && o.maxTasks > 0 && llmUsed >= o.maxTasks) writer = 'template';
+        let tr = env.run(task, writer);
+        if (writer !== 'template') llmUsed++;
+        if (tr.status !== 'ok' && o.fallback && writer !== 'template') {
+          const tr2 = env.run(task, 'template');
+          tr2.error = 'fallback after: ' + tr.error;
+          tr = tr2;
+        }
+        r.tasks.push(tr);
+        log(`  [${tr.status}] ${task.op.padEnd(8)} ${task.page.padEnd(34)} ${tr.writer} ${tr.error ?? ''}`);
+      }
+      syncTreePages(staging, a.tree, a.graph, a.facts, short(head));
+    }
     fixIndex(staging);
     r.changed = changedFiles(before, snapshot(staging));
     if (r.changed.length === 0 && o.kind === 'compound' && a.plan.mode === 'noop') {
@@ -623,6 +704,7 @@ export async function compound(o: Options): Promise<Result> {
       }
       r.verify = verifyWiki(wikiDir, a.graph, expected);
       verifyRequirements(wikiDir, a.graph, r.verify);
+      verifyTree(wikiDir, a.graph, a.facts, r.verify);
       if (!o.keep) fs.rmSync(work, { recursive: true, force: true });
       delete r.work_dir;
       return r;
@@ -637,6 +719,7 @@ export async function compound(o: Options): Promise<Result> {
     writeJSON(path.join(staging, '.kb', 'plan.json'), a.plan);
     const rep = verifyWiki(staging, a.graph, expected);
     verifyRequirements(staging, a.graph, rep);
+    verifyTree(staging, a.graph, a.facts, rep);
     r.verify = rep;
     writeJSON(path.join(staging, '.kb', 'update_record.json'), {
       base_sha: a.diff.base, changed: r.changed, date: o.date, head_sha: head, kind: o.kind, llm: o.llm, mode: a.plan.mode, reason: a.plan.reason, run_id: runID, tasks: r.tasks, verify_errors: rep.errors.length, verify_ok: rep.ok,

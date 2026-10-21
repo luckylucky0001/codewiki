@@ -14,9 +14,16 @@ export interface Front {
   id: string;
   title: string;
   kind?: string;
+  /** v2 tree pages: 0 repo · 1 project · 2 module · 3 cluster */
+  level?: number;
+  tree_node?: string;
+  parent?: string;
+  summary?: string;
   platforms?: string[];
   routes?: string[];
+  importance?: string;
   sources?: Anchor[];
+  children_digest?: string;
   source_commit?: string;
   status?: string;
   generated?: boolean;
@@ -52,6 +59,12 @@ export function parsePage(p: string, s: string): [Page, Error | null] {
     const arr = (v: unknown) => (Array.isArray(v) ? v.map(str) : undefined);
     page.front = { id: str(d.id), title: str(d.title) };
     if (d.kind) page.front.kind = str(d.kind);
+    if (typeof d.level === 'number') page.front.level = d.level;
+    if (d.tree_node) page.front.tree_node = str(d.tree_node);
+    if (d.parent) page.front.parent = str(d.parent);
+    if (d.summary) page.front.summary = str(d.summary);
+    if (d.importance) page.front.importance = str(d.importance);
+    if (d.children_digest) page.front.children_digest = str(d.children_digest);
     const pl = arr(d.platforms);
     if (pl) page.front.platforms = pl;
     const rs = arr(d.routes);
@@ -90,12 +103,18 @@ export function renderFront(f: Front): string {
   L.push('id: ' + yamlScalar(f.id));
   L.push('title: ' + yamlScalar(f.title));
   if (f.kind) L.push('kind: ' + yamlScalar(f.kind));
+  if (f.level !== undefined) L.push('level: ' + f.level);
+  if (f.tree_node) L.push('tree_node: ' + yamlScalar(f.tree_node));
+  if (f.parent) L.push('parent: ' + yamlScalar(f.parent));
+  if (f.summary) L.push('summary: ' + yamlScalar(f.summary));
   if (f.platforms?.length) L.push('platforms: ' + flowList(f.platforms));
   if (f.routes?.length) L.push('routes: ' + flowList(f.routes));
+  if (f.importance) L.push('importance: ' + yamlScalar(f.importance));
   if (f.sources?.length) {
     L.push('sources:');
     for (const a of f.sources) L.push('  - sym: ' + yamlScalar(a.sym), '    hash: ' + yamlScalar(a.hash));
   }
+  if (f.children_digest) L.push('children_digest: ' + yamlScalar(f.children_digest));
   if (f.source_commit) L.push('source_commit: ' + yamlScalar(f.source_commit));
   if (f.status) L.push('status: ' + yamlScalar(f.status));
   if (f.generated) L.push('generated: true');
@@ -108,6 +127,11 @@ export function renderPage(p: Page): string {
   return out;
 }
 
+/** Per-level tree index pages (pages/<p>/index.md, pages/<p>/<m>/index.md) are rendered by kb, like index.md. */
+export function isTreeIndexPath(rel: string): boolean {
+  return rel.startsWith('pages/') && rel.endsWith('/index.md');
+}
+
 export function idFromPath(rel: string): string {
   let id = rel.endsWith('.md') ? rel.slice(0, -3) : rel;
   if (id.startsWith('pages/')) id = id.slice(6);
@@ -116,6 +140,7 @@ export function idFromPath(rel: string): string {
 
 export function isPagePath(rel: string): boolean {
   if (!rel.endsWith('.md')) return false;
+  if (isTreeIndexPath(rel)) return false;
   return rel.startsWith('pages/') || rel.startsWith('facts/');
 }
 

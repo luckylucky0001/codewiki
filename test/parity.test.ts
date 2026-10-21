@@ -38,7 +38,11 @@ describe('minishop parity with Go', () => {
       kb('compound', '--llm', 'template');
       for (const ch of ['01-cart-limit', '02-arkts-api-rename', '03-profile-route']) {
         fs.cpSync(path.join(repo, 'examples/minishop-changes', ch, 'files'), root, { recursive: true });
-        expect(kb('plan', '--json', '--dry-run')).toBe(read(`plan-${ch}.json`));
+        // v2 adds plan.tree (hierarchy); the v1 part must stay identical to Go
+        const plan = JSON.parse(kb('plan', '--json', '--dry-run'));
+        expect(plan.tree).toBeDefined();
+        delete plan.tree;
+        expect(JSON.stringify(plan, null, 2) + '\n').toBe(read(`plan-${ch}.json`).replace(/\\u003c/g, '<').replace(/\\u003e/g, '>').replace(/\\u0026/g, '&'));
         kb('compound', '--llm', 'template');
       }
       expect(JSON.parse(kb('verify', '--json')).ok).toBe(true);

@@ -33,6 +33,8 @@ export interface Task {
   reasons: Reason[];
   context: string[];
   priority: number;
+  /** v2: tree node of a tree page task (not part of plan.json tasks) */
+  tree_node?: string;
 }
 
 export interface Plan {
@@ -46,6 +48,8 @@ export interface Plan {
   changed_route_ids: string[];
   changed_routes: RouteChange[];
   changed_files: string[];
+  /** v2 hierarchy: tree build/repair decisions and tree page tasks */
+  tree?: import('./hier.js').TreePlan;
 }
 
 export interface PlanInput {
@@ -159,7 +163,7 @@ export function buildPlan(inp: PlanInput): Plan {
   }
   p.stats.propagated_symbols = propagated.size;
   for (const pg of inp.pages) {
-    if (pg.front.generated || !pg.path.startsWith('pages/')) continue;
+    if (pg.front.generated || !pg.path.startsWith('pages/') || pg.front.tree_node) continue; // tree pages: plan.tree
     const reasons: Reason[] = [];
     for (const a of pg.front.sources ?? []) {
       const c = klass.get(a.sym);

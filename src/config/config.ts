@@ -21,6 +21,12 @@ export interface Config {
   plan: { hops: number; rebuild_module_ratio: number; rebuild_structural_ratio: number };
   docs: { exclude: string[] };
   facts: { uikit?: boolean };
+  /** v2 hierarchical tree overrides (docs/tree.md, design-v2 §3.6) */
+  tree?: Record<string, unknown>;
+  /** docs ownership scopes (docs/ownership.md §1) */
+  scopes?: { projects?: { id?: string; root: string }[]; repository?: { write?: boolean; read?: boolean } };
+  /** docs dimension overrides */
+  docs_schema?: Record<string, unknown>;
   /** absolute repo root (not serialized to yaml) */
   root: string;
 }
@@ -204,6 +210,10 @@ export function renderConfig(c: Config): string {
     for (const e of c.docs.exclude) L.push(`        - ${q(e)}`);
   }
   if (c.facts.uikit !== undefined) L.push('facts:', `    uikit: ${c.facts.uikit}`);
+  if (c.tree && Object.keys(c.tree).length) {
+    const y = YAML.stringify({ tree: c.tree }, { indent: 4 });
+    L.push(y.replace(/\n$/, ''));
+  }
   return L.join('\n') + '\n';
 }
 

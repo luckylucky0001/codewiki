@@ -16,7 +16,8 @@ import { serveMCP } from '../mcp/server.js';
 import { formatEval, runEval } from '../engine/eval.js';
 import { postMergeScript, postReceiveScript } from './hook.js';
 import { runBench } from './bench.js';
-import { fixIndex, subIndexesCurrent, verifyWiki, type Report } from '../wiki/verify.js';
+import { fixIndex, indexesCurrent, verifyWiki, type Report } from '../wiki/verify.js';
+import { verifyTree } from '../engine/hier.js';
 import { appendLog, initWiki, renderIndex } from '../wiki/layout.js';
 import { type Page, findPage, loadPages, writeFileAtomic } from '../wiki/page.js';
 import { cmpStr, goJSON } from '../util/go.js';
@@ -113,6 +114,10 @@ function printPlan(a: App, p: Plan): void {
     let rs = t.reasons.map((r) => r.code + (r.sym ? ':' + lastPart(r.sym) : ''));
     if (rs.length > 4) rs = [...rs.slice(0, 4), `…+${rs.length - 4}`];
     a.out(`  ${t.id} ${t.op.padEnd(7)} ${t.page.padEnd(30)} p${t.priority} write_set=[${t.write_set.join(' ')}] reasons=[${rs.join(', ')}]\n`);
+  }
+  if (p.tree) {
+    a.out(`tree ${p.tree.mode}: depth ${p.tree.depth} ${JSON.stringify(p.tree.nodes_per_level)}; ${p.tree.tasks.length} tree page task(s)\n`);
+    for (const t of p.tree.tasks) a.out(`  tree L${t.level} ${t.op.padEnd(7)} ${t.page} (${t.reasons.join(', ')})\n`);
   }
 }
 
@@ -341,13 +346,7 @@ register({
     if (!fs.existsSync(wp)) return a.fail(ExitUsage, `wiki dir ${cfg.wiki_dir} not found (run kb init)`);
     if (f['fix-index']) {
       const [pages] = loadPages(wp);
-      let cur = '';
-      try {
-        cur = fs.readFileSync(path.join(wp, 'index.md'), 'utf8');
-      } catch {
-        cur = '';
-      }
-      const same = cur === renderIndex(pages) && subIndexesCurrent(wp, pages);
+      const same = indexesCurrent(wp, pages);
       if (f['dry-run']) a.log(`fix-index (dry-run): index would ${same ? 'stay unchanged' : 'change'}`);
       else if (!same) {
         fixIndex(wp);
@@ -366,6 +365,7 @@ async function verifyNow(cfg: Config): Promise<Report> {
   const facts = extractFacts(cfg, res);
   const rep = verifyWiki(wikiPath(cfg), res.graph, expectedFacts(cfg, res.graph, facts));
   verifyRequirements(wikiPath(cfg), res.graph, rep);
+  verifyTree(wikiPath(cfg), res.graph, facts, rep);
   return rep;
 }
 
