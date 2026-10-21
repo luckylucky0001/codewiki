@@ -1,6 +1,6 @@
 ---
 name: codewiki
-description: Code-anchored LLM Wiki for Android (Kotlin/Java), iOS (Swift) and HarmonyOS (ArkTS) monorepos, driven by the single `kb` CLI. Use it to (1) answer questions about app behaviour, routes, deep links, testIDs, HTTP APIs, constants and cross-platform differences ("how many routes", "which pages set testIDs", "购物车上限三端分别是多少") with `kb routes`, `kb lint-tid`, `kb parity`, `kb search`, `kb get`, `kb context` instead of grepping; (2) find outdated docs/specs ("哪些文档过时") with `kb conflicts`; (3) ingest and verify spec-kit / OpenSpec / Kiro / ADR / README docs against code with `kb discover-docs` + `kb ingest`; (4) update the wiki after code changes or stale pages with `kb compound`, or write one page as the per-task writer; (5) lint and gate in CI with `kb verify`, `kb lint-tid`, `kb parity`; (6) repo / project docs ownership workflows (upcoming). Use before editing a source file and whenever another agent needs routes/testids/apis.
+description: Code-anchored LLM Wiki for Android (Kotlin/Java), iOS (Swift) and HarmonyOS (ArkTS) monorepos, driven by the single `kb` CLI. Use it to (1) answer questions about app behaviour, routes, deep links, testIDs, HTTP APIs, constants and cross-platform differences ("how many routes", "which pages set testIDs", "购物车上限三端分别是多少") with `kb routes`, `kb lint-tid`, `kb parity`, `kb search`, `kb get`, `kb context` instead of grepping; (2) find outdated docs/specs ("哪些文档过时") with `kb conflicts`; (3) ingest and verify spec-kit / OpenSpec / Kiro / ADR / README docs against code with `kb discover-docs` + `kb ingest`; (4) update the wiki after code changes with `kb compound`, or write one page as the task writer; (5) lint and gate in CI with `kb verify`, `kb lint-tid`, `kb parity`; (6) navigate the L0–L3 module tree (`kb tree show|explain`); (7) maintain repo/project docs/ with human content preserved (`kb docs compound|status|adr|debt`, `kb links`). Use before editing a source file.
 ---
 
 # codewiki
@@ -25,7 +25,8 @@ against HEAD. Trust order: code > `wiki/facts/` > `wiki/pages/` > `wiki/raw/docs
 | to onboard docs, or check whether documentation still matches the implementation | §4 Ingest → [references/ingest.md](references/ingest.md) |
 | the wiki updated after code changes / `kb status` shows stale pages / you are the page writer | §5 Compound → [references/compound.md](references/compound.md) |
 | a CI gate, lint, consistency check after manual wiki edits | §6 Lint → [references/lint.md](references/lint.md) |
-| ownership of repo / project docs | §7 Ownership (upcoming) |
+| where a symbol / file is documented, project → module → cluster structure, writing a tree page | §7 Tree → [references/tree.md](references/tree.md) |
+| repo `docs/` or `<project>/docs/`: update them, ADRs, tech debt, stale specs, links | §8 Ownership → [references/ownership.md](references/ownership.md) |
 
 ## 3. Query (read-only, run these FIRST)
 
@@ -79,7 +80,26 @@ kb parity --strict        # exit 1 on any cross-platform gap
 
 Exit codes: 0 ok · 1 stale / verify failed · 2 usage · 3 internal. See [references/lint.md](references/lint.md).
 
-## 7. Ownership (upcoming)
+## 7. Module tree (L0 repo → L1 project → L2 module → L3 cluster)
 
-Repo / project docs ownership commands will be added as `kb` subcommands; details will live in
-`references/ownership.md`.
+```bash
+kb tree show                      # the hierarchy (wiki/module_tree.json)
+kb tree explain <symbol-id|file>  # which page documents it, with the breadcrumb path
+kb plan --json                    # plan.tree: repair decisions + tree page tasks
+```
+
+Tree pages carry kb-owned blocks (breadcrumb, child table, symbol table, mermaid, Sources) that
+kb rewrites; write prose outside them. Details: [references/tree.md](references/tree.md).
+
+## 8. Repo / project docs ownership (`kb docs`)
+
+```bash
+kb docs scope && kb docs status   # scopes and per-file state (new/managed/skeleton/adopted/frozen)
+kb docs compound --dry-run        # then without --dry-run; --project id, --no-root-write
+kb docs stale-specs               # specs that drifted from code
+kb docs adr / kb docs debt        # proposals; --write to apply
+kb links && kb verify --docs
+```
+
+Human text in docs is never changed; Draft specs only yield `[Unconfirmed]` requirement entries;
+`specs/` is never written. Rules and agent contract: [references/ownership.md](references/ownership.md).
