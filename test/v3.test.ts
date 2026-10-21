@@ -87,3 +87,31 @@ describe('cli output', () => {
     expect(JSON.parse(r.stdout).broken.length).toBe(3000);
   });
 });
+
+describe('kb tree deps', () => {
+  it('lists build dependencies, dependents and fan-in ranking; module pages carry kb:dependents', async () => {
+    const { spawnSync } = await import('node:child_process');
+    const d = mk({
+      'settings.gradle.kts': 'include(":a", ":b", ":c")\n',
+      'a/build.gradle.kts': 'plugins {}\n',
+      'b/build.gradle.kts': 'dependencies {\n  implementation(projects.a)\n}\n',
+      'c/build.gradle.kts': 'dependencies {\n  implementation(project(":a"))\n  implementation(projects.b)\n}\n',
+      'a/src/main/kotlin/A.kt': 'class A { fun x() = 1 }\n',
+      'b/src/main/kotlin/B.kt': 'class B { fun y() = A().x() }\n',
+      'c/src/main/kotlin/C.kt': 'class C { fun z() = B().y() }\n',
+    });
+    const kb = (...a: string[]) => spawnSync('node', [path.join(repo, 'dist/cli.js'), ...a], { cwd: d, encoding: 'utf8' });
+    expect(kb('init', '--quiet').status).toBe(0);
+    expect(kb('compound', '--llm', 'template', '--quiet').status).toBe(0);
+    const a = JSON.parse(kb('tree', 'deps', ':a', '--json').stdout);
+    expect(a.dependents.map((x: { title: string }) => x.title)).toEqual([':b', ':c']);
+    const c = JSON.parse(kb('tree', 'deps', 'c', '--json').stdout);
+    expect(c.deps.map((x: { title: string }) => x.title).sort()).toEqual([':a', ':b']);
+    const top = JSON.parse(kb('tree', 'deps', '--top', '1', '--json').stdout);
+    expect(top.most_deps[0].title).toBe(':c');
+    expect(top.most_dependents[0].title).toBe(':a');
+    expect(kb('tree', 'deps', ':nope').status).toBe(1);
+    expect(fs.readFileSync(path.join(d, 'wiki/pages/a/overview.md'), 'utf8')).toContain('<!-- kb:dependents -->');
+    expect(kb('verify', '--quiet').status).toBe(0);
+  });
+});
