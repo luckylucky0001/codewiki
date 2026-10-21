@@ -11,7 +11,7 @@
 #   DEMO_MAX_LLM_TASKS=N                cap LLM tasks per compound (rest: template), default 3
 #   DEMO_OUT=dir                        output dir (default demo/output/<timestamp>)
 #
-# Requires: go (cgo + gcc), git, jq. All outputs are saved under demo/output/<timestamp>/.
+# Requires: node >= 20 + npm, git, jq. All outputs are saved under demo/output/<timestamp>/.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -25,7 +25,7 @@ REPO="$OUT/repo"
 CLAUDE_CMD="${DEMO_CLAUDE_CMD:-claude -p --model sonnet --permission-mode acceptEdits --allowedTools \"Read,Write,Edit,Glob,Grep,Bash(kb anchor:*),Bash(kb get:*)\" --output-format text}"
 
 case "$MODE" in template|claude) ;; *) echo "DEMO_LLM must be template or claude" >&2; exit 2 ;; esac
-for t in go git jq; do command -v "$t" >/dev/null || { echo "missing tool: $t" >&2; exit 2; }; done
+for t in node npm git jq; do command -v "$t" >/dev/null || { echo "missing tool: $t" >&2; exit 2; }; done
 if [ "$MODE" = claude ]; then command -v claude >/dev/null || { echo "claude CLI not found" >&2; exit 2; }; fi
 
 mkdir -p "$OUT/bin"
@@ -47,8 +47,9 @@ llm_flags() { # writer for incremental steps
   if [ "$MODE" = claude ]; then printf '%s\0' --llm claude --llm-cmd "$CLAUDE_CMD" --fallback --max-llm-tasks "$MAXT"; else printf '%s\0' --llm template; fi
 }
 
-log "build kb"
-( cd "$ROOT" && CGO_CFLAGS="${CGO_CFLAGS:--O2 -w}" go build -o "$KB" ./cmd/kb )
+log "build kb (TypeScript)"
+( cd "$ROOT" && { [ -d node_modules ] || npm ci --ignore-scripts >/dev/null; } && npm run --silent build )
+printf '#!/bin/sh\nexec node "%s/dist/cli.js" "$@"\n' "$ROOT" >"$KB" && chmod +x "$KB"
 "$KB" version | tee "$OUT/00-version.txt"
 
 log "create temp git repo from examples/minishop (branch master)"

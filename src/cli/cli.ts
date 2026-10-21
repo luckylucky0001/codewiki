@@ -8,6 +8,7 @@ import { scanRepo, CacheFile } from '../scan/scan.js';
 import { extractFacts } from '../facts/facts.js';
 import { factsJSON } from '../facts/render.js';
 import { symbolJSON, parseFailureJSON, getSym } from '../model.js';
+import type { Plan } from '../engine/plan.js';
 import { type Result, analyze, compound, expectedFacts, gitHead, loadGraph, today, verifyRequirements } from '../engine/compound.js';
 import { agentCommand, registry } from '../agents/agents.js';
 import { agentRows, installAgents, parseAgents } from './install.js';
@@ -90,12 +91,26 @@ class App {
 
 const commands: Command[] = [];
 
+const goMap = (m: Record<string, number>) => 'map[' + Object.keys(m).sort(cmpStr).map((k) => `${k}:${m[k]}`).join(' ') + ']';
+const lastPart = (id: string) => id.slice(id.lastIndexOf('#') + 1);
+
+function printPlan(a: App, p: Plan): void {
+  a.out(`mode ${p.mode} — ${p.reason}\n`);
+  a.out(`changed_route_ids: [${p.changed_route_ids.join(' ')}]; changed_files: ${p.changed_files.length}\n`);
+  a.out(`stats: symbols=${p.stats.symbols} changes=${goMap(p.stats.changes)} module_ratio=${p.stats.module_ratio.toFixed(2)} structural_ratio=${p.stats.structural_ratio.toFixed(2)} hops=${p.stats.hops} propagated=${p.stats.propagated_symbols}\n`);
+  for (const t of p.tasks) {
+    let rs = t.reasons.map((r) => r.code + (r.sym ? ':' + lastPart(r.sym) : ''));
+    if (rs.length > 4) rs = [...rs.slice(0, 4), `…+${rs.length - 4}`];
+    a.out(`  ${t.id} ${t.op.padEnd(7)} ${t.page.padEnd(30)} p${t.priority} write_set=[${t.write_set.join(' ')}] reasons=[${rs.join(', ')}]\n`);
+  }
+}
+
 function reportRun(a: App, r: Result): number {
   const ok = !r.verify || r.verify.ok;
   a.emit({ ok, result: r }, () => {
     const llm = r.llm + (r.agent && r.llm !== 'template' ? ' (agent ' + r.agent + ')' : '');
     a.out(`${r.kind} ${r.run_id}: base ${short(r.base)} → head ${r.head ? short(r.head) : '(no git)'}, mode ${r.mode}, llm ${llm}\n`);
-    a.out(`plan ${r.plan.mode}: ${r.plan.reason}\n`);
+    printPlan(a, r.plan);
     for (const t of r.tasks) a.out(`  task ${t.id.padEnd(28)} ${t.status.padEnd(8)} ${t.writer} ${t.error ?? ''}\n`);
     a.out(`changed files: ${r.changed.length}\n`);
     for (const c of r.changed) a.out(`  ${c}\n`);
@@ -273,10 +288,7 @@ register({
     const an = await analyze({ cfg, llm: 'template', base: String(f.base || ''), full: !!f.full });
     const p = an.plan;
     if (!f['dry-run'] && fs.existsSync(wikiPath(cfg))) writeFileAtomic(path.join(wikiPath(cfg), '.kb', 'plan.json'), goJSON(p, '  ') + '\n');
-    a.emit(p, () => {
-      a.out(`mode ${p.mode}: ${p.reason}\n`);
-      for (const t of p.tasks) a.out(`${t.id}  ${t.op.padEnd(8)} ${t.page}  (${t.reasons.map((r) => r.code).join(', ')})\n`);
-    });
+    a.emit(p, () => printPlan(a, p));
     return ExitOK;
   },
 });
@@ -386,7 +398,7 @@ register({
       if (!out.length) a.out('all pages current\n');
       for (const x of out) {
         if (x.reason === 'E_FACTS_STALE') a.out(`stale ${x.page} (generated facts out of date)\n`);
-        else a.out(`stale ${x.page} (${x.symbols.length} anchors: ${x.symbols.map((y) => y.slice(y.lastIndexOf('#') + 1)).join(', ')})\n`);
+        else a.out(`stale ${x.page} (${x.symbols.length} anchors: ${[...x.symbols.slice(0, 3).map(lastPart), ...(x.symbols.length > 3 ? [`…+${x.symbols.length - 3}`] : [])].join(', ')})\n`);
       }
     });
     return out.length ? ExitStale : ExitOK;
