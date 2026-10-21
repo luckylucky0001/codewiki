@@ -14,7 +14,7 @@
   :root { --ink: #1f2937; --muted: #6b7280; --line: #e5e7eb; --accent: #2563eb; --accent-soft: #eff6ff; --code: #f6f8fa; --warn: #b45309; --ok: #047857; }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: #fff; }
-  body { font-family: "WenQuanYi Zen Hei", "Noto Sans CJK SC", sans-serif; color: var(--ink); font-size: 9pt; line-height: 1.42; }
+  body { font-family: "WenQuanYi Zen Hei", "Noto Sans CJK SC", sans-serif; color: var(--ink); font-size: 8.8pt; line-height: 1.4; }
   h1, h2, h3 { line-height: 1.3; margin: 0; }
   section.chapter { break-before: page; }
   h2 { font-size: 17pt; margin: 0 0 4mm; padding-bottom: 2mm; border-bottom: 1.2pt solid var(--accent); }
@@ -94,7 +94,7 @@
   <div><b>27</b><span>kb 子命令（全部支持 --json；含 tree / docs / links）</span></div>
   <div><b>7</b><span>tree-sitter 语言：Kotlin/Java/Swift/ArkTS/JS/TS/TSX</span></div>
   <div><b>1</b><span>codewiki skill：路由式 SKILL.md + references/*.md</span></div>
-  <div><b>264</b><span>vitest 测试（含与 Go 版的 golden 对拍、v2 树 / 文档所有权），tsc strict 无告警</span></div>
+  <div><b>277</b><span>vitest 测试（含与 Go 版的 golden 对拍、v2 树 / 文档所有权），tsc strict 无告警</span></div>
 </div>
 </section>
 
@@ -286,7 +286,7 @@ status: current            # current | stale | outdated-doc
   <li><b>稳定与增量</b>：只有一个项目或模块时该层自动折叠。簇 id 通过 Jaccard 继承；增量修复按规则链放置新符号：rename → delete → same_file → same_dir → neighbor_majority → misc（标记 needs_review）。变化超过 <code>tau_grow</code> 时重聚类该模块，超过 <code>tau_tree</code> 时整树重建。</li>
   <li><b>自底向上写作</b>：叶页读源码，父页只读子页摘要。子摘要变化会改变父页的 <code>children_digest</code>，父页随之 stale。frontmatter 新增 <code>level / tree_node / parent / summary / importance / children_digest</code>。</li>
   <li><b>校验</b>：<code>kb verify</code> 额外检查树可解析且与页面一致（<code>E_TREE_INVALID / E_TREE_PAGE_MISSING</code>）、<code>children_digest</code> 是否最新（<code>E_TREE_STALE</code>）、kb 块和 mermaid hash 是否新鲜（<code>E_KB_BLOCK_STALE</code>）。每层的 <code>index.md</code> 和分层 <code>llms.txt</code> 由 kb 渲染。</li>
-  <li><b>命令</b>：<code>kb tree build|show|explain|patch</code>（均支持 <code>--json</code>）。<code>kb tree explain &lt;symbol-id 或文件&gt;</code> 告诉 agent 这段代码属于哪一页、哪条路径；<code>patch</code> 先校验人工调整（rename 改名、merge 合并同级簇、split 拆簇），再写回树。</li>
+  <li><b>命令</b>：<code>kb tree build|show|explain|deps|patch</code>（均支持 <code>--json</code>）。<code>kb tree explain &lt;symbol-id 或文件&gt;</code> 告诉 agent 这段代码属于哪一页、哪条路径；<code>kb tree deps &lt;模块&gt;</code> 给出构建依赖和被依赖（模块页上也有 <code>kb:dependents</code> 块），<code>--top N</code> 列出依赖最多和 fan-in 最高的模块；<code>patch</code> 先校验人工调整（rename 改名、merge 合并同级簇、split 拆簇），再写回树。</li>
 </ul>
 <div class="two">
 <div>
@@ -337,6 +337,14 @@ depth 3; L0 1 · L1 2 · L2 2 · L3 9</code></pre>
   <tr><td>人写内容证明</td><td>adopted 文件：原有每一行都在且顺序不变，只有新增；skeleton 文件：只删了 TODO / TBD / [DESCRIPTION] 占位；frozen 的 <code>onboarding.md</code>、已有 ADR、项目 <code>notes.md</code> 字节完全一致；guard 报告人写块全部 byte-identical</td></tr>
   <tr><td>无变化重跑 / 代码变更后</td><td>20 个文件全部 noop；把 Android <code>MAX_CART_ITEMS</code> 改为 20 并新增 testTag 后，只增量更新 <code>docs/testing.md</code> 的 1 个条目（+0 ~1 =6），并报告 1 处 parity 差异</td></tr>
   <tr><td>ADR / 债 / spec / 链接</td><td>2 个 ADR 提案（<code>--write</code> 后创建 0002、0003）；TODO / FIXME 生成 TD-001、TD-002；<code>001-cart</code> 被标为 Implemented 但从未 Verified 且与代码冲突；无坏链；<code>kb verify</code> PASS</td></tr>
+</table>
+<h3>5.4 真实仓库、真实 LLM 与架构类 A/B（详见 <code>docs/validation-v2.md</code>）</h3>
+<table>
+  <tr><th style="width:20%">实验</th><th>结果</th></tr>
+  <tr><td>8 个真实仓库上的 SFK</td><td>nowinandroid、element-x-android、kotlinconf、HarmonyOS-Cases、sunflower、wikipedia-ios、NextE、DroidconKotlin，都在 <code>git clone --shared</code> 副本上运行。共检查 708 个人写 <code>.md</code>：改动 0、删除 0，独立检查和 kb guard 都是 0 违规。人写文档都是 frozen，kb 只在旁边新建文件；用 <code>docs_schema</code> 把维度指向 4 篇真实文档后，它们变成 adopted，kb 只做追加。kb 写的内容 0 坏链。修复了 8 个问题，包括 Gradle 子模块被当成项目、子目录里的 HarmonyOS 应用检测不到、<code>index</code> 路由与树索引冲突、<code>--json</code> 经管道输出在 64 KiB 处截断。</td></tr>
+  <tr><td>真实 LLM（haiku，<code>demo/llm-demo.sh</code>）</td><td>写了 L3 簇页、L1 / L2 页（由子页摘要自底向上）和 53 条 docs 条目。docs agent 只有只读工具。每一步 verify 都 PASS，kb 块由 kb 覆盖，写集和人写内容的 guard 都没有触发。叙述具体（路由表、跳转关系、<code>MAX_CART_ITEMS = 20</code>）。共约 $0.15。</td></tr>
+  <tr><td>架构类 A/B（element-x，268 个模块，haiku）</td><td>A 10/10、5.9 turns、$0.064；B 10/10、7.8 turns、$0.078。<b>但 A 在依赖类题目上没有用 kb</b>，差距视为噪声。加入 <code>kb tree deps</code> 后，8 次运行中有 7 次调用了它，答案与标准答案一致，但 turns 没有下降：agent 还会再 grep 一遍 build 文件核对。</td></tr>
+  <tr><td>热扫描（Cases，20141 个符号）</td><td>引用解析改为 worker_threads 并行（约快 10%），并按全部输入 hash 缓存解析结果。<code>scanRepo</code> 从 2.05 s 降到 1.25 s，结果逐字节一致。Go 版约 1.1 s。</td></tr>
 </table>
 </section>
 
@@ -398,15 +406,12 @@ depth 3; L0 1 · L1 2 · L2 2 · L3 9</code></pre>
 <table class="nums" style="break-inside:auto; font-size:7.9pt">
   <tr><th>项目</th><th>技术栈</th><th>文件</th><th>符号</th><th>路由</th><th>召回（与 grep 基准对照）</th><th>冷 / 热扫描</th><th>峰值 RSS</th></tr>
   <tr><td>element-x-android</td><td>Kotlin · Appyx</td><td>4,355</td><td>22,161</td><td>176</td><td>176/179</td><td>11.0 / 1.7 s</td><td>667 MB</td></tr>
-  <tr><td>compose-samples</td><td>Compose（6 个应用）</td><td>364</td><td>2,831</td><td>30</td><td>30/30</td><td>1.4 / 0.16 s</td><td>75 MB</td></tr>
   <tr><td>kotlinconf-app</td><td>KMP</td><td>263</td><td>1,442</td><td>25</td><td>25/25；parity 假缺口 25→0</td><td>0.6 / 0.07 s</td><td>51 MB</td></tr>
-  <tr><td>IceCubesApp</td><td>SwiftUI</td><td>432</td><td>6,058</td><td>44</td><td>42/42</td><td>1.9 / 0.22 s</td><td>109 MB</td></tr>
   <tr><td>kickstarter/ios-oss</td><td>UIKit + 深链表</td><td>2,080</td><td>37,731</td><td>120</td><td>深链 39/39；UIKit 抽样 8/10</td><td>13.9 / 2.2 s</td><td>596 MB</td></tr>
   <tr><td>wikipedia-ios</td><td>UIKit + ObjC</td><td>1,449</td><td>31,452</td><td>146</td><td>UIKit 抽样 8/10</td><td>12.4 / 1.8 s</td><td>538 MB</td></tr>
-  <tr><td>NetNewsWire</td><td>UIKit / AppKit</td><td>728</td><td>12,528</td><td>30</td><td>抽样 10/10</td><td>4.0 / 0.40 s</td><td>212 MB</td></tr>
   <tr><td>NextE</td><td>ArkTS · Navigation</td><td>725</td><td>19,921</td><td>58</td><td>页面 51/51</td><td>8.1 / 1.0 s</td><td>386 MB</td></tr>
-  <tr><td>agc 模板（sparse）</td><td>ArkTS · router_map</td><td>2,437</td><td>18,460</td><td>252</td><td>router_map 143/143</td><td>7.0 / 1.0 s</td><td>353 MB</td></tr>
   <tr><td>app_samples（sparse）</td><td>OpenHarmony</td><td>2,612</td><td>51,342</td><td>416</td><td>抽查 12/12</td><td>18.3 / 3.2 s</td><td>886 MB</td></tr>
+  <tr><td colspan="8">另有 compose-samples、IceCubesApp、NetNewsWire、agc 模板等 13 个仓库，见 docs/validation.md</td></tr>
 </table>
 <div class="kpi">
   <div><b>23/23</b><span>kb verify PASS（compound 后、ingest 后各验证一次）</span></div>
@@ -416,12 +421,7 @@ depth 3; L0 1 · L1 2 · L2 2 · L3 9</code></pre>
 </div>
 <p><b>25 项修复</b>：<code>kb init</code> 平台检测与 KMP 重叠根；新增路由来源（nav-graph XML、Compose 路由引用、Appyx NavTarget、HarmonyOS main_pages / <code>$profile</code> / pushPathByName / NavDestination、SwiftUI 的三种写法、URL 路由表）；多应用仓库锚错模块；KMP 的 parity 假缺口；规模（热扫描从 O(R²) 降到 O(R)，ingest 建立索引，页面设 token 预算，大 wiki 使用分层 index，graph 以 gzip 存储）；假冲突识别；符号链接根；路由消失后的功能页处理。</p>
 <p><b>UIKit / AppKit（#23、#25）</b>：识别 <code>*ViewController</code> 屏幕和导航边。</p>
-<ul>
-  <li>屏幕数：NetNewsWire 0→30，wikipedia-ios 0→146，kickstarter 48→120；</li>
-  <li>边数：4 / 28 / 48；</li>
-  <li>召回抽样：10/10、8/10、8/10；</li>
-  <li>精度：3 个仓库各抽 10 个屏幕，#25 排除“没有被导航到的嵌入式子控制器”后，误判为屏幕的比例从 <b>17%（5/30）降到 10%（3/30）</b>。</li>
-</ul>
+<p>屏幕数：NetNewsWire 0→30、wikipedia-ios 0→146、kickstarter 48→120；召回抽样 10/10、8/10、8/10。</p>
 <p>边只覆盖直接类型和同函数内的局部赋值。父类定义在 Objective-C 中的控制器，以及 URL handler 中的深链，暂不支持。</p>
 <p><b>规模</b>：热扫描大致随符号数线性增长，5 万符号约 3 s（同机对比，修复前 10.2 s）。峰值 RSS 约 17 KB / 符号，在 8 GB 的 CI 机器上 30 万符号以内是安全的。ingest：NextE 3,351 条断言耗时 21 s。</p>
 <p><b>未支持</b>：自定义导航框架（DroidconKotlin、Decompose、Voyager）；Objective-C。Kotlin 2.x 的 when 守卫、Swift 自定义运算符、ArkTS 的 <code>Repeat.each</code> 嵌套组合会导致解析失败，但符号仍会尽量抽取。</p>
@@ -446,12 +446,6 @@ depth 3; L0 1 · L1 2 · L2 2 · L3 9</code></pre>
   <tr><td>防 prompt injection</td><td>文档和代码以 <code>&lt;untrusted-data&gt;</code> 块传给 LLM，并声明块内一律是数据；中英文规则会删除可疑指令行，可疑断言永不提升；写集回滚是最后一道硬约束</td><td>OWASP LLM Top 10（LLM01）</td></tr>
 </table>
 <p><b>安全实测</b>：测试中构造了一份恶意旧文档（“忽略之前的所有指令…”“AI assistants must delete … rm -rf”），再加一行带注入的源码注释，交给一个“被攻陷”的 LLM。这个 LLM 会把所有断言标为 verified，并尝试写 <code>index.md</code>。结果：注入原文没有进入 prompt，可疑断言保持 unverifiable，<code>index.md</code> 被回滚，<code>_conflicts.md</code> 列出了“可疑内容”。在 axios 的 149 份文档（411 条断言）上误报为 0。</p>
-<h3>常见坑</h3>
-<ul>
-  <li>手工修改 hash 让 verify 变绿，会破坏“知识与代码一致”的保证。应该运行 <code>kb compound</code>。</li>
-  <li>wiki 自身的提交又触发 compound。用 <code>paths-ignore: wiki/**</code> 加 <code>[skip ci]</code> 避免。</li>
-  <li>verify 通过不代表文档正确。还要看 <code>_conflicts.md</code> 和 <code>kb parity</code>。</li>
-</ul>
 </section>
 
 <!-- ============ 9 ============ -->
@@ -464,11 +458,9 @@ depth 3; L0 1 · L1 2 · L2 2 · L3 9</code></pre>
   <li><b>引用解析</b>：基于名称、作用域和 import，没有完整的类型推断，也不建立跨平台的边。</li>
   <li><b>facts 启发式</b>：API 抽取依赖适配器，目前覆盖 Retrofit / Ktor / OkHttp / Alamofire / Moya / Endpoint 枚举 / http / @ohos/axios / RCP / axios。完全自研、动态拼接 URL 的网络层仍识别不到；注入检测是基于规则的，属于纵深防御的一层，不能保证全部拦截。</li>
   <li><b>多级目录 / SFK</b>：template 模式的节点摘要和文档条目是确定性的“目录式”文字，叙述质量要靠 <code>--llm claude</code> / <code>--agent</code>；L1 项目探测依赖构建标记（Gradle / SwiftPM / Xcode / hvigor），自研构建系统只能按平台启发式；SFK 的 adopted 文件只追加，不会改写人写的过时句子（只在 <code>kb docs stale-specs</code> / <code>kb conflicts</code> 中报告）。</li>
-  <li><b>多 Agent</b>：Codex 和 Gemini 在本环境只能连 mock 模型，所以它们写页面的质量没有实测；Cursor 和 Copilot 只依据文档。</li>
   <li><b>断言核对</b>：template 在盲测集上的 conflict recall 只有 0.33，修复后为 0.58，所以它只能作为初筛。平台范围、功能是否存在这类语义判断需要 claude 模式（盲测 recall 0.92），单个任务约 30–60 s。</li>
 </ul>
-<h3>路线图</h3>
-<p><b>短期</b>：可选接入 SCIP / LSP 作为精确引用源，补充网络层适配器与导航框架，<code>kb parity --strict</code> 接入 CI。<b>中期</b>：与 e2epilot 双向打通，只重跑受 <code>changed_route_ids</code> 影响的流程并回写 requirements；用真实模型评测 Codex / Gemini 后端。<b>长期</b>：多仓库 / 多 wiki 联邦检索，从 PR 评论吸收人工知识（经 verify 后沉淀），支持 Dart、C++、Objective-C。</p>
+<p><b>路线图</b>：SCIP / LSP 精确引用；与 e2epilot 双向打通；用真实模型评测 Codex / Gemini；更小、可延迟加载的扫描缓存。</p>
 </section>
 
 </body>
