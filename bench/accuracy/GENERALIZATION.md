@@ -41,4 +41,6 @@ deeplinks 92.4% (97/105)、testids 95.8% (69/72)、apis 96.2% (101/105)、API mu
 | R2-c | c Swift URL 构造 | 单行计算属性（`static var profile: URL { URL(string: base)!.appendingPathComponent("v1/profile") }`）也作为函数体参与；`appendingPathComponent` 的"文件系统 base"排除词改为 `\bfile`/`FileManager`/`fileURL`（原先 `file` 子串误伤 `profile`）；Swift `String(format: "%@/posts/%@", base, id)` 与 ObjC `stringWithFormat:@"%@/…"`（前导 base 占位符丢弃，其余 `%@` → `{param}`）；原生封装识别也认只构造 `URLRequest(` 的辅助函数，方法取体内 `httpMethod = "POST"`。 | 0 / 0 / 0 / 0 / 0 | mastodon +4（joinmastodon `/servers`、`/languages`、`/categories`、`/default-servers`，真实） | 低–中。 |
 | R2-d | d Decompose 跨文件 | 已有规则即按名字跨文件/模块解析 sealed 配置类型、在任意宿主文件中找 `when (config)` 分支，多导航器（root/tabs）各自的配置都出路由；本轮补测试锁定该行为（配置在另一文件、`createChild` 为独立函数、两个导航器）。 | 0 / 0 / 0 / 0 / 0 | 无 | 低。 |
 
+第二轮最终全流程（`bin/run.sh`，kb 快照 `05aa1b3`、0 个未提交 src 文件）：16 仓 compound/discover/ingest 全部 exit 0；各类召回、FP、must-not、无 testID 仓抽取数与基线完全一致；16 仓 `kb verify` 全部 exit 0、0 个 E_。合成测试 24 个（`test/facts/generalization.test.ts`）；minishop 黄金文件不变（第二轮中途一次回归——`'/api/products/' + id` 因 `id` 是形参被误跳过——已改为"无字面路径段且只由形参构成"才跳过）。
+
 未做 / 已知局限：G2 不解析 Objective-C 的 `pushViewController:`/`presentViewController:` 边，也不处理 storyboard 中 ObjC 类的 embed 关系以外的情况；"仅内部实例化、不呈现的辅助 VC"只按 `addChildViewController:` 近似。G4 不跟踪跨文件的实例变量类型（`private http = new HttpClient()` 的接收者名若不含关键词则漏）。
