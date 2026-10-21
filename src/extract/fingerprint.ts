@@ -11,11 +11,21 @@ export function fingerprint(): string {
   if (fp) return fp;
   const h = createHash('sha256');
   const here = path.dirname(fileURLToPath(import.meta.url));
-  for (const f of fs.readdirSync(here).sort()) {
-    if (!/\.(js|ts)$/.test(f) || f.endsWith('.d.ts')) continue;
-    const b = fs.readFileSync(path.join(here, f));
-    h.update(`file ${f} ${b.length}\n`);
-    h.update(b);
+  // the facts extractor is part of the fingerprint too: query caches keyed on it (`facts`) must not
+  // serve facts computed by older facts code (seen as a one-off rewrite of testids.json after an upgrade)
+  for (const dir of [here, path.join(here, '..', 'facts')]) {
+    let names: string[] = [];
+    try {
+      names = fs.readdirSync(dir).sort();
+    } catch {
+      continue;
+    }
+    for (const f of names) {
+      if (!/\.(js|ts)$/.test(f) || f.endsWith('.d.ts')) continue;
+      const b = fs.readFileSync(path.join(dir, f));
+      h.update(`file ${path.basename(dir)}/${f} ${b.length}\n`);
+      h.update(b);
+    }
   }
   for (const l of Object.keys(specs).sort()) {
     const s = specs[l]!;
