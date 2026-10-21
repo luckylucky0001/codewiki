@@ -44,3 +44,7 @@ deeplinks 92.4% (97/105)、testids 95.8% (69/72)、apis 96.2% (101/105)、API mu
 第二轮最终全流程（`bin/run.sh`，kb 快照 `05aa1b3`、0 个未提交 src 文件）：16 仓 compound/discover/ingest 全部 exit 0；各类召回、FP、must-not、无 testID 仓抽取数与基线完全一致；16 仓 `kb verify` 全部 exit 0、0 个 E_。合成测试 24 个（`test/facts/generalization.test.ts`）；minishop 黄金文件不变（第二轮中途一次回归——`'/api/products/' + id` 因 `id` 是形参被误跳过——已改为"无字面路径段且只由形参构成"才跳过）。
 
 未做 / 已知局限：G2 不解析 Objective-C 的 `pushViewController:`/`presentViewController:` 边，也不处理 storyboard 中 ObjC 类的 embed 关系以外的情况；"仅内部实例化、不呈现的辅助 VC"只按 `addChildViewController:` 近似。G4 不跟踪跨文件的实例变量类型（`private http = new HttpClient()` 的接收者名若不含关键词则漏）。
+
+## 附：Ktor URL builder 规则（ab53565）复测（heldout3，仅规则，非盲测）
+
+`ktorBuilderPaths` 加入后，heldout3 仅规则成绩不变：routes 48.4%、APIs 19.7%、FP 13.3%。Shopping-By-KMP 的 API 仍为 0/20。看源码的调用形态后找到了原因：它用的是 `url { takeFrom(BASE_URL); encodedPath += MainService.NOTIFICATIONS }`，路径通过 `+=` 追加，追加的值是伴生对象里的常量，而当前规则只认 `encodedPath = "<字面量>"`。下一步：支持 `encodedPath +=`、`path(CONST)`，并从伴生对象或 `object` 中解析常量。补上之后，heldout3 的成绩只能算非盲测。
