@@ -14,6 +14,7 @@ import { agentCommand, registry } from '../agents/agents.js';
 import { agentRows, installAgents, parseAgents } from './install.js';
 import { serveMCP } from '../mcp/server.js';
 import { formatEval, runEval } from '../engine/eval.js';
+import { postMergeScript, postReceiveScript } from './hook.js';
 import { fixIndex, subIndexesCurrent, verifyWiki, type Report } from '../wiki/verify.js';
 import { appendLog, initWiki, renderIndex } from '../wiki/layout.js';
 import { type Page, findPage, loadPages, writeFileAtomic } from '../wiki/page.js';
@@ -1023,6 +1024,48 @@ register({
     }
     a.emit(rep, () => a.out(formatEval(rep)));
     return rep.claim_accuracy < Number(f['min-accuracy'] || 0) ? ExitStale : ExitOK;
+  },
+});
+
+register({
+  name: 'hook', usage: 'install --mode post-receive|post-merge [--repo <git dir>] [--kb <path>] [--llm template|claude|codex|gemini] [--branches master,main] [--dry-run]',
+  summary: 'install a git hook that runs kb compound on every push/merge to master (self-hosted git, GitLab, Gerrit)',
+  flags: {
+    mode: ['string', 'post-receive | post-merge', 'post-receive'], repo: ['string', 'git directory (bare repo for post-receive, working clone for post-merge); empty = print', ''],
+    kb: ['string', 'path to the kb binary used by the hook (default: this binary)', ''], llm: ['string', 'writer used by the hook: template | claude | codex | gemini', 'template'],
+    branches: ['string', 'branches that trigger compound', 'master,main'], 'dry-run': ['bool', 'print the target path and script without writing', false],
+  },
+  run(a, f, args) {
+    if (args.length !== 1 || args[0] !== 'install') return a.fail(ExitUsage, 'usage: kb hook install --mode post-receive|post-merge [--repo <git dir>]');
+    const mode = String(f.mode);
+    const kb = String(f.kb || '') || path.resolve(process.argv[1] ?? 'kb');
+    const llm = String(f.llm);
+    if (!['template', 'cmd', 'llm', 'claude', 'codex', 'gemini', 'generic'].includes(llm)) return a.fail(ExitUsage, `unknown --llm ${JSON.stringify(llm)}`);
+    const branches = String(f.branches).split(',').join(' ');
+    let script: string;
+    if (mode === 'post-receive') script = postReceiveScript(kb, llm, branches);
+    else if (mode === 'post-merge') script = postMergeScript(kb, llm, branches);
+    else return a.fail(ExitUsage, '--mode must be post-receive or post-merge');
+    const repo = String(f.repo || '');
+    if (!repo) {
+      a.out(script);
+      return ExitOK;
+    }
+    let hooks = path.join(repo, 'hooks');
+    try {
+      if (fs.statSync(path.join(repo, '.git')).isDirectory()) hooks = path.join(repo, '.git', 'hooks');
+    } catch {
+      /* bare repo */
+    }
+    const target = path.join(hooks, mode);
+    if (f['dry-run']) {
+      a.emit({ dry_run: true, ok: true, path: target, script }, () => a.out(`# would write ${target}\n${script}`));
+      return ExitOK;
+    }
+    fs.mkdirSync(hooks, { recursive: true });
+    fs.writeFileSync(target, script, { mode: 0o755 });
+    a.emit({ mode, ok: true, path: target }, () => a.out(`installed ${target}\n`));
+    return ExitOK;
   },
 });
 
