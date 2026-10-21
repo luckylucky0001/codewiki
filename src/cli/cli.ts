@@ -68,7 +68,15 @@ class App {
     return cfg;
   }
   loadCfg(): Config {
-    return this.applyWikiDir(loadConfig(this.root, this.config || undefined));
+    if (!this.config) return this.applyWikiDir(loadConfig(this.root));
+    // external config: wiki_dir is relative to the config file; --root defaults to the config's dir
+    const cfg = loadConfig(this.root, this.config);
+    const absDir = absRoot(path.dirname(path.resolve(this.config)));
+    if (!path.isAbsolute(cfg.wiki_dir)) {
+      if (this.root === '.') cfg.root = absDir;
+      cfg.wiki_dir = path.relative(cfg.root, path.join(absDir, cfg.wiki_dir)) || '.';
+    }
+    return this.applyWikiDir(cfg);
   }
   cfgOrFail(): Config | number {
     try {
@@ -1069,10 +1077,36 @@ register({
   },
 });
 
+const groups: Record<string, Record<string, string>> = {
+  agents: { install: 'install', skills: 'install-skills', mcp: 'mcp', list: 'agents', hook: 'hook' },
+};
+
+const sections: [string, string[]][] = [
+  ['Wiki pipeline', ['init', 'scan', 'diff', 'plan', 'compound', 'verify', 'status']],
+  ['Docs', ['discover-docs', 'ingest', 'conflicts']],
+  ['Query', ['search', 'get', 'context', 'anchor', 'routes', 'lint-tid', 'parity']],
+  ['Agents & automation (also: kb agents install|skills|mcp|list|hook)', ['install', 'install-skills', 'agents', 'mcp', 'hook']],
+  ['Evaluation', ['eval', 'bench']],
+];
+
 function mainUsage(a: App): void {
-  a.out('kb — compound mobile monorepo code (Android/iOS/HarmonyOS) + legacy docs into a code-anchored LLM Wiki.\n\nUsage: kb <command> [flags] [args]\n\nCommands:\n');
-  for (const c of commands) a.out(`  ${c.name.padEnd(14)} ${c.summary}\n`);
-  a.out('\nGlobal flags (every command): --json  --root <dir>  --config <file>  --wiki-dir <dir>  --quiet\n\nConventions: data → stdout, logs → stderr; exit 0 ok, 1 stale/verify failed,\n2 usage error, 3 internal error; writers support --dry-run; never interactive.\n\nRun "kb help <command>" for details.\n');
+  a.out('kb — compound mobile monorepo code (Android/iOS/HarmonyOS) + legacy docs into a code-anchored LLM Wiki.\n\nUsage: kb <command> [flags] [args]\n');
+  const shown = new Set<string>();
+  for (const [title, names] of sections) {
+    const cs = names.map((n) => commands.find((c) => c.name === n)).filter((c): c is Command => !!c);
+    if (!cs.length) continue;
+    a.out(`\n${title}:\n`);
+    for (const c of cs) {
+      shown.add(c.name);
+      a.out(`  ${c.name.padEnd(14)} ${c.summary}\n`);
+    }
+  }
+  const other = commands.filter((c) => !shown.has(c.name));
+  if (other.length) {
+    a.out('\nOther:\n');
+    for (const c of other) a.out(`  ${c.name.padEnd(14)} ${c.summary}\n`);
+  }
+  a.out('\nGlobal flags (every command): --json  --root <dir>  --config <file>  --wiki-dir <dir>  --quiet\n\nConventions: data → stdout, logs → stderr; exit 0 ok, 1 stale/verify failed,\n2 usage error, 3 internal error; writers support --dry-run; never interactive.\n\nTypical flow:\n  kb init && kb ingest --manifest <(kb discover-docs --json) && kb compound && kb verify\nRun "kb help <command>" for details.\n');
 }
 
 function cmdUsage(a: App, c: Command): void {
@@ -1098,8 +1132,16 @@ export async function run(argv: string[], out?: (s: string) => void): Promise<nu
     mainUsage(a);
     return ExitUsage;
   }
-  const name = argv[0]!;
-  const rest = [...pre, ...argv.slice(1)];
+  let name = argv[0]!;
+  let tail = argv.slice(1);
+  // command groups: `kb agents install|skills|mcp|list …` are the same commands as
+  // `kb install`, `kb install-skills`, `kb mcp`, `kb agents` (old names keep working)
+  const group = groups[name];
+  if (group && tail.length && group[tail[0]!]) {
+    name = group[tail[0]!]!;
+    tail = tail.slice(1);
+  }
+  const rest = [...pre, ...tail];
   if (name === '-h' || name === '--help' || name === 'help') {
     const c = commands.find((x) => x.name === rest[0]);
     if (c) cmdUsage(a, c);
