@@ -39,3 +39,105 @@ export function agentCommand(name: string, model = ''): string {
   if (!a.argv) throw new Error(`agent ${JSON.stringify(name)} has no supported non-interactive backend mode; use --llm-cmd '<your command>' (prompt on stdin, cwd = staging wiki)`);
   return a.argv(model).map(shellQuote).join(' ');
 }
+
+/** Token / cost usage an agent CLI reports on stdout (best effort). */
+export interface Usage {
+  input_tokens?: number;
+  output_tokens?: number;
+  cached_tokens?: number;
+  reasoning_tokens?: number;
+  cost_usd?: number;
+  turns?: number;
+  error?: string;
+}
+
+export function usageEmpty(u: Usage | undefined): boolean {
+  return !u || !(u.input_tokens || u.output_tokens || u.cached_tokens || u.reasoning_tokens || u.cost_usd || u.turns);
+}
+
+export function usageAdd(u: Usage, v: Usage | undefined): void {
+  if (!v) return;
+  for (const k of ['input_tokens', 'output_tokens', 'cached_tokens', 'reasoning_tokens', 'cost_usd', 'turns'] as const) {
+    const s = (u[k] ?? 0) + (v[k] ?? 0);
+    if (s) u[k] = s;
+  }
+}
+
+export function usageString(u: Usage | undefined): string {
+  if (!u || usageEmpty(u)) return '';
+  let s = `(in ${u.input_tokens ?? 0} / out ${u.output_tokens ?? 0} tok`;
+  if (u.cached_tokens) s += `, cached ${u.cached_tokens}`;
+  if (u.reasoning_tokens) s += `, reasoning ${u.reasoning_tokens}`;
+  if (u.cost_usd) s += `, $${u.cost_usd.toFixed(4)}`;
+  return s + ')';
+}
+
+type J = Record<string, unknown>;
+const jsonLines = (out: string): J[] =>
+  out
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => l.startsWith('{'))
+    .flatMap((l) => {
+      try {
+        return [JSON.parse(l) as J];
+      } catch {
+        return [];
+      }
+    });
+const num = (m: J | undefined, k: string) => (m && typeof m[k] === 'number' ? (m[k] as number) : 0);
+const sub = (m: J | undefined, k: string) => (m && m[k] && typeof m[k] === 'object' ? (m[k] as J) : undefined);
+const clean = (u: Usage): Usage => Object.fromEntries(Object.entries(u).filter(([, v]) => v !== 0 && v !== '' && v !== undefined)) as Usage;
+
+function parseClaude(out: string): Usage {
+  let u: Usage = {};
+  for (const m of jsonLines(out)) {
+    if (m.type !== 'result' && m.total_cost_usd === undefined) continue;
+    const us = sub(m, 'usage');
+    u = { input_tokens: num(us, 'input_tokens'), output_tokens: num(us, 'output_tokens'), cached_tokens: num(us, 'cache_read_input_tokens') + num(us, 'cache_creation_input_tokens'), cost_usd: num(m, 'total_cost_usd'), turns: num(m, 'num_turns') };
+    if (m.is_error === true) u.error = typeof m.result === 'string' && m.result ? m.result : String(m.subtype ?? '');
+  }
+  return clean(u);
+}
+
+function parseCodex(out: string): Usage {
+  const u: Usage = {};
+  for (const m of jsonLines(out)) {
+    if (m.type === 'turn.completed') {
+      const us = sub(m, 'usage');
+      u.input_tokens = (u.input_tokens ?? 0) + num(us, 'input_tokens');
+      u.cached_tokens = (u.cached_tokens ?? 0) + num(us, 'cached_input_tokens');
+      u.output_tokens = (u.output_tokens ?? 0) + num(us, 'output_tokens');
+      u.reasoning_tokens = (u.reasoning_tokens ?? 0) + num(us, 'reasoning_output_tokens');
+      u.turns = (u.turns ?? 0) + 1;
+    } else if (m.type === 'turn.failed') {
+      const e = sub(m, 'error')?.message;
+      if (typeof e === 'string' && e) u.error = e;
+    } else if (m.type === 'error' && typeof m.message === 'string' && m.message) u.error = m.message;
+  }
+  return clean(u);
+}
+
+function parseGemini(out: string): Usage {
+  const u: Usage = {};
+  let doc: J | undefined;
+  try {
+    doc = JSON.parse(out.trim()) as J;
+  } catch {
+    const ls = jsonLines(out);
+    doc = ls[ls.length - 1];
+  }
+  for (const mv of Object.values(sub(sub(doc, 'stats'), 'models') ?? {})) {
+    const tk = sub(mv as J, 'tokens');
+    u.input_tokens = (u.input_tokens ?? 0) + num(tk, 'prompt');
+    u.output_tokens = (u.output_tokens ?? 0) + num(tk, 'candidates');
+    u.cached_tokens = (u.cached_tokens ?? 0) + num(tk, 'cached');
+    u.reasoning_tokens = (u.reasoning_tokens ?? 0) + num(tk, 'thoughts');
+    u.turns = (u.turns ?? 0) + num(sub(mv as J, 'api'), 'totalRequests');
+  }
+  const e = sub(doc, 'error')?.message;
+  if (typeof e === 'string' && e) u.error = e;
+  return clean(u);
+}
+
+export const usageParsers: Record<string, (out: string) => Usage> = { claude: parseClaude, codex: parseCodex, gemini: parseGemini };

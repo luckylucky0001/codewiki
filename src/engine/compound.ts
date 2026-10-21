@@ -20,6 +20,7 @@ import { NavigationPage, SharedPage, routeIDs } from './anchors.js';
 import { ParityPage, computeParity, renderParity } from './parity.js';
 import { platformsOf, templateConcept, templateFeature, templateOverview } from './template.js';
 import { buildPrompt } from './prompt.js';
+import { type Usage, usageAdd, usageEmpty, usageParsers, usageString } from '../agents/agents.js';
 import { short, shortHead } from './graphutil.js';
 import { type DocEntry, allClaims, copyDocs, loadRawManifest, renderConflicts } from './docs.js';
 import { Checker, ClaimConflict, ClaimUnverifiable, ClaimVerified, claimJSON, type Claim } from './claims.js';
@@ -58,6 +59,7 @@ export interface TaskResult {
   reverted?: string[];
   error?: string;
   millis: number;
+  usage?: Usage;
 }
 
 export interface Result {
@@ -71,6 +73,7 @@ export interface Result {
   plan: Plan;
   diff: Diff;
   tasks: TaskResult[];
+  usage?: Usage;
   verify?: Report;
   published: boolean;
   changed: string[];
@@ -338,7 +341,7 @@ class TaskEnv {
       if (writer === 'template') this.runTemplate(t);
       else {
         if (this.o.agent) tr.agent = this.o.agent;
-        const reverted = this.runCmd(t);
+        const reverted = this.runCmd(t, tr);
         if (reverted.length) {
           tr.reverted = reverted;
           tr.status = 'violation';
@@ -348,9 +351,19 @@ class TaskEnv {
     } catch (e) {
       tr.status = 'failed';
       tr.error = (e as Error).message;
+      const rv = (e as { reverted?: string[] }).reverted;
+      if (rv?.length) tr.reverted = rv;
     }
     tr.millis = Date.now() - start;
-    return tr;
+    // Go field order: id, page, op, writer, agent, status, reverted, error, millis, usage
+    const o: TaskResult = { id: tr.id, page: tr.page, op: tr.op, writer: tr.writer } as TaskResult;
+    if (tr.agent) o.agent = tr.agent;
+    o.status = tr.status;
+    if (tr.reverted?.length) o.reverted = tr.reverted;
+    if (tr.error) o.error = tr.error;
+    o.millis = tr.millis;
+    if (tr.usage) o.usage = tr.usage;
+    return o;
   }
 
   runTemplate(t: Task): void {
@@ -449,7 +462,7 @@ class TaskEnv {
     writeJSON(path.join(this.staging, VerdictsFile), { version: 1, claims: templ.map(claimJSON) });
   }
 
-  runCmd(t: Task): string[] {
+  runCmd(t: Task, tr?: TaskResult): string[] {
     const cmdline = this.o.llmCmd || this.o.cfg.llm.cmd;
     const templ = t.kind === 'conflicts' ? this.templateClaims() : [];
     const pctx = { g: this.a.graph, f: this.a.facts, srcDir: this.a.scan.dir, staging: this.staging, head: this.head, platforms: this.platforms() };
@@ -471,6 +484,13 @@ class TaskEnv {
     if (this.o.kbPath) env.PATH = path.dirname(this.o.kbPath) + path.delimiter + (process.env.PATH ?? '');
     const r = spawnSync('sh', ['-c', cmdline], { cwd: this.staging, input: prompt, env, timeout, maxBuffer: 64 << 20 });
     fs.writeFileSync(path.join(tdir, t.id + '.log'), Buffer.concat([r.stdout ?? Buffer.alloc(0), r.stderr ?? Buffer.alloc(0)]));
+    const parse = this.o.agent ? usageParsers[this.o.agent] : undefined;
+    let usage: Usage | undefined;
+    if (parse) {
+      const u = parse((r.stdout ?? Buffer.alloc(0)).toString('utf8'));
+      if (!usageEmpty(u) || u.error) usage = u;
+    }
+    if (tr && usage) tr.usage = usage;
     const after = snapshot(this.staging);
     const allowed = new Set(t.write_set);
     const reverted: string[] = [];
@@ -485,7 +505,7 @@ class TaskEnv {
       } else fs.rmSync(p, { force: true });
     }
     if (r.error || r.status !== 0) {
-      const why = r.error ? r.error.message : `exit status ${r.status}`;
+      const why = (r.error ? r.error.message : `exit status ${r.status}`) + (usage?.error ? ': ' + usage.error : '');
       throw Object.assign(new Error(`llm command failed: ${why} (see ${path.join(tdir, t.id + '.log')})`), { reverted });
     }
     if (t.kind === 'conflicts') this.mergeVerdicts(templ);
@@ -581,10 +601,12 @@ export async function compound(o: Options): Promise<Result> {
         log(`  task ${t.id} failed (${tr.error}); falling back to template writer`);
         const tr2 = env.run(t, 'template');
         tr2.error = 'fallback after: ' + tr.error;
+        if (tr.usage) tr2.usage = tr.usage;
         tr = tr2;
       }
       r.tasks.push(tr);
-      log(`  [${tr.status}] ${t.op.padEnd(8)} ${t.page.padEnd(34)} ${tr.writer} ${tr.error ?? ''}`);
+      if (tr.usage) usageAdd((r.usage ??= {}), tr.usage);
+      log(`  [${tr.status}] ${t.op.padEnd(8)} ${t.page.padEnd(34)} ${tr.writer} ${tr.error ?? ''}${tr.usage && !usageEmpty(tr.usage) ? ' ' + usageString(tr.usage) : ''}`);
     }
     env.renderClaims();
     fixIndex(staging);

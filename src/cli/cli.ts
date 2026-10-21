@@ -10,7 +10,7 @@ import { factsJSON } from '../facts/render.js';
 import { symbolJSON, parseFailureJSON, getSym } from '../model.js';
 import type { Plan } from '../engine/plan.js';
 import { type Result, analyze, compound, expectedFacts, gitHead, loadGraph, today, verifyRequirements } from '../engine/compound.js';
-import { agentCommand, registry } from '../agents/agents.js';
+import { agentCommand, registry, usageEmpty, usageString } from '../agents/agents.js';
 import { agentRows, installAgents, parseAgents } from './install.js';
 import { serveMCP } from '../mcp/server.js';
 import { formatEval, runEval } from '../engine/eval.js';
@@ -122,7 +122,8 @@ function reportRun(a: App, r: Result): number {
     const llm = r.llm + (r.agent && r.llm !== 'template' ? ' (agent ' + r.agent + ')' : '');
     a.out(`${r.kind} ${r.run_id}: base ${short(r.base)} → head ${r.head ? short(r.head) : '(no git)'}, mode ${r.mode}, llm ${llm}\n`);
     printPlan(a, r.plan);
-    for (const t of r.tasks) a.out(`  task ${t.id.padEnd(28)} ${t.status.padEnd(8)} ${t.writer} ${t.error ?? ''}\n`);
+    for (const t of r.tasks) a.out(`  task ${t.id.padEnd(28)} ${t.status.padEnd(8)} ${t.writer} ${t.error ?? ''}${t.usage && !usageEmpty(t.usage) ? ' ' + usageString(t.usage) : ''}\n`);
+    if (r.usage && !usageEmpty(r.usage)) a.out(`agent usage: ${usageString(r.usage)}\n`);
     a.out(`changed files: ${r.changed.length}\n`);
     for (const c of r.changed) a.out(`  ${c}\n`);
     if (r.verify) {
