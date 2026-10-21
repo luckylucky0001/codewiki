@@ -691,6 +691,35 @@ function identifierRules(k: Checker, c: Claim, out: RuleOut): void {
 }
 const builtinTypesLower = new Set(['javascript', 'typescript', 'github', 'gitlab', 'macos', 'ipados', 'watchos', 'tvos', 'cocoapods', 'swiftui', 'uikit', 'appkit', 'iphone', 'ipad', 'youtube', 'testflight', 'playstore', 'appstore']);
 
+/** "Never use android.util.Log" / "Do not import X": the forbidden package must not be imported. */
+function forbiddenImports(k: Checker, c: Claim, out: RuleOut): void {
+  for (const m of c.text.matchAll(/\b(?:[Nn]ever|[Dd]o not|[Dd]on't|[Mm]ust not|[Ss]hould not)\s+(?:use|import)\s+`?([a-z][\w]*(?:\.[A-Za-z_]\w*)+)`?/g)) {
+    const pkg = m[1]!;
+    const hits: string[] = [];
+    for (const [f, fi] of Object.entries(k.G.files)) if ((fi.imports ?? []).some((raw) => {
+        const i = raw.slice(raw.indexOf('|') + 1); // imports are recorded as "Alias|full.path"
+        return i === pkg || i.startsWith(pkg + '.');
+      })) hits.push(f);
+    hits.sort(cmpStr);
+    if (hits.length) conflictf(out, `文档禁止使用 \`${pkg}\`，但 ${hits.length} 个文件仍 import 它：${hits.slice(0, 3).join(', ')}`);
+    else verifiedf(out, `代码中没有 import \`${pkg}\``);
+  }
+}
+
+/** "add the harInit interface … see feature/x/Index.ets": the example file exists, but the identifier
+ * the sentence is about appears nowhere in the code any more. */
+function referencedExample(k: Checker, c: Claim, out: RuleOut): void {
+  const refs = [...c.text.matchAll(/(?:参考|可参考|see|refer to|for example)\s*[:：]?\s*`?([\w./-]+\.\w{1,6})`?/gi)].map((m) => m[1]!);
+  if (!refs.length) return;
+  const ix = repoIndex(k);
+  if (!refs.some((r) => pathExists(ix, r.replace(/^\.\//, ''), true))) return;
+  const idents = [...c.text.replace(/[\w./-]+\.\w{1,6}/g, ' ').matchAll(/(?:^|[^A-Za-z0-9_])([a-z]+[A-Z][A-Za-z0-9]*)(?![A-Za-z0-9_])/g)].map((m) => m[1]!);
+  for (const id of new Set(idents)) {
+    if (id.length < 6 || k.findSymbols(id).length || k.tokenSearch(id) || ix.build.includes(alnum(id))) continue;
+    conflictf(out, `文档以 \`${refs[0]}\` 为例说明 \`${id}\`，但代码中已没有 \`${id}\``);
+  }
+}
+
 /** Rules for ordinary prose claims (any style): stale paths, counts, dependencies, commands, identifiers. */
 export function proseRules(k: Checker, c: Claim): RuleOut {
   const out: RuleOut = { conflict: false, verified: false, evidence: [], anchors: [] };
@@ -698,6 +727,8 @@ export function proseRules(k: Checker, c: Claim): RuleOut {
   countRules(k, c, out);
   dependencyRules(k, c, out);
   commandRules(k, c, out);
+  forbiddenImports(k, c, out);
+  referencedExample(k, c, out);
   if (c.style === 'prose') identifierRules(k, c, out);
   return out;
 }

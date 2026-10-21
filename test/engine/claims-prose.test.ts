@@ -66,6 +66,9 @@ describe('prose claim checks', () => {
     expect(check('The library relies on Node.js APIs for streams.').status).not.toBe('conflict');
     expect(check('The app uses Combine for state.').status).not.toBe('conflict');
   });
+  it('forbidden imports and stale examples', () => {
+    expect(check('Never use `java.util.logging` in app code.').status).toBe('verified');
+  });
   it('module counts: exact, or within tolerance with a qualifier', () => {
     expect(check('The app is split into 2 modules (Package.swift).').status).toBe('verified');
     expect(check('The app is split into 9 modules (Package.swift).').status).toBe('conflict');
