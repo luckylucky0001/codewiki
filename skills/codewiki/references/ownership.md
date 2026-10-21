@@ -19,7 +19,8 @@ kb docs stale-specs               # Draft too old, Implemented never Verified, I
 kb docs adr [--write]             # ADR proposals from trusted specs the code verifies (new files only)
 kb docs debt [--write]            # TODO/FIXME/HACK (≥4 words) → docs/tech-debt.md TD-NNN rows
 kb links [paths…]                 # broken links / backticked paths / Source lines (report only)
-kb verify --docs                  # owned entries whose Source vanished + broken links
+kb verify --docs [--strict]       # fails on kb-owned refs (vanished Source, broken links in entries);
+                                  # broken links in human text = human_review_candidates (exit 0; --strict fails)
 ```
 
 Exit codes: `kb docs compound` 1 when a file needs review or a written file has broken links.

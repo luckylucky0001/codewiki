@@ -158,6 +158,6 @@ frontmatter：kb 只拥有 `last_compound_scan`、`compound_scan_mode`、`compou
 | `kb docs adr [--write] [--json]` | ADR 提案；默认 dry-run，`--write` 才创建文件（确认 = 再次带 `--write` 运行或在 PR 中审阅） | 0 |
 | `kb docs debt [--write] [--json]` | 技术债登记提案；默认 dry-run | 0 |
 | `kb links [paths...] [--docs] [--wiki] [--json]` | 链接检查；`--exit-code-broken 3` 兼容 SFK | 0 / 1 |
-| `kb verify --docs` | 额外校验 docs 中 owned 条目的锚点 | 0 / 1 |
+| `kb verify --docs [--strict]` | 只校验 kb 拥有的内容（条目的 Source、条目 / 索引行 / kb 块里的链接）。人写正文中的坏链作为 `human_review_candidates` 报告，不算失败；加 `--strict` 才算失败 | 0 / 1 |
 
 kb 从不交互：所有"需要用户确认"的动作都默认 dry-run，确认方式是带 `--write` 重跑或在 CI 中通过 PR 审阅。
