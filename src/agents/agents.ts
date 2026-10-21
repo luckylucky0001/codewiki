@@ -28,8 +28,8 @@ export const registry: Record<string, Adapter> = {
     name: 'gemini', display: 'Gemini CLI', instructions: 'GEMINI.md', skillsDir: '.agents/skills',
     argv: (m) => ['gemini', '--skip-trust', '--approval-mode', 'auto_edit', '--output-format', 'json', ...(m ? ['--model', m] : []), '-p', 'Complete the codewiki task described above. Do not ask questions.'],
   },
-  cursor: { name: 'cursor', display: 'Cursor', instructions: 'AGENTS.md', skillsDir: '.cursor/skills' },
-  copilot: { name: 'copilot', display: 'GitHub Copilot', instructions: 'AGENTS.md', skillsDir: '.github/skills' },
+  cursor: { name: 'cursor', display: 'Cursor', instructions: '.cursor/rules/codewiki.mdc', skillsDir: '' },
+  copilot: { name: 'copilot', display: 'GitHub Copilot', instructions: '.github/copilot-instructions.md', skillsDir: '' },
   generic: { name: 'generic', display: 'any AGENTS.md-aware agent', instructions: 'AGENTS.md', skillsDir: '.agents/skills' },
 };
 

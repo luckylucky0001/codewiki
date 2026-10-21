@@ -9,7 +9,9 @@ import { extractFacts } from '../facts/facts.js';
 import { factsJSON } from '../facts/render.js';
 import { symbolJSON, parseFailureJSON, getSym } from '../model.js';
 import { type Result, analyze, compound, expectedFacts, gitHead, loadGraph, today, verifyRequirements } from '../engine/compound.js';
-import { agentCommand } from '../agents/agents.js';
+import { agentCommand, registry } from '../agents/agents.js';
+import { agentRows, installAgents, parseAgents } from './install.js';
+import { serveMCP } from '../mcp/server.js';
 import { fixIndex, subIndexesCurrent, verifyWiki, type Report } from '../wiki/verify.js';
 import { appendLog, initWiki, renderIndex } from '../wiki/layout.js';
 import { type Page, findPage, loadPages, writeFileAtomic } from '../wiki/page.js';
@@ -42,7 +44,9 @@ class App {
   config = '';
   wikiDir = '';
   quiet = false;
-  out = (s: string) => process.stdout.write(s);
+  out: (s: string) => void = (s: string) => {
+    process.stdout.write(s);
+  };
   log = (s: string) => {
     if (!this.quiet) process.stderr.write(s + '\n');
   };
@@ -897,6 +901,88 @@ register({
   },
 });
 
+register({
+  name: 'install', usage: '--agent claude,codex,gemini,cursor,copilot,generic|all [--target repo] [--mcp] [--dry-run]',
+  summary: 'make coding agents use the wiki: instructions block, the codewiki skill and (with --mcp) MCP registration per agent',
+  flags: {
+    agent: ['string', 'comma-separated agents, or all', ''], target: ['string', 'repository to install into (default --root)', ''], mcp: ['bool', "also register the kb MCP server in the agent's project config", false],
+    'mcp-root': ['string', 'value for kb mcp --root in MCP configs (default: absolute target path)', ''], 'no-skills': ['bool', 'do not copy skills', false], 'dry-run': ['bool', 'report what would change; write nothing', false],
+  },
+  run(a, f, args) {
+    let ads;
+    try {
+      ads = parseAgents(String(f.agent || '') || (args.length === 1 ? args[0]! : ''));
+    } catch (e) {
+      return a.fail(ExitUsage, e as Error);
+    }
+    const target = path.resolve(String(f.target || '') || a.root);
+    if (!fs.existsSync(target) || !fs.statSync(target).isDirectory()) return a.fail(ExitUsage, '--target must be an existing directory: ' + target);
+    const dry = !!f['dry-run'];
+    const [res, notes] = installAgents(target, ads, { dry, skills: !f['no-skills'], mcp: !!f.mcp, mcpRoot: String(f['mcp-root'] || '') || target });
+    a.emit({ actions: res, dry_run: dry, notes, ok: true, target }, () => {
+      for (const x of res) {
+        if (x.kind === 'skill' && x.action === 'unchanged') continue;
+        a.out(`${x.action.padEnd(9)} ${x.kind.padEnd(12)} ${x.agent.padEnd(8)} ${x.path}${x.note ? ' — ' + x.note : ''}\n`);
+      }
+      for (const n of notes) a.out('note: ' + n + '\n');
+    });
+    return ExitOK;
+  },
+});
+
+register({
+  name: 'install-skills', usage: '<target-repo> [--dry-run]', summary: 'alias of kb install --agent claude (+ AGENTS.md block): the codewiki skill into <target>/.claude/skills',
+  flags: { 'dry-run': ['bool', 'list files only', false], 'no-agents-md': ['bool', 'do not write the codewiki block into AGENTS.md / CLAUDE.md', false] },
+  run(a, f, args) {
+    if (args.length !== 1) return a.fail(ExitUsage, 'usage: kb install-skills <target-repo>');
+    const target = path.resolve(args[0]!);
+    const dry = !!f['dry-run'];
+    const [res] = installAgents(target, [registry.claude!], { dry, skills: true, mcp: false, mcpRoot: target, noInstructions: true });
+    const pointers: string[] = [];
+    if (!f['no-agents-md']) {
+      for (const ag of ['generic', 'claude']) {
+        const [r2] = installAgents(target, [registry[ag]!], { dry, skills: false, mcp: false, mcpRoot: target });
+        for (const x of r2) if (x.action !== 'unchanged') pointers.push(path.join(target, x.path));
+      }
+    }
+    const files = res.filter((x) => x.kind === 'skill').map((x) => path.join(target, x.path));
+    a.emit({ agent_pointers: pointers, files, ok: true, target: path.join(target, '.claude', 'skills') }, () => {
+      for (const x of files) a.out(x + '\n');
+      for (const x of pointers) a.out(x + ' (codewiki block)\n');
+    });
+    return ExitOK;
+  },
+});
+
+register({
+  name: 'agents', usage: '[name] [--model m]', summary: 'list supported coding agents: backend command line, consumer files',
+  flags: { model: ['string', 'model passed to the adapter', ''] },
+  run(a, f, args) {
+    let names = Object.keys(registry);
+    if (args.length === 1) {
+      const n = args[0]!.toLowerCase();
+      if (!registry[n]) return a.fail(ExitUsage, `unknown agent ${JSON.stringify(args[0])} (known: ${names.join(', ')})`);
+      names = [n];
+    }
+    const rows = agentRows(names, String(f.model || ''));
+    a.emit({ agents: rows, ok: true }, () => {
+      if (rows.length === 1 && rows[0]!.backend_command) {
+        a.out(rows[0]!.backend_command + '\n');
+        return;
+      }
+      for (const r of rows) a.out(`${r.name} (${r.display})\n  backend  ${r.backend_command ?? '— (use --llm-cmd)'}\n  consumer ${r.instructions}${r.skills_dir ? ', ' + r.skills_dir + '/' : ''}${r.mcp_config ? ', MCP ' + r.mcp_config : ''}\n`);
+    });
+    return ExitOK;
+  },
+});
+
+register({
+  name: 'mcp', usage: '[--root repo]', summary: 'stdio MCP server exposing search/get/context/anchor/status/parity/conflicts/routes as tools',
+  async run(a) {
+    return serveMCP((argv, out) => run(argv, out), path.resolve(a.root), a.config, Version);
+  },
+});
+
 function mainUsage(a: App): void {
   a.out('kb — compound mobile monorepo code (Android/iOS/HarmonyOS) + legacy docs into a code-anchored LLM Wiki.\n\nUsage: kb <command> [flags] [args]\n\nCommands:\n');
   for (const c of commands) a.out(`  ${c.name.padEnd(14)} ${c.summary}\n`);
@@ -909,8 +995,9 @@ function cmdUsage(a: App, c: Command): void {
   a.out('  --json / --root / --config / --wiki-dir / --quiet  (global)\n');
 }
 
-export async function run(argv: string[]): Promise<number> {
+export async function run(argv: string[], out?: (s: string) => void): Promise<number> {
   const a = new App();
+  if (out) a.out = out;
   if (!argv.length) {
     mainUsage(a);
     return ExitUsage;
