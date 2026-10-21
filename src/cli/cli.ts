@@ -10,15 +10,18 @@ import { factsJSON } from '../facts/render.js';
 import { symbolJSON, parseFailureJSON, getSym } from '../model.js';
 import { type Result, analyze, compound, expectedFacts, gitHead, loadGraph, today, verifyRequirements } from '../engine/compound.js';
 import { agentCommand } from '../agents/agents.js';
-import { fixIndex, verifyWiki } from '../wiki/verify.js';
-import { appendLog, initWiki } from '../wiki/layout.js';
-import { findPage, loadPages, renderPage, writeFileAtomic } from '../wiki/page.js';
+import { fixIndex, subIndexesCurrent, verifyWiki, type Report } from '../wiki/verify.js';
+import { appendLog, initWiki, renderIndex } from '../wiki/layout.js';
+import { type Page, findPage, loadPages, writeFileAtomic } from '../wiki/page.js';
 import { cmpStr, goJSON } from '../util/go.js';
 import { short } from '../engine/graphutil.js';
 import { type DocEntry, type DocsManifest, discoverDocs, docJSON, manifestJSON } from '../engine/docs.js';
 import { type Claim, claimJSON, extractClaims } from '../engine/claims.js';
 import type { Requirement } from '../model.js';
-import { computeParity } from '../engine/parity.js';
+import { computeParity, renderParity } from '../engine/parity.js';
+import zlib from 'node:zlib';
+import { treeStamp } from '../scan/scan.js';
+import { fingerprint } from '../extract/fingerprint.js';
 
 export const Version = '0.2.0-ts';
 const ExitOK = 0, ExitStale = 1, ExitUsage = 2, ExitInternal = 3;
@@ -295,6 +298,11 @@ register({
   },
 });
 
+
+
+
+
+
 register({
   name: 'verify', usage: '[--fix-index]', summary: 'CI gate: anchors match HEAD, symbols exist, no dead links/orphans, index complete, facts fresh',
   flags: { 'fix-index': ['bool', 'regenerate index.md/llms.txt before verifying', false], 'dry-run': ['bool', 'with --fix-index: show what would change', false] },
@@ -302,120 +310,199 @@ register({
     const cfg = a.cfgOrFail();
     if (typeof cfg === 'number') return cfg;
     const wp = wikiPath(cfg);
-    if (f['fix-index'] && !f['dry-run']) {
-      fixIndex(wp);
-      appendLog(wp, today(), 'fix-index', 'index.md, llms.txt', []);
+    if (!fs.existsSync(wp)) return a.fail(ExitUsage, `wiki dir ${cfg.wiki_dir} not found (run kb init)`);
+    if (f['fix-index']) {
+      const [pages] = loadPages(wp);
+      let cur = '';
+      try {
+        cur = fs.readFileSync(path.join(wp, 'index.md'), 'utf8');
+      } catch {
+        cur = '';
+      }
+      const same = cur === renderIndex(pages) && subIndexesCurrent(wp, pages);
+      if (f['dry-run']) a.log(`fix-index (dry-run): index would ${same ? 'stay unchanged' : 'change'}`);
+      else if (!same) {
+        fixIndex(wp);
+        appendLog(wp, today(), 'fix-index', 'regenerated index.md', []);
+        a.log('index.md regenerated');
+      }
     }
-    const res = await scanRepo(cfg);
-    const facts = extractFacts(cfg, res);
-    const rep = verifyWiki(wp, res.graph, expectedFacts(cfg, res.graph, facts));
-    verifyRequirements(wp, res.graph, rep);
-    a.emit(rep, () => {
-      for (const e of rep.errors) a.out(`ERROR ${e.code} ${e.page ?? ''} ${e.sym ?? ''} ${e.detail}\n`);
-      for (const w of rep.warnings) a.out(`warn  ${w.code} ${w.page ?? ''} ${w.detail}\n`);
-      a.out(`verify ${rep.ok ? 'PASS' : 'FAIL'}: ${rep.pages} pages, ${rep.anchors} anchors, ${rep.errors.length} errors, ${rep.warnings.length} warnings\n`);
-    });
+    const rep = await verifyNow(cfg);
+    a.emit(rep, () => printVerify(a, rep));
     return rep.ok ? ExitOK : ExitStale;
   },
 });
+
+async function verifyNow(cfg: Config): Promise<Report> {
+  const res = await scanRepo(cfg);
+  const facts = extractFacts(cfg, res);
+  const rep = verifyWiki(wikiPath(cfg), res.graph, expectedFacts(cfg, res.graph, facts));
+  verifyRequirements(wikiPath(cfg), res.graph, rep);
+  return rep;
+}
+
+function printVerify(a: App, rep: Report): void {
+  a.out(`verify ${rep.ok ? 'PASS' : 'FAIL'}: ${rep.pages} pages, ${rep.anchors} anchors, ${rep.errors.length} errors, ${rep.warnings.length} warnings\n`);
+  rep.errors.some((e, i) => {
+    if (i >= 40) {
+      a.out(`  … ${rep.errors.length - i} more\n`);
+      return true;
+    }
+    a.out(`  ${e.code} ${e.page ?? ''} ${e.sym ?? ''} ${e.detail}\n`);
+    return false;
+  });
+}
 
 register({
   name: 'status', usage: '', summary: 'list stale pages (anchor hash differs from HEAD); exit 1 if any',
   async run(a) {
     const cfg = a.cfgOrFail();
     if (typeof cfg === 'number') return cfg;
-    const res = await scanRepo(cfg);
-    const rep = verifyWiki(wikiPath(cfg), res.graph);
-    const st = { ok: rep.stale_pages.length === 0, stale_pages: rep.stale_pages, head: gitHead(cfg.root) };
-    a.emit(st, () => {
-      if (!rep.stale_pages.length) a.out('all pages current\n');
-      for (const p of rep.stale_pages) a.out('stale ' + p + '\n');
+    const rep = await verifyNow(cfg);
+    const m = new Map<string, string[]>();
+    const reason = new Map<string, string>();
+    for (const e of rep.errors) {
+      if (e.code.startsWith('E_ANCHOR') || ['E_REQ_ANCHOR_STALE', 'E_STATUS_STALE', 'E_FACTS_STALE'].includes(e.code)) {
+        const pg = e.page ?? '';
+        if (e.sym) m.set(pg, [...(m.get(pg) ?? []), e.sym]);
+        else if (!m.has(pg)) m.set(pg, []);
+        reason.set(pg, e.code);
+      }
+    }
+    const out = [...m.keys()].sort(cmpStr).map((pg) => ({ page: pg, reason: reason.get(pg)!, symbols: m.get(pg)! }));
+    let st: Record<string, unknown> = {};
+    try {
+      st = JSON.parse(fs.readFileSync(path.join(wikiPath(cfg), '.kb', 'state.json'), 'utf8'));
+    } catch {
+      st = {};
+    }
+    const head = gitHead(cfg.root);
+    a.emit({ head, ok: out.length === 0, stale: out, state: Object.fromEntries(Object.entries(st).sort((x, y) => cmpStr(x[0], y[0]))) }, () => {
+      a.out(`head ${head ? short(head) : '(no git)'}, last compound ${short(String(st.last_sha ?? ''))}\n`);
+      if (!out.length) a.out('all pages current\n');
+      for (const x of out) {
+        if (x.reason === 'E_FACTS_STALE') a.out(`stale ${x.page} (generated facts out of date)\n`);
+        else a.out(`stale ${x.page} (${x.symbols.length} anchors: ${x.symbols.map((y) => y.slice(y.lastIndexOf('#') + 1)).join(', ')})\n`);
+      }
     });
-    return st.ok ? ExitOK : ExitStale;
+    return out.length ? ExitStale : ExitOK;
   },
 });
 
 register({
   name: 'anchor', usage: '<symbol-id...>', summary: 'print the current hash of symbols (for page frontmatter)',
-  async run(a, _f, pos) {
-    if (!pos.length) return a.fail(ExitUsage, 'usage: kb anchor <symbol-id...>');
-    let g = process.env.KB_GRAPH ? (() => {
-      try {
-        const x = JSON.parse(fs.readFileSync(process.env.KB_GRAPH!, 'utf8'));
-        return x;
-      } catch {
-        return null;
-      }
-    })() : null;
+  async run(a, _f, args) {
+    if (!args.length) return a.fail(ExitUsage, 'usage: kb anchor <symbol-id...>');
+    let g = process.env.KB_GRAPH ? loadGraph(process.env.KB_GRAPH) : null;
     if (!g) {
+      if (a.root === '.' && process.env.KB_ROOT) a.root = process.env.KB_ROOT;
       const cfg = a.cfgOrDetect();
       if (typeof cfg === 'number') return cfg;
       g = (await scanRepo(cfg)).graph;
     }
-    let code = ExitOK;
-    const out = pos.map((id) => {
+    let missing = 0;
+    const out = args.map((id) => {
       const s = getSym(g, id);
-      if (!s) code = ExitStale;
-      return { sym: id, hash: s?.hash ?? '', found: !!s };
+      if (!s) {
+        missing++;
+        return { sym: id, hash: '' };
+      }
+      return { sym: s.id, hash: s.hash };
     });
-    a.emit(out, () => out.forEach((x) => a.out(x.found ? `- sym: ${x.sym}\n  hash: ${x.hash}\n` : `# not found: ${x.sym}\n`)));
-    return code;
+    a.emit({ anchors: out, ok: missing === 0 }, () => {
+      for (const x of out) a.out(x.hash ? `  - sym: ${x.sym}\n    hash: ${x.hash}\n` : `${x.sym} NOT_FOUND\n`);
+    });
+    return missing ? ExitStale : ExitOK;
   },
 });
 
+function frontJSON(f: Page['front']): Record<string, unknown> {
+  const o: Record<string, unknown> = { id: f.id, title: f.title };
+  if (f.kind) o.kind = f.kind;
+  if (f.platforms?.length) o.platforms = f.platforms;
+  if (f.routes?.length) o.routes = f.routes;
+  if (f.sources?.length) o.sources = f.sources;
+  if (f.source_commit) o.source_commit = f.source_commit;
+  if (f.status) o.status = f.status;
+  if (f.generated) o.generated = true;
+  return o;
+}
+
 register({
   name: 'get', usage: '<page-id|path>', summary: 'print one page (frontmatter + body)',
-  run(a, _f, pos) {
+  run(a, _f, args) {
+    if (args.length !== 1) return a.fail(ExitUsage, 'usage: kb get <page-id>');
     const cfg = a.cfgOrFail();
     if (typeof cfg === 'number') return cfg;
-    if (!pos.length) return a.fail(ExitUsage, 'usage: kb get <page-id|path>');
     const [pages] = loadPages(wikiPath(cfg));
-    const p = findPage(pages, pos[0]!);
-    if (!p) return a.fail(ExitStale, `page not found: ${pos[0]}`);
-    a.emit({ path: p.path, front: p.front, body: p.body }, () => a.out(renderPage(p)));
+    const p = findPage(pages, args[0]!);
+    if (!p) return a.fail(ExitUsage, `page ${JSON.stringify(args[0])} not found`);
+    const raw = fs.readFileSync(path.join(wikiPath(cfg), p.path), 'utf8');
+    a.emit({ body: p.body, front: frontJSON(p.front), path: p.path }, () => a.out(raw));
     return ExitOK;
   },
 });
+
+function snippet(body: string, term: string): string {
+  // byte window like the Go version (60 bytes before, 80 after, widened to rune boundaries)
+  const lb = Buffer.from(body.toLowerCase(), 'utf8');
+  const bb = Buffer.from(body, 'utf8');
+  const i = lb.indexOf(Buffer.from(term, 'utf8'));
+  if (i < 0) return '';
+  let lo = Math.max(0, i - 60), hi = Math.min(bb.length, i + 80);
+  while (lo > 0 && (bb[lo]! & 0xc0) === 0x80) lo--;
+  while (hi < bb.length && (bb[hi]! & 0xc0) === 0x80) hi++;
+  return compactWS(bb.subarray(lo, hi).toString('utf8'));
+}
+const compactWS = (s: string) => s.split(/\s+/).filter(Boolean).join(' ');
 
 register({
   name: 'search', usage: '<query> [--limit n]', summary: 'full-text search over pages, facts and symbol names',
   flags: { limit: ['int', 'max results', 10] },
-  run(a, f, pos) {
+  run(a, f, args) {
+    if (!args.length) return a.fail(ExitUsage, 'usage: kb search <query>');
     const cfg = a.cfgOrFail();
     if (typeof cfg === 'number') return cfg;
-    const q = pos.join(' ').toLowerCase();
-    if (!q) return a.fail(ExitUsage, 'usage: kb search <query>');
-    const [pages] = loadPages(wikiPath(cfg));
+    const q = args.join(' ').toLowerCase();
     const terms = q.split(/\s+/).filter(Boolean);
-    const hits = pages
-      .map((p) => {
-        const text = (p.front.title + ' ' + p.path + ' ' + p.body).toLowerCase();
-        const score = terms.reduce((n, t) => n + (text.split(t).length - 1) + (p.front.title.toLowerCase().includes(t) ? 5 : 0), 0);
-        return { path: p.path, title: p.front.title, score };
-      })
-      .filter((h) => h.score > 0)
-      .sort((x, y) => y.score - x.score || cmpStr(x.path, y.path))
-      .slice(0, Number(f.limit) || 10);
-    a.emit({ query: q, results: hits }, () => hits.forEach((h) => a.out(`${h.path}  ${h.title}  (${h.score})\n`)));
+    const [pages] = loadPages(wikiPath(cfg));
+    let hits: Record<string, unknown>[] = [];
+    for (const p of pages) {
+      const title = (p.front.title + ' ' + p.front.id + ' ' + (p.front.routes ?? []).join(' ')).toLowerCase();
+      const body = p.body.toLowerCase();
+      let score = 0;
+      for (const t of terms) {
+        if (title.includes(t)) score += 5;
+        score += Math.min(body.split(t).length - 1, 10);
+      }
+      if (!score) continue;
+      if (p.path.startsWith('facts/')) score *= 0.6;
+      const h: Record<string, unknown> = { kind: 'page', id: p.front.id };
+      if (p.front.title) h.title = p.front.title;
+      h.path = p.path;
+      h.score = score;
+      const sn = snippet(p.body, terms[0]!);
+      if (sn) h.snippet = sn;
+      hits.push(h);
+    }
+    const g = loadGraph(path.join(wikiPath(cfg), '.kb', 'graph.json'));
+    for (const s of g?.symbols ?? []) {
+      const id = s.qual.toLowerCase();
+      const sc = terms.reduce((n, t) => n + (id.includes(t) ? 2 : 0), 0);
+      if (sc > 0) hits.push({ kind: 'symbol', id: s.id, ...(s.signature ? { title: s.signature } : {}), path: `${s.file}:${s.start_line}`, score: sc });
+    }
+    hits.sort((x, y) => Number(y.score) - Number(x.score));
+    hits = hits.slice(0, Number(f.limit) || 10);
+    a.emit({ query: q, results: hits }, () => {
+      for (const h of hits) {
+        a.out(`${Number(h.score).toFixed(1).padStart(5)} ${String(h.kind).padEnd(6)} ${h.id}  ${h.title ?? ''}\n`);
+        if (h.snippet) a.out(`       ${h.snippet}\n`);
+      }
+    });
     return ExitOK;
   },
 });
 
-register({
-  name: 'parity', usage: '[--strict]', summary: 'feature × platform matrix: routes, testIDs, APIs and constants that differ across platforms',
-  flags: { strict: ['bool', 'exit 1 when any gap or constant difference exists', false] },
-  async run(a, f) {
-    const cfg = a.cfgOrDetect();
-    if (typeof cfg === 'number') return cfg;
-    const res = await scanRepo(cfg);
-    const p = computeParity(res.graph, extractFacts(cfg, res), cfg.platforms.map((x) => x.name));
-    a.emit(p, () => {
-      for (const r of p.features) a.out(`${r.route_id}: ${p.platforms.map((pl) => `${pl}=${r.platforms[pl]!.route ? '✓' : '✗'}`).join(' ')}\n`);
-      a.out(`gaps: ${p.gaps}\n`);
-    });
-    return f.strict && p.gaps > 0 ? ExitStale : ExitOK;
-  },
-});
 
 register({
   name: 'ingest', usage: '<docs...> | --manifest docs.json [--kinds spec,adr] [--llm template|claude]', summary: 'copy docs to raw/docs, extract claims, verify them against code → pages/_conflicts.md + facts/requirements.json',
@@ -641,6 +728,172 @@ register({
       }
     });
     return ExitOK;
+  },
+});
+
+/** Query cache keyed on the tree stamp + kb build (wiki/.kb/cache/<name>.json.gz). */
+async function stampCached<T>(cfg: Config, name: string, compute: () => Promise<T>): Promise<T> {
+  const stamp = treeStamp(cfg) + '|' + fingerprint() + '|' + Version;
+  const p = path.join(wikiPath(cfg), '.kb', 'cache', name + '.json.gz');
+  try {
+    const snap = JSON.parse(zlib.gunzipSync(fs.readFileSync(p)).toString('utf8'));
+    if (snap.stamp === stamp && snap.value) return snap.value as T;
+  } catch {
+    /* miss */
+  }
+  const v = await compute();
+  try {
+    if (fs.statSync(wikiPath(cfg)).isDirectory()) writeFileAtomic(p, zlib.gzipSync(JSON.stringify({ stamp, value: v })));
+  } catch {
+    /* no wiki: do not persist */
+  }
+  return v;
+}
+
+const queryFacts = (cfg: Config) => stampCached(cfg, 'facts', async () => extractFacts(cfg, await scanRepo(cfg)));
+
+register({
+  name: 'lint-tid', usage: '[--strict] [--pages] [--top N]', summary: 'testID coverage per route and platform',
+  flags: { strict: ['bool', 'exit 1 when a testID is missing on some platform', false], pages: ['bool', 'per routed page: which testIDs its page source sets', false], top: ['int', 'the N most used testIDs with occurrence and file counts', 0] },
+  async run(a, fl) {
+    const cfg = a.cfgOrDetect();
+    if (typeof cfg === 'number') return cfg;
+    const f = await queryFacts(cfg);
+    const routes = f.routes ?? [], testids = f.testids ?? [];
+    if (fl.pages) {
+      let withT = 0;
+      const out = routes.map((r) => {
+        const seen = new Set<string>();
+        for (const t of testids) if (t.platform === r.platform && (t.file === r.file || (t.route_id && t.route_id === r.route_id))) seen.add(t.tid);
+        const tids = [...seen].sort(cmpStr);
+        if (tids.length) withT++;
+        return { platform: r.platform, route_id: r.route_id, file: r.file, testid_count: tids.length, testids: tids };
+      });
+      out.sort((x, y) => y.testid_count - x.testid_count || cmpStr(x.route_id, y.route_id));
+      a.emit({ pages: out, pages_with_testids: withT, routed_pages: out.length }, () => {
+        a.out(`${withT} of ${out.length} routed pages set testIDs in their page source\n`);
+        for (const p of out) if (p.testid_count) a.out(`  ${p.route_id.padEnd(28)} ${p.platform.padEnd(8)} ${String(p.testid_count).padStart(2)}  ${p.testids.join(', ')}  (${p.file})\n`);
+        a.out(`pages without testIDs: ${out.length - withT} (use --json for the full list)\n`);
+      });
+      return ExitOK;
+    }
+    const n = Number(fl.top) || 0;
+    if (n > 0) {
+      const by = new Map<string, { tid: string; count: number; files: Set<string>; plats: Set<string> }>();
+      for (const t of testids) {
+        if (t.tid.replace(/^["'`]+|["'`]+$/g, '') === '') continue;
+        let e = by.get(t.tid);
+        if (!e) by.set(t.tid, (e = { tid: t.tid, count: 0, files: new Set(), plats: new Set() }));
+        e.count++;
+        e.files.add(t.file);
+        e.plats.add(t.platform);
+      }
+      const out = [...by.values()].map((e) => ({ tid: e.tid, count: e.count, files: e.files.size, platforms: [...e.plats].sort(cmpStr) }));
+      out.sort((x, y) => y.count - x.count || cmpStr(x.tid, y.tid));
+      const topN = out.slice(0, n);
+      a.emit({ distinct_testids: by.size, top: topN }, () => {
+        a.out(`${by.size} distinct testIDs; top ${topN.length} by occurrences (count / files):\n`);
+        for (const t of topN) a.out(`  ${t.tid.padEnd(32)} ${String(t.count).padStart(4)}  ${String(t.files).padStart(3)} files  ${t.platforms.join(',')}\n`);
+      });
+      return ExitOK;
+    }
+    const plats = cfg.platforms.map((p) => p.name);
+    const matrix = new Map<string, Map<string, Set<string>>>();
+    const routePlats = new Map<string, Set<string>>();
+    for (const r of routes) routePlats.set(r.route_id, (routePlats.get(r.route_id) ?? new Set()).add(r.platform));
+    for (const t of testids) {
+      const rid = t.route_id || '(shared)';
+      const m = matrix.get(rid) ?? new Map<string, Set<string>>();
+      matrix.set(rid, m);
+      m.set(t.tid, (m.get(t.tid) ?? new Set()).add(t.platform));
+    }
+    const noTid = [...routePlats.keys()].sort(cmpStr).filter((rid) => !matrix.get(rid)?.size);
+    let gaps = 0;
+    const rows: { route_id: string; tid: string; present: Record<string, boolean>; missing: string[] }[] = [];
+    for (const rid of [...matrix.keys()].sort(cmpStr)) {
+      const m = matrix.get(rid)!;
+      for (const tid of [...m.keys()].sort(cmpStr)) {
+        const present = m.get(tid)!;
+        const missing: string[] = [];
+        for (const p of plats) {
+          if (rid !== '(shared)' && !routePlats.get(rid)?.has(p)) continue;
+          if (!present.has(p) && !(rid !== '(shared)' && matrix.get('(shared)')?.get(tid)?.has(p))) missing.push(p);
+        }
+        gaps += missing.length;
+        rows.push({ route_id: rid, tid, present: Object.fromEntries([...present].sort(cmpStr).map((x) => [x, true])), missing });
+      }
+    }
+    a.emit({ gaps, ok: gaps === 0, platforms: plats, routes_without_testids: noTid.length ? noTid : null, rows: rows.length ? rows : null }, () => {
+      a.out(`${'route_id'.padEnd(16)} ${'tid'.padEnd(18)} ${plats.join(' ')}\n`);
+      for (const r of rows) {
+        const cells = plats.map((p) => (r.present[p] ? '✓' : r.missing.includes(p) ? '✗' : '·').padEnd(p.length));
+        a.out(`${r.route_id.padEnd(16)} ${r.tid.padEnd(18)} ${cells.join(' ')}\n`);
+      }
+      a.out(`gaps: ${gaps}; routes without testIDs: [${noTid.join(' ')}]\n`);
+    });
+    return gaps > 0 && fl.strict ? ExitStale : ExitOK;
+  },
+});
+
+const moduleOf = (file: string) => {
+  const i = file.indexOf('/src/main/');
+  return i >= 0 ? file.slice(0, i) : path.posix.dirname(file);
+};
+
+register({
+  name: 'routes', usage: '[--dangling]', summary: 'all routes grouped by module (router_map / NavHost / Route enums) with counts, plus dangling buildFunctions',
+  flags: { dangling: ['bool', 'only list dangling router_map entries (buildFunction not found in pageSourceFile)', false] },
+  async run(a, fl) {
+    const cfg = a.cfgOrDetect();
+    if (typeof cfg === 'number') return cfg;
+    const f = await queryFacts(cfg);
+    const byMod = new Map<string, { module: string; count: number; routes: string[] }>();
+    for (const r of f.routes ?? []) {
+      const m = moduleOf(r.file);
+      const e = byMod.get(m) ?? { module: m, count: 0, routes: [] };
+      byMod.set(m, e);
+      e.count++;
+      e.routes.push(r.route_id);
+    }
+    const mods = [...byMod.values()].map((m) => ({ ...m, routes: m.routes.sort(cmpStr) }));
+    mods.sort((x, y) => y.count - x.count || cmpStr(x.module, y.module));
+    const dangling = (f.warnings ?? []).filter((w) => w.includes('buildFunction') && w.includes('not found'));
+    const only = !!fl.dangling;
+    const out: Record<string, unknown> = { dangling };
+    if (!only) {
+      out.modules = mods.length ? mods : null;
+      out.total = f.routes?.length ?? 0;
+    }
+    a.emit(out, () => {
+      if (!only) {
+        a.out(`${f.routes?.length ?? 0} routes in ${mods.length} modules\n`);
+        for (const m of mods) a.out(`  ${String(m.count).padStart(4)}  ${m.module}\n`);
+      }
+      a.out(`dangling buildFunctions: ${dangling.length}\n`);
+      for (const d of dangling) a.out(`  ⚠ ${d}\n`);
+    });
+    return ExitOK;
+  },
+});
+
+register({
+  name: 'parity', usage: '[--strict]', summary: 'feature × platform matrix: routes, testIDs, APIs and constants that differ across platforms',
+  flags: { strict: ['bool', 'exit 1 when any gap or constant difference exists', false] },
+  async run(a, fl) {
+    const cfg = a.cfgOrDetect();
+    if (typeof cfg === 'number') return cfg;
+    const plats = cfg.platforms.map((p) => p.name);
+    const p = await stampCached(cfg, 'parity', async () => {
+      const res = await scanRepo(cfg);
+      return computeParity(res.graph, extractFacts(cfg, res), plats);
+    });
+    a.emit(p, () => {
+      let md = renderParity(p);
+      const i = md.indexOf('# ');
+      if (i >= 0) md = md.slice(i);
+      a.out(md);
+    });
+    return p.gaps > 0 && fl.strict ? ExitStale : ExitOK;
   },
 });
 

@@ -53,11 +53,9 @@ export function repairTree(prev: ModuleTree, input: TreeInput, delta: GraphDelta
   const deletedNodes: string[] = [];
   const llmRoute: string[] = [];
   const prevKeys = new Set<string>();
-  const prevHolderLeaf = new Map<string, TreeNode>();
   walk(prev.root, (n) => {
     if (!n.key) return;
     prevKeys.add(n.key);
-    if (!n.children?.some((c) => c.kind === 'cluster')) prevHolderLeaf.set(n.key, n);
   });
   const renameMap = new Map(delta.renamed.map((r) => [r.from, r.to]));
   const addedSet = new Set(delta.added);

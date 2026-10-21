@@ -13,3 +13,5 @@ export * from './changes.js';
 export * from './runstate.js';
 export * from './contract.js';
 export * from './route.js';
+export * from './schema.js';
+export * from './docsstate.js';

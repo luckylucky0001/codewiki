@@ -64,7 +64,7 @@ export interface MergeInput {
   sourceCommit?: string;
   /** title for new files */
   title?: string;
-  /** agent instruction files etc.: never get frontmatter */
+  /** knowledge-layer file (<docs_root>/adr/**, <docs_root>/tech-debt.md, see isKnowledgeLayerFile): never gets frontmatter */
   knowledgeLayer?: boolean;
   /** managed only: existing owned entries whose source no longer exists are retagged [Pending] */
   sourceExists?: (path: string) => boolean;

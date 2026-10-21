@@ -1,6 +1,6 @@
 // File ownership state machine: disabled / new / managed / skeleton / adopted.
 import { parseHeadingLine } from './markers.js';
-import { findFrontmatter, isValidScanDate, splitLines, joinLines } from './text.js';
+import { findFrontmatter, isUnder, isValidScanDate, joinLines, normalizeRepoPath, splitLines } from './text.js';
 
 export type FileState = 'disabled' | 'new' | 'managed' | 'skeleton' | 'adopted';
 
@@ -73,15 +73,33 @@ export function lineBudget(state: FileState): number {
   return state === 'new' || state === 'skeleton' ? 150 : state === 'disabled' ? 0 : 100;
 }
 
-/** Knowledge-layer files (agent instruction files) never receive frontmatter. */
-export function isKnowledgeLayerFile(path: string): boolean {
-  const p = path.replace(/\\/g, '/');
+/**
+ * Knowledge-layer files (SFK): `<docs_root>/adr/**` and `<docs_root>/tech-debt.md`.
+ * They are written by their own generators (ADR proposals, debt register) and never get frontmatter.
+ */
+export function isKnowledgeLayerFile(path: string, docsRoots: string[]): boolean {
+  const p = normalizeRepoPath(path);
+  return docsRoots.some((r) => {
+    const root = normalizeRepoPath(r);
+    const pre = root === '' ? '' : root + '/';
+    return p === `${pre}tech-debt.md` || (p.startsWith(`${pre}adr/`) && p.length > pre.length + 4);
+  });
+}
+
+/**
+ * kb-install pointer files (agent instruction files). They are outside the docs
+ * scope and excluded from the docs inventory unless they live under a docs root,
+ * where they are ordinary human docs.
+ */
+export function isInstallPointerFile(path: string, docsRoots: string[] = []): boolean {
+  const p = normalizeRepoPath(path);
+  if (docsRoots.some((r) => isUnder(p, r))) return false;
   const b = p.slice(p.lastIndexOf('/') + 1);
   return (
     /^(AGENTS|CLAUDE|GEMINI|CODEX)\.md$/i.test(b) ||
     /^llms(-full)?\.txt$/i.test(b) ||
     /(^|\/)\.github\/copilot-instructions\.md$/.test(p) ||
     /(^|\/)\.cursor\/rules\//.test(p) ||
-    /^\.cursorrules$/.test(b)
+    b === '.cursorrules'
   );
 }
