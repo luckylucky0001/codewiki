@@ -1,0 +1,6 @@
+# Docs that no dimension covers. enabled: false = kb never touches the file.
+entries:
+  - target_root: .
+    output_path: docs/onboarding.md
+    target: 新人上手
+    enabled: false

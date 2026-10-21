@@ -17,6 +17,8 @@ import { formatEval, runEval } from '../engine/eval.js';
 import { postMergeScript, postReceiveScript } from './hook.js';
 import { runBench } from './bench.js';
 import { treeCommand } from './treecmd.js';
+import { adrProposals, debtProposals, docsCompound, docsStatus, linkCheck, staleSpecs, verifyDocs } from '../engine/docsflow.js';
+import * as D from '../docs/index.js';
 import { fixIndex, indexesCurrent, verifyWiki, type Report } from '../wiki/verify.js';
 import { verifyTree } from '../engine/hier.js';
 import { appendLog, initWiki, renderIndex } from '../wiki/layout.js';
@@ -339,11 +341,22 @@ register({
 
 register({
   name: 'verify', usage: '[--fix-index]', summary: 'CI gate: anchors match HEAD, symbols exist, no dead links/orphans, index complete, facts fresh',
-  flags: { 'fix-index': ['bool', 'regenerate index.md/llms.txt before verifying', false], 'dry-run': ['bool', 'with --fix-index: show what would change', false] },
+  flags: { 'fix-index': ['bool', 'regenerate index.md/llms.txt before verifying', false], 'dry-run': ['bool', 'with --fix-index: show what would change', false], docs: ['bool', 'also check owned entries and links in docs/ and <project>/docs/', false] },
   async run(a, f) {
     const cfg = a.cfgOrFail();
     if (typeof cfg === 'number') return cfg;
     const wp = wikiPath(cfg);
+    if (f.docs) {
+      const vd = await verifyDocs(cfg);
+      if (!fs.existsSync(wp)) {
+        a.emit(vd, () => {
+          for (const e of vd.errors) a.out(`  ${e.code} ${e.page} ${e.detail}\n`);
+          a.out(`verify --docs ${vd.ok ? 'PASS' : 'FAIL'}: ${vd.files} docs, ${vd.errors.length} errors\n`);
+        });
+        return vd.ok ? ExitOK : ExitStale;
+      }
+      docsVerify = vd;
+    }
     if (!fs.existsSync(wp)) return a.fail(ExitUsage, `wiki dir ${cfg.wiki_dir} not found (run kb init)`);
     if (f['fix-index']) {
       const [pages] = loadPages(wp);
@@ -356,10 +369,16 @@ register({
       }
     }
     const rep = await verifyNow(cfg);
+    if (docsVerify) {
+      for (const e of docsVerify.errors) rep.errors.push(e);
+      if (!docsVerify.ok) rep.ok = false;
+    }
     a.emit(rep, () => printVerify(a, rep));
     return rep.ok ? ExitOK : ExitStale;
   },
 });
+
+let docsVerify: { ok: boolean; errors: { code: string; page: string; detail: string }[] } | null = null;
 
 async function verifyNow(cfg: Config): Promise<Report> {
   const res = await scanRepo(cfg);
@@ -1109,6 +1128,118 @@ register({
     const r = await treeCommand(cfg, args[0] ?? 'show', args.slice(1), { rebuild: !!f.rebuild, dryRun: !!f['dry-run'] });
     a.emit(r.json, () => a.out(r.text));
     return r.code;
+  },
+});
+
+register({
+  name: 'docs', usage: 'scope | status | compound [--project id]… [--no-root-write] [--no-root-read] [--agent …|--llm template] [--resume|--restart] [--dry-run] | stale-specs [--days 30] | adr [--write] | debt [--write]',
+  summary: 'SFK docs ownership workflow over repo docs/ and <project>/docs/: scope, status, compound, stale-specs, adr, debt',
+  flags: {
+    project: ['string', 'comma-separated project ids to keep', ''], 'no-root-write': ['bool', 'never write the repository docs/ (still read)', false], 'no-root-read': ['bool', 'do not read the repository docs/', false],
+    ...backendFlags('docs writer'), resume: ['bool', 'resume an unfinished run at the same HEAD', false], restart: ['bool', 'discard an unfinished run', false],
+    'dry-run': ['bool', 'compute and report; write nothing', false], days: ['int', 'stale-specs: Draft age threshold', 30], write: ['bool', 'adr / debt: create the proposed files / rows', false],
+  },
+  async run(a, f, args) {
+    const cfg = a.cfgOrDetect();
+    if (typeof cfg === 'number') return cfg;
+    const sub = args[0] ?? 'status';
+    const projects = String(f.project || '').split(',').map((x) => x.trim()).filter(Boolean);
+    const scopeOpts = { projects: projects.length ? projects : undefined, paths: args.slice(1).length && sub === 'compound' ? args.slice(1) : undefined, noRootWrite: !!f['no-root-write'], noRootRead: !!f['no-root-read'] };
+    switch (sub) {
+      case 'scope':
+      case 'status': {
+        const st = await docsStatus(cfg, scopeOpts);
+        if (sub === 'scope') {
+          a.emit(st.scopes, () => {
+            const r = st.scopes.repository;
+            a.out(`repository  docs=${r.docsRoot} specs=${r.specsRoots.join(',')} write=${r.writeEnabled} read=${r.docsReadEnabled}\n`);
+            for (const p of st.scopes.projects) a.out(`project ${p.id.padEnd(16)} root=${p.root} docs=${p.docsRoot} specs=${p.specsRoots.join(',')} ${p.platform ?? ''} ${p.buildSystem ?? ''} (${p.origin})\n`);
+            if (st.scopes.unresolved.length) a.out(`unresolved: ${st.scopes.unresolved.join(', ')}\n`);
+          });
+          return ExitOK;
+        }
+        a.emit(st, () => {
+          for (const x of st.files) a.out(`${x.state.padEnd(9)} ${x.scope.padEnd(14)} ${x.path}${x.dimension ? `  [${x.dimension}]` : ''}${x.knowledge_layer ? '  (knowledge layer)' : ''}${x.last_compound_scan ? `  scanned ${x.last_compound_scan}` : ''}${x.pending ? `  ${x.pending} [Pending]` : ''}\n`);
+          a.out(`extra registry ${st.extra_registry.path}: ${st.extra_registry.entries.map((e) => `${D.extraEntryPath(e)}${e.enabled ? '' : ' (frozen)'}`).join(', ') || '(none)'}\n`);
+          if (st.extra_registry.unregistered.length) a.out(`unregistered custom docs (registered on the next kb docs compound): ${st.extra_registry.unregistered.join(', ')}\n`);
+        });
+        return ExitOK;
+      }
+      case 'compound': {
+        let be;
+        try {
+          be = resolveBackend(f, cfg);
+        } catch (e) {
+          return a.fail(ExitUsage, e as Error);
+        }
+        const r = await docsCompound(cfg, { ...scopeOpts, llm: be.mode, llmCmd: be.cmd, agent: be.agent, resume: !!f.resume, restart: !!f.restart, dryRun: !!f['dry-run'], log: a.log });
+        a.emit(r, () => {
+          a.out(`docs compound (${r.run.decision}: ${r.run.reason})${r.dry_run ? ' [dry-run]' : ''}\n`);
+          for (const s of r.scopes) a.out(`  scope ${s.id.padEnd(14)} ${s.docs_root} ${s.scan_mode}${s.write ? '' : ' (read-only)'}\n`);
+          for (const x of r.files) a.out(`  ${x.action.padEnd(6)} ${x.state.padEnd(8)} ${x.path} [${x.dimension}] +${x.inserted} ~${x.replaced} =${x.unchanged}${x.pending ? ` pending ${x.pending}` : ''}${x.dropped.length ? ` dropped ${x.dropped.length}` : ''}${x.review.length ? ` REVIEW ${x.review.join('; ')}` : ''}\n`);
+          const repo = r.routing.filter((x) => x.dest === 'repo').length;
+          a.out(`routing: ${r.routing.length} item(s), ${repo} to repository docs (root evidence or ≥2 projects), ${r.routing.filter((x) => x.parity_diff).length} parity difference(s)\n`);
+          for (const b of r.broken_links) a.out(`  broken link ${b.file}:${b.line} ${b.target} (${b.reason})\n`);
+          if (r.agent) a.out(`agent: ${r.agent.status}, accepted ${r.agent.accepted}, rejected ${r.agent.rejected}\n`);
+        });
+        return r.ok ? ExitOK : ExitStale;
+      }
+      case 'stale-specs': {
+        const st = await staleSpecs(cfg, Number(f.days) || 30);
+        a.emit({ ok: st.length === 0, stale: st }, () => {
+          if (!st.length) a.out('no stale specs\n');
+          for (const x of st) a.out(`${x.reason.padEnd(28)} ${x.status.padEnd(12)} ${x.path} — ${x.detail}\n`);
+        });
+        return st.length ? ExitStale : ExitOK;
+      }
+      case 'adr': {
+        const pl = await adrProposals(cfg, !!f.write);
+        a.emit({ ok: true, write: !!f.write, ...pl }, () => {
+          for (const c of pl.create) a.out(`${f.write ? 'created' : 'proposed'} ${c.path}\n`);
+          for (const x of pl.skipped) a.out(`skipped ${x.key}: ${x.reason}${x.existing ? ' (' + x.existing + ')' : ''}\n`);
+          if (!f.write && pl.create.length) a.out('dry-run: re-run with --write to create the ADR files (or review them in a PR)\n');
+        });
+        return ExitOK;
+      }
+      case 'debt': {
+        const d = await debtProposals(cfg, !!f.write);
+        a.emit({ ok: true, write: !!f.write, ...d }, () => {
+          for (const it of d.items) a.out(`${it.description}  ${it.source} ${it.location}\n`);
+          a.out(`${d.file}: ${d.result.action}${d.result.added.length ? ', adds ' + d.result.added.map((x) => x.id).join(', ') : ''}${f.write ? '' : ' (dry-run; --write to apply)'}\n`);
+        });
+        return ExitOK;
+      }
+    }
+    return a.fail(ExitUsage, `unknown kb docs subcommand ${JSON.stringify(sub)} (scope | status | compound | stale-specs | adr | debt)`);
+  },
+});
+
+register({
+  name: 'links', usage: '[paths…] [--json]', summary: 'check links in docs (markdown, backticked repo paths, **Source** lines); report only, never edits',
+  async run(a, _f, args) {
+    const cfg = a.cfgOrDetect();
+    if (typeof cfg === 'number') return cfg;
+    const v = args.length ? null : await verifyDocs(cfg);
+    let broken;
+    if (args.length) {
+      const all: string[] = [];
+      const rec = (d: string) => {
+        for (const e of fs.readdirSync(path.join(cfg.root, d), { withFileTypes: true })) {
+          const rel = d ? d + '/' + e.name : e.name;
+          if (e.isDirectory()) {
+            if (!['.git', 'node_modules', 'build', '.kb-work'].includes(e.name)) rec(rel);
+          } else all.push(rel);
+        }
+      };
+      rec('');
+      const files = args.map((p) => path.relative(cfg.root, path.resolve(p)).split(path.sep).join('/'));
+      broken = linkCheck(cfg.root, files, all);
+    } else broken = v!.errors.filter((e) => e.code === 'E_DOCS_LINK');
+    a.emit({ broken, ok: broken.length === 0 }, () => {
+      if (!broken.length) a.out('no broken links\n');
+      for (const b of broken as { file?: string; page?: string; line?: number; target?: string; reason?: string; detail?: string; suggestions?: string[] }[]) a.out(b.detail ? `${b.page} ${b.detail}\n` : `${b.file}:${b.line} ${b.target} (${b.reason})${b.suggestions?.length ? ' → ' + b.suggestions[0] : ''}\n`);
+    });
+    return broken.length ? ExitStale : ExitOK;
   },
 });
 

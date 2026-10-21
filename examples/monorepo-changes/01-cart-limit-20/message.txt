@@ -1,0 +1,1 @@
+feat(cart): lower the Android cart limit to 20
