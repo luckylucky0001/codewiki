@@ -257,3 +257,74 @@ describe('precision', () => {
     expect(ids).not.toContain('AppNavDestination');
   });
 });
+
+describe('round 2: more call shapes', () => {
+  it('testIDs: SwiftUI .accessibility(identifier:), ArkTS .key(), interpolated UIKit ids by prefix', async () => {
+    const f = await factsOf({
+      'ios/App/V.swift': `import SwiftUI
+struct V: View {
+  var body: some View { Text("x").accessibility(identifier: "legacy_id") }
+}
+final class C: UIViewController {
+  func cell(i: Int) { label.accessibilityIdentifier = "row_\\(i)"; other.accessibilityIdentifier = "\\(name)" }
+}
+`,
+      'harmony/entry/src/main/ets/pages/P.ets': "@Entry\n@Component\nstruct P {\n  build() { Column() { Button('ok').key('ok_button') } }\n}\n",
+    });
+    const tids = f.testids!.map((t) => t.tid);
+    expect(tids).toContain('legacy_id');
+    expect(tids).toContain('ok_button');
+    expect(tids).toContain('row_');
+    expect(tids).not.toContain('');
+  });
+  it('APIs: unresolved base stripped, Retrofit @HTTP, Volley, appending(path:), path+method endpoint types', async () => {
+    const f = await factsOf({
+      'android/app/src/main/java/a/Svc.kt': `interface Svc {
+  @HTTP(method = "DELETE", path = "items/{id}", hasBody = true)
+  suspend fun remove(@Path("id") id: String, @Body b: Body)
+}
+class Repo(private val client: HttpClient) {
+  suspend fun list() = client.get("$baseUrl/catalog/list")
+}
+`,
+      'android/app/src/main/java/a/V.java': `class V {
+  void send(RequestQueue q) {
+    StringRequest r = new StringRequest(Request.Method.POST, BASE_URL + "/feedback", l, e);
+    q.add(r);
+  }
+}
+`,
+      'ios/App/E.swift': `import Foundation
+enum ProfileAPI {
+  case me, avatar
+  var path: String {
+    switch self {
+    case .me: return "/profile/me"
+    case .avatar: return "/profile/avatar"
+    }
+  }
+  var method: String {
+    switch self {
+    case .me: return .get
+    case .avatar: return .post
+    }
+  }
+}
+final class N {
+  func fetch() async throws {
+    let url = apiBaseURL.appending(path: "v2/feed")
+    _ = try await URLSession.shared.data(from: url)
+  }
+}
+`,
+    });
+    const apis = f.apis!.map((a) => a.method + ' ' + a.path);
+    expect(apis).toContain('DELETE /items/{id}');
+    expect(apis).toContain('GET /catalog/list');
+    expect(apis.some((a) => a.includes('{baseUrl}'))).toBe(false);
+    expect(apis).toContain('POST /feedback');
+    expect(apis).toContain('GET /v2/feed');
+    expect(apis).toContain('GET /profile/me');
+    expect(apis).toContain('POST /profile/avatar');
+  });
+});

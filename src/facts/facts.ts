@@ -985,6 +985,7 @@ export class Ctx {
       for (const call of this.calls(file)) {
         if (!call.args?.length) continue;
         let ok = false;
+        let arg0 = call.args[0]!;
         switch (fi.lang) {
           case 'kotlin':
           case 'java':
@@ -992,9 +993,18 @@ export class Ctx {
             break;
           case 'swift':
             ok = call.callee === 'accessibilityIdentifier';
+            // SwiftUI's older `.accessibility(identifier: "x")`
+            if (call.callee === 'accessibility') {
+              const a = call.args.find((x) => x.label === 'identifier');
+              if (a) {
+                ok = true;
+                arg0 = a;
+              }
+            }
             break;
           case 'arkts':
-            ok = call.callee === 'id' && call.callee_text.endsWith('.id');
+            // `.id('x')`, and the older ArkUI `.key('x')` (string literal only: `.key` is a common name)
+            ok = (call.callee === 'id' && call.callee_text.endsWith('.id')) || (call.callee === 'key' && call.callee_text.endsWith('.key') && /^['"][^'"]+['"]$/.test(arg0.text.trim()));
             break;
           case 'javascript':
           case 'typescript':
@@ -1002,10 +1012,10 @@ export class Ctx {
             ok = call.callee === 'getByTestId';
         }
         if (!ok) continue;
-        let [v, any] = this.eval(fi.platform, call.args[0]!.parts);
+        let [v, any] = this.eval(fi.platform, arg0.parts);
         if (!any) {
           // constant objects: `testTag(TestTags.signIn)` with `val signIn = TestTag("sign-in")`
-          const parts = call.args[0]!.parts ?? [];
+          const parts = arg0.parts ?? [];
           const w = parts.length === 1 && parts[0]!.ref ? this.wrappedConst(fi.platform, parts[0]!.ref, file) : '';
           if (!w) continue;
           v = { s: w, dynamic: false, prefix: w };
@@ -1043,7 +1053,8 @@ export class Ctx {
           const rhs = m[1]!.trim().replace(/\s*(\/\/.*)?$/, '');
           let tid = '';
           const lit = /^"((?:[^"\\]|\\.)*)"$/.exec(rhs);
-          if (lit) tid = lit[1]!.includes('\\(') ? '' : lit[1]!;
+          // interpolated ids are recorded by their literal prefix (`"cell_\(i)"` → `cell_`), like the call form
+          if (lit) tid = lit[1]!.includes('\\(') ? (/^[A-Za-z][\w.-]*[_.-]$/.test(lit[1]!.slice(0, lit[1]!.indexOf('\\('))) ? lit[1]!.slice(0, lit[1]!.indexOf('\\(')) : '') : lit[1]!;
           else if (/^[A-Za-z_][\w.]*$/.test(rhs) && constLikeRef(rhs)) {
             const [v, ok] = this.lookup(fi.platform, rhs);
             tid = ok ? v : this.wrappedConst(fi.platform, rhs, file);
@@ -1113,6 +1124,9 @@ export class Ctx {
       const [v, ok] = this.eval(platform, a.parts);
       if (!ok) return ['', false];
       let s = v.s;
+      // `BASE_URL + "/x"`, `"$baseUrl/x"` with an unresolvable base: keep the path, not `{BASE_URL}/x`
+      const bm = /^\{(\w*(?:base|host|server|domain|endpoint|api|url|root)\w*)\}(\/?[A-Za-z].*)$/i.exec(s);
+      if (bm && v.prefix === '') s = bm[2]!.startsWith('/') ? bm[2]! : '/' + bm[2]!;
       if (relativeOK && s !== '' && !s.includes('://') && !s.startsWith('/') && !s.startsWith('{')) s = '/' + s;
       return normPath(s);
     };
@@ -1130,7 +1144,14 @@ export class Ctx {
         switch (fi.lang) {
           case 'kotlin':
           case 'java':
-            if (call.callee.startsWith('@') && httpMethods.has(call.callee.slice(1)) && args.length > 0) {
+            if (call.callee === '@HTTP' && args.length > 0) {
+              const ma = args.find((x) => x.label === 'method'), pa = args.find((x) => x.label === 'path');
+              const mm = trimChars(ma?.text ?? '', '"').toUpperCase();
+              if (pa && httpMethods.has(mm)) {
+                const [p, ok] = evalPath(fi.platform, pa, true);
+                if (ok) api(mm, p);
+              }
+            } else if (call.callee.startsWith('@') && httpMethods.has(call.callee.slice(1)) && args.length > 0) {
               const [p, ok] = evalPath(fi.platform, args[0]!, true);
               if (ok) api(call.callee.slice(1), p);
             } else if (httpMethods.has(M) && args.length > 0 && recv.includes('.url(')) {
@@ -1249,7 +1270,7 @@ export class Ctx {
    * absolute-URL constants used where a request is built. Method from the same function (or, for an
    * endpoint helper, from the functions in the file that call it); GET when nothing says otherwise. */
   composedAPIs(add: (a: API) => void): void {
-    const pre = /appendingPathComponent|additionalPathComponents|String\.format|\(\s*\.(?:GET|POST|PUT|DELETE|PATCH|HEAD)\s*,|`\$\{[^}]*\}\/|\b(?:get|post|put|delete|patch)\s*\{\s*\w+\(\s*"|https?:\/\/[^"'`\s]+\/|URLComponents|(?:base|host|server|domain|endpoint|api|url|root)\w*(?:\(\))?\s*\+\s*"|"(?:\$\{?|\\\()\w*(?:base|host|server|domain|endpoint|api|url|root)/i;
+    const pre = /appendingPathComponent|additionalPathComponents|String\.format|\(\s*\.(?:GET|POST|PUT|DELETE|PATCH|HEAD)\s*,|`\$\{[^}]*\}\/|\b(?:get|post|put|delete|patch)\s*\{\s*\w+\(\s*"|https?:\/\/[^"'`\s]+\/|URLComponents|\.appending\(\s*(?:path|component)|(?:base|host|server|domain|endpoint|api|url|root)\w*(?:\(\))?\s*\+\s*"|"(?:\$\{?|\\\()\w*(?:base|host|server|domain|endpoint|api|url|root)/i;
     const callables = new Set(['function', 'method', 'property', 'constructor', 'composable', 'const', 'variable']);
     // absolute URL constants (value with a path) by platform
     const urlConsts = new Map<string, Map<string, string>>();
@@ -1309,6 +1330,9 @@ export class Ctx {
           const baseOK = /url|endpoint|base|api|host|server/i.test(before) && !/director|folder|cache|document|file|container|bundle|temporary/i.test(before.slice(-50));
           if (lit && baseOK) found.push([segs.join('/'), '']);
         }
+        // iOS 16 `base.appending(path: "x")` / `appending(component:)` over a URL-ish base
+        for (const m of b.matchAll(/(\w+)\s*\.appending\(\s*(?:path|component)\s*:\s*"([^"\s]+)"/g))
+          if (/url|endpoint|base|api|host|server/i.test(m[1]!) && !/director|folder|cache|document|file|container|bundle|temporary/i.test(m[1]!)) found.push([trimPrefix(m[2]!, '/'), '']);
         // additionalPathComponents: ["a", "b", expr]
         for (const m of b.matchAll(/(?:additionalPathComponents|pathComponents)\s*:\s*\[([^\]]*)\]/g)) {
           const segs = splitTop(m[1]!).map((x) => x.trim()).filter(Boolean).map((x) => (/^"[^"]*"$/.test(x) ? x.slice(1, -1) : '{' + (/^(\w+)/.exec(x)?.[1] ?? 'param') + '}'));
@@ -1379,7 +1403,8 @@ export class Ctx {
     for (const [parent, m] of byParent) {
       const ps = m.get('path');
       const owner = getSym(this.g, parent);
-      if (!ps || !owner || !(owner.signature.includes('TargetType') || owner.signature.includes('Endpoint'))) continue;
+      // endpoint types: Moya TargetType / *Endpoint conformances, or a type that declares both `path` and `method`
+      if (!ps || !owner || !(owner.signature.includes('TargetType') || owner.signature.includes('Endpoint') || (m.has('method') && /(?:Api|API|Endpoint|Request|Service|Target)s?$/.test(owner.name)))) continue;
       const body = this.symbolSource(ps);
       const methods = new Map<string, string>();
       let defMethod = 'GET';
@@ -2195,9 +2220,9 @@ export function urlRoutingRoutes(text: string): { method: string; path: string; 
 
 /** HTTP verbs a function body uses (builder calls, method labels, HTTPMethod enums, post* helpers). */
 // a body that actually issues an HTTP request (not a web view / namespace / file use of a URL)
-const reqContextRe = /\b(?:request|newCall|execute|fetch|createHttp|HttpRequest|dataTask|URLRequest|AF\.request|httpClient|client\.(?:get|post|put|delete|patch)|Request\.Builder|Request\(|getJson|getString|download)\b/;
+const reqContextRe = /\b(?:StringRequest|JsonObjectRequest|JsonArrayRequest|request|newCall|execute|fetch|createHttp|HttpRequest|dataTask|URLRequest|AF\.request|httpClient|client\.(?:get|post|put|delete|patch)|Request\.Builder|Request\(|getJson|getString|download)\b/;
 // stricter: a body that runs a network client call (for bare URL literals, which are often web pages)
-const netCallRe = /\b(?:newCall|Request\.Builder|HttpRequest|createHttp|dataTask|URLSession|AF\.request|httpClient|OkHttpClient|HttpClient|client\.(?:get|post|put|delete|patch))\b/;
+const netCallRe = /\b(?:StringRequest|JsonObjectRequest|JsonArrayRequest|newCall|Request\.Builder|HttpRequest|createHttp|dataTask|URLSession|AF\.request|httpClient|OkHttpClient|HttpClient|client\.(?:get|post|put|delete|patch))\b/;
 // local files / documents / web pages are not API endpoints
 const docAssetRe = /\.(?:db|sqlite3?|plist|html?|md|txt|xml|xhtml)$|\/(?:README|LICENSE)[^/]*$/i;
 
@@ -2206,6 +2231,7 @@ function methodsIn(b: string): string[] {
   for (const m of b.matchAll(/\.(get|post|put|patch|delete|head)\s*\(/gi)) out.add(m[1]!.toUpperCase());
   for (const m of b.matchAll(/\b(?:method|httpMethod)\s*[:=]\s*(?:[\w.]*\.)?["'.]?(GET|POST|PUT|PATCH|DELETE|HEAD)\b/gi)) out.add(m[1]!.toUpperCase());
   for (const m of b.matchAll(/\bHTTPMethod\.(get|post|put|patch|delete|head)\b/gi)) out.add(m[1]!.toUpperCase());
+  for (const m of b.matchAll(/\bRequest\.Method\.(GET|POST|PUT|PATCH|DELETE|HEAD)\b/g)) out.add(m[1]!);
   if (/\bpost[A-Z]\w*\s*\(/.test(b)) out.add('POST');
   const nonGet = [...out].filter((v) => v !== 'GET');
   if (nonGet.length) return nonGet;
