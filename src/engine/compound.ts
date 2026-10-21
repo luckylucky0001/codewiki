@@ -10,6 +10,7 @@ import { GraphVersion, type Facts, type Graph, type Anchor, getSym, graphJSON, r
 import { scan, scanRepo, type ScanResult } from '../scan/scan.js';
 import { extractFactsCached } from './factscache.js';
 import { renderFacts } from '../facts/render.js';
+import { type SuggestOptions, applyOverlay, suggest } from '../facts/llm.js';
 import { goJSON, cmpStr } from '../util/go.js';
 import { type Page, loadPages, parsePage, renderPage, writeFileAtomic, idFromPath, StatusCurrent } from '../wiki/page.js';
 import { appendLog, initWiki } from '../wiki/layout.js';
@@ -50,6 +51,8 @@ export interface Options {
   kbPath?: string;
   keep?: boolean;
   ingestDocs?: DocEntry[];
+  /** LLM-assisted fallback extraction of routes/APIs (verified; see facts/llm.ts). */
+  llmFacts?: SuggestOptions;
 }
 
 export interface TaskResult {
@@ -168,7 +171,14 @@ export async function analyze(o: Options): Promise<Analysis> {
   const cfg = o.cfg;
   const res = await scanRepo(cfg);
   res.graph.commit = gitHead(cfg.root) || undefined;
-  const facts = extractFactsCached(cfg, res);
+  let facts = extractFactsCached(cfg, res);
+  if (o.llmFacts) {
+    // the overlay and answer cache live in <wiki>/.kb: create the skeleton first on a fresh wiki
+    if (!fs.existsSync(wikiPath(cfg)) && !o.dryRun) initWiki(wikiPath(cfg), false);
+    const sr = suggest(cfg, res, facts, { ...o.llmFacts, log: o.log });
+    o.log?.(`llm-facts: ${sr.candidates.length} candidate file(s), ${sr.agent_calls} agent call(s), ${sr.cached_files} cached; accepted ${sr.accepted.routes.length} route(s) / ${sr.accepted.apis.length} api(s), rejected ${sr.rejected.length}, rule conflicts ${sr.skipped_conflict}${sr.usage.cost_usd ? `, $${sr.usage.cost_usd.toFixed(4)}` : ''}${sr.errors.length ? ' — ' + sr.errors.join('; ') : ''}\n`);
+  }
+  facts = applyOverlay(cfg, facts);
   let old: Graph | null = null;
   if (o.base) old = (await scanRevision(cfg, o.base)).graph;
   else old = loadGraph(path.join(wikiPath(cfg), '.kb', 'graph.json'));

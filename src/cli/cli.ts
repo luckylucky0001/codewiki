@@ -7,6 +7,7 @@ import { ConfigNotFoundError, DefaultLLMCmd, FileName, absRoot, defaultConfig, d
 import { scanRepo, CacheFile } from '../scan/scan.js';
 import { extractFacts } from '../facts/facts.js';
 import { extractFactsCached } from '../engine/factscache.js';
+import { applyOverlay, suggest } from '../facts/llm.js';
 import { factsJSON } from '../facts/render.js';
 import { symbolJSON, parseFailureJSON, getSym } from '../model.js';
 import type { Plan } from '../engine/plan.js';
@@ -318,6 +319,7 @@ register({
   name: 'compound', usage: "[--llm template|cmd] [--agent claude|codex|gemini] [--llm-cmd '...'] [--base sha] [--full] [--dry-run]", summary: 'scan→diff→plan→LLM→verify→atomic publish; updates state, update_record, log.md',
   flags: {
     ...backendFlags('writer'), ...baseFlag, full: ['bool', 'force full rebuild', false], 'dry-run': ['bool', 'plan only; write nothing', false],
+    'llm-facts': ['bool', 'LLM-assisted fallback extraction of routes/APIs (every suggestion verified against the source; cached)', false], 'facts-agent': ['string', 'agent for --llm-facts (claude)', 'claude'], 'facts-model': ['string', 'model for --llm-facts', 'haiku'], 'facts-max-files': ['int', 'candidate file budget for --llm-facts', 40],
     fallback: ['bool', 'fall back to the template writer when an LLM task fails', false], 'max-llm-tasks': ['int', 'cap LLM tasks per run (rest use template); 0 = unlimited', 0], 'keep-work': ['bool', 'keep .kb-work/<run>', false],
   },
   async run(a, f) {
@@ -330,7 +332,7 @@ register({
       return a.fail(ExitUsage, e as Error);
     }
     const { mode: llm, cmd: llmCmd, agent } = be;
-    const r = await compound({ cfg, llm, llmCmd, agent, base: String(f.base || ''), full: !!f.full, dryRun: !!f['dry-run'], fallback: !!f.fallback, maxTasks: Number(f['max-llm-tasks'] || 0), keep: !!f['keep-work'], log: a.log, kbPath: process.argv[1] });
+    const r = await compound({ cfg, llm, llmCmd, agent, base: String(f.base || ''), full: !!f.full, dryRun: !!f['dry-run'], fallback: !!f.fallback, maxTasks: Number(f['max-llm-tasks'] || 0), keep: !!f['keep-work'], log: a.log, kbPath: process.argv[1], llmFacts: f['llm-facts'] ? { agent: String(f['facts-agent'] || 'claude'), model: String(f['facts-model'] || ''), maxFiles: Number(f['facts-max-files'] || 40) } : undefined });
     return reportRun(a, r);
   },
 });
@@ -339,6 +341,34 @@ register({
 
 
 
+
+register({
+  name: 'facts', usage: 'suggest --agent claude [--model haiku] [--max-files N] [--kinds routes,apis] [--llm-cmd ...]', summary: 'LLM-assisted fallback extraction of routes/APIs; every suggestion is verified against the source before it is accepted',
+  flags: { agent: ['string', 'agent backend (claude)', 'claude'], model: ['string', 'model', 'haiku'], 'max-files': ['int', 'candidate file budget', 40], kinds: ['string', 'routes,apis', 'routes,apis'], 'llm-cmd': ['string', 'override the agent command (prompt on stdin)', ''] },
+  async run(a, f, args) {
+    if (args[0] !== 'suggest') return a.fail(ExitUsage, new Error('usage: kb facts suggest [--agent claude] [--model haiku] [--max-files N] [--kinds routes,apis]'));
+    const cfg = a.cfgOrFail();
+    if (typeof cfg === 'number') return cfg;
+    const res = await scanRepo(cfg);
+    const facts = extractFactsCached(cfg, res);
+    let r;
+    try {
+      r = suggest(cfg, res, facts, { agent: String(f.agent || 'claude'), model: String(f.model || ''), llmCmd: String(f['llm-cmd'] || '') || undefined, maxFiles: Number(f['max-files'] || 40), kinds: String(f.kinds || 'routes,apis').split(',').map((s) => s.trim()).filter(Boolean), log: a.log });
+    } catch (e) {
+      return a.fail(ExitUsage, e as Error);
+    }
+    a.emit({ ok: r.errors.length === 0, ...r }, () => {
+      a.out(`candidates: ${r.candidates.length} file(s); agent calls ${r.agent_calls}, cached ${r.cached_files}\n`);
+      for (const x of r.accepted.routes) a.out(`  + route ${x.route_id} -> ${x.symbol}  ${x.file}:${x.line}\n`);
+      for (const x of r.accepted.apis) a.out(`  + api ${x.method} ${x.path}  ${x.file}:${x.line}\n`);
+      for (const x of r.rejected) a.out(`  - ${x.kind} ${x.item}  ${x.file}:${x.line}  (${x.reason})\n`);
+      a.out(`accepted ${r.accepted.routes.length} route(s) / ${r.accepted.apis.length} api(s), rejected ${r.rejected.length}, rule conflicts ${r.skipped_conflict}${r.usage.cost_usd ? `, cost $${r.usage.cost_usd.toFixed(4)}` : ''}\n`);
+      for (const e of r.errors) a.out(`  error: ${e}\n`);
+      a.out('accepted items are stored in .kb/llm-facts.json and written to facts/*.json by the next kb compound\n');
+    });
+    return r.errors.length ? ExitStale : ExitOK;
+  },
+});
 
 register({
   name: 'verify', usage: '[--fix-index] [--docs [--strict]]', summary: 'CI gate: anchors match HEAD, symbols exist, no dead links/orphans, index complete, facts fresh',
@@ -397,7 +427,7 @@ function printHumanCandidates(a: App, c: { page: string; detail: string }[], str
 
 async function verifyNow(cfg: Config): Promise<Report> {
   const res = await scanRepo(cfg);
-  const facts = extractFactsCached(cfg, res);
+  const facts = applyOverlay(cfg, extractFactsCached(cfg, res));
   const rep = verifyWiki(wikiPath(cfg), res.graph, expectedFacts(cfg, res.graph, facts));
   verifyRequirements(wikiPath(cfg), res.graph, rep);
   verifyTree(wikiPath(cfg), res.graph, facts, rep);
@@ -1263,7 +1293,7 @@ const groups: Record<string, Record<string, string>> = {
 };
 
 const sections: [string, string[]][] = [
-  ['Wiki pipeline', ['init', 'scan', 'diff', 'plan', 'compound', 'verify', 'status']],
+  ['Wiki pipeline', ['init', 'scan', 'diff', 'plan', 'compound', 'facts', 'verify', 'status']],
   ['Docs', ['discover-docs', 'ingest', 'conflicts']],
   ['Query', ['search', 'get', 'context', 'anchor', 'routes', 'lint-tid', 'parity']],
   ['Hierarchy & docs', ['tree', 'docs', 'links']],
