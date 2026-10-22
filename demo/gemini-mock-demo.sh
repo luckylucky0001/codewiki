@@ -8,6 +8,7 @@
 #       parsing). MOCKED: only the model (demo/mock-model/mock_gemini.py).
 # Needs: node, git, python3, gemini. No network, no API key.
 set -euo pipefail
+export KB_LLM_FACTS="${KB_LLM_FACTS:-0}"   # rules-only facts: no default-on LLM facts fallback (KB_LLM_FACTS=1 to enable)
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/.." && pwd)"
 GEMINI="${GEMINI_BIN:-$(command -v gemini || true)}"

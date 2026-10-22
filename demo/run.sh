@@ -10,6 +10,9 @@
 #   DEMO_CLAUDE_CMD='claude -p ...'     LLM command line for claude mode
 #   DEMO_MAX_LLM_TASKS=N                cap LLM tasks per compound (rest: template), default 3
 #   DEMO_OUT=dir                        output dir (default demo/output/<timestamp>)
+#   DEMO_LLM_FACTS=1                    keep the LLM facts fallback of kb compound on in template mode
+#                                       (default: template mode passes --no-llm-facts so the demo stays
+#                                       deterministic; claude mode keeps kb's default, on)
 #
 # Requires: node >= 20 + npm, git, jq. All outputs are saved under demo/output/<timestamp>/.
 set -euo pipefail
@@ -19,6 +22,8 @@ ROOT="$(cd "$HERE/.." && pwd)"
 MODE="${DEMO_LLM:-template}"
 BOOT="${DEMO_BOOTSTRAP_LLM:-template}"
 MAXT="${DEMO_MAX_LLM_TASKS:-3}"
+FACTS=()   # kb compound runs the LLM facts fallback by default; template mode stays deterministic
+if [ "$MODE" = template ] && [ "${DEMO_LLM_FACTS:-0}" != 1 ]; then FACTS=(--no-llm-facts); fi
 TS="$(date -u +%Y%m%dT%H%M%SZ)"
 OUT="${DEMO_OUT:-$ROOT/demo/output/$TS-$MODE}"
 REPO="$OUT/repo"
@@ -73,7 +78,7 @@ gitc add -A && gitc commit -qm "docs(wiki): ingest legacy docs and specs"
 
 log "initial kb compound (full rebuild, writer=$BOOT)"
 mapfile -d '' BF < <(if [ "$BOOT" = claude ]; then printf '%s\0' --llm claude --llm-cmd "$CLAUDE_CMD" --fallback; else printf '%s\0' --llm template; fi)
-kbsave 04-compound-initial.txt compound "${BF[@]}"
+kbsave 04-compound-initial.txt compound "${BF[@]}" ${FACTS[@]+"${FACTS[@]}"}
 kbsave 04-compound-initial.verify.txt verify
 gitc add -A && gitc commit -qm "docs(wiki): initial compound"
 
@@ -92,7 +97,7 @@ for cs in "$ROOT"/examples/minishop-changes/*/; do
   kbsave "$p-$name.1-status.txt" status
   kbsave "$p-$name.2-diff.txt" diff
   kbsave "$p-$name.3-plan.json" plan --json --dry-run
-  kbsave "$p-$name.4-compound.txt" compound "${LF[@]}"
+  kbsave "$p-$name.4-compound.txt" compound "${LF[@]}" ${FACTS[@]+"${FACTS[@]}"}
   kbsave "$p-$name.5-verify.txt" verify
   kbsave "$p-$name.6-parity.txt" parity
   gitc add -A && gitc commit -qm "docs(wiki): compound after $name"

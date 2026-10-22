@@ -12,6 +12,7 @@
 #    (project trusted in a throwaway CODEX_HOME), and the exact `codex exec` line is printed.
 # Outputs: $OUT (default demo/output/<ts>-agents).
 set -euo pipefail
+export KB_LLM_FACTS="${KB_LLM_FACTS:-0}"   # rules-only facts: no default-on LLM facts fallback (KB_LLM_FACTS=1 to enable)
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/.." && pwd)"
 TS="$(date -u +%Y%m%dT%H%M%SZ)"

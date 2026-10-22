@@ -1,5 +1,6 @@
 #!/bin/bash
 # usage: runx.sh <set: heldout2|heldout3> <version: A|C|D...> <label-name>; KB per version below
+export KB_LLM_FACTS="${KB_LLM_FACTS:-0}"   # rules-only facts: no default-on LLM facts fallback (KB_LLM_FACTS=1 to enable)
 S=${SCRATCH}; O=$S/heldout2-runs
 SET=$1 V=$2 N=$3; H=$S/$SET
 case $V in A) KB=$S/kb-go;; C) KB="node $O/ts-snap-c/dist/cli.js";; *) KB="node $O/ts-snap-$(echo $V | tr A-Z a-z)/dist/cli.js";; esac

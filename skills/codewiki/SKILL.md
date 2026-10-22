@@ -14,7 +14,7 @@ against HEAD. Trust order: code > `wiki/facts/` > `wiki/pages/` > `wiki/raw/docs
 - No `codewiki.yaml` at the repo root → `kb init` (auto-detects android/ios/harmony roots).
 - Source queries (`kb routes`, `kb lint-tid`, `kb parity`, `kb scan`, `kb anchor`) work without it
   (zero-config mode). Wiki commands need `wiki/`: build it once with
-  `kb init && kb compound --llm template` (deterministic, no LLM, seconds).
+  `kb init && kb compound --llm template --no-llm-facts` (deterministic, no LLM, seconds).
 
 ## 2. Decide the task
 
@@ -63,7 +63,7 @@ kb plan --json       # tasks + write sets (dry, no writes with --dry-run)
 kb compound --llm template           # offline deterministic writer
 kb compound --agent claude --fallback --max-llm-tasks 5   # coding agent per task
 kb facts suggest --agent claude --model haiku            # rules found few routes/APIs: LLM proposes, kb verifies evidence (±5 lines)
-kb compound --llm-facts                                   # same fallback inside compound (off by default; entries tagged source: llm)
+kb compound --no-llm-facts                                # compound runs that fallback by default (entries tagged source: llm; no agent → rules only); this turns it off
 kb verify
 ```
 

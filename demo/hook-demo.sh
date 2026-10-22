@@ -7,6 +7,7 @@
 # lock and always compounds the branch head, so queued pushes are caught up.
 #   demo/hook-demo.sh [outdir]
 set -euo pipefail
+export KB_LLM_FACTS="${KB_LLM_FACTS:-0}"   # rules-only facts: no default-on LLM facts fallback (KB_LLM_FACTS=1 to enable)
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/.." && pwd)"
 OUT="${1:-$ROOT/demo/output/hook-$(date -u +%Y%m%dT%H%M%SZ)}"

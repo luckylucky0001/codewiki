@@ -131,7 +131,7 @@ llm:
   timeout_sec: 600
 ```
 
-命令行的优先级从高到低依次是：`--llm-cmd`、`--agent` / `--llm <agent>`、`llm.agent`、`llm.cmd`。默认写作器仍然是 `template`，不设置 `--agent` 或 `--llm` 就不会调用任何模型。`--llm claude` 保持旧行为：如果改过 `llm.cmd`，用改过的命令；否则用 Claude 适配器。
+命令行的优先级从高到低依次是：`--llm-cmd`、`--agent` / `--llm <agent>`、`llm.agent`、`llm.cmd`。默认写作器仍然是 `template`，不设置 `--agent` 或 `--llm` 就不会用模型写页面。注意 facts 的 LLM 兜底（routes/APIs 补漏，`llm.facts`，默认开启，用 `claude` + haiku，每条结果都要核对源码、按文件 hash 缓存）是独立的：`claude` 不在 PATH 上或调用失败时只打一行 `llm-facts: skipped (<原因>), rules only` 并继续；用 `--no-llm-facts`、`llm.facts: false` 或 `KB_LLM_FACTS=0` 可以完全不调用模型。`--llm claude` 保持旧行为：如果改过 `llm.cmd`，用改过的命令；否则用 Claude 适配器。
 
 ### 和具体 agent 无关的保证
 

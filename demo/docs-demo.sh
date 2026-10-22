@@ -5,12 +5,14 @@
 #
 # Uses examples/monorepo (two app projects, specs/ with Draft/Implemented/Verified, root docs
 # with an adopted file, a skeleton file and a frozen custom doc) and the change set
-# examples/monorepo-changes/01-cart-limit-20. Template mode: deterministic, no LLM.
+# examples/monorepo-changes/01-cart-limit-20. Template mode: deterministic, no LLM
+# (kb compound gets --no-llm-facts; DEMO_LLM_FACTS=1 keeps the default-on LLM facts fallback).
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/.." && pwd)"
 OUT="${1:-$ROOT/demo/output/docs-$(date -u +%Y%m%dT%H%M%SZ)}"
 REPO="$OUT/repo"
+FACTS=(--no-llm-facts); [ "${DEMO_LLM_FACTS:-0}" = 1 ] && FACTS=()
 for t in node npm git; do command -v "$t" >/dev/null || { echo "missing tool: $t" >&2; exit 2; }; done
 rm -rf "$OUT"; mkdir -p "$OUT/bin" "$OUT/before"
 ( cd "$ROOT" && { [ -d node_modules ] || npm ci --ignore-scripts >/dev/null; } && npm run --silent build )
@@ -28,7 +30,7 @@ HUMAN="docs/architecture.md docs/testing.md docs/onboarding.md docs/adr/0001-nat
 for f in $HUMAN; do mkdir -p "$OUT/before/$(dirname "$f")"; cp "$REPO/$f" "$OUT/before/$f"; done
 
 log "2. wiki with the module tree (kb compound --llm template)"
-save 01-compound.txt compound --llm template
+save 01-compound.txt compound --llm template ${FACTS[@]+"${FACTS[@]}"}
 save 02-tree.txt tree show
 gitc add -A && gitc commit -qm "docs(wiki): initial compound"
 
@@ -73,7 +75,7 @@ save 07-docs-compound-noop.txt docs compound
 log "7. code change (examples/monorepo-changes/01-cart-limit-20) → kb compound + incremental docs run"
 cp -R "$ROOT/examples/monorepo-changes/01-cart-limit-20/files/." "$REPO/"
 gitc add -A && gitc commit -qm "$(cat "$ROOT/examples/monorepo-changes/01-cart-limit-20/message.txt")"
-save 08-compound.txt compound --llm template
+save 08-compound.txt compound --llm template ${FACTS[@]+"${FACTS[@]}"}
 save 09-docs-compound-2.txt docs compound
 gitc add -A && gitc commit -qm "docs: incremental kb docs compound"
 

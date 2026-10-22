@@ -98,6 +98,10 @@ jobs:
           npm install -g @openai/codex@0.163.0
           printenv OPENAI_API_KEY | codex login --with-api-key
 
+      # The LLM facts fallback (routes/APIs the rules missed, every item verified against the source)
+      # is on by default and uses claude (llm.facts_agent). Without the claude CLI / ANTHROPIC_API_KEY
+      # it logs "llm-facts: skipped (...), rules only" and compound continues; answers are cached in
+      # wiki/.kb/cache/llm-facts (restored above). Turn it off with llm.facts: false or KB_LLM_FACTS: "0".
       - name: kb compound
         if: steps.cfg.outputs.present == 'true'
         id: compound

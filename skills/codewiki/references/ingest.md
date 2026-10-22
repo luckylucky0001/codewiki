@@ -10,7 +10,7 @@ checked against the code and anchored to symbols.
 - Source queries (`kb routes`, `kb lint-tid`, `kb parity`, `kb scan`, `kb anchor`) also work without it
   (zero-config mode, noted on stderr, writes nothing). Wiki commands (`compound`, `ingest`, `verify`,
   `status`, `search`, `get`, `context`, `conflicts`) need the wiki: if `wiki/` is missing, build it once with
-  `kb init`, then `kb compound --llm template` (deterministic, no LLM cost, seconds) and continue.
+  `kb init`, then `kb compound --llm template --no-llm-facts` (deterministic, no LLM cost, seconds) and continue.
 
 ## Steps
 

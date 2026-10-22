@@ -11,7 +11,7 @@ the write set you are given.
 - Source queries (`kb routes`, `kb lint-tid`, `kb parity`, `kb scan`, `kb anchor`) also work without it
   (zero-config mode, noted on stderr, writes nothing). Wiki commands (`compound`, `ingest`, `verify`,
   `status`, `search`, `get`, `context`, `conflicts`) need the wiki: if `wiki/` is missing, build it once with
-  `kb init`, then `kb compound --llm template` (deterministic, no LLM cost, seconds) and continue.
+  `kb init`, then `kb compound --llm template --no-llm-facts` (deterministic, no LLM cost, seconds) and continue.
 
 ## When to use
 
@@ -24,10 +24,13 @@ the write set you are given.
 ```bash
 kb status --json                     # what is stale?
 kb plan --json                       # affected pages, reasons, write sets (also wiki/.kb/plan.json)
-kb compound --llm claude --fallback  # or --llm template for an offline, deterministic run
+kb compound --llm claude --fallback  # or --llm template --no-llm-facts for an offline, deterministic run
 kb facts suggest --agent claude      # optional: LLM fallback for routes/APIs the rules missed; each suggestion
                                      # must quote evidence found within ±5 lines and is tagged "source":"llm"
-kb compound --llm-facts              # run that fallback as part of compound (off by default)
+                                     # compound runs that fallback by default (llm.facts: true); it degrades to
+                                     # rules only with "llm-facts: skipped (<reason>), rules only" when the agent
+                                     # CLI is missing or fails; --dry-run never calls it
+kb compound --no-llm-facts           # rules only (also llm.facts: false or KB_LLM_FACTS=0, e.g. in CI tests)
 kb verify                            # exit 0 = wiki matches HEAD
 ```
 

@@ -38,7 +38,7 @@
 | testIDs recall | 95.8% | 59.5% | 94.6% | n/a | n/a |
 | APIs recall | 96.2% | 33.3% | 38.1% | **19.7%** | 16.7% |
 
-**LLM 兜底（`kb facts suggest` / `kb compound --llm-facts`，默认关闭）**：先挑出规则几乎没抽到东西的导航类、网络类文件，交给 agent 提出候选。每条候选都要经过确定性核对才写入：证据必须原文出现在给定行 ±5 行内，路由名或路径片段也必须出现在该范围内。核对不通过的候选一律丢弃，写入的条目带 `"source":"llm"` 标记；规则结果和 LLM 候选冲突时以规则为准；结果按文件 hash 缓存。下表是在 heldout3 上做的真盲测，只评测一次（haiku，总成本约 $0.16）：
+**LLM 兜底（`kb compound` 内置，`kb facts suggest` 可单独运行；默认开启，可用 `--no-llm-facts` / `llm.facts: false` / `KB_LLM_FACTS=0` 关闭；无 agent 时自动降级为仅规则）**：没有 agent CLI（默认 `claude`）或调用失败（认证、网络）时，`kb compound` 在 stderr 打一行 `llm-facts: skipped (<原因>), rules only` 后照常完成，已缓存的答案仍会生效；`--dry-run` 从不调用 LLM。先挑出规则几乎没抽到东西的导航类、网络类文件，交给 agent 提出候选。每条候选都要经过确定性核对才写入：证据必须原文出现在给定行 ±5 行内，路由名或路径片段也必须出现在该范围内。核对不通过的候选一律丢弃，写入的条目带 `"source":"llm"` 标记；规则结果和 LLM 候选冲突时以规则为准；结果按文件 hash 缓存。下表是在 heldout3 上做的真盲测，只评测一次（haiku，总成本约 $0.16）：
 
 | 指标 | 仅规则 | 规则 + LLM |
 |---|---|---|
@@ -46,7 +46,7 @@
 | APIs recall | 19.7% | **39.4%** |
 | not_screen FP | 13.3% | 13.3% |
 
-运行中共采纳 93 条路由候选、23 条 API 候选，核对拒绝 17 条。另做了一次独立人工审核（[bench/accuracy/llm-audit/AUDIT.md](bench/accuracy/llm-audit/AUDIT.md)），逐条核对最终写入 facts 的 60 条 LLM 条目，严格精确率为 78.3%（routes 85%，APIs 65%）。错误主要有两类：一是静态资源 URL 被当成了 API，二是同一路由的不同写法造成重复。据此加了 5 条通用核对规则（必须有 HTTP 调用、过滤资源路径、校验 host 和参数、id 归一化后去重、只认注册点），精确率升到 **97.9%**，召回不变。这一轮是在看过审核结果之后调整的，因此不算盲测。置信度分为 `verified-call` 和 `evidence-token` 两档。需要注意三点：LLM 额外写入的、标注里没有的条目无法评分；KMP 仓库的 API 仍是 0/20；关闭开关时，16 仓库训练集的输出与之前逐字节相同。
+运行中共采纳 93 条路由候选、23 条 API 候选，核对拒绝 17 条。另做了一次独立人工审核（[bench/accuracy/llm-audit/AUDIT.md](bench/accuracy/llm-audit/AUDIT.md)），逐条核对最终写入 facts 的 60 条 LLM 条目，严格精确率为 78.3%（routes 85%，APIs 65%）。错误主要有两类：一是静态资源 URL 被当成了 API，二是同一路由的不同写法造成重复。据此加了 5 条通用核对规则（必须有 HTTP 调用、过滤资源路径、校验 host 和参数、id 归一化后去重、只认注册点），精确率升到 **97.9%**，召回不变。这一轮是在看过审核结果之后调整的，因此不算盲测。置信度分为 `verified-call` 和 `evidence-token` 两档。需要注意三点：LLM 额外写入的、标注里没有的条目无法评分；KMP 仓库的 API 仍是 0/20；关闭 LLM 兜底时，16 仓库训练集的输出与之前逐字节相同。
 
 **结论**：规则抽取遇到没见过的写法，效果会明显下降，heldout3 上整类条目整体漏掉。漏掉的包括 Navigation 3 的 `NavKey` 路由、有具名路由时被忽略的 `main_pages`、Ktor 调用、自封装的 ArkTS HTTP 工具，以及 OkHttp 模板 URL。训练集上的高分不能当成通用准确率。改进方向有三条：一是给规则加一层由 LLM 提议、再用锚点证据核对的兜底（`kb facts suggest`，见下）；二是持续扩充盲测集；三是每接入一个新仓库，先跑一遍盲测，再动手补规则。
 
@@ -135,7 +135,7 @@ cd your-monorepo                 # 含 android/ ios/ harmony/
 kb init                          # 生成 codewiki.yaml、wiki/ 骨架与 wiki/AGENTS.md schema
 kb discover-docs --json > /tmp/docs.json
 kb ingest --manifest /tmp/docs.json --kinds spec,design,adr,agent-guide,doc   # 文档断言逐条核对
-kb compound                      # 首次：全量；之后：增量（默认 template 写作器，离线确定性）
+kb compound                      # 首次：全量；之后：增量（默认 template 写作器；facts 的 LLM 兜底默认开启，无 agent 时自动跳过，--no-llm-facts 则完全离线确定）
 kb compound --llm claude         # 使用真实 LLM（claude -p）写页面
 kb verify                        # CI 门禁：exit 0 = wiki 与 HEAD 一致
 kb search "购物车 上限"; kb get features/cart
@@ -170,6 +170,10 @@ llm:
   # model: gpt-5-codex
   cmd: claude -p --permission-mode acceptEdits --allowedTools "Read,Write,Edit,Glob,Grep,Bash(kb anchor:*),Bash(kb get:*),Bash(kb search:*)" --output-format text
   timeout_sec: 600
+  facts: true                    # kb compound 的 LLM 兜底抽取 routes/APIs（默认开启；false / --no-llm-facts / KB_LLM_FACTS=0 关闭）
+  # facts_agent: claude          # 兜底用的 agent（默认 claude；不在 PATH 上时自动降级为仅规则）
+  # facts_model: haiku
+  # facts_max_files: 40          # 每次送给 agent 的候选文件上限
 plan:
   hops: 1                        # 签名变化沿引用边传播的跳数 k
   rebuild_module_ratio: 0.5      # >50% 模块变化 → 全量重建
@@ -190,7 +194,7 @@ docs:
 | `kb scan [--out graph.json] [--symbols]` | tree-sitter 抽取符号与 facts，报告 `parse_failures` |
 | `kb diff [--base <sha>]` | 与上次 compound 的符号图（或 `--base` 版本）按符号 ID 比对：unchanged / body / signature / added / deleted / renamed（含 body 相似度） |
 | `kb plan [--base] [--full] [--dry-run]` | 受影响页面 = 自身锚点变化 ∪ 签名变化沿引用边 k 跳传播 ∪ 新路由；每个任务带显式 write set；超阈值全量重建；写 `wiki/.kb/plan.json` |
-| `kb compound [--llm template\|cmd] [--agent claude\|codex\|gemini] [--model m] [--llm-cmd ...] [--fallback] [--max-llm-tasks N] [--full] [--dry-run] [--keep-work]` | scan→diff→plan→LLM→verify→原子发布；更新 `.kb/state.json`（last_sha）、`.kb/update_record.json`、追加 `log.md` |
+| `kb compound [--llm template\|cmd] [--agent claude\|codex\|gemini] [--model m] [--llm-cmd ...] [--fallback] [--max-llm-tasks N] [--full] [--dry-run] [--keep-work] [--no-llm-facts]` | scan→diff→plan→LLM→verify→原子发布；默认先跑 LLM 兜底抽取 facts（见上文，无 agent 时只用规则）；更新 `.kb/state.json`（last_sha）、`.kb/update_record.json`、追加 `log.md` |
 | `kb verify [--fix-index]` | 锚点 hash 匹配 HEAD、正文提到的符号存在、无死链、无孤儿页、index 覆盖、facts 与重新抽取一致、requirements 锚点新鲜 |
 | `kb status` | 列出 stale 页面（exit 1 表示存在） |
 | `kb discover-docs [--out f]` | 按业界约定发现并分类文档（spec/design/tasks/adr/agent-guide/readme/doc），记录 path + hash |

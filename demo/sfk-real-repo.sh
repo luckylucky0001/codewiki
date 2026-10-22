@@ -4,6 +4,7 @@
 # dim=path points a docs dimension at an existing human doc (codewiki.yaml docs_schema) to exercise `adopted`.
 # Outputs: per-step logs/JSON, git-status.txt and 12-check.json (independent human-content check).
 set -uo pipefail
+export KB_LLM_FACTS="${KB_LLM_FACTS:-0}"   # rules-only facts: no default-on LLM facts fallback (KB_LLM_FACTS=1 to enable)
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; ROOT="$(cd "$HERE/.." && pwd)"
 SRC="$(cd "${1:?repo}" && pwd)"; W="${2:?outdir}"; shift 2; R="$W/repo"; KB="node $ROOT/dist/cli.js"
 rm -rf "$W"; mkdir -p "$W/before"

@@ -9,6 +9,7 @@
 #       scripts its turns: write the task's write set + one file outside it, then say "done").
 # Needs: node, git, python3, jq, codex. No network, no API key.
 set -euo pipefail
+export KB_LLM_FACTS="${KB_LLM_FACTS:-0}"   # rules-only facts: no default-on LLM facts fallback (KB_LLM_FACTS=1 to enable)
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/.." && pwd)"
 CODEX="${CODEX_BIN:-$(command -v codex || true)}"

@@ -5,6 +5,7 @@
 #   demo/agents-ab.sh            # AB_MODEL=haiku, AB_REPEAT=1
 # Outputs: $OUT/<variant>-<q>.jsonl + summary.md (tool calls, first action, agent-file reads, turns, cost).
 set -euo pipefail
+export KB_LLM_FACTS="${KB_LLM_FACTS:-0}"   # rules-only facts: no default-on LLM facts fallback (KB_LLM_FACTS=1 to enable)
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/.." && pwd)"
 OUT="${DEMO_OUT:-$ROOT/demo/output/$(date -u +%Y%m%dT%H%M%SZ)-agents-ab}"

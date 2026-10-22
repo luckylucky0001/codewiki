@@ -219,14 +219,13 @@ platforms:
   - {name: android, root: android}
   - {name: ios,     root: ios}
   - {name: harmony, root: harmony}
-llm:
-  cmd: claude -p --permission-mode ...
+llm: {cmd: claude -p ..., facts: true}   # facts：LLM 兜底，默认开启
 plan:
   hops: 1
   rebuild_module_ratio: 0.5</code></pre>
 </div>
 </div>
-<p><b>配置不需要手写</b>：<code>kb init</code> 会自动探测平台目录，只有探测不准时才需要改。<b>零配置</b>：没有 yaml 时，<code>kb routes / lint-tid / parity / scan / anchor</code> 仍可直接运行，且不写入任何文件。wiki 类命令遇到未初始化的仓库，会提示先运行 <code>kb init</code> 和 <code>kb compound --llm template</code>，这一步是确定性的，不调用 LLM，只需几秒。skill 和 CLAUDE.md/AGENTS.md 指引块也写了同样的步骤。实测在未初始化的仓库里，Claude 会自行完成初始化，轮数从 12 降到 5。指定 <code>--config &lt;file&gt; --root &lt;repo&gt;</code> 时，wiki 会写到被分析仓库之外，用于只读分析第三方仓库。</p>
+<p><b>配置不需要手写</b>：<code>kb init</code> 会自动探测平台目录，只有探测不准时才需要改。<b>零配置</b>：没有 yaml 时，<code>kb routes / lint-tid / parity / scan / anchor</code> 仍可直接运行，且不写入任何文件。wiki 类命令遇到未初始化的仓库，会提示先运行 <code>kb init</code> 和 <code>kb compound --llm template --no-llm-facts</code>，这一步是确定性的，不调用 LLM，只需几秒。skill 和 CLAUDE.md/AGENTS.md 指引块也写了同样的步骤。实测在未初始化的仓库里，Claude 会自行完成初始化，轮数从 12 降到 5。指定 <code>--config &lt;file&gt; --root &lt;repo&gt;</code> 时，wiki 会写到被分析仓库之外，用于只读分析第三方仓库。</p>
 <h3>4.3 页面 frontmatter 契约</h3>
 <pre><code>---
 id: features/cart          # = 路径去掉 pages/ 与 .md（verify 强制检查）
@@ -354,12 +353,12 @@ depth 3; L0 1 · L1 2 · L2 2 · L3 9</code></pre>
   <tr><td>APIs recall</td><td>96.2%</td><td>33.3%</td><td>38.1%</td><td><b>19.7%</b></td><td>16.7%</td></tr>
 </table>
 <div class="warn"><b>结论：规则抽取的泛化能力很差。</b>遇到没见过的写法时，整类条目会全部漏掉，例如 Navigation 3 的 <code>NavKey</code> 路由、有具名路由时被忽略的 <code>main_pages</code>、Ktor 调用、自封装的 ArkTS HTTP 工具、OkHttp 模板 URL。训练集上的高分不能当成通用准确率。接入新仓库时，应先跑一遍盲测，再补规则。</div>
-<p><b>LLM 兜底</b>（<code>kb facts suggest --agent claude</code> / <code>kb compound --llm-facts</code>，默认关闭）：先挑出规则几乎没抽到东西的导航类、网络类文件，交给 agent 提出候选。每条候选都要经过确定性核对才写入：</p>
+<p><b>LLM 兜底</b>（<code>kb facts suggest --agent claude</code> / <code>kb compound</code> 内置，默认开启，可用 <code>--no-llm-facts</code> / <code>llm.facts: false</code> / <code>KB_LLM_FACTS=0</code> 关闭；无 agent 时自动降级为仅规则）：先挑出规则几乎没抽到东西的导航类、网络类文件，交给 agent 提出候选。每条候选都要经过确定性核对才写入：</p>
 <ul>
   <li>证据必须原文出现在给定行 ±5 行内，路由名或路径片段也必须出现在这个范围内；不通过的一律丢弃。</li>
   <li>写入的条目带 <code>"source":"llm"</code>；与规则结果冲突时以规则为准；结果按文件 hash 缓存。</li>
 </ul>
-<p>在 heldout3 上做了一次真盲测（haiku，总成本约 $0.16），结果见下表。这次共采纳路由候选 93 条、API 候选 23 条，核对拒绝 17 条。三点注意：LLM 额外写入、标注里没有的条目无法评分；KMP 仓库的 API 仍是 0/20；关闭开关时，训练集输出与之前逐字节相同。</p>
+<p>在 heldout3 上做了一次真盲测（haiku，总成本约 $0.16），结果见下表。这次共采纳路由候选 93 条、API 候选 23 条，核对拒绝 17 条。三点注意：LLM 额外写入、标注里没有的条目无法评分；KMP 仓库的 API 仍是 0/20；关闭兜底时，训练集输出与之前逐字节相同。</p>
 <table class="nums" style="break-inside:avoid">
   <tr><th>指标</th><th>仅规则</th><th>规则 + LLM</th></tr>
   <tr><td>routes recall</td><td>48.4%</td><td><b>89.1%</b></td></tr>

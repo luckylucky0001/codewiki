@@ -4,6 +4,7 @@
 # Per repo: kb compound --llm template --full; kb discover-docs; kb ingest --manifest --llm template.
 # Builds the TypeScript kb first (set KB=<binary> to use another kb, e.g. the Go one). JOBS=n parallel repos.
 set -u
+export KB_LLM_FACTS="${KB_LLM_FACTS:-0}"   # rules-only facts: no default-on LLM facts fallback (KB_LLM_FACTS=1 to enable)
 HERE=$(cd "$(dirname "$0")" && pwd); ACC=$(dirname "$HERE"); REPO=$(cd "$ACC/../.." && pwd)
 OUT=${1:?out dir}; shift; mkdir -p "$OUT"; OUT=$(cd "$OUT" && pwd)
 if [ -z "${KB:-}" ]; then
