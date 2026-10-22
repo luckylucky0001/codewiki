@@ -96,7 +96,7 @@ flowchart LR
 
 ## 复杂仓库的业务知识沉淀
 
-使用 `kb compound --knowledge --agent codex --workers 3 --keep-work`：由 agent 阅读源码并规划模块页、跨模块业务链路，再由写作 agent 深入取证。计划保存模块映射、待回答问题和增量监视范围；不依赖路由识别成功，也不允许用模板充当业务知识。新增模块用 `--replan`。验收和边界见 [Agent 知识规划](docs/agent-knowledge.md)。
+使用 `kb compound --knowledge --agent claude --workers 3 --keep-work`（或 `--agent codex|gemini`，IDE 内用 `--llm-cmd` 文件交接）：由 agent 阅读源码并规划模块页（`pages/modules/`）、跨模块业务链路（`pages/flows/`），再由写作 agent 在各自独立的 staging 中深入取证。计划（`.kb/knowledge-plan.json`）保存模块映射、待回答问题和增量监视范围；不依赖路由识别成功，也不允许用模板充当业务知识，过时 hash 直接拒绝而不是重盖。新增模块用 `--replan`；定向修订 `--knowledge-pages … --feedback …`；退役旧页 `--retire-pages … --retire-reason …`；中断续跑 `--resume-result run.json`。这些页面与 v2 模块树页（`pages/<project>/…`）并存，总览页变为知识导航。验收和边界见 [Agent 知识规划](docs/agent-knowledge.md)。
 
 ## 安装
 
@@ -198,7 +198,8 @@ docs:
 | `kb scan [--out graph.json] [--symbols]` | tree-sitter 抽取符号与 facts，报告 `parse_failures` |
 | `kb diff [--base <sha>]` | 与上次 compound 的符号图（或 `--base` 版本）按符号 ID 比对：unchanged / body / signature / added / deleted / renamed（含 body 相似度） |
 | `kb plan [--base] [--full] [--dry-run]` | 受影响页面 = 自身锚点变化 ∪ 签名变化沿引用边 k 跳传播 ∪ 新路由；每个任务带显式 write set；超阈值全量重建；写 `wiki/.kb/plan.json` |
-| `kb compound [--llm template\|cmd] [--agent claude\|codex\|gemini] [--model m] [--llm-cmd ...] [--fallback] [--max-llm-tasks N] [--full] [--dry-run] [--keep-work] [--no-llm-facts]` | scan→diff→plan→LLM→verify→原子发布；默认先跑 LLM 兜底抽取 facts（见上文，无 agent 时只用规则）；更新 `.kb/state.json`（last_sha）、`.kb/update_record.json`、追加 `log.md` |
+| `kb compound [--llm template\|cmd] [--agent claude\|codex\|gemini] [--model m] [--llm-cmd ...] [--fallback] [--max-llm-tasks N] [--full] [--dry-run] [--keep-work] [--no-llm-facts]` | scan→diff→plan→LLM→verify→原子发布；默认先跑 LLM 兜底抽取 facts（见上文，无 agent 时只用规则）；更新 `.kb/state.json`（last_sha）、`.kb/update_record.json`、追加 `log.md`；任一任务失败则不发布（`E_TASK_FAILED`，staging 保留） |
+| `kb compound --knowledge [--replan] [--workers N] [--knowledge-pages p,… --feedback f] [--retire-pages p,… --retire-reason r] [--resume-result run.json]` | agent 规划并撰写模块/业务链路知识页（见 [docs/agent-knowledge.md](docs/agent-knowledge.md)） |
 | `kb verify [--fix-index]` | 锚点 hash 匹配 HEAD、正文提到的符号存在、无死链、无孤儿页、index 覆盖、facts 与重新抽取一致、requirements 锚点新鲜 |
 | `kb status` | 列出 stale 页面（exit 1 表示存在） |
 | `kb discover-docs [--out f]` | 按业界约定发现并分类文档（spec/design/tasks/adr/agent-guide/readme/doc），记录 path + hash |
@@ -213,7 +214,7 @@ docs:
 | `kb routes [--dangling]` | 所有路由按模块汇总（router_map / NavHost / Route 枚举），给出总数；`--dangling` 列出 buildFunction 找不到实现的条目 |
 | `kb lint-tid --pages` / `--top N` | 哪些路由页面在源文件里设置了 testID（`--json` 给出完整清单）；使用次数最多的 N 个 testID 及其次数 |
 | `kb install-skills <repo> [--no-agents-md]` | 把 skills 安装到 `<repo>/.claude/skills/`。同时在 `AGENTS.md` 和 `CLAUDE.md` 中写入或更新一段 `<!-- codewiki:begin -->…<!-- codewiki:end -->` 指引块，把各类问题映射到对应命令：路由/深链 → facts、testID → `kb lint-tid`、三端差异 → `kb parity`、过时文档 → `kb conflicts`、改文件前 → `kb context`。重复运行结果不变，块外内容保持原样 |
-| `kb install --agent claude,codex,gemini,cursor,copilot\|all [--target repo] [--mcp] [--dry-run]` | 让各 agent 用上 wiki：写入各自的指令文件块、skills 和 MCP 注册（JSON/TOML 安全合并），可重复运行。见 [docs/agents.md](docs/agents.md) |
+| `kb install --agent claude,codex,gemini,cursor,copilot,trae-cn,generic\|all [--target repo] [--mcp] [--dry-run]` | 让各 agent 用上 wiki：写入各自的指令文件块、skills 和 MCP 注册（JSON/TOML 安全合并），可重复运行。见 [docs/agents.md](docs/agents.md) |
 | `kb agents [name]` | 支持矩阵：每个 agent 的后端命令行、消费者文件、验证等级 |
 | `kb bench [--synthetic N]` | 冷/热扫描基准（合成仓库或 `--root` 指定的真实仓库） |
 | `kb eval [--llm …]` | 用人工标注的 golden set 评测断言核对与 plan 影响面（precision/recall） |
@@ -571,7 +572,7 @@ claude mcp add codewiki -- kb mcp --root /path/to/app-repo
 
 ## 多 Agent 支持
 
-除了 Claude Code，wiki 也可以给 Codex、Gemini CLI、Cursor、Copilot 和任何支持 AGENTS.md 的 agent 使用。`kb compound`、`kb ingest`、`kb eval` 的写作和核对步骤也可以交给 Codex 或 Gemini 完成。
+除了 Claude Code，wiki 也可以给 Codex、Gemini CLI、Cursor、Copilot、TRAE CN 和任何支持 AGENTS.md 的 agent 使用。`kb compound`、`kb ingest`、`kb eval` 的写作和核对步骤也可以交给 Codex 或 Gemini 完成。
 
 ```bash
 kb install --agent all --mcp      # CLAUDE.md / AGENTS.md / GEMINI.md / .cursor/rules / copilot-instructions + skills + MCP
@@ -586,6 +587,7 @@ kb agents                         # 支持矩阵和实际执行的命令行
 - Claude：实跑。
 - Codex 和 Gemini：真实 CLI 二进制配合 mock 模型 API 端到端运行，包括 Codex 的 `debug prompt-input` 和 `mcp list` 核对。
 - Cursor 和 Copilot：只依据文档。
+- TRAE CN：`kb install --agent trae-cn` 只安装 skill 到 `.trae/skills/`（路径依据官方文档）；没有内置后端，业务知识通过 skill 的 IDE 文件交接（`scripts/file-agent.py`）由 IDE 当前 agent 完成。安装与交接协议有测试，IDE 实跑尚未验证。
 
 支持矩阵、CI 示例和安全说明见 [docs/agents.md](docs/agents.md)，调研来源见 [docs/agents-research.md](docs/agents-research.md)。
 
@@ -888,4 +890,4 @@ DEMO_LLM=template demo/run.sh           # 端到端 demo（verify PASS）
 
 目录：`src/cli`（`kb` 命令、install、hook）、`src/config`、`src/scan`（遍历 + 引用解析 + worker_threads）、`src/extract`（WASM tree-sitter 符号/调用点）、`src/facts`（三端事实）、`src/engine`（diff/plan/compound/claims/docs/eval）、`src/wiki`（页面/索引/日志/verify）、`src/mcp`、`src/agents`、`grammars/`（WASM）、`skills/codewiki/`、`test/`（含 `test/golden/`）、`legacy-go/`（原 Go 实现）。
 
-客户使用 TRAE CN 时：`kb install --agent trae-cn` 安装项目 skill，并按 [通用 IDE 交接流程](skills/codewiki/references/ide-handoff.md) 执行。无需安装 Codex；TRAE 安装适配不表示已经完成 IDE 实跑验收。
+客户使用 TRAE CN 时：`npm i -g codewiki` 后 `kb install --agent trae-cn` 安装项目 skill（`.trae/skills/codewiki/`），并按 [通用 IDE 交接流程](skills/codewiki/references/ide-handoff.md) 执行。无需安装 Codex；TRAE 安装适配不表示已经完成 IDE 实跑验收。

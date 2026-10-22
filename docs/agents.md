@@ -22,7 +22,7 @@ kb agents                                                     # 查看支持矩�
 | **Gemini CLI** | `gemini --skip-trust --approval-mode auto_edit --output-format json -p '…'`（完整 prompt 从 stdin 读入） | `GEMINI.md` | `.agents/skills/` | `.gemini/settings.json`（`trust: true`） | 后端和消费者都是**真二进制 / mock 模型** |
 | **Cursor** | 无适配器，用 `--llm-cmd` | `.cursor/rules/codewiki.mdc`（`alwaysApply: true`） | — | `.cursor/mcp.json` | **仅文档** |
 | **GitHub Copilot** | 无适配器，用 `--llm-cmd` | `.github/copilot-instructions.md` | — | 打印手工配置说明 | **仅文档** |
-| **TRAE CN** | IDE file handoff; no bundled headless command | Skill only | `.trae/skills/` | Manual setup | Documented path and installation tested; IDE model run pending |
+| **TRAE CN** | 无适配器：IDE 当前 agent 经 skill 的文件交接（`--llm-cmd 'python3 …/scripts/file-agent.py --exchange-dir …'`）完成任务 | 无（只装 skill） | `.trae/skills/` | 手工在 IDE 中注册（`--mcp` 打印提示） | **仅文档**（安装路径与交接协议有测试，IDE 实跑待验证） |
 | **generic**（任何支持 AGENTS.md 的 agent） | 使用 `llm.cmd` 或 `--llm-cmd` | `AGENTS.md` | `.agents/skills/` | 打印 `kb mcp --root <repo>` | **仅文档** |
 
 验证等级的含义：
@@ -262,6 +262,6 @@ steps:
 - Cursor 和 Copilot 只做了消费者文件，验证等级是“仅文档”；它们的 headless CLI 需要用 `--llm-cmd` 自行接入。
 - JSON 合并后会按 2 空格缩进重排键的顺序（只在确实有变化时写回）。
 
-## TRAE CN IDE workflow
+## TRAE CN IDE 工作流
 
-Run `kb install --agent trae-cn`. Use the current IDE agent with [the shared skill handoff](../skills/codewiki/references/ide-handoff.md); Codex installation and parallel subagents are optional. The project skill path follows [official TRAE CN documentation](https://docs.trae.cn/ide_skills), checked 2026-10-21. Installation tests do not establish an actual IDE model run.
+运行 `kb install --agent trae-cn`（`kb` 来自 `npm i -g codewiki`），把 `codewiki` skill 装到 `.trae/skills/codewiki/`。之后由 IDE 当前 agent 按 [IDE 文件交接流程](../skills/codewiki/references/ide-handoff.md) 工作：后台运行 `kb compound --knowledge --workers 1 --keep-work --json --llm-cmd 'python3 <abs>/.trae/skills/codewiki/scripts/file-agent.py --exchange-dir <abs>'`，再逐个处理交接目录里的 `request.json`。不需要安装 Codex，也不要求子 agent 能力；`kb compound --agent trae-cn` 不存在（报错）。项目 skill 路径依据 [TRAE CN 官方文档](https://docs.trae.cn/ide_skills)（2026-10-21 核对）。安装测试与交接协议测试（`test/knowledge.test.ts`）不等于 IDE 中的真实模型运行。
