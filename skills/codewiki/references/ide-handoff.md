@@ -6,8 +6,11 @@ and the CodeWiki CLI are required. A skill directory must be loaded through the
 IDE's supported skill mechanism; do not assume different IDEs discover the same
 installation directory automatically.
 
-1. Read this skill and its planning/writing contracts. Initialize the repository
-   if necessary. Locate this skill's `scripts/file-agent.py` by absolute path.
+1. Read the `codewiki` skill and its planning/writing contracts
+   ([knowledge-planner.md](knowledge-planner.md), [knowledge-writer.md](knowledge-writer.md)).
+   Initialize the repository if necessary (`kb init`; `kb` comes from `npm i -g codewiki`).
+   Locate this skill's `scripts/file-agent.py` by absolute path (after
+   `kb install --agent trae-cn`: `<repo>/.trae/skills/codewiki/scripts/file-agent.py`).
 2. Choose an absolute exchange directory outside the staging wiki (for example
    `<repository>/.kb-handoff/<unique-run-id>`). Start the following pipeline as a
    **background terminal job**, redirecting stdout/stderr to run-specific files:

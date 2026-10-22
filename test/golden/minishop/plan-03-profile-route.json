@@ -94,68 +94,7 @@
       "priority": 4
     },
     {
-      "id": "t02-concepts-shared-components",
-      "op": "update",
-      "kind": "concept",
-      "page": "pages/concepts/shared-components.md",
-      "title": "共享组件",
-      "write_set": [
-        "pages/concepts/shared-components.md"
-      ],
-      "reasons": [
-        {
-          "code": "anchor_added",
-          "sym": "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.getInstance"
-        },
-        {
-          "code": "anchor_added",
-          "sym": "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.save"
-        },
-        {
-          "code": "anchor_added",
-          "sym": "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.token"
-        },
-        {
-          "code": "anchor_added",
-          "sym": "ios://MiniShop/Networking/APIClient.swift#LoginResponse.token"
-        },
-        {
-          "code": "anchor_added",
-          "sym": "ios://MiniShop/Networking/APIClient.swift#TokenStore.token"
-        }
-      ],
-      "context": [
-        "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiClient",
-        "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiClient.BASE_URL",
-        "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiClient.service",
-        "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.getInstance",
-        "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.save",
-        "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.token",
-        "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.pending",
-        "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.preload",
-        "android://app/src/main/java/com/minishop/ui/components/MiniShopTopBar.kt#MiniShopTopBar",
-        "harmony://entry/src/main/ets/common/Api.ets#Api",
-        "harmony://entry/src/main/ets/common/Api.ets#Api.addToCart",
-        "harmony://entry/src/main/ets/common/BackButton.ets#BackButton",
-        "harmony://entry/src/main/ets/common/BackButton.ets#BackButton.build",
-        "ios://MiniShop/Components/BackButton.swift#BackButton",
-        "ios://MiniShop/Components/BackButton.swift#BackButton.body",
-        "ios://MiniShop/Components/BackButton.swift#BackButton.dismiss",
-        "ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel",
-        "ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel.preload",
-        "ios://MiniShop/Networking/APIClient.swift#APIClient",
-        "ios://MiniShop/Networking/APIClient.swift#APIClient.send",
-        "ios://MiniShop/Networking/APIClient.swift#APIClient.shared",
-        "ios://MiniShop/Networking/APIClient.swift#LoginResponse.token",
-        "ios://MiniShop/Networking/APIClient.swift#TokenStore",
-        "ios://MiniShop/Networking/APIClient.swift#TokenStore.save",
-        "ios://MiniShop/Networking/APIClient.swift#TokenStore.shared",
-        "ios://MiniShop/Networking/APIClient.swift#TokenStore.token"
-      ],
-      "priority": 5
-    },
-    {
-      "id": "t03-features-MainActivity",
+      "id": "t02-features-MainActivity",
       "op": "update",
       "kind": "feature",
       "page": "pages/features/MainActivity.md",
@@ -187,7 +126,7 @@
       "priority": 1
     },
     {
-      "id": "t04-features-RootView",
+      "id": "t03-features-RootView",
       "op": "update",
       "kind": "feature",
       "page": "pages/features/RootView.md",
@@ -213,7 +152,7 @@
       "priority": 2
     },
     {
-      "id": "t05-features-profile",
+      "id": "t04-features-profile",
       "op": "create",
       "kind": "feature",
       "page": "pages/features/profile.md",
@@ -244,7 +183,7 @@
       "priority": 3
     },
     {
-      "id": "t06-overview",
+      "id": "t05-overview",
       "op": "update",
       "kind": "overview",
       "page": "pages/overview.md",
@@ -258,7 +197,7 @@
         }
       ],
       "context": [],
-      "priority": 6
+      "priority": 5
     }
   ],
   "changed_route_ids": [

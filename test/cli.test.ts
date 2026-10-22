@@ -84,7 +84,7 @@ describe('kb CLI', () => {
     expect(first['AGENTS.md']).toContain('keep me');
     expect(first['AGENTS.md']).toContain('<!-- codewiki:begin');
     const skills = Object.keys(first).filter((f) => f.endsWith('SKILL.md'));
-    expect(skills.sort()).toEqual(['.agents/skills/codewiki/SKILL.md', '.claude/skills/codewiki/SKILL.md']);
+    expect(skills.sort()).toEqual(['.agents/skills/codewiki/SKILL.md', '.claude/skills/codewiki/SKILL.md', '.trae/skills/codewiki/SKILL.md']);
     expect(JSON.parse(first['.mcp.json']!).mcpServers.codewiki.args).toEqual(['mcp', '--root', target]);
   });
 
@@ -97,6 +97,10 @@ describe('kb CLI', () => {
     expect(fm.description.length).toBeLessThan(1024);
     expect(s.split('\n').length).toBeLessThan(500);
     for (const m of s.matchAll(/\]\((references\/[^)]+)\)/g)) expect(fs.existsSync(path.join(dir, 'codewiki', m[1]!))).toBe(true);
+    // one level deep: every bundled reference is routed from SKILL.md, and scripts are named there
+    for (const f of fs.readdirSync(path.join(dir, 'codewiki/references'))) expect(s).toContain(`](references/${f})`);
+    for (const f of fs.readdirSync(path.join(dir, 'codewiki/scripts'))) expect(s).toContain(`scripts/${f}`);
+    expect(fs.readdirSync(path.join(dir, 'codewiki')).sort()).toEqual(['SKILL.md', 'references', 'scripts']);
   });
 
   it('mcp server lists tools and runs them', () => {

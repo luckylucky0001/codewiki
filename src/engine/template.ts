@@ -29,7 +29,6 @@ export function templateFeature(g: Graph, f: Facts, rid: string, commit: string)
   b += '> 由 `kb compound --llm template` 根据 facts 与符号图确定性生成；使用 claude 模式可获得更完整的叙述。锚点见 frontmatter `sources`。\n\n';
   b += '## 路由与深链\n\n| 平台 | pattern | deeplink | 入口符号 |\n|---|---|---|---|\n';
   for (const r of f.routes ?? []) if (r.route_id === rid) b += `| ${r.platform} | \`${r.pattern}\` | \`${r.deeplink}\` | \`${r.symbol}\` |\n`;
-  b += '\n测试注入参数：`?token=<t>&cart=<sku,sku>`（见各端 deeplink 处理代码）。\n';
   const tids = (f.testids ?? []).filter((t) => t.route_id === rid).map((t) => `| ${t.platform} | \`${t.tid}\` | \`${t.file}:${t.line}\` |`);
   b += '\n## testID\n\n';
   b += tids.length === 0 ? '（无归属于该路由的 testID；共享组件的 testID 见 facts）\n' : '| 平台 | tid | 位置 |\n|---|---|---|\n' + tids.join('\n') + '\n';
@@ -65,7 +64,7 @@ export function templateFeature(g: Graph, f: Facts, rid: string, commit: string)
 
 export function templateOverview(f: Facts, platforms: string[], commit: string): Page {
   const rids = routeIDs(f);
-  let b = '# 总览：三端路由矩阵\n\n> 由 facts 确定性生成（`kb compound`）。每个功能页覆盖一个 `route_id`，三端共享同一 pattern 与 deeplink。\n\n';
+  let b = '# 总览：自动抽取的路由事实\n\n> 由 facts 确定性生成（`kb compound`）。每个功能页覆盖一个 `route_id`；各平台实际覆盖以表格为准。自动事实为零不代表没有业务能力。\n\n';
   b += '| route_id | pattern | ' + platforms.join(' | ') + ' | 页面 |\n|---|---|' + '---|'.repeat(platforms.length) + '---|\n';
   for (const rid of rids) {
     let pattern = '';
@@ -83,7 +82,7 @@ export function templateOverview(f: Facts, platforms: string[], commit: string):
   }
   const schemes = new Set<string>();
   for (const sc of Object.values(f.schemes ?? {})) sc.forEach((s) => schemes.add(s));
-  if (schemes.size) b += `\n深链 scheme：\`${sortedKeys(schemes).join('`, `')}\`；测试态注入：\`?token=<t>&cart=<sku,sku>\`。\n`;
+  if (schemes.size) b += `\n深链 scheme：\`${sortedKeys(schemes).join('`, `')}\`。\n`;
   b += `\n规模：${f.routes?.length ?? 0} 条路由、${f.testids?.length ?? 0} 个 testID、${f.apis?.length ?? 0} 个接口调用点。三端差异见 [parity.md](parity.md)。机器可读：[routes.json](../facts/routes.json) · [testids.json](../facts/testids.json) · [apis.json](../facts/apis.json)\n`;
   return { path: OverviewPage, hasFM: true, body: b, front: { id: idFromPath(OverviewPage), title: '总览', kind: 'overview', platforms, routes: rids, source_commit: commit, status: StatusCurrent } };
 }

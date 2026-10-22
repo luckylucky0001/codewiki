@@ -35,6 +35,10 @@ export interface Task {
   priority: number;
   /** v2: tree node of a tree page task (not part of plan.json tasks) */
   tree_node?: string;
+  /** agent-led business knowledge task (pages/modules|flows; see knowledge.ts) */
+  knowledge?: boolean;
+  questions?: string[];
+  scope?: string[];
 }
 
 export interface Plan {
@@ -189,7 +193,7 @@ export function buildPlan(inp: PlanInput): Plan {
     const have = new Set((pg.front.sources ?? []).map((a) => a.sym));
     for (const id of want) {
       if (have.has(id)) continue;
-      if (added.has(id) || pg.front.kind === 'concept') reasons.push(R('anchor_added', id));
+      if (added.has(id)) reasons.push(R('anchor_added', id));
     }
     for (const rid of pg.front.routes ?? []) if (!rids.includes(rid)) reasons.push(R('route_removed', undefined, rid));
     if (reasons.length === 0) continue;
@@ -242,7 +246,7 @@ export function rankForLLM(tasks: Task[]): number[] {
   return idx;
 }
 
-function finalize(p: Plan): void {
+export function finalize(p: Plan): void {
   p.tasks.sort((a, b) => cmpStr(a.page, b.page));
   p.tasks.forEach((t, i) => {
     const slug = t.page.replaceAll('pages/', '').replaceAll('/', '-').replaceAll('.md', '');

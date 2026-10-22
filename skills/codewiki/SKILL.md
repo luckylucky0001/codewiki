@@ -1,6 +1,6 @@
 ---
 name: codewiki
-description: Code-anchored LLM Wiki for Android (Kotlin/Java), iOS (Swift) and HarmonyOS (ArkTS) monorepos, driven by the single `kb` CLI. Use it to (1) answer questions about app behaviour, routes, deep links, testIDs, HTTP APIs, constants and cross-platform differences ("how many routes", "which pages set testIDs", "购物车上限三端分别是多少") with `kb routes`, `kb lint-tid`, `kb parity`, `kb search`, `kb get`, `kb context` instead of grepping; (2) find outdated docs/specs ("哪些文档过时") with `kb conflicts`; (3) ingest and verify spec-kit / OpenSpec / Kiro / ADR / README docs against code with `kb discover-docs` + `kb ingest`; (4) update the wiki after code changes with `kb compound`, or write one page as the task writer; (5) lint and gate in CI with `kb verify`, `kb lint-tid`, `kb parity`; (6) navigate the L0–L3 module tree (`kb tree show|explain`); (7) maintain repo/project docs/ with human content preserved (`kb docs compound|status|adr|debt`, `kb links`). Use before editing a source file.
+description: Code-anchored LLM Wiki for Android (Kotlin/Java), iOS (Swift) and HarmonyOS (ArkTS) monorepos via the `kb` CLI. Use it to (1) answer questions about app behaviour, routes, deep links, testIDs, HTTP APIs, constants and cross-platform differences ("how many routes", "which pages set testIDs", "购物车上限三端分别是多少") with `kb routes`, `kb lint-tid`, `kb parity`, `kb search`, `kb get`, `kb context` not grep; (2) find outdated docs/specs ("哪些文档过时") with `kb conflicts`; (3) ingest and verify spec-kit / OpenSpec / Kiro / ADR / README docs against code with `kb discover-docs` + `kb ingest`; (4) update the wiki after code changes with `kb compound`, or write one page as task writer; (5) lint and gate in CI with `kb verify`, `kb lint-tid`, `kb parity`; (6) navigate the L0–L3 module tree (`kb tree show|explain`); (7) maintain repo/project docs/ (human text kept) (`kb docs compound|status|adr|debt`, `kb links`); (8) agent-written module/business-flow pages (`kb compound --knowledge`, IDE handoff). Use before editing source.
 ---
 
 # codewiki
@@ -27,6 +27,7 @@ against HEAD. Trust order: code > `wiki/facts/` > `wiki/pages/` > `wiki/raw/docs
 | a CI gate, lint, consistency check after manual wiki edits | §6 Lint → [references/lint.md](references/lint.md) |
 | where a symbol / file is documented, project → module → cluster structure, writing a tree page | §7 Tree → [references/tree.md](references/tree.md) |
 | repo `docs/` or `<project>/docs/`: update them, ADRs, tech debt, stale specs, links | §8 Ownership → [references/ownership.md](references/ownership.md) |
+| module responsibilities / business flows of a complex repo (routes sparse), or you are in an IDE (TRAE CN …) without a headless agent | §9 Business knowledge → [references/ide-handoff.md](references/ide-handoff.md) |
 
 ## 3. Query (read-only, run these FIRST)
 
@@ -106,3 +107,23 @@ kb links && kb verify --docs
 
 Human text in docs is never changed; Draft specs only yield `[Unconfirmed]` requirement entries;
 `specs/` is never written. Rules and agent contract: [references/ownership.md](references/ownership.md).
+
+## 9. Business knowledge (complex repos, agent-led)
+
+Route facts can be sparse; module responsibilities and cross-module business chains need research.
+
+```bash
+kb compound --knowledge --agent claude --workers 3 --keep-work   # planner agent → .kb/knowledge-plan.json, then writers
+kb compound --knowledge --replan --agent codex                   # new modules / architectural regrouping
+kb compound --knowledge-pages pages/flows/x.md --feedback /abs/review.md --agent claude   # targeted repair
+kb compound --retire-pages pages/concepts/old.md --retire-reason '<evidence>'            # archive obsolete pages
+kb compound --resume-result /abs/run.json --agent claude          # reuse ok pages of an interrupted run
+```
+
+In an IDE without a headless backend (TRAE CN, …) you are the agent: run the pipeline with
+`--llm-cmd 'python3 <this skill>/scripts/file-agent.py --exchange-dir <abs dir>'` and answer
+its requests — [references/ide-handoff.md](references/ide-handoff.md). Contracts:
+planner [references/knowledge-planner.md](references/knowledge-planner.md), writer
+[references/knowledge-writer.md](references/knowledge-writer.md). Pages live in `pages/modules/`
+and `pages/flows/`; never template-filled, never restamped. `kb verify` is not acceptance:
+follow [references/knowledge-acceptance.md](references/knowledge-acceptance.md).

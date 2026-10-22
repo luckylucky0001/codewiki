@@ -150,8 +150,8 @@ export function clusterHolder(ctx: BuildContext, holder: TreeNode, m: LayerModul
   delete holder.core;
 }
 
-/** v1 page directories (pages/features/… etc.) are not available as top-level tree ids. */
-const V1Dirs = new Set(['features', 'concepts', 'flows', 'decisions', 'facts', 'raw', 'index']);
+/** v1 page directories (pages/features/… etc.) and agent knowledge dirs (pages/modules, pages/flows) are not available as top-level tree ids. */
+const V1Dirs = new Set(['features', 'concepts', 'flows', 'modules', 'decisions', 'facts', 'raw', 'index']);
 const topSafe = (slug: string, kind: string) => (V1Dirs.has(slug) ? `${slug}-${kind}` : slug);
 
 /** Builds the full tree (L0–L3) from scratch, inheriting cluster ids/slugs/titles from input.prev. */

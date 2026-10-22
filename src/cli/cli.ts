@@ -152,6 +152,7 @@ function resolveBackend(f: Flags, cfg: Config): { mode: string; cmd: string; age
   const llmSet = !!f.llm;
   if (agent && llmSet && llm === 'template') throw new Error('--agent and --llm template are mutually exclusive');
   if (!['template', 'cmd', 'llm', 'claude', 'codex', 'gemini', 'generic'].includes(llm)) throw new Error(`unknown --llm ${JSON.stringify(llm)} (template | cmd | claude | codex | gemini | generic)`);
+  if (f['llm-cmd'] && llmSet && llm === 'template') throw new Error('--llm-cmd and --llm template are mutually exclusive');
   if (!agent && llm === 'template' && !f['llm-cmd']) return { mode: 'template', cmd: '', agent: '' };
   let implicitClaude = false;
   if (!agent) {
@@ -328,13 +329,21 @@ register({
 });
 
 register({
-  name: 'compound', usage: "[--llm template|cmd] [--agent claude|codex|gemini] [--llm-cmd '...'] [--base sha] [--full] [--dry-run] [--no-llm-facts]", summary: 'scan→diff→plan→LLM→verify→atomic publish; updates state, update_record, log.md',
+  name: 'compound', usage: "[--llm template|cmd] [--agent claude|codex|gemini] [--llm-cmd '...'] [--base sha] [--full] [--dry-run] [--no-llm-facts] [--knowledge [--replan] [--workers N]] [--knowledge-pages p,… --feedback f] [--retire-pages p,… --retire-reason r] [--resume-result run.json]", summary: 'scan→diff→plan→LLM→verify→atomic publish; updates state, update_record, log.md',
   flags: {
     ...backendFlags('writer'), ...baseFlag, full: ['bool', 'force full rebuild', false], 'dry-run': ['bool', 'plan only; write nothing', false],
     'llm-facts': ['bool', 'force the LLM fallback extraction of routes/APIs on (default on: llm.facts; every suggestion verified against the source; cached; skipped with a notice when the agent is unavailable)', false],
     'no-llm-facts': ['bool', 'turn the LLM facts fallback off (also llm.facts: false or KB_LLM_FACTS=0)', false],
     'facts-agent': ['string', 'agent for the facts fallback (default llm.facts_agent or claude)', ''], 'facts-model': ['string', 'model for the facts fallback (default llm.facts_model or haiku)', ''], 'facts-max-files': ['int', 'candidate file budget for the facts fallback (default llm.facts_max_files or 40)', 0],
     fallback: ['bool', 'fall back to the template writer when an LLM task fails', false], 'max-llm-tasks': ['int', 'cap LLM tasks per run (rest use template); 0 = unlimited', 0], 'keep-work': ['bool', 'keep .kb-work/<run>', false],
+    knowledge: ['bool', 'agent-plan module and business-flow knowledge pages (pages/modules, pages/flows; needs --agent or --llm-cmd)', false],
+    replan: ['bool', 'refresh the agent-authored knowledge plan (.kb/knowledge-plan.json)', false],
+    workers: ['int', 'isolated concurrent knowledge writers (1-8)', 1],
+    'knowledge-pages': ['string', 'force selected knowledge pages (comma-separated paths)', ''],
+    'retire-pages': ['string', 'archive and remove obsolete pages; publication requires valid remaining links', ''],
+    'retire-reason': ['string', 'required evidence-based reason for retiring pages', ''],
+    feedback: ['string', 'review findings for selected knowledge writers (read-only text file)', ''],
+    'resume-result': ['string', 'reuse successful knowledge tasks from a completed run JSON with identical source graph', ''],
   },
   async run(a, f) {
     const cfg = a.cfgOrFail();
@@ -347,7 +356,8 @@ register({
     }
     const { mode: llm, cmd: llmCmd, agent } = be;
     if (f['llm-facts'] && f['no-llm-facts']) return a.fail(ExitUsage, new Error('--llm-facts and --no-llm-facts are mutually exclusive'));
-    const r = await compound({ cfg, llm, llmCmd, agent, base: String(f.base || ''), full: !!f.full, dryRun: !!f['dry-run'], fallback: !!f.fallback, maxTasks: Number(f['max-llm-tasks'] || 0), keep: !!f['keep-work'], log: a.log, kbPath: process.argv[1], llmFacts: llmFactsOptions(f, cfg) });
+    const r = await compound({ cfg, llm, llmCmd, agent, base: String(f.base || ''), full: !!f.full, dryRun: !!f['dry-run'], fallback: !!f.fallback, maxTasks: Number(f['max-llm-tasks'] || 0), keep: !!f['keep-work'], log: a.log, kbPath: process.argv[1], llmFacts: llmFactsOptions(f, cfg),
+      knowledge: !!f.knowledge, replan: !!f.replan, workers: Number(f.workers || 1), knowledgePages: String(f['knowledge-pages'] || ''), retirePages: String(f['retire-pages'] || ''), retireReason: String(f['retire-reason'] || ''), feedbackFile: String(f.feedback || ''), resumeResult: String(f['resume-result'] || '') });
     return reportRun(a, r);
   },
 });
@@ -1006,7 +1016,7 @@ register({
 });
 
 register({
-  name: 'install', usage: '--agent claude,codex,gemini,cursor,copilot,generic|all [--target repo] [--mcp] [--dry-run]',
+  name: 'install', usage: '--agent claude,codex,gemini,cursor,copilot,trae-cn,generic|all [--target repo] [--mcp] [--dry-run]',
   summary: 'make coding agents use the wiki: instructions block, the codewiki skill and (with --mcp) MCP registration per agent',
   flags: {
     agent: ['string', 'comma-separated agents, or all', ''], target: ['string', 'repository to install into (default --root)', ''], mcp: ['bool', "also register the kb MCP server in the agent's project config", false],
@@ -1074,7 +1084,7 @@ register({
         a.out(rows[0]!.backend_command + '\n');
         return;
       }
-      for (const r of rows) a.out(`${r.name} (${r.display})\n  backend  ${r.backend_command ?? '— (use --llm-cmd)'}\n  consumer ${r.instructions}${r.skills_dir ? ', ' + r.skills_dir + '/' : ''}${r.mcp_config ? ', MCP ' + r.mcp_config : ''}\n`);
+      for (const r of rows) a.out(`${r.name} (${r.display})\n  backend  ${r.backend_command ?? '— (use --llm-cmd)'}\n  consumer ${[r.instructions, r.skills_dir ? r.skills_dir + '/' : ''].filter(Boolean).join(', ')}${r.mcp_config ? ', MCP ' + r.mcp_config : ''}\n${r.notes ? '  notes    ' + r.notes + '\n' : ''}`);
     });
     return ExitOK;
   },

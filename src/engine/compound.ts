@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
 import { createHash } from 'node:crypto';
-import { execFileSync, spawnSync } from 'node:child_process';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import type { Config } from '../config/config.js';
 import { wikiPath } from '../config/config.js';
 import { GraphVersion, type Facts, type Graph, type Anchor, getSym, graphJSON, reindexGraph } from '../model.js';
@@ -17,6 +17,8 @@ import { appendLog, initWiki } from '../wiki/layout.js';
 import { fixIndex, verifyWiki, type Report } from '../wiki/verify.js';
 import { computeImpact, diffGraphs, loadRoutes, loadTestIDs, type Diff } from './diff.js';
 import { buildPlan, ConflictsPage, VerdictsFile, OpRecheck, type Plan, type Task } from './plan.js';
+import { KnowledgePlanFile, applyKnowledgePlan, checkKnowledgePage, knowledgePlanningPrompt, knowledgeWritingPrompt, loadKnowledgePlan, prepareKnowledge, prepareResume, renderKnowledgeOverview, runKnowledgeTasks, selectKnowledgePages } from './knowledge.js';
+import { retirePages, suppressRetiredPlaceholders } from './retire.js';
 import { NavigationPage, SharedPage, routeIDs } from './anchors.js';
 import { ParityPage, computeParity, renderParity } from './parity.js';
 import { platformsOf, templateConcept, templateFeature, templateOverview } from './template.js';
@@ -33,7 +35,7 @@ import { conflictsPrompt } from './prompt.js';
 import { scanInjection } from './safety.js';
 import type { Requirement } from '../model.js';
 
-export const PromptVersion = '2026-10-20.1';
+export const PromptVersion = '2026-10-21.knowledge.1';
 
 export interface Options {
   cfg: Config;
@@ -53,6 +55,20 @@ export interface Options {
   ingestDocs?: DocEntry[];
   /** LLM-assisted fallback extraction of routes/APIs (verified; see facts/llm.ts). */
   llmFacts?: SuggestOptions;
+  /** agent-led business knowledge (knowledge.ts): plan (or --replan) and write pages/modules|flows */
+  knowledge?: boolean;
+  replan?: boolean;
+  /** concurrent knowledge writers (1-8) */
+  workers?: number;
+  /** comma-separated planned pages to force-rewrite (review iteration) */
+  knowledgePages?: string;
+  /** review findings file handed to the selected knowledge writers */
+  feedbackFile?: string;
+  /** comma-separated pages to archive and remove (retire.ts) */
+  retirePages?: string;
+  retireReason?: string;
+  /** completed run JSON whose successful knowledge pages may be reused */
+  resumeResult?: string;
 }
 
 export interface TaskResult {
@@ -198,6 +214,13 @@ export async function analyze(o: Options): Promise<Analysis> {
   const oldG = old ?? { version: 0, symbols: [], files: {}, parse_failures: [] };
   const [pages] = loadPages(wikiPath(cfg));
   const plan = buildPlan({ cfg, diff, old: oldG, cur: res.graph, facts, pages, forceFull: !!o.full, hasDocs: hasRawDocs(wikiPath(cfg)) || (o.ingestDocs?.length ?? 0) > 0 });
+  const pa = { pages, plan, diff, graph: res.graph, old: oldG };
+  if (o.kind !== 'ingest') {
+    const kp = loadKnowledgePlan(wikiPath(cfg));
+    if (kp) applyKnowledgePlan(pa, kp, !!o.full);
+  }
+  suppressRetiredPlaceholders(pa, wikiPath(cfg));
+  if (o.knowledgePages) selectKnowledgePages(pa, loadKnowledgePlan(wikiPath(cfg)), o.knowledgePages);
   if (o.kind === 'ingest') {
     let keep = plan.tasks.filter((t) => t.kind === 'conflicts');
     if (!keep.length) keep = [{ id: 't01-_conflicts', op: OpRecheck, kind: 'conflicts', page: ConflictsPage, title: '文档核对', write_set: [VerdictsFile], reasons: [{ code: 'ingest' }], context: [], priority: 0 }];
@@ -211,7 +234,8 @@ export async function analyze(o: Options): Promise<Analysis> {
     const prev = loadTree(wikiPath(cfg));
     const ct = computeTree(cfg, res.graph, old, facts, prev, !!o.full || !!diff.incompatible || !prev, res.graph.commit ?? '');
     t = ct.tree;
-    const tasks = treeTasks(t, res.graph, pages);
+    // an explicit knowledge review iteration rewrites only the selected pages
+    const tasks = o.knowledgePages ? [] : treeTasks(t, res.graph, pages);
     plan.tree = { ...ct.plan, tasks };
     if (plan.mode === 'noop' && tasks.length) {
       plan.mode = 'incremental';
@@ -230,7 +254,10 @@ export function expectedFacts(cfg: Config, g: Graph, f: Facts): Map<string, stri
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
 function runStamp(d = new Date()): string {
-  return `${d.getUTCFullYear()}${pad2(d.getUTCMonth() + 1)}${pad2(d.getUTCDate())}T${pad2(d.getUTCHours())}${pad2(d.getUTCMinutes())}${pad2(d.getUTCSeconds())}`;
+  // sub-second part: failed staging is retained, and a second run in the same second must
+  // never reuse that directory and inherit files absent from the published wiki
+  const frac = String(d.getUTCMilliseconds()).padStart(3, '0') + String(process.hrtime.bigint() % 1_000_000n).padStart(6, '0');
+  return `${d.getUTCFullYear()}${pad2(d.getUTCMonth() + 1)}${pad2(d.getUTCDate())}T${pad2(d.getUTCHours())}${pad2(d.getUTCMinutes())}${pad2(d.getUTCSeconds())}.${frac}`;
 }
 export const today = () => new Date().toISOString().slice(0, 10);
 
@@ -391,9 +418,55 @@ function llmEvidence(llm: string[] | undefined, templ: string[] | undefined): st
   return out.join('；');
 }
 
-class TaskEnv {
+interface CmdSetup {
+  cmdline: string;
+  prompt: string;
+  tdir: string;
+  before: Map<string, string>;
+  saved: Map<string, Buffer>;
+  env: NodeJS.ProcessEnv;
+  timeout: number;
+  templ: Claim[];
+}
+interface CmdOutcome {
+  stdout: Buffer;
+  stderr: Buffer;
+  status: number | null;
+  error?: Error;
+}
+
+/** Async variant of spawnSync('sh', ['-c', cmd]) so knowledge writers can run concurrently. */
+function spawnShell(cmdline: string, cwd: string, input: string, env: NodeJS.ProcessEnv, timeout: number): Promise<CmdOutcome> {
+  return new Promise((resolve) => {
+    const out: Buffer[] = [];
+    const err: Buffer[] = [];
+    let error: Error | undefined;
+    const c = spawn('sh', ['-c', cmdline], { cwd, env, timeout });
+    c.stdout.on('data', (d: Buffer) => out.push(d));
+    c.stderr.on('data', (d: Buffer) => err.push(d));
+    c.on('error', (e) => (error = e));
+    c.stdin.on('error', () => {}); // the agent may exit without reading the whole prompt
+    c.stdin.end(input);
+    c.on('close', (code, signal) => resolve({ stdout: Buffer.concat(out), stderr: Buffer.concat(err), status: code, error: error ?? (signal ? new Error(`killed by ${signal}${signal === 'SIGTERM' ? ' (timeout?)' : ''}`) : undefined) }));
+  });
+}
+
+export class TaskEnv {
   claims: Claim[] | null = null;
+  /** --resume-result: the prior completed run (knowledge.ts) */
+  resume?: Result;
   constructor(public o: Options, public a: Analysis, public staging: string, public work: string, public graphPath: string, public head: string) {}
+
+  /** Same environment, different staging dir (isolated knowledge writers). */
+  withStaging(staging: string): TaskEnv {
+    const e = new TaskEnv(this.o, this.a, staging, this.work, this.graphPath, this.head);
+    e.resume = this.resume;
+    return e;
+  }
+
+  addUsage(r: Result, tr: TaskResult): void {
+    if (tr.usage) usageAdd((r.usage ??= {}), tr.usage);
+  }
 
   platforms(): string[] {
     return this.o.cfg.platforms.map((p) => p.name);
@@ -410,19 +483,45 @@ class TaskEnv {
       if (writer === 'template') this.runTemplate(t);
       else {
         if (this.o.agent) tr.agent = this.o.agent;
-        const reverted = this.runCmd(t, tr);
-        if (reverted.length) {
-          tr.reverted = reverted;
-          tr.status = 'violation';
-          tr.error = 'reverted writes outside write set: ' + reverted.join(', ');
-        }
+        this.markReverted(tr, this.runCmd(t, tr));
       }
     } catch (e) {
-      tr.status = 'failed';
-      tr.error = (e as Error).message;
-      const rv = (e as { reverted?: string[] }).reverted;
-      if (rv?.length) tr.reverted = rv;
+      this.markFailed(tr, e);
     }
+    return this.shape(tr, start);
+  }
+
+  /** Agent task without blocking the event loop (knowledge planner / writers). */
+  async runAsync(t: Task, writer: string): Promise<TaskResult> {
+    if (writer === 'template') return this.run(t, writer);
+    const start = Date.now();
+    const tr: TaskResult = { id: t.id, page: t.page, op: t.op, writer, status: 'ok', millis: 0 };
+    if (this.o.agent) tr.agent = this.o.agent;
+    try {
+      const st = this.cmdSetup(t);
+      const res = await spawnShell(st.cmdline, this.staging, st.prompt, st.env, st.timeout);
+      this.markReverted(tr, this.cmdFinish(t, st, res, tr));
+    } catch (e) {
+      this.markFailed(tr, e);
+    }
+    return this.shape(tr, start);
+  }
+
+  private markReverted(tr: TaskResult, reverted: string[]): void {
+    if (!reverted.length) return;
+    tr.reverted = reverted;
+    tr.status = 'violation';
+    tr.error = 'reverted writes outside write set: ' + reverted.join(', ');
+  }
+
+  private markFailed(tr: TaskResult, e: unknown): void {
+    tr.status = 'failed';
+    tr.error = (e as Error).message;
+    const rv = (e as { reverted?: string[] }).reverted;
+    if (rv?.length) tr.reverted = rv;
+  }
+
+  private shape(tr: TaskResult, start: number): TaskResult {
     tr.millis = Date.now() - start;
     // Go field order: id, page, op, writer, agent, status, reverted, error, millis, usage
     const o: TaskResult = { id: tr.id, page: tr.page, op: tr.op, writer: tr.writer } as TaskResult;
@@ -539,11 +638,24 @@ class TaskEnv {
   }
 
   runCmd(t: Task, tr?: TaskResult): string[] {
-    const cmdline = this.o.llmCmd || this.o.cfg.llm.cmd;
-    const templ = t.kind === 'conflicts' ? this.templateClaims() : [];
+    const st = this.cmdSetup(t);
+    const r = spawnSync('sh', ['-c', st.cmdline], { cwd: this.staging, input: st.prompt, env: st.env, timeout: st.timeout, maxBuffer: 64 << 20 });
+    return this.cmdFinish(t, st, { stdout: r.stdout ?? Buffer.alloc(0), stderr: r.stderr ?? Buffer.alloc(0), status: r.status, error: r.error }, tr);
+  }
+
+  private cmdPrompt(t: Task, templ: Claim[]): string {
+    if (t.kind === 'knowledge-plan') return knowledgePlanningPrompt(this);
+    if (t.knowledge) return knowledgeWritingPrompt(this, t);
     const pctx = { g: this.a.graph, f: this.a.facts, srcDir: this.a.scan.dir, staging: this.staging, head: this.head, platforms: this.platforms() };
     let prompt = t.kind === 'conflicts' ? conflictsPrompt(pctx, t, templ) : buildPrompt(pctx, t);
     if (TreeKinds.has(t.kind) && this.a.tree) prompt += treePromptExtra(this.a.tree, t, this.a.graph, this.a.facts, short(this.head));
+    return prompt;
+  }
+
+  private cmdSetup(t: Task): CmdSetup {
+    const cmdline = this.o.llmCmd || this.o.cfg.llm.cmd;
+    const templ = t.kind === 'conflicts' ? this.templateClaims() : [];
+    const prompt = this.cmdPrompt(t, templ);
     const tdir = path.join(this.work, 'tasks');
     fs.mkdirSync(tdir, { recursive: true });
     fs.writeFileSync(path.join(tdir, t.id + '.prompt.md'), prompt);
@@ -559,12 +671,16 @@ class TaskEnv {
     const timeout = (this.o.cfg.llm.timeout_sec > 0 ? this.o.cfg.llm.timeout_sec : 600) * 1000;
     const env: NodeJS.ProcessEnv = { ...process.env, KB_ROOT: this.o.cfg.root, KB_GRAPH: this.graphPath, KB_TASK: t.id };
     if (this.o.kbPath) env.PATH = path.dirname(this.o.kbPath) + path.delimiter + (process.env.PATH ?? '');
-    const r = spawnSync('sh', ['-c', cmdline], { cwd: this.staging, input: prompt, env, timeout, maxBuffer: 64 << 20 });
-    fs.writeFileSync(path.join(tdir, t.id + '.log'), Buffer.concat([r.stdout ?? Buffer.alloc(0), r.stderr ?? Buffer.alloc(0)]));
+    return { cmdline, prompt, tdir, before, saved, env, timeout, templ };
+  }
+
+  private cmdFinish(t: Task, st: CmdSetup, r: CmdOutcome, tr?: TaskResult): string[] {
+    const { tdir, before, saved, templ } = st;
+    fs.writeFileSync(path.join(tdir, t.id + '.log'), Buffer.concat([r.stdout, r.stderr]));
     const parse = this.o.agent ? usageParsers[this.o.agent] : undefined;
     let usage: Usage | undefined;
     if (parse) {
-      const u = parse((r.stdout ?? Buffer.alloc(0)).toString('utf8'));
+      const u = parse(r.stdout.toString('utf8'));
       if (!usageEmpty(u) || u.error) usage = u;
     }
     if (tr && usage) tr.usage = usage;
@@ -585,7 +701,9 @@ class TaskEnv {
       const why = (r.error ? r.error.message : `exit status ${r.status}`) + (usage?.error ? ': ' + usage.error : '');
       throw Object.assign(new Error(`llm command failed: ${why} (see ${path.join(tdir, t.id + '.log')})`), { reverted });
     }
-    if (t.kind === 'conflicts') this.mergeVerdicts(templ);
+    if (t.kind === 'knowledge-plan') {
+      if (!loadKnowledgePlan(this.staging)) throw new Error(`LLM did not write ${KnowledgePlanFile}`);
+    } else if (t.kind === 'conflicts') this.mergeVerdicts(templ);
     else if (TreeKinds.has(t.kind)) {
       if (!fs.existsSync(path.join(this.staging, t.page))) throw new Error(`LLM did not write ${t.page}`);
     } else this.postProcess(t);
@@ -609,9 +727,12 @@ class TaskEnv {
       if (!s) throw new Error(`LLM anchored unknown symbol ${a.sym}`);
       if (seen.has(s.id)) continue;
       seen.add(s.id);
+      // knowledge pages: stale or missing hashes are rejected, never restamped (reread current evidence)
+      if (t.knowledge && a.hash !== s.hash) throw new Error(`knowledge page has stale or missing hash for ${s.id}; reread current evidence`);
       src.push({ sym: a.sym, hash: ctx.has(s.id) || a.hash !== s.hash ? s.hash : a.hash });
     }
-    if (!src.length && t.kind !== 'overview') for (const id of t.context) src.push({ sym: id, hash: getSym(this.a.graph, id)!.hash });
+    if (!src.length && t.kind !== 'overview' && !t.knowledge) for (const id of t.context) src.push({ sym: id, hash: getSym(this.a.graph, id)!.hash });
+    if (t.knowledge) checkKnowledgePage(pg.body, src);
     pg.front.sources = src.length ? src : undefined;
     pg.front.id = idFromPath(t.page);
     if (!pg.front.title) pg.front.title = t.title;
@@ -672,8 +793,15 @@ export async function compound(o: Options): Promise<Result> {
     const graphPath = path.join(work, 'graph.json');
     fs.writeFileSync(graphPath, goJSON(graphJSON(a.graph), ' '));
     const env = new TaskEnv(o, a, staging, work, graphPath, head);
+    prepareResume(env);
+    if (o.knowledge || o.replan || o.resumeResult) await prepareKnowledge(env, r);
+    const knowledgeTasks: Task[] = [];
     let llmUsed = 0;
     for (const t of a.plan.tasks) {
+      if (t.knowledge) {
+        knowledgeTasks.push(t);
+        continue;
+      }
       let writer = o.llm;
       if (writer !== 'template' && !(o.maxTasks && o.maxTasks > 0 && t.priority > o.maxTasks)) llmUsed++;
       if (o.maxTasks && o.maxTasks > 0 && t.priority > o.maxTasks && writer !== 'template') writer = 'template';
@@ -689,7 +817,22 @@ export async function compound(o: Options): Promise<Result> {
       if (tr.usage) usageAdd((r.usage ??= {}), tr.usage);
       log(`  [${tr.status}] ${t.op.padEnd(8)} ${t.page.padEnd(34)} ${tr.writer} ${tr.error ?? ''}${tr.usage && !usageEmpty(tr.usage) ? ' ' + usageString(tr.usage) : ''}`);
     }
+    if (knowledgeTasks.length) {
+      for (const tr of await runKnowledgeTasks(env, knowledgeTasks)) {
+        r.tasks.push(tr);
+        env.addUsage(r, tr);
+      }
+    }
+    // a failed task (or a write-set violation of a semantic task) blocks publication; staging is kept
+    const semantic = new Set(knowledgeTasks.map((t) => t.id));
+    const bad = r.tasks.find((tr) => tr.status === 'failed' || (tr.status === 'violation' && semantic.has(tr.id)));
+    if (bad) {
+      r.verify = { ok: false, pages: 0, anchors: 0, errors: [{ code: 'E_TASK_FAILED', page: bad.page, detail: bad.error ?? bad.status }], warnings: [], stale_pages: [] };
+      r.message = `task failed; staging retained at ${staging}; wiki NOT published`;
+      return r;
+    }
     env.renderClaims();
+    renderKnowledgeOverview(env);
     if (a.tree) {
       writeFileAtomic(path.join(staging, TreeFile), treeLib.serializeTree(a.tree));
       const tt = a.plan.tree?.tasks ?? [];
@@ -710,6 +853,7 @@ export async function compound(o: Options): Promise<Result> {
       }
       syncTreePages(staging, a.tree, a.graph, a.facts, short(head));
     }
+    retirePages(env);
     fixIndex(staging);
     r.changed = changedFiles(before, snapshot(staging));
     if (r.changed.length === 0 && o.kind === 'compound' && a.plan.mode === 'noop') {

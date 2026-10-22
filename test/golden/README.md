@@ -34,6 +34,11 @@ and the change sets in `examples/minishop-changes/`; checked by `test/parity.tes
   `testids.json` / `apis.json` are unchanged. New `facts/deeplinks.json` lists declared deep links.
   `test/cli.test.ts` zero-config `routes` total 18 → 20 for the same reason.
 
+- **Upstream PR #1 (Go commit 0756e4f, agent-led business knowledge):** a concept page no longer
+  gets `anchor_added` reasons for every wanted-but-missing symbol, only for symbols that were
+  actually added/renamed. `plan-03-profile-route.json` loses the `concepts/shared-components`
+  task (ids/priorities renumbered); regenerated with the TS kb, matching legacy-go `plan.go`.
+
 - Grammars are WASM builds of the exact grammar sources Go linked (`grammars/VENDORED.md`);
   tree-sitter-swift's scanner lost one `fprintf(stderr, …)` OOM message (no `stderr` in
   web-tree-sitter). Parse trees are unchanged.

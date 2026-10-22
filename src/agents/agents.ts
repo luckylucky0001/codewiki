@@ -13,6 +13,9 @@ export interface Adapter {
   argv?: (model: string) => string[];
   instructions: string;
   skillsDir: string;
+  /** shown by `kb agents` / `kb install --mcp` for agents without a built-in backend or MCP target */
+  notes?: string;
+  mcpHint?: string;
 }
 
 export const registry: Record<string, Adapter> = {
@@ -30,6 +33,11 @@ export const registry: Record<string, Adapter> = {
   },
   cursor: { name: 'cursor', display: 'Cursor', instructions: '.cursor/rules/codewiki.mdc', skillsDir: '' },
   copilot: { name: 'copilot', display: 'GitHub Copilot', instructions: '.github/copilot-instructions.md', skillsDir: '' },
+  'trae-cn': {
+    name: 'trae-cn', display: 'TRAE CN', instructions: '', skillsDir: '.trae/skills',
+    mcpHint: 'use the IDE MCP settings to register kb mcp --root <repo>',
+    notes: 'Project skill path verified against https://docs.trae.cn/ide_skills; no bundled headless backend. Use the codewiki skill IDE file handoff (references/ide-handoff.md); actual IDE execution requires separate validation.',
+  },
   generic: { name: 'generic', display: 'any AGENTS.md-aware agent', instructions: 'AGENTS.md', skillsDir: '.agents/skills' },
 };
 
