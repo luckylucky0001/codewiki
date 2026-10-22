@@ -1,0 +1,470 @@
+{
+ "repo": "HarmonyOS-Cases/Cases",
+ "url": "https://github.com/HarmonyOS-Cases/Cases",
+ "commit": "f6602bc2970a785394ddfbb872acba5119d90c33",
+ "platform_roots": {
+  "harmony": [
+   "CommonAppDevelopment/product/entry",
+   "CommonAppDevelopment/feature",
+   "CommonAppDevelopment/common"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "harmony",
+   "route_id": "networkstatusobserver/NetworkStatusObserverComponent",
+   "symbol": "NetworkStatusObserverComponent",
+   "file": "CommonAppDevelopment/feature/networkstatusobserver/src/main/ets/FeatureComponent.ets",
+   "kind": "app-router-decorator",
+   "note": "@AppRouter({name}) custom decorator (routermodule AutoBuildRouter plugin generates the route table at build time)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "akiusepractice/AkiViewComponent",
+   "symbol": "AkiViewComponent",
+   "file": "CommonAppDevelopment/feature/akiusepractice/src/main/ets/FeatureComponent.ets",
+   "kind": "app-router-decorator",
+   "note": "@AppRouter({name}) custom decorator (routermodule AutoBuildRouter plugin generates the route table at build time)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "dragandexchange/LauncherComponent",
+   "symbol": "LauncherComponent",
+   "file": "CommonAppDevelopment/feature/dragandexchange/src/main/ets/FeatureComponent.ets",
+   "kind": "app-router-decorator",
+   "note": "@AppRouter({name}) custom decorator (routermodule AutoBuildRouter plugin generates the route table at build time)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "chinesetopinyin/ChineseToPinyin",
+   "symbol": "ChineseToPinyin",
+   "file": "CommonAppDevelopment/feature/chinesetopinyin/src/main/ets/FeatureComponent.ets",
+   "kind": "app-router-decorator",
+   "note": "@AppRouter({name}) custom decorator (routermodule AutoBuildRouter plugin generates the route table at build time)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "compressfile/CompressFileView",
+   "symbol": "CompressFileView",
+   "file": "CommonAppDevelopment/feature/compressfile/src/main/ets/FeatureComponent.ets",
+   "kind": "app-router-decorator",
+   "note": "@AppRouter({name}) custom decorator (routermodule AutoBuildRouter plugin generates the route table at build time)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "webcustompressmenu/WebCustomPressMenu",
+   "symbol": "WebCustomPressMenu",
+   "file": "CommonAppDevelopment/feature/webcustompressmenu/src/main/ets/FeatureComponent.ets",
+   "kind": "app-router-decorator",
+   "note": "@AppRouter({name}) custom decorator (routermodule AutoBuildRouter plugin generates the route table at build time)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "fontdynamicregistration/FontDynamicRegistrationComponent",
+   "symbol": "FontDynamicRegistrationComponent",
+   "file": "CommonAppDevelopment/feature/fontdynamicregistration/src/main/ets/FeatureComponent.ets",
+   "kind": "app-router-decorator",
+   "note": "@AppRouter({name}) custom decorator (routermodule AutoBuildRouter plugin generates the route table at build time)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "paintcomponent/PaintComponent",
+   "symbol": "PaintComponent",
+   "file": "CommonAppDevelopment/feature/paintcomponent/src/main/ets/FeatureComponent.ets",
+   "kind": "app-router-decorator",
+   "note": "@AppRouter({name}) custom decorator (routermodule AutoBuildRouter plugin generates the route table at build time)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "sendmessage/MessageComponent",
+   "symbol": "MessageComponent",
+   "file": "CommonAppDevelopment/feature/sendmessage/src/main/ets/FeatureComponent.ets",
+   "kind": "app-router-decorator",
+   "note": "@AppRouter({name}) custom decorator (routermodule AutoBuildRouter plugin generates the route table at build time)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "etswrapper/MockNativeCallPickerView",
+   "symbol": "MockNativeCallPickerView",
+   "file": "CommonAppDevelopment/feature/etswrapper/src/main/ets/FeatureComponent.ets",
+   "kind": "app-router-decorator",
+   "note": "@AppRouter({name}) custom decorator (routermodule AutoBuildRouter plugin generates the route table at build time)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "videoscreendirectionswitching/VideoScreenDirectionSwitching",
+   "symbol": "VideoScreenDirectionSwitching",
+   "file": "CommonAppDevelopment/feature/videoscreendirectionswitching/src/main/ets/FeatureComponent.ets",
+   "kind": "app-router-decorator",
+   "note": "@AppRouter({name}) custom decorator (routermodule AutoBuildRouter plugin generates the route table at build time)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "photopickandsave/PictureManager",
+   "symbol": "PictureManager",
+   "file": "CommonAppDevelopment/feature/photopickandsave/src/main/ets/FeatureComponent.ets",
+   "kind": "app-router-decorator",
+   "note": "@AppRouter({name}) custom decorator (routermodule AutoBuildRouter plugin generates the route table at build time)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "verifycode/VerifyCodeView",
+   "symbol": "VerifyCodeView",
+   "file": "CommonAppDevelopment/feature/verifycode/src/main/ets/FeatureComponent.ets",
+   "kind": "app-router-decorator",
+   "note": "@AppRouter({name}) custom decorator (routermodule AutoBuildRouter plugin generates the route table at build time)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "multiplefilesdownload/MultipleFilesDownload",
+   "symbol": "MultipleFilesDownload",
+   "file": "CommonAppDevelopment/feature/multiplefilesdownload/src/main/ets/FeatureComponent.ets",
+   "kind": "app-router-decorator",
+   "note": "@AppRouter({name}) custom decorator (routermodule AutoBuildRouter plugin generates the route table at build time)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "webpagesnapshot/WebPageSnapshot",
+   "symbol": "WebPageSnapshot",
+   "file": "CommonAppDevelopment/feature/webpagesnapshot/src/main/ets/FeatureComponent.ets",
+   "kind": "app-router-decorator",
+   "note": "@AppRouter({name}) custom decorator (routermodule AutoBuildRouter plugin generates the route table at build time)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "refreshtimeline/RefreshTimeLineComponent",
+   "symbol": "RefreshTimeLineComponent",
+   "file": "CommonAppDevelopment/feature/refreshtimeline/src/main/ets/FeatureComponent.ets",
+   "kind": "app-router-decorator",
+   "note": "@AppRouter({name}) custom decorator (routermodule AutoBuildRouter plugin generates the route table at build time)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "blendmode/BlendModeView",
+   "symbol": "BlendModeView",
+   "file": "CommonAppDevelopment/feature/blendmode/src/main/ets/FeatureComponent.ets",
+   "kind": "app-router-decorator",
+   "note": "@AppRouter({name}) custom decorator (routermodule AutoBuildRouter plugin generates the route table at build time)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "addressexchange/AddressExchangeView",
+   "symbol": "AddressExchangeView",
+   "file": "CommonAppDevelopment/feature/addressexchange/src/main/ets/FeatureComponent.ets",
+   "kind": "app-router-decorator",
+   "note": "@AppRouter({name}) custom decorator (routermodule AutoBuildRouter plugin generates the route table at build time)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "foldablescreencases/MusicPlayerPageComponent",
+   "symbol": "MusicPlayerPageComponent",
+   "file": "CommonAppDevelopment/feature/foldablescreencases/src/main/ets/FeatureComponent.ets",
+   "kind": "app-router-decorator",
+   "note": "@AppRouter({name}) custom decorator (routermodule AutoBuildRouter plugin generates the route table at build time); component is ALSO annotated @Preview but is a real route"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "navigationparametertransfer/NavigationParameterTransferView",
+   "symbol": "NavigationParameterTransferView",
+   "file": "CommonAppDevelopment/feature/navigationparametertransfer/src/main/ets/view/NavigationParameterTransferView.ets",
+   "kind": "app-router-decorator",
+   "note": "hasParam: true; not in FeatureComponent.ets"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "Web页面长截图",
+   "symbol": "WebPageBuilder",
+   "file": "CommonAppDevelopment/feature/webpagesnapshot/src/main/ets/components/mainpage/WebPage.ets",
+   "kind": "router_map",
+   "map_file": "CommonAppDevelopment/feature/webpagesnapshot/src/main/resources/base/profile/route_map.json",
+   "note": "system routerMap (module.json5 routerMap: $profile:route_map)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "滚动组件页面长截图",
+   "symbol": "ScrollableComponentPageBuilder",
+   "file": "CommonAppDevelopment/feature/webpagesnapshot/src/main/ets/components/mainpage/ScrollableComponentPage.ets",
+   "kind": "router_map",
+   "map_file": "CommonAppDevelopment/feature/webpagesnapshot/src/main/resources/base/profile/route_map.json",
+   "note": "system routerMap (module.json5 routerMap: $profile:route_map)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "AddressBookDetail",
+   "symbol": "AddressBookDetailBuilder",
+   "file": "CommonAppDevelopment/feature/perfermance/operaterdbintaskpool/src/main/ets/view/AddressBookDetail.ets",
+   "kind": "router_map",
+   "map_file": "CommonAppDevelopment/feature/perfermance/operaterdbintaskpool/src/main/resources/base/profile/router_map.json",
+   "note": "system routerMap (module.json5 routerMap: $profile:router_map)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "AddressBookEdit",
+   "symbol": "AddressBookEditBuilder",
+   "file": "CommonAppDevelopment/feature/perfermance/operaterdbintaskpool/src/main/ets/view/AddressBookEdit.ets",
+   "kind": "router_map",
+   "map_file": "CommonAppDevelopment/feature/perfermance/operaterdbintaskpool/src/main/resources/base/profile/router_map.json",
+   "note": "system routerMap (module.json5 routerMap: $profile:router_map)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "SubDetailPage",
+   "symbol": "SubDetailPageBuilder",
+   "file": "CommonAppDevelopment/feature/transitionanimation/src/main/ets/components/pages/SubDetailPage.ets",
+   "kind": "router_map",
+   "map_file": "CommonAppDevelopment/feature/transitionanimation/src/main/resources/base/profile/router_map.json",
+   "note": "system routerMap (module.json5 routerMap: $profile:router_map)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/EntryView",
+   "symbol": "EntryView",
+   "file": "CommonAppDevelopment/product/entry/src/main/ets/pages/EntryView.ets",
+   "kind": "main_pages",
+   "note": "@Entry(storage) page in main_pages.json"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/AdvertisingPage",
+   "symbol": "TransitionsAnimation",
+   "file": "CommonAppDevelopment/product/entry/src/main/ets/pages/AdvertisingPage.ets",
+   "kind": "main_pages",
+   "note": "file name != struct name"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/SecondaryLinkExample",
+   "symbol": "SecondaryLinkExample",
+   "file": "CommonAppDevelopment/feature/secondarylinkage/src/main/ets/pages/SecondaryLinkExample.ets",
+   "kind": "main_pages"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "view/GroupAvatarMainPage",
+   "symbol": "GroupAvatarMainPage",
+   "file": "CommonAppDevelopment/feature/groupavatar/src/main/ets/view/GroupAvatarMainPage.ets",
+   "kind": "main_pages"
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "harmony",
+   "symbol": "FontDynamicRegistration",
+   "file": "CommonAppDevelopment/feature/fontdynamicregistration/src/main/ets/components/FontDynamicRegistration.ets",
+   "reason": "@Preview inner component wrapped by FontDynamicRegistrationComponent route"
+  },
+  {
+   "platform": "harmony",
+   "symbol": "AddressExchangeView (view/AddressExchangeView.ets)",
+   "file": "CommonAppDevelopment/feature/addressexchange/src/main/ets/view/AddressExchangeView.ets",
+   "reason": "same name as route id suffix but the route is the wrapper in FeatureComponent.ets"
+  },
+  {
+   "platform": "harmony",
+   "symbol": "WebPageSnapshotComponent",
+   "file": "CommonAppDevelopment/feature/webpagesnapshot/src/main/ets/components/mainpage/MainPage.ets",
+   "reason": "inner component hosting a Navigation; not itself registered"
+  },
+  {
+   "platform": "harmony",
+   "symbol": "ClickEvent",
+   "file": "CommonAppDevelopment/feature/eventpropagation/src/main/ets/view/EventPropagation.ets",
+   "reason": "private sub-struct"
+  },
+  {
+   "platform": "harmony",
+   "symbol": "MapComponent",
+   "file": "CommonAppDevelopment/feature/componentinstancesharedinpages/src/main/ets/components/MapComponent.ets",
+   "reason": "shared component instance"
+  },
+  {
+   "platform": "harmony",
+   "symbol": "PrivacyAgreementDialog",
+   "file": "CommonAppDevelopment/product/entry/src/main/ets/view/PrivacyAgreementDialog.ets",
+   "reason": "dialog"
+  }
+ ],
+ "deeplinks": [
+  {
+   "platform": "harmony",
+   "scheme": "file",
+   "host": "",
+   "path": "",
+   "file": "CommonAppDevelopment/product/entry/src/main/module.json5",
+   "source": "EntryAbility skills uris (ohos.want.action.sendData, utd general.image)",
+   "optional": true,
+   "note": "share-target, not a navigational deep link"
+  }
+ ],
+ "testids": [
+  {
+   "platform": "harmony",
+   "tid": "web_page_snap_shot_preview_component",
+   "file": "CommonAppDevelopment/feature/webpagesnapshot/src/main/ets/components/viewmodel/PreviewWindowComponent.ets",
+   "line": 164
+  },
+  {
+   "platform": "harmony",
+   "tid": "item_ble_list",
+   "file": "CommonAppDevelopment/feature/bluetooth/src/main/ets/pages/BluetoothClient.ets",
+   "line": 122
+  },
+  {
+   "platform": "harmony",
+   "tid": "btn_start_scan",
+   "file": "CommonAppDevelopment/feature/bluetooth/src/main/ets/pages/BluetoothClient.ets",
+   "line": 148
+  },
+  {
+   "platform": "harmony",
+   "tid": "scrollPart",
+   "file": "CommonAppDevelopment/feature/bottomdrawerslidecase/src/main/ets/utils/BottomDrawer.ets",
+   "line": 101
+  },
+  {
+   "platform": "harmony",
+   "tid": "txt_right_time",
+   "file": "CommonAppDevelopment/feature/videotrimmer/src/main/ets/videotrimmer/RangeSeekBarView.ets",
+   "line": 151
+  },
+  {
+   "platform": "harmony",
+   "tid": "rightYAxisOutSide",
+   "file": "CommonAppDevelopment/feature/barchart/src/main/ets/view/BarChart.ets",
+   "line": 1026
+  },
+  {
+   "platform": "harmony",
+   "tid": "faceBtn",
+   "file": "CommonAppDevelopment/feature/chatwithexpression/src/main/ets/view/ChatWithExpression.ets",
+   "line": 304
+  },
+  {
+   "platform": "harmony",
+   "tid": "close_button",
+   "file": "CommonAppDevelopment/feature/immersive/src/main/ets/components/Comment.ets",
+   "line": 60
+  },
+  {
+   "platform": "harmony",
+   "tid": "compressButton",
+   "file": "CommonAppDevelopment/feature/compressfile/src/main/ets/components/CompressFileComponent.ets",
+   "line": 146
+  },
+  {
+   "platform": "harmony",
+   "tid": "btn_privacy_agreement",
+   "file": "CommonAppDevelopment/product/entry/src/main/ets/view/PrivacyAgreementDialog.ets",
+   "line": 95
+  },
+  {
+   "platform": "harmony",
+   "tid": "web_page_snap_shot_web_page",
+   "file": "CommonAppDevelopment/feature/webpagesnapshot/src/main/ets/components/mainpage/MainPage.ets",
+   "line": 67
+  }
+ ],
+ "apis": [
+  {
+   "method": "GET",
+   "path": "https://gitee.com/harmonyos-cases/cases/raw/master/CommonAppDevelopment/feature/skeletondiagram/src/main/resources/rawfile/skeletondiagram.json",
+   "file": "CommonAppDevelopment/feature/skeletondiagram/src/main/ets/view/SkeletonDiagram.ets",
+   "note": "const REQUEST_URL; http.createHttp().request (default GET)"
+  },
+  {
+   "method": "GET",
+   "path": "https://gitee.com/harmonyos-cases/cases/raw/master/README.md",
+   "file": "CommonAppDevelopment/product/entry/src/main/ets/entryformability/EntryFormAbility.ets",
+   "note": "const URL"
+  },
+  {
+   "method": "GET",
+   "path": "https://gitee.com/harmonyos-cases/cases/raw/master/CommonAppDevelopment/feature/variablewatch/src/main/resources/base/media/variablewatch_grape.png",
+   "file": "CommonAppDevelopment/feature/photopickandsave/src/main/ets/components/SaveNetWorkPictures.ets",
+   "note": "inline literal in .request()"
+  },
+  {
+   "method": "GET",
+   "path": "{url}",
+   "file": "CommonAppDevelopment/feature/h5cache/src/main/ets/pages/SubWeb.ets",
+   "dynamic": true,
+   "expect": false,
+   "note": "web resource interception; URL from request; should NOT be expected"
+  }
+ ],
+ "claims": [
+  {
+   "id": "C1",
+   "text": "本解决方案通过Navigation组件实现页面路由，NavDestination作为Web子页面和滚动组件子页面的根容器",
+   "source": "CommonAppDevelopment/feature/webpagesnapshot/README.md",
+   "label": "verified",
+   "evidence": "CommonAppDevelopment/feature/webpagesnapshot/src/main/ets/components/mainpage/WebPage.ets:110"
+  },
+  {
+   "id": "C2",
+   "text": "在aboutToAppear生命周期方法中加载网络数据，并根据返回结果改变状态变量loadingCollectedStatus的值",
+   "source": "CommonAppDevelopment/feature/skeletondiagram/README.md",
+   "label": "verified",
+   "evidence": "CommonAppDevelopment/feature/skeletondiagram/src/main/ets/view/SkeletonDiagram.ets"
+  },
+  {
+   "id": "C3",
+   "text": "需要权限：ohos.permission.INTERNET在entry/src/main/module.json5文件中添加",
+   "source": "CommonAppDevelopment/feature/skeletondiagram/README.md",
+   "label": "verified",
+   "evidence": "CommonAppDevelopment/product/entry/src/main/module.json5 requestPermissions"
+  },
+  {
+   "id": "C4",
+   "text": "在子模块中添加动态加载页面组件的接口harInit ... 参考 feature/eventpropagation/Index.ets",
+   "source": "CommonAppDevelopment/common/routermodule/README.md",
+   "label": "conflict",
+   "evidence": "CommonAppDevelopment/feature/eventpropagation/Index.ets (no harInit; modules now use @AppRouter)",
+   "note": "doc self-declares as unmaintained"
+  },
+  {
+   "id": "C5",
+   "text": "可参考barchart模块中的Index.ets（多个pageName与页面路径一一对应 via harInit）",
+   "source": "CommonAppDevelopment/common/routermodule/README.md",
+   "label": "conflict",
+   "evidence": "CommonAppDevelopment/feature/barchart/Index.ets (no harInit)"
+  },
+  {
+   "id": "C6",
+   "text": "在主模块中添加动态路由的依赖 routermodule: file:../../common/routermodule (product/entry/oh-package.json5)",
+   "source": "CommonAppDevelopment/common/routermodule/README.md",
+   "label": "verified",
+   "evidence": "CommonAppDevelopment/product/entry/oh-package.json5:71"
+  },
+  {
+   "id": "C7",
+   "text": "在工程的根目录的build-profile.json5中添加动态路由模块 routermodule srcPath ./common/routermodule",
+   "source": "CommonAppDevelopment/common/routermodule/README.md",
+   "label": "verified",
+   "evidence": "CommonAppDevelopment/build-profile.json5:146"
+  },
+  {
+   "id": "C8",
+   "text": "如果需要通过路由传递参数，则需要设置hasParam为true，可参考NavigationParameterTransferView.ets",
+   "source": "CommonAppDevelopment/common/routermodule/README_AUTO_GENERATE.md",
+   "label": "verified",
+   "evidence": "CommonAppDevelopment/feature/navigationparametertransfer/src/main/ets/view/NavigationParameterTransferView.ets:31"
+  },
+  {
+   "id": "C9",
+   "text": "在需要跳转的页面的自定义组件上添加装饰器，可参考AddressExchangeView.ets (@AppRouter name addressexchange/AddressExchangeView)",
+   "source": "CommonAppDevelopment/common/routermodule/README_AUTO_GENERATE.md",
+   "label": "conflict",
+   "evidence": "CommonAppDevelopment/feature/addressexchange/src/main/ets/FeatureComponent.ets:4 (decorator is on FeatureComponent.ets, not view/AddressExchangeView.ets)",
+   "note": "name exists but in a different file than the doc link"
+  },
+  {
+   "id": "C10",
+   "text": "本示例依赖common模块实现日志打印 (common/utils/src/main/ets/log/Logger.ets)",
+   "source": "CommonAppDevelopment/feature/multiplefilesdownload/README.md",
+   "label": "verified",
+   "evidence": "CommonAppDevelopment/common/utils/src/main/ets/log/Logger.ets"
+  }
+ ],
+ "notes": "Sample of 166 @AppRouter routes (custom decorator + hvigor plugin AutoBuildRouter), 5 system routerMap entries (note one file is named route_map.json not router_map.json; module.json5 references it via $profile:route_map), 4 main_pages entries. route_id for router_map = name (may be Chinese); for main_pages = page path. No navigational deep-link URIs (only file share target). test/ performance demo projects also contain router_map.json files (excluded from sample - outside CommonAppDevelopment). Clone reused read-only from oss2; .id() usage in ohosTest ON.id(...) is NOT a declaration."
+}

@@ -24,7 +24,7 @@ permissions:
   contents: write
 
 env:
-  KB_VERSION: latest                 # or a tag / pseudo-version of luckylucky0001/codewiki
+  KB_VERSION: latest                 # npm version of the codewiki package
   KB_MAX_LLM_TASKS: "12"             # cost guard: remaining tasks use the template writer
   CGO_CFLAGS: "-O2 -w"
 
@@ -34,11 +34,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        if: hashFiles('cmd/kb/main.go') != ''
-        with: { go-version: "1.24", cache: true }
-      - if: hashFiles('cmd/kb/main.go') != ''
-        run: go vet ./... && test -z "$(gofmt -l cmd internal skills)" && go test ./...
+      - uses: actions/setup-node@v4
+        if: hashFiles('src/cli/cli.ts') != ''
+        with: { node-version: "22", cache: npm }
+      - if: hashFiles('src/cli/cli.ts') != ''
+        run: npm ci --ignore-scripts && npm test
 
   compound:
     runs-on: ubuntu-latest
@@ -58,17 +58,9 @@ jobs:
           if [ -f codewiki.yaml ]; then echo "present=true" >> "$GITHUB_OUTPUT"
           else echo "::notice::no codewiki.yaml at repo root; skipping compound"; fi
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-node@v4
         if: steps.cfg.outputs.present == 'true'
-        with: { go-version: "1.24", cache: true }
-
-      - name: Cache kb binary
-        if: steps.cfg.outputs.present == 'true'
-        id: kbcache
-        uses: actions/cache@v4
-        with:
-          path: ~/go/bin/kb
-          key: kb-${{ runner.os }}-${{ env.KB_VERSION }}
+        with: { node-version: "22" }
 
       - name: Restore scan cache (per-file parse results keyed by content hash)
         if: steps.cfg.outputs.present == 'true'
@@ -79,10 +71,10 @@ jobs:
           restore-keys: kb-scan-${{ runner.os }}-
 
       - name: Install kb
-        if: steps.cfg.outputs.present == 'true' && steps.kbcache.outputs.cache-hit != 'true'
+        if: steps.cfg.outputs.present == 'true'
         run: |
-          if [ -f cmd/kb/main.go ]; then go build -o ~/go/bin/kb ./cmd/kb
-          else go install github.com/luckylucky0001/codewiki/cmd/kb@${KB_VERSION}; fi
+          if [ -f src/cli/cli.ts ]; then npm ci --ignore-scripts && npm run build && npm link
+          else npm i -g codewiki@${KB_VERSION}; fi
 
       - name: Pick the writer (docs/agents.md)
         if: steps.cfg.outputs.present == 'true'
@@ -106,6 +98,10 @@ jobs:
           npm install -g @openai/codex@0.163.0
           printenv OPENAI_API_KEY | codex login --with-api-key
 
+      # The LLM facts fallback (routes/APIs the rules missed, every item verified against the source)
+      # is on by default and uses claude (llm.facts_agent). Without the claude CLI / ANTHROPIC_API_KEY
+      # it logs "llm-facts: skipped (...), rules only" and compound continues; answers are cached in
+      # wiki/.kb/cache/llm-facts (restored above). Turn it off with llm.facts: false or KB_LLM_FACTS: "0".
       - name: kb compound
         if: steps.cfg.outputs.present == 'true'
         id: compound

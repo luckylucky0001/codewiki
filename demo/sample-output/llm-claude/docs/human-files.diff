@@ -1,0 +1,149 @@
+diff --git a/apps/shop-ios/docs/navigation.md b/apps/shop-ios/docs/navigation.md
+index 4dacbf9..f8693e0 100644
+--- a/apps/shop-ios/docs/navigation.md
++++ b/apps/shop-ios/docs/navigation.md
+@@ -1,7 +1,51 @@
++---
++last_compound_scan: 2026-10-21
++compound_scan_mode: full
++compound_source_commit: aca79fd22e09360835e048979b68973ed5a66004
++---
+ # Navigation
+ 
+-[DESCRIPTION]
+-
+ ## Routes
+ 
+-TODO
++### 路由 RootView
++
++`AppRouter` 持有 `@Published var path: [Destination]`。`handle(url:)` 解析 `minishop://` 的 `token` 与 `cart` 参数，`match` 按 `Route.allCases` 匹配路径。`RootView` 的 `NavigationStack` 通过 `navigationDestination` 映射各路由，根页为 `LoginView`。
++
++**Source**: `apps/shop-ios/MiniShop/Navigation/AppRouter.swift` [Code Direct] [Verified]
++
++### 路由 cart
++
++`CartView` 显示 `BackButton` 与 "Items: N"。`cart_checkout` 按钮在 `vm.total() == 0` 时禁用，点击后向 `router.path` 追加 `.checkout`。
++
++**Source**: `apps/shop-ios/MiniShop/Features/Cart/CartView.swift` [Code Direct] [Verified]
++
++### 路由 checkout
++
++`CheckoutView` 的 `checkout_submit` 按钮调用 `APIClient.shared.send(.post, path: "/api/orders", body: OrderRequest(paymentMethod: "card"))`。成功返回后向 `router.path` 追加 `.orderDetail`，并携带 `id` 参数。
++
++**Source**: `apps/shop-ios/MiniShop/Features/Checkout/CheckoutView.swift` [Code Direct] [Verified]
++
++### 路由 login
++
++`LoginView` 包含 `login_username`、`login_password` 输入框和 `login_submit` 按钮。点击后调用 `vm.login`，成功则向 `router.path` 追加 `.products`。
++
++**Source**: `apps/shop-ios/MiniShop/Features/Login/LoginView.swift` [Code Direct] [Verified]
++
++### 路由 order_detail
++
++`OrderDetailView` 接收 `id` 参数，显示 `BackButton` 与 "Order placed"（accessibilityIdentifier `order_status`）。
++
++**Source**: `apps/shop-ios/MiniShop/Features/Order/OrderDetailView.swift` [Code Direct] [Verified]
++
++### 路由 product_detail
++
++`ProductDetailView` 接收 `id`，在 `.task` 中调用 `vm.loadProduct(id:)` 填充标题。`add_to_cart` 按钮调用 `cart.addItem(sku: id)`。
++
++**Source**: `apps/shop-ios/MiniShop/Features/Products/ProductDetailView.swift` [Code Direct] [Verified]
++
++### 路由 products
++
++`ProductsView` 用 `List` 展示商品，每项 `product_item_<id>` 点击后向 `router.path` 追加 `.productDetail` 并携带 `id`。工具栏的 `tab_cart` 追加 `.cart`。
++
++**Source**: `apps/shop-ios/MiniShop/Features/Products/ProductsView.swift` [Code Direct] [Verified]
++
+diff --git a/docs/architecture.md b/docs/architecture.md
+index 5cd1e13..3a59a12 100644
+--- a/docs/architecture.md
++++ b/docs/architecture.md
+@@ -1,3 +1,8 @@
++---
++last_compound_scan: 2026-10-21
++compound_scan_mode: full
++compound_source_commit: aca79fd22e09360835e048979b68973ed5a66004
++---
+ # MonoShop 架构
+ 
+ MonoShop 由两个原生应用组成，共用同一套后端接口（`/api/*`）。本文由架构组维护，
+@@ -8,3 +13,15 @@ MonoShop 由两个原生应用组成，共用同一套后端接口（`/api/*`）
+ - 购物车上限由产品决定，目前是 10。
+ 
+ > 人工维护的段落：kb 只能在后面追加带 `**Source**` 的条目，不会改动这里的任何字节。
++
++### 项目 minishop
++
++`MainActivity` 为 Android 端的单 Activity 宿主，`applyTestParams` 从深链注入测试状态。
++
++**Source**: `apps/shop-android/app/src/main/java/com/minishop/MainActivity.kt` [Code Direct] [Verified]
++
++### 项目 MiniShop
++
++`MiniShopApp` 是 `@main` 入口，创建 `AppRouter` 并以 `environmentObject` 注入 `RootView`，`onOpenURL` 交给 `router.handle(url:)`。
++
++**Source**: `apps/shop-ios/MiniShop/App/MiniShopApp.swift` [Code Direct] [Verified]
+diff --git a/docs/testing.md b/docs/testing.md
+index a5668ce..cd4adee 100644
+--- a/docs/testing.md
++++ b/docs/testing.md
+@@ -1,9 +1,53 @@
++---
++last_compound_scan: 2026-10-21
++compound_scan_mode: full
++compound_source_commit: aca79fd22e09360835e048979b68973ed5a66004
++---
+ # Testing
+ 
+ ## Test layout
+ 
+-TODO
+-
+ ## testID conventions
+ 
+-TBD
++### testID · (shared)
++
++`MiniShopTopBar` 为共享顶栏，返回按钮统一使用 testTag `nav_back`，且仅在 `onBack` 非空时渲染。
++
++**Source**: `apps/shop-android/app/src/main/java/com/minishop/ui/components/MiniShopTopBar.kt` [Code Direct] [Verified]
++
++### testID · cart
++
++`CartScreen` 使用的 testTag 为 `cart_total`（购物车数量文本）和 `cart_checkout`（结账按钮）。
++
++**Source**: `apps/shop-android/app/src/main/java/com/minishop/ui/cart/CartScreen.kt` [Code Direct] [Verified]
++
++### testID · checkout
++
++`CheckoutScreen` 的提交按钮使用 testTag `checkout_submit`。
++
++**Source**: `apps/shop-android/app/src/main/java/com/minishop/ui/checkout/CheckoutScreen.kt` [Code Direct] [Verified]
++
++### testID · login
++
++`LoginScreen` 使用的 testTag 为 `login_username`、`login_password` 和 `login_submit`。
++
++**Source**: `apps/shop-android/app/src/main/java/com/minishop/ui/login/LoginScreen.kt` [Code Direct] [Verified]
++
++### testID · order_detail
++
++`OrderDetailScreen` 的状态文本使用 testTag `order_status`。
++
++**Source**: `apps/shop-android/app/src/main/java/com/minishop/ui/order/OrderDetailScreen.kt` [Code Direct] [Verified]
++
++### testID · product_detail
++
++`ProductDetailScreen` 的加入购物车按钮使用 testTag `add_to_cart`。
++
++**Source**: `apps/shop-android/app/src/main/java/com/minishop/ui/products/ProductDetailScreen.kt` [Code Direct] [Verified]
++
++### testID · products
++
++`ProductsScreen` 使用的 testTag 为 `tab_cart`（购物车入口）、`product_list`（列表容器）和 `product_item_<id>`（列表项）。
++
++**Source**: `apps/shop-android/app/src/main/java/com/minishop/ui/products/ProductsScreen.kt` [Code Direct] [Verified]
++

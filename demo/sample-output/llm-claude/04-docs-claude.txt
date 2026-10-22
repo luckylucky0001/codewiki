@@ -1,0 +1,46 @@
+  write  new      apps/shop-android/docs/architecture.md [architecture] +4 ~0
+  write  new      apps/shop-android/docs/contracts.md [api-contracts] +5 ~0
+  write  new      apps/shop-android/docs/design-patterns.md [design-patterns] +2 ~0
+  write  new      apps/shop-android/docs/features.md [features] +7 ~0
+  write  new      apps/shop-android/docs/navigation.md [navigation] +7 ~0
+  write  new      apps/shop-android/docs/product-specs.md [product-specs] +1 ~0
+  write  new      apps/shop-android/docs/testing.md [testing] +7 ~0
+  write  new      apps/shop-ios/docs/architecture.md [architecture] +7 ~0
+  write  new      apps/shop-ios/docs/contracts.md [api-contracts] +5 ~0
+  write  new      apps/shop-ios/docs/design-patterns.md [design-patterns] +2 ~0
+  write  new      apps/shop-ios/docs/features.md [features] +7 ~0
+  write  skeleton apps/shop-ios/docs/navigation.md [navigation] +7 ~0
+  write  new      apps/shop-ios/docs/testing.md [testing] +7 ~0
+  write  adopted  docs/architecture.md [architecture] +2 ~0
+  write  new      docs/contracts.md [api-contracts] +5 ~0
+  write  new      docs/design-patterns.md [design-patterns] +2 ~0
+  write  new      docs/features.md [features] +6 ~0
+  write  new      docs/product-specs.md [product-specs] +3 ~0
+  write  new      docs/requirements.md [requirements] +5 ~0
+  write  skeleton docs/testing.md [testing] +7 ~0
+docs compound (fresh: no previous run)
+  scope repo           docs full
+  scope shop-android   apps/shop-android/docs full
+  scope shop-ios       apps/shop-ios/docs full
+  write  new      apps/shop-android/docs/architecture.md [architecture] +4 ~0 =0
+  write  new      apps/shop-android/docs/contracts.md [api-contracts] +5 ~0 =0
+  write  new      apps/shop-android/docs/design-patterns.md [design-patterns] +2 ~0 =0
+  write  new      apps/shop-android/docs/features.md [features] +7 ~0 =0
+  write  new      apps/shop-android/docs/navigation.md [navigation] +7 ~0 =0
+  write  new      apps/shop-android/docs/product-specs.md [product-specs] +1 ~0 =0
+  write  new      apps/shop-android/docs/testing.md [testing] +7 ~0 =0
+  write  new      apps/shop-ios/docs/architecture.md [architecture] +7 ~0 =0
+  write  new      apps/shop-ios/docs/contracts.md [api-contracts] +5 ~0 =0
+  write  new      apps/shop-ios/docs/design-patterns.md [design-patterns] +2 ~0 =0
+  write  new      apps/shop-ios/docs/features.md [features] +7 ~0 =0
+  write  skeleton apps/shop-ios/docs/navigation.md [navigation] +7 ~0 =0
+  write  new      apps/shop-ios/docs/testing.md [testing] +7 ~0 =0
+  write  adopted  docs/architecture.md [architecture] +2 ~0 =0
+  write  new      docs/contracts.md [api-contracts] +5 ~0 =0
+  write  new      docs/design-patterns.md [design-patterns] +2 ~0 =0
+  write  new      docs/features.md [features] +6 ~0 =0
+  write  new      docs/product-specs.md [product-specs] +3 ~0 =0
+  write  new      docs/requirements.md [requirements] +5 ~0 =0
+  write  skeleton docs/testing.md [testing] +7 ~0 =0
+routing: 58 item(s), 30 to repository docs (root evidence or ≥2 projects), 1 parity difference(s)
+agent: done, accepted 53, rejected 0

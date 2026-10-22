@@ -1,0 +1,25 @@
+{
+  "name": "codewiki",
+  "version": "0.2.0",
+  "description": "Compound a mobile monorepo (Android / iOS / HarmonyOS) and its legacy docs into a code-anchored LLM Wiki",
+  "type": "module",
+  "bin": { "kb": "dist/cli.js" },
+  "main": "dist/index.js",
+  "files": ["dist", "grammars", "skills", "README.md"],
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node scripts/postbuild.mjs",
+    "test": "npm run build && vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "web-tree-sitter": "0.27.1",
+    "yaml": "2.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.18.0",
+    "typescript": "5.9.2",
+    "vitest": "3.2.4"
+  },
+  "license": "MIT"
+}

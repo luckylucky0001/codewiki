@@ -39,7 +39,8 @@ fi
 
 if [ -z "${AGENT_RESCORE:-}" ]; then
 mkdir -p "$OUT/bin" "$OUT/transcripts"
-( cd "$HERE/../.." && CGO_CFLAGS="${CGO_CFLAGS:--O2 -w}" go build -o "$OUT/bin/kb" ./cmd/kb )
+( cd "$HERE/../.." && { [ -d node_modules ] || npm ci --ignore-scripts >/dev/null; } && npm run --silent build )
+printf '#!/bin/sh\nexec node "%s/dist/cli.js" "$@"\n' "$(cd "$HERE/../.." && pwd)" >"$OUT/bin/kb" && chmod +x "$OUT/bin/kb"
 export PATH="$OUT/bin:$PATH"
 G=(-c user.name=bench -c user.email=bench@codewiki.local)
 
@@ -50,7 +51,13 @@ git clone -q "$SRC" "$OUT/A"
 # --- B: same source tree, no wiki / skills / kb config, fresh history
 mkdir -p "$OUT/B"
 ( cd "$OUT/A" && git archive HEAD ) | tar -x -C "$OUT/B"
-rm -rf "$OUT/B/wiki" "$OUT/B/.claude" "$OUT/B/codewiki.yaml" "$OUT/B/AGENTS.md" "$OUT/B/CLAUDE.md"
+rm -rf "$OUT/B/wiki" "$OUT/B/.claude" "$OUT/B/codewiki.yaml"
+# keep the repo's own AGENTS.md / CLAUDE.md, drop only the kb pointer block (files that only held the block go away)
+for f in AGENTS.md CLAUDE.md GEMINI.md; do
+  [ -f "$OUT/B/$f" ] || continue
+  sed -i '/<!-- codewiki:begin/,/<!-- codewiki:end -->/d' "$OUT/B/$f"
+  [ -n "$(tr -d '[:space:]' <"$OUT/B/$f")" ] || rm -f "$OUT/B/$f"
+done
 ( cd "$OUT/B" && git init -q && git "${G[@]}" add -A && git "${G[@]}" commit -qm "source only" )
 grep -rIl -e 'codewiki' -e 'kb compound' "$OUT/B" --exclude-dir=.git >"$OUT/B-leaks.txt" || true
 

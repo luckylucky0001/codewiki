@@ -1,0 +1,21 @@
+per-run tool use (A arm): wiki = tool input mentions wiki/ or module_tree; kb = Bash call starting with kb; skill = Skill tool
+A-E1-login-impl-deps-r1          tools  9 bash  1 wiki 0 kb 0 skill 0
+A-E1-login-impl-deps-r2          tools  1 bash  1 wiki 0 kb 0 skill 0
+A-E2-qrcode-dependents-r1        tools  4 bash  2 wiki 1 kb 2 skill 0
+A-E2-qrcode-dependents-r2        tools  4 bash  2 wiki 0 kb 1 skill 0
+A-E3-call-impl-purpose-r1        tools  3 bash  1 wiki 1 kb 1 skill 0
+A-E3-call-impl-purpose-r2        tools  3 bash  2 wiki 1 kb 1 skill 0
+A-E4-most-deps-feature-r1        tools  9 bash  7 wiki 0 kb 0 skill 0
+A-E4-most-deps-feature-r2        tools  9 bash  2 wiki 0 kb 0 skill 0
+A-E5-matrix-api-fanin-r1         tools  3 bash  2 wiki 0 kb 0 skill 0
+A-E5-matrix-api-fanin-r2         tools  4 bash  3 wiki 0 kb 0 skill 0
+B-E1-login-impl-deps-r1          tools  8 bash  8 wiki 0 kb 0 skill 0
+B-E1-login-impl-deps-r2          tools 10 bash 10 wiki 0 kb 0 skill 0
+B-E2-qrcode-dependents-r1        tools  3 bash  0 wiki 0 kb 0 skill 0
+B-E2-qrcode-dependents-r2        tools  4 bash  1 wiki 0 kb 0 skill 0
+B-E3-call-impl-purpose-r1        tools  5 bash  2 wiki 0 kb 0 skill 0
+B-E3-call-impl-purpose-r2        tools  5 bash  1 wiki 0 kb 0 skill 0
+B-E4-most-deps-feature-r1        tools 11 bash  4 wiki 0 kb 0 skill 0
+B-E4-most-deps-feature-r2        tools 15 bash  3 wiki 0 kb 0 skill 0
+B-E5-matrix-api-fanin-r1         tools  4 bash  1 wiki 0 kb 0 skill 0
+B-E5-matrix-api-fanin-r2         tools  3 bash  1 wiki 0 kb 0 skill 0

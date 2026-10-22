@@ -1,0 +1,471 @@
+{
+ "repo": "razaghimahdi/Shopping-By-KMP",
+ "url": "https://github.com/razaghimahdi/Shopping-By-KMP",
+ "commit": "df8d034585f3fd26f7ad78b04b452eefd8100383",
+ "platform_roots": {
+  "kmp": [
+   "app/shared"
+  ],
+  "android": [
+   "app/androidApp"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "kmp",
+   "route_id": "SplashNavigation.Splash",
+   "symbol": "SplashNavigation.Splash",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/navigation/SplashNavigation.kt",
+   "kind": "compose-typesafe-route",
+   "screen_fn": "SplashScreen",
+   "screen_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/splash/SplashScreen.kt",
+   "nav_host_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/splash/SplashNav.kt",
+   "alt_files": [
+    "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/splash/SplashScreen.kt"
+   ],
+   "note": "internal fun"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "SplashNavigation.Login",
+   "symbol": "SplashNavigation.Login",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/navigation/SplashNavigation.kt",
+   "kind": "compose-typesafe-route",
+   "screen_fn": "LoginScreen",
+   "screen_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/splash/LoginScreen.kt",
+   "nav_host_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/splash/SplashNav.kt",
+   "alt_files": [
+    "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/splash/LoginScreen.kt"
+   ]
+  },
+  {
+   "platform": "kmp",
+   "route_id": "SplashNavigation.Register",
+   "symbol": "SplashNavigation.Register",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/navigation/SplashNavigation.kt",
+   "kind": "compose-typesafe-route",
+   "screen_fn": "RegisterScreen",
+   "screen_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/splash/RegisterScreen.kt",
+   "nav_host_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/splash/SplashNav.kt",
+   "alt_files": [
+    "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/splash/RegisterScreen.kt"
+   ]
+  },
+  {
+   "platform": "kmp",
+   "route_id": "HomeNavigation.Home",
+   "symbol": "HomeNavigation.Home",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/navigation/HomeNavigation.kt",
+   "kind": "compose-typesafe-route",
+   "screen_fn": "HomeScreen",
+   "screen_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/home/HomeScreen.kt",
+   "nav_host_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/home/HomeNav.kt",
+   "alt_files": [
+    "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/home/HomeScreen.kt"
+   ]
+  },
+  {
+   "platform": "kmp",
+   "route_id": "HomeNavigation.Notification",
+   "symbol": "HomeNavigation.Notification",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/navigation/HomeNavigation.kt",
+   "kind": "compose-typesafe-route",
+   "screen_fn": "NotificationsScreen",
+   "screen_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/notifications/NotificationsScreen.kt",
+   "nav_host_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/home/HomeNav.kt",
+   "alt_files": [
+    "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/notifications/NotificationsScreen.kt"
+   ]
+  },
+  {
+   "platform": "kmp",
+   "route_id": "HomeNavigation.Categories",
+   "symbol": "HomeNavigation.Categories",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/navigation/HomeNavigation.kt",
+   "kind": "compose-typesafe-route",
+   "screen_fn": "CategoriesScreen",
+   "screen_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/categories/CategoriesScreen.kt",
+   "nav_host_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/home/HomeNav.kt",
+   "alt_files": [
+    "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/categories/CategoriesScreen.kt"
+   ]
+  },
+  {
+   "platform": "kmp",
+   "route_id": "HomeNavigation.Search",
+   "symbol": "HomeNavigation.Search",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/navigation/HomeNavigation.kt",
+   "kind": "compose-typesafe-route",
+   "screen_fn": "SearchScreen",
+   "screen_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/search/SearchScreen.kt",
+   "nav_host_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/home/HomeNav.kt",
+   "alt_files": [
+    "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/search/SearchScreen.kt"
+   ],
+   "note": "data class Search(categoryId, sort), toRoute<>"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "DetailNavigation.Detail",
+   "symbol": "DetailNavigation.Detail",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/navigation/DetailNavigation.kt",
+   "kind": "compose-typesafe-route",
+   "screen_fn": "DetailScreen",
+   "screen_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/detail/DetailScreen.kt",
+   "nav_host_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/detail/DetailNav.kt",
+   "alt_files": [
+    "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/detail/DetailScreen.kt"
+   ],
+   "note": "nested DetailNav(id) host is used from Home/Cart/Wishlist .Detail(id) keys"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "DetailNavigation.Comment",
+   "symbol": "DetailNavigation.Comment",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/navigation/DetailNavigation.kt",
+   "kind": "compose-typesafe-route",
+   "screen_fn": "CommentScreen",
+   "screen_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/comment/CommentScreen.kt",
+   "nav_host_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/detail/DetailNav.kt",
+   "alt_files": [
+    "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/comment/CommentScreen.kt"
+   ]
+  },
+  {
+   "platform": "kmp",
+   "route_id": "WishlistNavigation.Wishlist",
+   "symbol": "WishlistNavigation.Wishlist",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/navigation/WishlistNavigation.kt",
+   "kind": "compose-typesafe-route",
+   "screen_fn": "WishlistScreen",
+   "screen_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/wishlist/WishlistScreen.kt",
+   "nav_host_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/wishlist/WishlistNav.kt",
+   "alt_files": [
+    "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/wishlist/WishlistScreen.kt"
+   ]
+  },
+  {
+   "platform": "kmp",
+   "route_id": "CartNavigation.Cart",
+   "symbol": "CartNavigation.Cart",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/navigation/CartNavigation.kt",
+   "kind": "compose-typesafe-route",
+   "screen_fn": "CartScreen",
+   "screen_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/cart/CartScreen.kt",
+   "nav_host_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/cart/CartNav.kt",
+   "alt_files": [
+    "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/cart/CartScreen.kt"
+   ]
+  },
+  {
+   "platform": "kmp",
+   "route_id": "CartNavigation.Checkout",
+   "symbol": "CartNavigation.Checkout",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/navigation/CartNavigation.kt",
+   "kind": "compose-typesafe-route",
+   "screen_fn": "CheckoutScreen",
+   "screen_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/checkout/CheckoutScreen.kt",
+   "nav_host_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/cart/CartNav.kt",
+   "alt_files": [
+    "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/checkout/CheckoutScreen.kt"
+   ]
+  },
+  {
+   "platform": "kmp",
+   "route_id": "ProfileNavigation.Profile",
+   "symbol": "ProfileNavigation.Profile",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/navigation/ProfileNavigation.kt",
+   "kind": "compose-typesafe-route",
+   "screen_fn": "ProfileScreen",
+   "screen_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/profile/ProfileScreen.kt",
+   "nav_host_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/profile/ProfileNav.kt",
+   "alt_files": [
+    "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/profile/ProfileScreen.kt"
+   ]
+  },
+  {
+   "platform": "kmp",
+   "route_id": "ProfileNavigation.EditProfile",
+   "symbol": "ProfileNavigation.EditProfile",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/navigation/ProfileNavigation.kt",
+   "kind": "compose-typesafe-route",
+   "screen_fn": "EditProfileScreen",
+   "screen_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/edit_profile/EditProfileScreen.kt",
+   "nav_host_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/profile/ProfileNav.kt",
+   "alt_files": [
+    "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/edit_profile/EditProfileScreen.kt"
+   ]
+  },
+  {
+   "platform": "kmp",
+   "route_id": "ProfileNavigation.MyOrders",
+   "symbol": "ProfileNavigation.MyOrders",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/navigation/ProfileNavigation.kt",
+   "kind": "compose-typesafe-route",
+   "screen_fn": "MyOrdersScreen",
+   "screen_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/my_orders/MyOrdersScreen.kt",
+   "nav_host_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/profile/ProfileNav.kt",
+   "alt_files": [
+    "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/my_orders/MyOrdersScreen.kt"
+   ]
+  },
+  {
+   "platform": "kmp",
+   "route_id": "ProfileNavigation.MyCoupons",
+   "symbol": "ProfileNavigation.MyCoupons",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/navigation/ProfileNavigation.kt",
+   "kind": "compose-typesafe-route",
+   "screen_fn": "MyCouponsScreen",
+   "screen_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/my_coupons/MyCouponsScreen.kt",
+   "nav_host_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/profile/ProfileNav.kt",
+   "alt_files": [
+    "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/my_coupons/MyCouponsScreen.kt"
+   ]
+  },
+  {
+   "platform": "kmp",
+   "route_id": "ProfileNavigation.PaymentMethod",
+   "symbol": "ProfileNavigation.PaymentMethod",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/navigation/ProfileNavigation.kt",
+   "kind": "compose-typesafe-route",
+   "screen_fn": "PaymentMethodScreen",
+   "screen_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/payment_method/PaymentMethodScreen.kt",
+   "nav_host_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/profile/ProfileNav.kt",
+   "alt_files": [
+    "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/payment_method/PaymentMethodScreen.kt"
+   ]
+  },
+  {
+   "platform": "kmp",
+   "route_id": "ProfileNavigation.Address",
+   "symbol": "ProfileNavigation.Address",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/navigation/ProfileNavigation.kt",
+   "kind": "compose-typesafe-route",
+   "screen_fn": "AddressScreen",
+   "screen_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/address/AddressScreen.kt",
+   "nav_host_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/profile/ProfileNav.kt",
+   "alt_files": [
+    "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/address/AddressScreen.kt"
+   ],
+   "note": "also CartNavigation.Address -> same AddressScreen"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "ProfileNavigation.AddAddressInformation",
+   "symbol": "ProfileNavigation.AddAddressInformation",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/navigation/ProfileNavigation.kt",
+   "kind": "compose-typesafe-route",
+   "screen_fn": "AddAddressInformationScreen",
+   "screen_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/add_address/AddAddressInformationScreen.kt",
+   "nav_host_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/profile/ProfileNav.kt",
+   "alt_files": [
+    "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/add_address/AddAddressInformationScreen.kt"
+   ],
+   "optional": true
+  },
+  {
+   "platform": "kmp",
+   "route_id": "ProfileNavigation.Settings",
+   "symbol": "ProfileNavigation.Settings",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/navigation/ProfileNavigation.kt",
+   "kind": "compose-typesafe-route",
+   "screen_fn": "SettingsScreen",
+   "screen_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/settings/SettingsScreen.kt",
+   "nav_host_file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/profile/ProfileNav.kt",
+   "alt_files": [
+    "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/ui/main/settings/SettingsScreen.kt"
+   ],
+   "optional": true,
+   "note": "HomeNavigation.Settings maps to the same SettingsScreen"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "ProfileNavigation.MyWallet",
+   "symbol": "ProfileNavigation.MyWallet",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/navigation/ProfileNavigation.kt",
+   "kind": "compose-typesafe-route",
+   "screen_fn": "MyWalletScreen",
+   "optional": true,
+   "note": "MyWalletScreen(...) is called in ProfileNav.kt but has NO definition anywhere in the repo (broken reference)"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "BottomNavigation.Home",
+   "symbol": "BottomNavigation.Home",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/navigation/BottomNavigation.kt",
+   "kind": "compose-string-route",
+   "optional": true,
+   "note": "string route \"Home\" hosting nested HomeNav NavHost in MainNav.kt"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "AppNavigation.Main",
+   "symbol": "AppNavigation.Main",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/navigation/AppNavigation.kt",
+   "kind": "compose-typesafe-route",
+   "screen_fn": "MainNav",
+   "optional": true,
+   "note": "top-level container hosting bottom bar"
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "kmp",
+   "symbol": "FailedNetworkScreen",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/component/DefaultScreenUI.kt",
+   "reason": "error-state composable named *Screen, not a destination"
+  },
+  {
+   "platform": "kmp",
+   "symbol": "LoadingWithLogoScreen",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/component/DefaultScreenUI.kt",
+   "reason": "loading-state composable named *Screen"
+  },
+  {
+   "platform": "kmp",
+   "symbol": "DefaultScreenUI",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/component/DefaultScreenUI.kt",
+   "reason": "scaffold wrapper used by every screen"
+  },
+  {
+   "platform": "kmp",
+   "symbol": "SharedViewModel",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/presentation/SharedViewModel.kt",
+   "reason": "view model"
+  }
+ ],
+ "deeplinks": [],
+ "testids": [],
+ "apis": [
+  {
+   "method": "POST",
+   "path": "login",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/business/datasource/network/splash/SplashServiceImpl.kt",
+   "note": "Ktor url{ takeFrom(BASE_URL); encodedPath += MainService.CONST }"
+  },
+  {
+   "method": "POST",
+   "path": "register",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/business/datasource/network/splash/SplashServiceImpl.kt",
+   "note": "Ktor url{ takeFrom(BASE_URL); encodedPath += MainService.CONST }"
+  },
+  {
+   "method": "GET",
+   "path": "home",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/business/datasource/network/main/MainServiceImpl.kt",
+   "note": "Ktor url{ takeFrom(BASE_URL); encodedPath += MainService.CONST }"
+  },
+  {
+   "method": "GET",
+   "path": "notifications",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/business/datasource/network/main/MainServiceImpl.kt",
+   "note": "Ktor url{ takeFrom(BASE_URL); encodedPath += MainService.CONST }"
+  },
+  {
+   "method": "GET",
+   "path": "orders",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/business/datasource/network/main/MainServiceImpl.kt",
+   "note": "Ktor url{ takeFrom(BASE_URL); encodedPath += MainService.CONST }"
+  },
+  {
+   "method": "POST",
+   "path": "basket/buy",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/business/datasource/network/main/MainServiceImpl.kt",
+   "note": "Ktor url{ takeFrom(BASE_URL); encodedPath += MainService.CONST }"
+  },
+  {
+   "method": "GET",
+   "path": "address",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/business/datasource/network/main/MainServiceImpl.kt",
+   "note": "Ktor url{ takeFrom(BASE_URL); encodedPath += MainService.CONST }"
+  },
+  {
+   "method": "POST",
+   "path": "address",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/business/datasource/network/main/MainServiceImpl.kt",
+   "note": "Ktor url{ takeFrom(BASE_URL); encodedPath += MainService.CONST }"
+  },
+  {
+   "method": "GET",
+   "path": "comment/{id}",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/business/datasource/network/main/MainServiceImpl.kt",
+   "note": "Ktor url{ takeFrom(BASE_URL); encodedPath += MainService.CONST }"
+  },
+  {
+   "method": "POST",
+   "path": "comment",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/business/datasource/network/main/MainServiceImpl.kt",
+   "note": "Ktor url{ takeFrom(BASE_URL); encodedPath += MainService.CONST }"
+  },
+  {
+   "method": "GET",
+   "path": "search",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/business/datasource/network/main/MainServiceImpl.kt",
+   "note": "Ktor url{ takeFrom(BASE_URL); encodedPath += MainService.CONST }"
+  },
+  {
+   "method": "GET",
+   "path": "search/filter",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/business/datasource/network/main/MainServiceImpl.kt",
+   "note": "Ktor url{ takeFrom(BASE_URL); encodedPath += MainService.CONST }"
+  },
+  {
+   "method": "GET",
+   "path": "profile",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/business/datasource/network/main/MainServiceImpl.kt",
+   "note": "Ktor url{ takeFrom(BASE_URL); encodedPath += MainService.CONST }"
+  },
+  {
+   "method": "POST",
+   "path": "profile",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/business/datasource/network/main/MainServiceImpl.kt",
+   "note": "Ktor url{ takeFrom(BASE_URL); encodedPath += MainService.CONST }"
+  },
+  {
+   "method": "GET",
+   "path": "basket",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/business/datasource/network/main/MainServiceImpl.kt",
+   "note": "Ktor url{ takeFrom(BASE_URL); encodedPath += MainService.CONST }"
+  },
+  {
+   "method": "POST",
+   "path": "basket/add",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/business/datasource/network/main/MainServiceImpl.kt",
+   "note": "Ktor url{ takeFrom(BASE_URL); encodedPath += MainService.CONST }"
+  },
+  {
+   "method": "POST",
+   "path": "basket/delete",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/business/datasource/network/main/MainServiceImpl.kt",
+   "note": "Ktor url{ takeFrom(BASE_URL); encodedPath += MainService.CONST }"
+  },
+  {
+   "method": "GET",
+   "path": "product/{id}",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/business/datasource/network/main/MainServiceImpl.kt",
+   "note": "Ktor url{ takeFrom(BASE_URL); encodedPath += MainService.CONST }"
+  },
+  {
+   "method": "GET",
+   "path": "product/{id}/like",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/business/datasource/network/main/MainServiceImpl.kt",
+   "note": "Ktor url{ takeFrom(BASE_URL); encodedPath += MainService.CONST }"
+  },
+  {
+   "method": "GET",
+   "path": "product/wishlist",
+   "file": "app/shared/src/commonMain/kotlin/com/razzaghi/shopingbykmp/business/datasource/network/main/MainServiceImpl.kt",
+   "note": "Ktor url{ takeFrom(BASE_URL); encodedPath += MainService.CONST }"
+  }
+ ],
+ "claims": [],
+ "notes": "Compose Multiplatform type-safe navigation: @Serializable sealed interface XNavigation { data object/class } + composable<XNavigation.Y>{ YScreen() } in per-feature *Nav.kt NavHosts; route_id = XNavigation.Y. Same case names (Detail, Settings, Address, AddAddress) exist in several graphs. Bottom bar uses string routes BottomNavigation.X.route. Ktor client: url{takeFrom(BASE_URL); encodedPath += CONST (+ \"/$id\")}. Repo also has a Ktor server/ module (routes not labelled; server side). No testTag, no deep links.",
+ "platform_aliases": {
+  "kmp": [
+   "android",
+   "ios",
+   "desktop",
+   "common"
+  ]
+ }
+}

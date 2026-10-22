@@ -1,0 +1,3 @@
+apps/shop-android/app/src/main/java/com/minishop/ui/cart/CartViewModel.kt
+  file → Cart view model [shop-android/c-2fbaebfe] pages/shop-android/cart-view-model.md
+  path: monoshop › minishop › Cart view model

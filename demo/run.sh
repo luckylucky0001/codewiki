@@ -10,8 +10,11 @@
 #   DEMO_CLAUDE_CMD='claude -p ...'     LLM command line for claude mode
 #   DEMO_MAX_LLM_TASKS=N                cap LLM tasks per compound (rest: template), default 3
 #   DEMO_OUT=dir                        output dir (default demo/output/<timestamp>)
+#   DEMO_LLM_FACTS=1                    keep the LLM facts fallback of kb compound on in template mode
+#                                       (default: template mode passes --no-llm-facts so the demo stays
+#                                       deterministic; claude mode keeps kb's default, on)
 #
-# Requires: go (cgo + gcc), git, jq. All outputs are saved under demo/output/<timestamp>/.
+# Requires: node >= 20 + npm, git, jq. All outputs are saved under demo/output/<timestamp>/.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -19,13 +22,15 @@ ROOT="$(cd "$HERE/.." && pwd)"
 MODE="${DEMO_LLM:-template}"
 BOOT="${DEMO_BOOTSTRAP_LLM:-template}"
 MAXT="${DEMO_MAX_LLM_TASKS:-3}"
+FACTS=()   # kb compound runs the LLM facts fallback by default; template mode stays deterministic
+if [ "$MODE" = template ] && [ "${DEMO_LLM_FACTS:-0}" != 1 ]; then FACTS=(--no-llm-facts); fi
 TS="$(date -u +%Y%m%dT%H%M%SZ)"
 OUT="${DEMO_OUT:-$ROOT/demo/output/$TS-$MODE}"
 REPO="$OUT/repo"
 CLAUDE_CMD="${DEMO_CLAUDE_CMD:-claude -p --model sonnet --permission-mode acceptEdits --allowedTools \"Read,Write,Edit,Glob,Grep,Bash(kb anchor:*),Bash(kb get:*)\" --output-format text}"
 
 case "$MODE" in template|claude) ;; *) echo "DEMO_LLM must be template or claude" >&2; exit 2 ;; esac
-for t in go git jq; do command -v "$t" >/dev/null || { echo "missing tool: $t" >&2; exit 2; }; done
+for t in node npm git jq; do command -v "$t" >/dev/null || { echo "missing tool: $t" >&2; exit 2; }; done
 if [ "$MODE" = claude ]; then command -v claude >/dev/null || { echo "claude CLI not found" >&2; exit 2; }; fi
 
 mkdir -p "$OUT/bin"
@@ -47,8 +52,9 @@ llm_flags() { # writer for incremental steps
   if [ "$MODE" = claude ]; then printf '%s\0' --llm claude --llm-cmd "$CLAUDE_CMD" --fallback --max-llm-tasks "$MAXT"; else printf '%s\0' --llm template; fi
 }
 
-log "build kb"
-( cd "$ROOT" && CGO_CFLAGS="${CGO_CFLAGS:--O2 -w}" go build -o "$KB" ./cmd/kb )
+log "build kb (TypeScript)"
+( cd "$ROOT" && { [ -d node_modules ] || npm ci --ignore-scripts >/dev/null; } && npm run --silent build )
+printf '#!/bin/sh\nexec node "%s/dist/cli.js" "$@"\n' "$ROOT" >"$KB" && chmod +x "$KB"
 "$KB" version | tee "$OUT/00-version.txt"
 
 log "create temp git repo from examples/minishop (branch master)"
@@ -59,6 +65,9 @@ gitc add -A && gitc commit -qm "chore: import minishop"
 
 log "kb init"
 kbsave 01-init.txt init
+# minishop is tiny (one module per platform): a small token budget makes kb split the
+# platform modules into L3 feature clusters, so the demo wiki has L0 → L1 → L3 pages
+printf 'tree:\n    budget_tokens: 2000\n' >>"$REPO/codewiki.yaml"
 gitc add -A && gitc commit -qm "chore(wiki): kb init"
 
 log "kb discover-docs + kb ingest (claims verified against code)"
@@ -69,7 +78,7 @@ gitc add -A && gitc commit -qm "docs(wiki): ingest legacy docs and specs"
 
 log "initial kb compound (full rebuild, writer=$BOOT)"
 mapfile -d '' BF < <(if [ "$BOOT" = claude ]; then printf '%s\0' --llm claude --llm-cmd "$CLAUDE_CMD" --fallback; else printf '%s\0' --llm template; fi)
-kbsave 04-compound-initial.txt compound "${BF[@]}"
+kbsave 04-compound-initial.txt compound "${BF[@]}" ${FACTS[@]+"${FACTS[@]}"}
 kbsave 04-compound-initial.verify.txt verify
 gitc add -A && gitc commit -qm "docs(wiki): initial compound"
 
@@ -88,7 +97,7 @@ for cs in "$ROOT"/examples/minishop-changes/*/; do
   kbsave "$p-$name.1-status.txt" status
   kbsave "$p-$name.2-diff.txt" diff
   kbsave "$p-$name.3-plan.json" plan --json --dry-run
-  kbsave "$p-$name.4-compound.txt" compound "${LF[@]}"
+  kbsave "$p-$name.4-compound.txt" compound "${LF[@]}" ${FACTS[@]+"${FACTS[@]}"}
   kbsave "$p-$name.5-verify.txt" verify
   kbsave "$p-$name.6-parity.txt" parity
   gitc add -A && gitc commit -qm "docs(wiki): compound after $name"
@@ -104,6 +113,8 @@ kbsave 94-lint-tid.txt lint-tid
 kbsave 94-parity.json parity --json
 ( cd "$ROOT" && "$KB" eval --quiet ) >"$OUT/95-eval.txt" 2>&1 || true
 kbsave 95-status.txt status
+kbsave 95-tree.txt tree show
+kbsave 95-tree-explain.txt tree explain android/app/src/main/java/com/minishop/ui/cart/CartViewModel.kt
 kbsave 96-verify.json verify --json
 cp "$REPO/wiki/log.md" "$OUT/97-log.md"
 cp "$REPO/wiki/facts/requirements.json" "$OUT/98-requirements.json"
@@ -163,6 +174,14 @@ log "SUMMARY.md"
   echo '```'
   head -4 "$OUT/95-eval.txt"
   grep -E '^plan impact' "$OUT/95-eval.txt" || true
+  echo '```'
+  echo
+  echo "## Module tree（多级目录）"
+  echo
+  echo '```'
+  tail -1 "$OUT/95-tree.txt"
+  head -14 "$OUT/95-tree.txt"
+  cat "$OUT/95-tree-explain.txt"
   echo '```'
   echo
   echo "## Queries"

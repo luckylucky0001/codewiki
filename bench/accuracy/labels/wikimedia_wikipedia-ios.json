@@ -1,0 +1,566 @@
+{
+ "repo": "wikimedia/wikipedia-ios",
+ "url": "https://github.com/wikimedia/wikipedia-ios",
+ "commit": "427f61dbf9587cf221c8e6bcc93a4e4ab1c6f35b",
+ "platform_roots": {
+  "ios": [
+   "Wikipedia",
+   "WMF Framework",
+   "WMFComponents",
+   "WMFData"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "ios",
+   "route_id": "ArticleViewController",
+   "symbol": "ArticleViewController",
+   "file": "Wikipedia/Code/ArticleViewController.swift",
+   "kind": "uikit-vc",
+   "note": "Router.Destination.article"
+  },
+  {
+   "platform": "ios",
+   "route_id": "PageHistoryViewController",
+   "symbol": "PageHistoryViewController",
+   "file": "Wikipedia/Code/PageHistoryViewController.swift",
+   "kind": "uikit-vc",
+   "note": ".articleHistory"
+  },
+  {
+   "platform": "ios",
+   "route_id": "DiffContainerViewController",
+   "symbol": "DiffContainerViewController",
+   "file": "Wikipedia/Code/DiffContainerViewController.swift",
+   "kind": "uikit-vc",
+   "note": ".articleDiff"
+  },
+  {
+   "platform": "ios",
+   "route_id": "SinglePageWebViewController",
+   "symbol": "SinglePageWebViewController",
+   "file": "Wikipedia/Code/SinglePageWebViewController.swift",
+   "kind": "uikit-vc",
+   "note": ".inAppLink"
+  },
+  {
+   "platform": "ios",
+   "route_id": "TalkPageViewController",
+   "symbol": "TalkPageViewController",
+   "file": "Wikipedia/Code/TalkPageViewController.swift",
+   "kind": "uikit-vc",
+   "note": ".talk/.userTalk"
+  },
+  {
+   "platform": "ios",
+   "route_id": "CreateReadingListViewController",
+   "symbol": "CreateReadingListViewController",
+   "file": "Wikipedia/Code/CreateReadingListViewController.swift",
+   "kind": "uikit-vc",
+   "note": ".readingListsImport"
+  },
+  {
+   "platform": "ios",
+   "route_id": "ExploreViewController",
+   "symbol": "ExploreViewController",
+   "file": "Wikipedia/Code/ExploreViewController.swift",
+   "kind": "uikit-vc",
+   "note": "tab"
+  },
+  {
+   "platform": "ios",
+   "route_id": "HomeViewController",
+   "symbol": "HomeViewController",
+   "file": "Wikipedia/Code/HomeViewController.swift",
+   "kind": "uikit-vc",
+   "note": "tab"
+  },
+  {
+   "platform": "ios",
+   "route_id": "SearchViewController",
+   "symbol": "SearchViewController",
+   "file": "Wikipedia/Code/SearchViewController.swift",
+   "kind": "uikit-vc",
+   "note": "tab/.search"
+  },
+  {
+   "platform": "ios",
+   "route_id": "PlacesViewController",
+   "symbol": "PlacesViewController",
+   "file": "Wikipedia/Code/PlacesViewController.swift",
+   "kind": "uikit-vc",
+   "note": "tab"
+  },
+  {
+   "platform": "ios",
+   "route_id": "SavedViewController",
+   "symbol": "SavedViewController",
+   "file": "Wikipedia/Code/SavedViewController.swift",
+   "kind": "uikit-vc",
+   "note": "tab"
+  },
+  {
+   "platform": "ios",
+   "route_id": "OnThisDayViewController",
+   "symbol": "OnThisDayViewController",
+   "file": "Wikipedia/Code/OnThisDayViewController.swift",
+   "kind": "uikit-vc",
+   "note": ".onThisDay"
+  },
+  {
+   "platform": "ios",
+   "route_id": "EditLinkViewController",
+   "symbol": "EditLinkViewController",
+   "file": "Wikipedia/Code/EditLinkViewController.swift",
+   "kind": "uikit-vc",
+   "note": ""
+  },
+  {
+   "platform": "ios",
+   "route_id": "InsertLinkViewController",
+   "symbol": "InsertLinkViewController",
+   "file": "Wikipedia/Code/InsertLinkViewController.swift",
+   "kind": "uikit-vc",
+   "note": ""
+  },
+  {
+   "platform": "ios",
+   "route_id": "WMFWatchlistViewController",
+   "symbol": "WMFWatchlistViewController",
+   "file": "WMFComponents/Sources/WMFComponents/Components/Watchlist/WMFWatchlistViewController.swift",
+   "kind": "uikit-vc",
+   "note": ".watchlist (WMFComponents package)"
+  },
+  {
+   "platform": "ios",
+   "route_id": "WMFSettingsViewController",
+   "symbol": "WMFSettingsViewController",
+   "file": "WMFComponents/Sources/WMFComponents/Components/Settings/WMFSettingsViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "WMFOnboardingViewController",
+   "symbol": "WMFOnboardingViewController",
+   "file": "WMFComponents/Sources/WMFComponents/Components/Shared/Onboarding/WMFOnboardingViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "WMFActivityTabViewController",
+   "symbol": "WMFActivityTabViewController",
+   "file": "Wikipedia/Code/ActivityTabViewController.swift",
+   "kind": "uikit-vc",
+   "note": "file name != class name (ActivityTabViewController.swift)"
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "ios",
+   "symbol": "WMFAppViewController",
+   "file": "Wikipedia/Code/WMFAppViewController.swift",
+   "reason": "root tab-bar container VC",
+   "borderline": true
+  },
+  {
+   "platform": "ios",
+   "symbol": "ArticlePeekPreviewViewController",
+   "file": "Wikipedia/Code/ArticlePeekPreviewViewController.swift",
+   "reason": "3D-touch/context-menu peek preview, not a navigable screen"
+  },
+  {
+   "platform": "ios",
+   "symbol": "AVPlayerViewController",
+   "file": "(system)",
+   "reason": "system VC used for .audio destination - not app code"
+  },
+  {
+   "platform": "ios",
+   "symbol": "ViewControllerRouter",
+   "file": "Wikipedia/Code/ViewControllerRouter.swift",
+   "reason": "router, not a screen"
+  },
+  {
+   "platform": "ios",
+   "symbol": "AccessibilityIdentifiers",
+   "file": "WMFComponents/Sources/WMFComponents/Utility/AccessibilityIdentifiers.swift",
+   "reason": "constants enum"
+  },
+  {
+   "platform": "ios",
+   "symbol": "WikipediaUITests",
+   "file": "WikipediaUITests",
+   "reason": "UI test target",
+   "borderline": true
+  }
+ ],
+ "deeplinks": [
+  {
+   "platform": "ios",
+   "scheme": "wikipedia",
+   "host": "",
+   "path": "",
+   "file": "Wikipedia/Wikipedia-Info.plist",
+   "source": "CFBundleURLSchemes"
+  },
+  {
+   "platform": "ios",
+   "scheme": "wikipedia-official",
+   "host": "",
+   "path": "",
+   "file": "Wikipedia/Wikipedia-Info.plist",
+   "source": "CFBundleURLSchemes"
+  },
+  {
+   "platform": "ios",
+   "scheme": "wikipedia",
+   "host": "content",
+   "path": "",
+   "file": "Wikipedia/Code/NSUserActivity+WMFExtensions.m",
+   "source": "wmf_activityForWikipediaScheme: url.host == @\"content\" (also wikipedia-official)"
+  },
+  {
+   "platform": "ios",
+   "scheme": "wikipedia",
+   "host": "explore",
+   "path": "",
+   "file": "Wikipedia/Code/NSUserActivity+WMFExtensions.m",
+   "source": "wmf_activityForWikipediaScheme: url.host == @\"explore\" (also wikipedia-official)"
+  },
+  {
+   "platform": "ios",
+   "scheme": "wikipedia",
+   "host": "home",
+   "path": "",
+   "file": "Wikipedia/Code/NSUserActivity+WMFExtensions.m",
+   "source": "wmf_activityForWikipediaScheme: url.host == @\"home\" (also wikipedia-official)"
+  },
+  {
+   "platform": "ios",
+   "scheme": "wikipedia",
+   "host": "places",
+   "path": "",
+   "file": "Wikipedia/Code/NSUserActivity+WMFExtensions.m",
+   "source": "wmf_activityForWikipediaScheme: url.host == @\"places\" (also wikipedia-official)"
+  },
+  {
+   "platform": "ios",
+   "scheme": "wikipedia",
+   "host": "saved",
+   "path": "",
+   "file": "Wikipedia/Code/NSUserActivity+WMFExtensions.m",
+   "source": "wmf_activityForWikipediaScheme: url.host == @\"saved\" (also wikipedia-official)"
+  },
+  {
+   "platform": "ios",
+   "scheme": "wikipedia",
+   "host": "activity",
+   "path": "",
+   "file": "Wikipedia/Code/NSUserActivity+WMFExtensions.m",
+   "source": "wmf_activityForWikipediaScheme: url.host == @\"activity\" (also wikipedia-official)"
+  },
+  {
+   "platform": "ios",
+   "scheme": "wikipedia",
+   "host": "search",
+   "path": "",
+   "file": "Wikipedia/Code/NSUserActivity+WMFExtensions.m",
+   "source": "wmf_activityForWikipediaScheme: url.host == @\"search\" (also wikipedia-official)"
+  },
+  {
+   "platform": "ios",
+   "scheme": "wikipedia",
+   "host": "random",
+   "path": "",
+   "file": "Wikipedia/Code/NSUserActivity+WMFExtensions.m",
+   "source": "wmf_activityForWikipediaScheme: url.host == @\"random\" (also wikipedia-official)"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "*.wikipedia.org",
+   "path": "",
+   "file": "Wikipedia/Wikipedia.entitlements",
+   "source": "applinks wildcard"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "wikipedia.org",
+   "path": "",
+   "file": "Wikipedia/Wikipedia.entitlements",
+   "source": "applinks"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "en.wikipedia.beta.wmflabs.org",
+   "path": "",
+   "file": "Wikipedia/Wikipedia.entitlements",
+   "source": "applinks (beta)",
+   "optional": true
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "en.m.wikipedia.beta.wmflabs.org",
+   "path": "",
+   "file": "Wikipedia/Wikipedia.entitlements",
+   "source": "applinks (beta)",
+   "optional": true
+  }
+ ],
+ "testids": [
+  {
+   "platform": "ios",
+   "tid": "Article Lead Image",
+   "file": "WMFComponents/Sources/WMFComponents/Utility/AccessibilityIdentifiers.swift",
+   "line": 19,
+   "alt_files": [
+    "Wikipedia/Code/ArticleViewController.swift"
+   ],
+   "use_file": "Wikipedia/Code/ArticleViewController.swift",
+   "use_line": 355,
+   "note": "string constant in AccessibilityIdentifiers enum, assigned via x.accessibilityIdentifier = AccessibilityIdentifiers.A.b"
+  },
+  {
+   "platform": "ios",
+   "tid": "Article Search Button",
+   "file": "WMFComponents/Sources/WMFComponents/Utility/AccessibilityIdentifiers.swift",
+   "line": 31,
+   "alt_files": [
+    "Wikipedia/Code/ArticleViewController.swift"
+   ],
+   "use_file": "Wikipedia/Code/ArticleViewController.swift",
+   "use_line": 937,
+   "note": "string constant in AccessibilityIdentifiers enum, assigned via x.accessibilityIdentifier = AccessibilityIdentifiers.A.b"
+  },
+  {
+   "platform": "ios",
+   "tid": "Article Home Button",
+   "file": "WMFComponents/Sources/WMFComponents/Utility/AccessibilityIdentifiers.swift",
+   "line": 17,
+   "alt_files": [
+    "Wikipedia/Code/ArticleViewController.swift"
+   ],
+   "use_file": "Wikipedia/Code/ArticleViewController.swift",
+   "use_line": 953,
+   "note": "string constant in AccessibilityIdentifiers enum, assigned via x.accessibilityIdentifier = AccessibilityIdentifiers.A.b"
+  },
+  {
+   "platform": "ios",
+   "tid": "Article View",
+   "file": "WMFComponents/Sources/WMFComponents/Utility/AccessibilityIdentifiers.swift",
+   "line": 35,
+   "alt_files": [
+    "Wikipedia/Code/ArticleViewController.swift"
+   ],
+   "use_file": "Wikipedia/Code/ArticleViewController.swift",
+   "use_line": 1477,
+   "note": "string constant in AccessibilityIdentifiers enum, assigned via x.accessibilityIdentifier = AccessibilityIdentifiers.A.b"
+  },
+  {
+   "platform": "ios",
+   "tid": "Explore View",
+   "file": "WMFComponents/Sources/WMFComponents/Utility/AccessibilityIdentifiers.swift",
+   "line": 45,
+   "alt_files": [
+    "Wikipedia/Code/ExploreViewController.swift"
+   ],
+   "use_file": "Wikipedia/Code/ExploreViewController.swift",
+   "use_line": 124,
+   "note": "string constant in AccessibilityIdentifiers enum, assigned via x.accessibilityIdentifier = AccessibilityIdentifiers.A.b"
+  },
+  {
+   "platform": "ios",
+   "tid": "Root Tab Saved Button",
+   "file": "WMFComponents/Sources/WMFComponents/Utility/AccessibilityIdentifiers.swift",
+   "line": 52,
+   "alt_files": [
+    "Wikipedia/Code/WMFAppViewController.swift"
+   ],
+   "use_file": "Wikipedia/Code/WMFAppViewController.swift",
+   "use_line": 1602,
+   "note": "string constant in AccessibilityIdentifiers enum, assigned via x.accessibilityIdentifier = AccessibilityIdentifiers.A.b"
+  },
+  {
+   "platform": "ios",
+   "tid": "profile-button",
+   "file": "WMFComponents/Sources/WMFComponents/Utility/AccessibilityIdentifiers.swift",
+   "line": 66,
+   "alt_files": [
+    "WMFComponents/Sources/WMFComponents/Extensions/Navigation Bar/WMFNavigationBarConfiguring.swift"
+   ],
+   "use_file": "WMFComponents/Sources/WMFComponents/Extensions/Navigation Bar/WMFNavigationBarConfiguring.swift",
+   "use_line": 109,
+   "note": "string constant in AccessibilityIdentifiers enum, assigned via x.accessibilityIdentifier = AccessibilityIdentifiers.A.b"
+  },
+  {
+   "platform": "ios",
+   "tid": "Year in Review Close Button",
+   "file": "WMFComponents/Sources/WMFComponents/Utility/AccessibilityIdentifiers.swift",
+   "line": 62,
+   "alt_files": [
+    "WMFComponents/Sources/WMFComponents/Components/Year in Review/WMFYearInReviewNavigationItems.swift"
+   ],
+   "use_file": "WMFComponents/Sources/WMFComponents/Components/Year in Review/WMFYearInReviewNavigationItems.swift",
+   "use_line": 58,
+   "note": "string constant in AccessibilityIdentifiers enum, assigned via x.accessibilityIdentifier = AccessibilityIdentifiers.A.b"
+  },
+  {
+   "platform": "ios",
+   "tid": "Home View",
+   "file": "WMFComponents/Sources/WMFComponents/Utility/AccessibilityIdentifiers.swift",
+   "line": 58,
+   "alt_files": [
+    "Wikipedia/Code/HomeViewController.swift"
+   ],
+   "use_file": "Wikipedia/Code/HomeViewController.swift",
+   "use_line": 47,
+   "note": "string constant in AccessibilityIdentifiers enum, assigned via x.accessibilityIdentifier = AccessibilityIdentifiers.A.b"
+  },
+  {
+   "platform": "ios",
+   "tid": "Article Save Button",
+   "file": "WMFComponents/Sources/WMFComponents/Utility/AccessibilityIdentifiers.swift",
+   "line": 29,
+   "alt_files": [
+    "Wikipedia/Code/ArticleToolbarController.swift"
+   ],
+   "use_file": "Wikipedia/Code/ArticleToolbarController.swift",
+   "use_line": 39,
+   "note": "string constant in AccessibilityIdentifiers enum, assigned via x.accessibilityIdentifier = AccessibilityIdentifiers.A.b"
+  }
+ ],
+ "apis": [
+  {
+   "method": "GET",
+   "path": "/api/rest_v1/page/summary/{title}",
+   "file": "WMFData/Sources/WMFData/Data Controllers/Shared/WMFArticleSummaryDataController.swift",
+   "note": "wikimediaRestAPIURL(additionalPathComponents:[\"page\",\"summary\",title])"
+  },
+  {
+   "method": "GET",
+   "path": "/api/rest_v1/page/random/summary",
+   "file": "WMFData/Sources/WMFData/Data Controllers/Shared/WMFRandomDataController.swift"
+  },
+  {
+   "method": "GET",
+   "path": "/api/rest_v1/feed/configuration",
+   "file": "WMFData/Sources/WMFData/Extensions/URL+API.swift"
+  },
+  {
+   "method": "GET",
+   "path": "/w/rest.php/growthexperiments/v0/user-impact/{userID}",
+   "file": "WMFData/Sources/WMFData/Data Controllers/Shared/WMFUserImpactDataController.swift"
+  },
+  {
+   "method": "PUT",
+   "path": "/w/rest.php/growthexperiments/v0/suggestions/addimage/feedback/{title}",
+   "file": "WMFData/Sources/WMFData/Data Controllers/Image Recommendations/WMFImageRecommendationsDataController.swift",
+   "note": "WMFMediaWikiServiceRequest(method: .PUT)"
+  },
+  {
+   "method": "GET",
+   "path": "/wiki/MediaWiki:AppsDonationConfig.json",
+   "file": "WMFData/Sources/WMFData/Extensions/URL+API.swift"
+  },
+  {
+   "method": "GET",
+   "path": "/wiki/MediaWiki:AppsCampaignConfig.json",
+   "file": "WMFData/Sources/WMFData/Extensions/URL+API.swift"
+  },
+  {
+   "method": "GET",
+   "path": "/wiki/MediaWiki:AppsFeatureConfig.json",
+   "file": "WMFData/Sources/WMFData/Extensions/URL+API.swift"
+  },
+  {
+   "method": "GET",
+   "path": "/w/api.php",
+   "file": "WMFData/Sources/WMFData/Extensions/URL+API.swift",
+   "note": "MediaWiki action API; action=... query params distinguish calls -> path alone is ambiguous"
+  },
+  {
+   "method": "GET",
+   "path": "/api/rest_v1/metrics",
+   "file": "WMFData/Sources/WMFData/Extensions/URL+API.swift",
+   "optional": true,
+   "note": "prefix only; real paths appended at call sites"
+  }
+ ],
+ "claims": [
+  {
+   "id": "C1",
+   "text": "WMFData is a local Swift package designed to house all of the logic pertaining to the data layer",
+   "source": "CLAUDE.md",
+   "label": "verified",
+   "evidence": "WMFData/Package.swift"
+  },
+  {
+   "id": "C2",
+   "text": "Services: Sources > WMFData > Services",
+   "source": "CLAUDE.md",
+   "label": "conflict",
+   "evidence": "WMFData/Sources/WMFData/Service (singular)",
+   "note": "minor path drift"
+  },
+  {
+   "id": "C3",
+   "text": "We have two services: WMFBasicService and mediaWikiService",
+   "source": "CLAUDE.md",
+   "label": "verified",
+   "evidence": "WMFData/Sources/WMFData/Service/WMFBasicService.swift; Environment mediaWikiService"
+  },
+  {
+   "id": "C4",
+   "text": "Currently we have 3 stores: userDefaultsStore, sharedCacheStore, coreDataStore",
+   "source": "CLAUDE.md",
+   "label": "conflict",
+   "evidence": "WMFData/Sources/WMFData/Environment (4 stores: + crossProcessUserDefaultsStore)"
+  },
+  {
+   "id": "C5",
+   "text": "userDefaultsStore and sharedCacheStore are accessed via a generalized protocol WMFKeyValueStore",
+   "source": "CLAUDE.md",
+   "label": "verified",
+   "evidence": "WMFData/Sources/WMFData/Store/Protocol/WMFKeyValueStore.swift"
+  },
+  {
+   "id": "C6",
+   "text": "coreDataStore - capable of saving and loading to WMFData's own Core Data xcdatamodel",
+   "source": "CLAUDE.md",
+   "label": "verified",
+   "evidence": "WMFData/Sources/WMFData/Resources/WMFData.xcdatamodeld"
+  },
+  {
+   "id": "C7",
+   "text": "WMFImageDataController.shared - use this singleton to fetch image data in WMFComponents",
+   "source": "CLAUDE.md",
+   "label": "verified",
+   "evidence": "WMFData/Sources/WMFData/Data Controllers/Shared/WMFImageDataController.swift:4"
+  },
+  {
+   "id": "C8",
+   "text": "Data Controllers live in Sources > WMFData > Data Controllers",
+   "source": "CLAUDE.md",
+   "label": "verified",
+   "evidence": "WMFData/Sources/WMFData/Data Controllers"
+  },
+  {
+   "id": "C9",
+   "text": "Stores can be accessed via the WMFDataEnvironment.current singleton",
+   "source": "CLAUDE.md",
+   "label": "verified",
+   "evidence": "WMFData/Sources/WMFData/Environment"
+  },
+  {
+   "id": "C10",
+   "text": "Stores and services should be strictly feature-agnostic",
+   "source": "CLAUDE.md",
+   "label": "unverifiable",
+   "evidence": "(design guideline)"
+  }
+ ],
+ "notes": "Mixed ObjC/Swift UIKit. Router.Destination enum maps URLs to destinations, ViewControllerRouter instantiates VCs. wikipedia:// hosts parsed in ObjC (NSUserActivity+WMFExtensions.m). accessibilityIdentifiers are centralised constants (values are human strings like \"Article View\"); label file = declaration, alt_files = assignment site. APIs built from base path constants + additionalPathComponents arrays (hard). Clone reused read-only from oss2."
+}

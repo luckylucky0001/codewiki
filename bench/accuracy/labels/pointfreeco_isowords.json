@@ -1,0 +1,422 @@
+{
+ "repo": "pointfreeco/isowords",
+ "url": "https://github.com/pointfreeco/isowords",
+ "commit": "c727d3a7c49cf0c98f2fa4f24c562f81e30165f7",
+ "platform_roots": {
+  "ios": [
+   "App/iOS",
+   "Sources"
+  ],
+  "server": [
+   "Sources/Server*",
+   "Sources/*Middleware"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "ios",
+   "route_id": "AppView",
+   "symbol": "AppView",
+   "file": "Sources/AppFeature/AppView.swift",
+   "kind": "swiftui-root",
+   "note": "TCA root; Destination{game,onboarding}"
+  },
+  {
+   "platform": "ios",
+   "route_id": "HomeView",
+   "symbol": "HomeView",
+   "file": "Sources/HomeFeature/Home.swift",
+   "kind": "swiftui-destination"
+  },
+  {
+   "platform": "ios",
+   "route_id": "GameView",
+   "symbol": "GameView",
+   "file": "Sources/GameCore/Views/GameView.swift",
+   "kind": "swiftui-destination",
+   "note": "AppView.Destination.game"
+  },
+  {
+   "platform": "ios",
+   "route_id": "OnboardingView",
+   "symbol": "OnboardingView",
+   "file": "Sources/OnboardingFeature/OnboardingView.swift",
+   "kind": "swiftui-destination",
+   "note": "AppView.Destination.onboarding"
+  },
+  {
+   "platform": "ios",
+   "route_id": "ChangelogView",
+   "symbol": "ChangelogView",
+   "file": "Sources/ChangelogFeature/ChangelogView.swift",
+   "kind": "swiftui-destination",
+   "note": "Home.Destination.changelog"
+  },
+  {
+   "platform": "ios",
+   "route_id": "DailyChallengeView",
+   "symbol": "DailyChallengeView",
+   "file": "Sources/DailyChallengeFeature/DailyChallengeView.swift",
+   "kind": "swiftui-destination",
+   "note": "Home.Destination.dailyChallenge"
+  },
+  {
+   "platform": "ios",
+   "route_id": "LeaderboardView",
+   "symbol": "LeaderboardView",
+   "file": "Sources/LeaderboardFeature/Leaderboard.swift",
+   "kind": "swiftui-destination",
+   "note": "Home.Destination.leaderboard"
+  },
+  {
+   "platform": "ios",
+   "route_id": "MultiplayerView",
+   "symbol": "MultiplayerView",
+   "file": "Sources/MultiplayerFeature/MultiplayerView.swift",
+   "kind": "swiftui-destination",
+   "note": "Home.Destination.multiplayer"
+  },
+  {
+   "platform": "ios",
+   "route_id": "SettingsView",
+   "symbol": "SettingsView",
+   "file": "Sources/SettingsFeature/SettingsView.swift",
+   "kind": "swiftui-destination",
+   "note": "Home.Destination.settings / GameCore.Destination.settings"
+  },
+  {
+   "platform": "ios",
+   "route_id": "SoloView",
+   "symbol": "SoloView",
+   "file": "Sources/SoloFeature/SoloView.swift",
+   "kind": "swiftui-destination",
+   "note": "Home.Destination.solo"
+  },
+  {
+   "platform": "ios",
+   "route_id": "GameOverView",
+   "symbol": "GameOverView",
+   "file": "Sources/GameOverFeature/GameOverView.swift",
+   "kind": "swiftui-destination",
+   "note": "GameCore.Destination.gameOver"
+  },
+  {
+   "platform": "ios",
+   "route_id": "CubePreviewView",
+   "symbol": "CubePreviewView",
+   "file": "Sources/CubePreview/CubePreviewView.swift",
+   "kind": "swiftui-destination",
+   "note": "Leaderboard.Destination.cubePreview"
+  },
+  {
+   "platform": "ios",
+   "route_id": "DailyChallengeResultsView",
+   "symbol": "DailyChallengeResultsView",
+   "file": "Sources/DailyChallengeFeature/DailyChallengeResults.swift",
+   "kind": "swiftui-destination",
+   "note": "DailyChallenge.Destination.results"
+  },
+  {
+   "platform": "ios",
+   "route_id": "VocabView",
+   "symbol": "VocabView",
+   "file": "Sources/VocabFeature/Vocab.swift",
+   "kind": "swiftui-destination",
+   "note": "Stats.Destination.vocab"
+  },
+  {
+   "platform": "ios",
+   "route_id": "StatsView",
+   "symbol": "StatsView",
+   "file": "Sources/StatsFeature/StatsFeature.swift",
+   "kind": "swiftui-destination",
+   "note": "SettingsNavigationLink destination"
+  },
+  {
+   "platform": "ios",
+   "route_id": "UpgradeInterstitialView",
+   "symbol": "UpgradeInterstitialView",
+   "file": "Sources/UpgradeInterstitialFeature/UpgradeInterstitialView.swift",
+   "kind": "swiftui-destination",
+   "note": "GameOver.Destination.upgradeInterstitial"
+  },
+  {
+   "platform": "ios",
+   "route_id": "NotificationsSettingsView",
+   "symbol": "NotificationsSettingsView",
+   "file": "Sources/SettingsFeature/NotificationsSettingsView.swift",
+   "kind": "swiftui-destination",
+   "note": "SettingsNavigationLink"
+  },
+  {
+   "platform": "ios",
+   "route_id": "SoundsSettingsView",
+   "symbol": "SoundsSettingsView",
+   "file": "Sources/SettingsFeature/SoundsSettingsView.swift",
+   "kind": "swiftui-destination"
+  },
+  {
+   "platform": "ios",
+   "route_id": "AppearanceSettingsView",
+   "symbol": "AppearanceSettingsView",
+   "file": "Sources/SettingsFeature/AppearanceSettingsView.swift",
+   "kind": "swiftui-destination"
+  },
+  {
+   "platform": "ios",
+   "route_id": "AccessibilitySettingsView",
+   "symbol": "AccessibilitySettingsView",
+   "file": "Sources/SettingsFeature/AccessibilitySettingsView.swift",
+   "kind": "swiftui-destination"
+  },
+  {
+   "platform": "ios",
+   "route_id": "PurchasesSettingsView",
+   "symbol": "PurchasesSettingsView",
+   "file": "Sources/SettingsFeature/PurchasesSettingsView.swift",
+   "kind": "swiftui-destination"
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "ios",
+   "symbol": "HomeView_Previews",
+   "file": "Sources/HomeFeature/Home.swift",
+   "reason": "PreviewProvider"
+  },
+  {
+   "platform": "ios",
+   "symbol": "LeaderboardLinkView_Previews",
+   "file": "Sources/HomeFeature/LeaderboardLinkView.swift",
+   "reason": "PreviewProvider"
+  },
+  {
+   "platform": "ios",
+   "symbol": "OnboardingPreviewApp",
+   "file": "App/Previews/OnboardingPreview/OnboardingPreviewApp.swift",
+   "reason": "@main mini preview app, not part of shipped app navigation"
+  },
+  {
+   "platform": "ios",
+   "symbol": "SettingsNavigationLink",
+   "file": "Sources/SettingsFeature/SettingsView.swift",
+   "reason": "row/link component"
+  },
+  {
+   "platform": "ios",
+   "symbol": "NotificationsAuthAlertView",
+   "file": "Sources/NotificationsAuthAlert/NotificationsAuthAlert.swift",
+   "reason": "modal alert overlay (Destination case but an alert, not a screen) - borderline",
+   "borderline": true
+  },
+  {
+   "platform": "ios",
+   "symbol": "ActiveGamesView",
+   "file": "Sources/ActiveGamesFeature/ActiveGamesView.swift",
+   "reason": "horizontal carousel embedded in HomeView"
+  }
+ ],
+ "deeplinks": [
+  {
+   "platform": "ios",
+   "scheme": "isowords",
+   "host": "",
+   "path": "",
+   "file": "App/iOS/Info.plist",
+   "source": "CFBundleURLSchemes"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "isowords.xyz",
+   "path": "",
+   "file": "App/iOS/iOS.entitlements",
+   "source": "applinks"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.isowords.xyz",
+   "path": "",
+   "file": "App/iOS/iOS.entitlements",
+   "source": "applinks"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "isowords-staging.herokuapp.com",
+   "path": "",
+   "file": "App/iOS/iOS.entitlements",
+   "source": "applinks",
+   "optional": true
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "pointfreeco-localhost.ngrok.io",
+   "path": "",
+   "file": "App/iOS/iOS.entitlements",
+   "source": "applinks (dev)",
+   "optional": true
+  },
+  {
+   "platform": "ios",
+   "scheme": "isowords",
+   "host": "sharedGames",
+   "path": "/{code}",
+   "file": "Sources/ServerRouter/Router.swift",
+   "source": "ServerRoute.sharedGame.show (router printed with baseURL isowords:// in ShareGameMiddleware)",
+   "optional": true,
+   "note": "path-grammar via swift-url-routing; also shared-games"
+  }
+ ],
+ "testids": [],
+ "apis": [
+  {
+   "method": "POST",
+   "path": "/api/authenticate",
+   "file": "Sources/ServerRouter/Router.swift",
+   "note": "declared via swift-url-routing parser DSL (Path{..}/Method.post), shared by server and ApiClientLive; no URL string literals -> very hard case"
+  },
+  {
+   "method": "GET",
+   "path": "/api/current-player",
+   "file": "Sources/ServerRouter/Router.swift",
+   "note": "declared via swift-url-routing parser DSL (Path{..}/Method.post), shared by server and ApiClientLive; no URL string literals -> very hard case"
+  },
+  {
+   "method": "GET",
+   "path": "/api/config",
+   "file": "Sources/ServerRouter/Router.swift",
+   "note": "declared via swift-url-routing parser DSL (Path{..}/Method.post), shared by server and ApiClientLive; no URL string literals -> very hard case"
+  },
+  {
+   "method": "GET",
+   "path": "/api/changelog",
+   "file": "Sources/ServerRouter/Router.swift",
+   "note": "declared via swift-url-routing parser DSL (Path{..}/Method.post), shared by server and ApiClientLive; no URL string literals -> very hard case"
+  },
+  {
+   "method": "GET",
+   "path": "/api/daily-challenges/today",
+   "file": "Sources/ServerRouter/Router.swift",
+   "note": "declared via swift-url-routing parser DSL (Path{..}/Method.post), shared by server and ApiClientLive; no URL string literals -> very hard case"
+  },
+  {
+   "method": "GET",
+   "path": "/api/daily-challenges/results/history",
+   "file": "Sources/ServerRouter/Router.swift",
+   "note": "declared via swift-url-routing parser DSL (Path{..}/Method.post), shared by server and ApiClientLive; no URL string literals -> very hard case"
+  },
+  {
+   "method": "POST",
+   "path": "/api/games",
+   "file": "Sources/ServerRouter/Router.swift",
+   "note": "declared via swift-url-routing parser DSL (Path{..}/Method.post), shared by server and ApiClientLive; no URL string literals -> very hard case"
+  },
+  {
+   "method": "POST",
+   "path": "/api/push-tokens",
+   "file": "Sources/ServerRouter/Router.swift",
+   "note": "declared via swift-url-routing parser DSL (Path{..}/Method.post), shared by server and ApiClientLive; no URL string literals -> very hard case"
+  },
+  {
+   "method": "POST",
+   "path": "/api/push-settings",
+   "file": "Sources/ServerRouter/Router.swift",
+   "note": "declared via swift-url-routing parser DSL (Path{..}/Method.post), shared by server and ApiClientLive; no URL string literals -> very hard case"
+  },
+  {
+   "method": "POST",
+   "path": "/api/verify-receipt",
+   "file": "Sources/ServerRouter/Router.swift",
+   "note": "declared via swift-url-routing parser DSL (Path{..}/Method.post), shared by server and ApiClientLive; no URL string literals -> very hard case"
+  },
+  {
+   "method": "GET",
+   "path": "/api/leaderboard-scores/vocab",
+   "file": "Sources/ServerRouter/Router.swift",
+   "note": "declared via swift-url-routing parser DSL (Path{..}/Method.post), shared by server and ApiClientLive; no URL string literals -> very hard case"
+  },
+  {
+   "method": "POST",
+   "path": "/demo/games",
+   "file": "Sources/ServerRouter/Router.swift",
+   "note": "declared via swift-url-routing parser DSL (Path{..}/Method.post), shared by server and ApiClientLive; no URL string literals -> very hard case"
+  }
+ ],
+ "claims": [
+  {
+   "id": "C1",
+   "text": "The iOS client's logic is built in the Composable Architecture",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "Package.swift swift-composable-architecture"
+  },
+  {
+   "id": "C2",
+   "text": "the UI is built mostly in SwiftUI with a little bit in SceneKit",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "Sources/CubeCore/Geometries.swift (SceneKit)"
+  },
+  {
+   "id": "C3",
+   "text": "the client and server are split into 86 modules",
+   "source": "README.md",
+   "label": "conflict",
+   "evidence": "Package.swift has 90 non-test targets + 34 test targets",
+   "note": "hedged \"at the time of writing\"; stale count"
+  },
+  {
+   "id": "C4",
+   "text": "The router used for handling requests on the server is the exact same code the iOS client uses to make API requests",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "Sources/ApiClientLive/*.swift imports ServerRouter"
+  },
+  {
+   "id": "C5",
+   "text": "The screenshots are generated by a test suite (AppStoreSnapshotTests)",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "Tests/AppStoreSnapshotTests/01-Solo.swift"
+  },
+  {
+   "id": "C6",
+   "text": "we create mini-applications (App/Previews) e.g. OnboardingPreviewApp",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "App/Previews/OnboardingPreview/OnboardingPreviewApp.swift"
+  },
+  {
+   "id": "C7",
+   "text": "The preview video is generated from a slimmed-down version (TrailerFeature)",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "Sources/TrailerFeature"
+  },
+  {
+   "id": "C8",
+   "text": "The entire app state is held in a single source of truth, called a Store",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "App/iOS/App.swift AppView(store: appDelegate.store)"
+  },
+  {
+   "id": "C9",
+   "text": "The code for both the iOS client and server are included in this single repository",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "Sources/ServerBootstrap, Sources/SiteMiddleware"
+  },
+  {
+   "id": "C10",
+   "text": "We test very detailed user flows ... integration tests that simultaneously test the server and iOS client",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "Sources/IntegrationTestHelpers"
+  }
+ ],
+ "notes": "TCA app: navigation is via @Reducer enum Destination cases + .sheet/.navigationDestination(item:) store scoping; route_id = SwiftUI View struct. No accessibilityIdentifier in Sources -> testids empty (false-positive probe). APIs are defined with swift-url-routing parsers (no string URLs); expecting extraction is aspirational -> report separately. Server (Swift on Linux) routes are the same as client API."
+}

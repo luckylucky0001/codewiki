@@ -1,0 +1,12 @@
+{
+ "files": 6,
+ "unchanged": 3,
+ "changed": 3,
+ "deleted": [],
+ "independentViolations": [],
+ "guardViolations": [],
+ "states": {
+  "adopted": 4,
+  "skeleton": 2
+ }
+}

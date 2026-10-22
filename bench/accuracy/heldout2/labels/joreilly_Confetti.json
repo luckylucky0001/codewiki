@@ -1,0 +1,401 @@
+{
+ "repo": "joreilly/Confetti",
+ "url": "https://github.com/joreilly/Confetti",
+ "commit": "c517e458e032ac4e0073d5d7163adcd5e2d04d05",
+ "platform_roots": {
+  "kmp": [
+   "shared"
+  ],
+  "android": [
+   "androidApp",
+   "wearApp",
+   "automotiveApp",
+   "common"
+  ],
+  "ios": [
+   "iosApp"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "kmp",
+   "route_id": "Config.Onboarding",
+   "symbol": "Config.Onboarding",
+   "file": "shared/src/commonMain/kotlin/dev/johnoreilly/confetti/decompose/AppComponent.kt",
+   "kind": "decompose-config",
+   "aliases": [
+    "AppComponent.Child.Onboarding"
+   ],
+   "child_component": "OnboardingComponent",
+   "screen_fn": "OnboardingUI"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "Config.Conferences",
+   "symbol": "Config.Conferences",
+   "file": "shared/src/commonMain/kotlin/dev/johnoreilly/confetti/decompose/AppComponent.kt",
+   "kind": "decompose-config",
+   "aliases": [
+    "AppComponent.Child.Conferences"
+   ],
+   "child_component": "ConferencesComponent",
+   "screen_fn": "ConferenceListView"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "Config.Conference",
+   "symbol": "Config.Conference",
+   "file": "shared/src/commonMain/kotlin/dev/johnoreilly/confetti/decompose/AppComponent.kt",
+   "kind": "decompose-config",
+   "aliases": [
+    "AppComponent.Child.Conference"
+   ],
+   "child_component": "ConferenceComponent",
+   "screen_fn": "ConferenceView",
+   "note": "container stack for one conference",
+   "optional": true
+  },
+  {
+   "platform": "kmp",
+   "route_id": "Config.Loading",
+   "symbol": "Config.Loading",
+   "file": "shared/src/commonMain/kotlin/dev/johnoreilly/confetti/decompose/AppComponent.kt",
+   "kind": "decompose-config",
+   "aliases": [
+    "AppComponent.Child.Loading"
+   ],
+   "optional": true,
+   "note": "Child.Initializing splash state"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "Config.Home",
+   "symbol": "Config.Home",
+   "file": "shared/src/commonMain/kotlin/dev/johnoreilly/confetti/decompose/ConferenceComponent.kt",
+   "kind": "decompose-config",
+   "aliases": [
+    "ConferenceComponent.Child.Home"
+   ],
+   "child_component": "HomeComponent",
+   "screen_fn": "HomeView"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "Config.SessionDetails",
+   "symbol": "Config.SessionDetails",
+   "file": "shared/src/commonMain/kotlin/dev/johnoreilly/confetti/decompose/ConferenceComponent.kt",
+   "kind": "decompose-config",
+   "aliases": [
+    "ConferenceComponent.Child.SessionDetails"
+   ],
+   "child_component": "SessionDetailsComponent",
+   "screen_fn": "SessionDetailsUI"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "Config.SpeakerDetails",
+   "symbol": "Config.SpeakerDetails",
+   "file": "shared/src/commonMain/kotlin/dev/johnoreilly/confetti/decompose/ConferenceComponent.kt",
+   "kind": "decompose-config",
+   "aliases": [
+    "ConferenceComponent.Child.SpeakerDetails"
+   ],
+   "child_component": "SpeakerDetailsComponent",
+   "screen_fn": "SpeakerDetailsUI"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "Config.Settings",
+   "symbol": "Config.Settings",
+   "file": "shared/src/commonMain/kotlin/dev/johnoreilly/confetti/decompose/ConferenceComponent.kt",
+   "kind": "decompose-config",
+   "aliases": [
+    "ConferenceComponent.Child.Settings"
+   ],
+   "child_component": "SettingsComponent",
+   "screen_fn": "SettingsUI"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "Config.Agent",
+   "symbol": "Config.Agent",
+   "file": "shared/src/commonMain/kotlin/dev/johnoreilly/confetti/decompose/ConferenceComponent.kt",
+   "kind": "decompose-config",
+   "aliases": [
+    "ConferenceComponent.Child.Agent"
+   ],
+   "child_component": "ConferenceAgentComponent",
+   "screen_fn": "ConferenceAgentView"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "Config.Venue",
+   "symbol": "Config.Venue",
+   "file": "shared/src/commonMain/kotlin/dev/johnoreilly/confetti/decompose/ConferenceComponent.kt",
+   "kind": "decompose-config",
+   "aliases": [
+    "ConferenceComponent.Child.Venue"
+   ],
+   "child_component": "VenueComponent",
+   "screen_fn": "VenueUI"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "Config.Search",
+   "symbol": "Config.Search",
+   "file": "shared/src/commonMain/kotlin/dev/johnoreilly/confetti/decompose/ConferenceComponent.kt",
+   "kind": "decompose-config",
+   "aliases": [
+    "ConferenceComponent.Child.Search"
+   ],
+   "child_component": "SearchComponent",
+   "screen_fn": "SearchUI"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "Config.Sessions",
+   "symbol": "Config.Sessions",
+   "file": "shared/src/commonMain/kotlin/dev/johnoreilly/confetti/decompose/HomeComponent.kt",
+   "kind": "decompose-config",
+   "aliases": [
+    "HomeComponent.Child.Sessions"
+   ],
+   "child_component": "SessionsComponent",
+   "screen_fn": "SessionsUI",
+   "note": "bottom-nav child stack of HomeComponent"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "Config.Speakers",
+   "symbol": "Config.Speakers",
+   "file": "shared/src/commonMain/kotlin/dev/johnoreilly/confetti/decompose/HomeComponent.kt",
+   "kind": "decompose-config",
+   "aliases": [
+    "HomeComponent.Child.Speakers"
+   ],
+   "child_component": "SpeakersComponent",
+   "screen_fn": "SpeakersUI"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "Config.Bookmarks",
+   "symbol": "Config.Bookmarks",
+   "file": "shared/src/commonMain/kotlin/dev/johnoreilly/confetti/decompose/HomeComponent.kt",
+   "kind": "decompose-config",
+   "aliases": [
+    "HomeComponent.Child.Bookmarks"
+   ],
+   "child_component": "BookmarksComponent",
+   "screen_fn": "BookmarksUI"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "Config.Account",
+   "symbol": "Config.Account",
+   "file": "shared/src/commonMain/kotlin/dev/johnoreilly/confetti/decompose/HomeComponent.kt",
+   "kind": "decompose-config",
+   "aliases": [
+    "HomeComponent.Child.Account"
+   ],
+   "child_component": "AccountComponent",
+   "screen_fn": "AccountUI"
+  },
+  {
+   "platform": "android",
+   "route_id": "Config.Conferences",
+   "symbol": "Config.Conferences",
+   "file": "wearApp/src/main/java/dev/johnoreilly/confetti/wear/navigation/Config.kt",
+   "kind": "decompose-config",
+   "aliases": [
+    "Child.Conferences"
+   ],
+   "screen_fn": "ConferencesRoute"
+  },
+  {
+   "platform": "android",
+   "route_id": "Config.ConferenceSessions",
+   "symbol": "Config.ConferenceSessions",
+   "file": "wearApp/src/main/java/dev/johnoreilly/confetti/wear/navigation/Config.kt",
+   "kind": "decompose-config",
+   "aliases": [
+    "Child.ConferenceSessions"
+   ],
+   "screen_fn": "SessionsRoute"
+  },
+  {
+   "platform": "android",
+   "route_id": "Config.SessionDetails",
+   "symbol": "Config.SessionDetails",
+   "file": "wearApp/src/main/java/dev/johnoreilly/confetti/wear/navigation/Config.kt",
+   "kind": "decompose-config",
+   "aliases": [
+    "Child.SessionDetails"
+   ],
+   "screen_fn": "SessionDetailsRoute"
+  },
+  {
+   "platform": "android",
+   "route_id": "Config.SpeakerDetails",
+   "symbol": "Config.SpeakerDetails",
+   "file": "wearApp/src/main/java/dev/johnoreilly/confetti/wear/navigation/Config.kt",
+   "kind": "decompose-config",
+   "aliases": [
+    "Child.SpeakerDetails"
+   ],
+   "screen_fn": "SpeakerDetailsRoute"
+  },
+  {
+   "platform": "android",
+   "route_id": "Config.Settings",
+   "symbol": "Config.Settings",
+   "file": "wearApp/src/main/java/dev/johnoreilly/confetti/wear/navigation/Config.kt",
+   "kind": "decompose-config",
+   "aliases": [
+    "Child.Settings"
+   ],
+   "screen_fn": "SettingsRoute"
+  },
+  {
+   "platform": "android",
+   "route_id": "Config.Bookmarks",
+   "symbol": "Config.Bookmarks",
+   "file": "wearApp/src/main/java/dev/johnoreilly/confetti/wear/navigation/Config.kt",
+   "kind": "decompose-config",
+   "aliases": [
+    "Child.Bookmarks"
+   ],
+   "screen_fn": "BookmarksRoute"
+  },
+  {
+   "platform": "android",
+   "route_id": "Config.Home",
+   "symbol": "Config.Home",
+   "file": "wearApp/src/main/java/dev/johnoreilly/confetti/wear/navigation/Config.kt",
+   "kind": "decompose-config",
+   "aliases": [
+    "Child.Home"
+   ],
+   "screen_fn": "HomeRoute"
+  },
+  {
+   "platform": "android",
+   "route_id": "Config.Loading",
+   "symbol": "Config.Loading",
+   "file": "wearApp/src/main/java/dev/johnoreilly/confetti/wear/navigation/Config.kt",
+   "kind": "decompose-config",
+   "aliases": [
+    "Child.Loading"
+   ],
+   "optional": true
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "kmp",
+   "symbol": "SessionItemView",
+   "file": "shared/src/commonMain/kotlin/dev/johnoreilly/confetti/ui/sessions/SessionItemView.kt",
+   "reason": "list row composable"
+  },
+  {
+   "platform": "kmp",
+   "symbol": "SpeakerItemView",
+   "file": "shared/src/commonMain/kotlin/dev/johnoreilly/confetti/ui/speakers/SpeakerItemView.kt",
+   "reason": "list row"
+  },
+  {
+   "platform": "kmp",
+   "symbol": "ErrorView",
+   "file": "shared/src/commonMain/kotlin/dev/johnoreilly/confetti/ui/component/ErrorView.kt",
+   "reason": "state placeholder"
+  },
+  {
+   "platform": "kmp",
+   "symbol": "LoadingView",
+   "file": "shared/src/commonMain/kotlin/dev/johnoreilly/confetti/ui/component/LoadingView.kt",
+   "reason": "state placeholder",
+   "borderline": true
+  },
+  {
+   "platform": "kmp",
+   "symbol": "SessionDetailsKey",
+   "file": "shared/src/mobileMain/kotlin/dev/johnoreilly/confetti/navigation/SessionDetailsKey.kt",
+   "reason": "plain data class named *Key, not a NavKey/route"
+  },
+  {
+   "platform": "kmp",
+   "symbol": "ConferenceDayKey",
+   "file": "shared/src/mobileMain/kotlin/dev/johnoreilly/confetti/navigation/ConferenceDayKey.kt",
+   "reason": "plain data class, not a route"
+  }
+ ],
+ "deeplinks": [
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "confetti-app.dev",
+   "path": "",
+   "file": "androidApp/src/main/AndroidManifest.xml",
+   "source": "MainActivity intent-filter autoVerify"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "confetti-app.dev",
+   "path": "/conference/{conference}/session/{session}",
+   "file": "androidApp/src/main/java/dev/johnoreilly/confetti/DeepLink.kt",
+   "source": "in-code path parse",
+   "kind": "in-app-url",
+   "optional": true
+  },
+  {
+   "platform": "android",
+   "scheme": "confetti",
+   "host": "confetti",
+   "path": "",
+   "file": "wearApp/src/main/AndroidManifest.xml",
+   "source": "wear MainActivity intent-filter",
+   "platform_note": "wearApp"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "confetti-app.dev",
+   "path": "",
+   "file": "wearApp/src/main/AndroidManifest.xml",
+   "source": "wear MainActivity intent-filter autoVerify",
+   "optional": true,
+   "note": "duplicate of phone app link, in wear manifest"
+  }
+ ],
+ "testids": [
+  {
+   "platform": "kmp",
+   "tid": "conference.id",
+   "file": "shared/src/commonMain/kotlin/dev/johnoreilly/confetti/ui/ConferenceListView.kt",
+   "line": 209,
+   "expect": false,
+   "note": "testTag(conference.id) pure variable; only testTag in repo"
+  }
+ ],
+ "apis": [
+  {
+   "method": "POST",
+   "path": "/graphql",
+   "file": "shared/src/androidMain/kotlin/dev/johnoreilly/confetti/di/KoinAndroid.kt",
+   "note": "Apollo serverUrl https://confetti-app.dev/graphql; operations are .graphql documents",
+   "alt_files": [
+    "shared/src/iosMain/kotlin/dev/johnoreilly/confetti/di/KoiniOS.kt"
+   ]
+  }
+ ],
+ "claims": [],
+ "notes": "Decompose navigation: private sealed class Config per component (AppComponent/ConferenceComponent/HomeComponent in shared commonMain; separate Config.kt in wearApp) -> Child -> UI composable. route_id = Config.<Name>; SAME names (Config.Settings, Config.SessionDetails, Config.Conferences, Config.Home, Config.Bookmarks, Config.Loading) exist in shared and wear -> matched per module dir. *Key data classes in mobileMain are NOT routes. Only GraphQL endpoint; testTag only a variable.",
+ "platform_aliases": {
+  "kmp": [
+   "android",
+   "ios",
+   "desktop",
+   "web"
+  ]
+ }
+}

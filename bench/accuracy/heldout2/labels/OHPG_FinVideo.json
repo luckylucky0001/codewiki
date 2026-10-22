@@ -1,0 +1,256 @@
+{
+ "repo": "OHPG/FinVideo",
+ "url": "https://github.com/OHPG/FinVideo",
+ "commit": "669916b3581c7d92514f7639232565cd5ac3f775",
+ "platform_roots": {
+  "harmony": [
+   "entry"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "harmony",
+   "route_id": "pages/splash/SplashPage",
+   "symbol": "SplashPage",
+   "file": "entry/src/main/ets/pages/splash/SplashPage.ets",
+   "kind": "main_pages",
+   "struct": "SplashPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/home/HomePage",
+   "symbol": "HomePage",
+   "file": "entry/src/main/ets/pages/home/HomePage.ets",
+   "kind": "main_pages",
+   "struct": "HomePage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/detail/movie/MoviePage",
+   "symbol": "MoviePage",
+   "file": "entry/src/main/ets/pages/detail/movie/MoviePage.ets",
+   "kind": "main_pages",
+   "struct": "MoviePage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/detail/show/ShowPage",
+   "symbol": "ShowPage",
+   "file": "entry/src/main/ets/pages/detail/show/ShowPage.ets",
+   "kind": "main_pages",
+   "struct": "ShowPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/detail/show/season/ShowSeasonPage",
+   "symbol": "ShowSeasonPage",
+   "file": "entry/src/main/ets/pages/detail/show/season/ShowSeasonPage.ets",
+   "kind": "main_pages",
+   "struct": "ShowSeasonPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/detail/person/PersonPage",
+   "symbol": "PersonPage",
+   "file": "entry/src/main/ets/pages/detail/person/PersonPage.ets",
+   "kind": "main_pages",
+   "struct": "PersonPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/media/MediaListPage",
+   "symbol": "MediaListPage",
+   "file": "entry/src/main/ets/pages/media/MediaListPage.ets",
+   "kind": "main_pages",
+   "struct": "MediaListPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/favourite/FavouriteListPage",
+   "symbol": "FavouriteListPage",
+   "file": "entry/src/main/ets/pages/favourite/FavouriteListPage.ets",
+   "kind": "main_pages",
+   "struct": "FavouriteListPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/search/SearchPage",
+   "symbol": "SearchPage",
+   "file": "entry/src/main/ets/pages/search/SearchPage.ets",
+   "kind": "main_pages",
+   "struct": "SearchPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/setting/VideoSettingPage",
+   "symbol": "VideoSettingPage",
+   "file": "entry/src/main/ets/pages/setting/VideoSettingPage.ets",
+   "kind": "main_pages",
+   "struct": "VideoSettingPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/setting/CodecSettingPage",
+   "symbol": "CodecSettingPage",
+   "file": "entry/src/main/ets/pages/setting/CodecSettingPage.ets",
+   "kind": "main_pages",
+   "struct": "CodecSettingPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/setting/GestureSettingPage",
+   "symbol": "GestureSettingPage",
+   "file": "entry/src/main/ets/pages/setting/GestureSettingPage.ets",
+   "kind": "main_pages",
+   "struct": "GestureSettingPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/setting/SubtitleSettingPage",
+   "symbol": "SubtitleSettingPage",
+   "file": "entry/src/main/ets/pages/setting/SubtitleSettingPage.ets",
+   "kind": "main_pages",
+   "struct": "SubtitleSettingPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/interface/InterfacePage",
+   "symbol": "InterfacePage",
+   "file": "entry/src/main/ets/pages/interface/InterfacePage.ets",
+   "kind": "main_pages",
+   "struct": "InterfacePage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/about/AboutPage",
+   "symbol": "AboutPage",
+   "file": "entry/src/main/ets/pages/about/AboutPage.ets",
+   "kind": "main_pages",
+   "struct": "AboutPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "MainComponent",
+   "symbol": "MainComponent",
+   "file": "entry/src/main/ets/pages/home/main/MainComponent.ets",
+   "kind": "tab-page",
+   "optional": true,
+   "note": "HomePage tab content"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "MediaComponent",
+   "symbol": "MediaComponent",
+   "file": "entry/src/main/ets/pages/home/media/MediaComponent.ets",
+   "kind": "tab-page",
+   "optional": true,
+   "note": "HomePage tab content"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "FavouriteComponent",
+   "symbol": "FavouriteComponent",
+   "file": "entry/src/main/ets/pages/home/favourite/FavouriteComponent.ets",
+   "kind": "tab-page",
+   "optional": true,
+   "note": "HomePage tab content"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "PreferComponent",
+   "symbol": "PreferComponent",
+   "file": "entry/src/main/ets/pages/home/prefer/PreferComponent.ets",
+   "kind": "tab-page",
+   "optional": true,
+   "note": "HomePage tab content"
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "harmony",
+   "symbol": "ShowEpisodePage",
+   "file": "entry/src/main/ets/pages/detail/show/episode/ShowEpisodePage.ets",
+   "reason": "named *Page and lives under pages/, but not @Entry / not in main_pages; embedded in sheet/ShowEpisodeSheet.ets"
+  },
+  {
+   "platform": "harmony",
+   "symbol": "DetailComponent",
+   "file": "entry/src/main/ets/pages/detail/DetailComponent.ets",
+   "reason": "shared detail body component"
+  },
+  {
+   "platform": "harmony",
+   "symbol": "HomeToolBar",
+   "file": "entry/src/main/ets/widget/bar/HomeToolBar.ets",
+   "reason": "toolbar widget"
+  },
+  {
+   "platform": "harmony",
+   "symbol": "CategoryToolBar",
+   "file": "entry/src/main/ets/widget/bar/CategoryToolBar.ets",
+   "reason": "toolbar widget"
+  },
+  {
+   "platform": "harmony",
+   "symbol": "AppRouter",
+   "file": "entry/src/main/ets/router/AppRouter.ets",
+   "reason": "router helper class"
+  },
+  {
+   "platform": "harmony",
+   "symbol": "MediaRouter",
+   "file": "entry/src/main/ets/pages/common/MediaRouter.ets",
+   "reason": "router helper",
+   "borderline": true
+  }
+ ],
+ "deeplinks": [],
+ "testids": [
+  {
+   "platform": "harmony",
+   "tid": "episode_cover",
+   "file": "entry/src/main/ets/pages/detail/show/season/ShowSeasonPage.ets",
+   "line": 71,
+   "alt_files": [
+    "entry/src/main/ets/pages/detail/show/episode/ShowEpisodePage.ets"
+   ],
+   "note": "same id also at ShowEpisodePage:33"
+  },
+  {
+   "platform": "harmony",
+   "tid": "episode_name",
+   "file": "entry/src/main/ets/pages/detail/show/season/ShowSeasonPage.ets",
+   "line": 112,
+   "alt_files": [
+    "entry/src/main/ets/pages/detail/show/episode/ShowEpisodePage.ets"
+   ]
+  },
+  {
+   "platform": "harmony",
+   "tid": "episode_overview",
+   "file": "entry/src/main/ets/pages/detail/show/season/ShowSeasonPage.ets",
+   "line": 133
+  },
+  {
+   "platform": "harmony",
+   "tid": "episode_play",
+   "file": "entry/src/main/ets/pages/detail/DetailComponent.ets",
+   "line": 111
+  },
+  {
+   "platform": "harmony",
+   "tid": "episode_finish",
+   "file": "entry/src/main/ets/pages/detail/DetailComponent.ets",
+   "line": 132
+  },
+  {
+   "platform": "harmony",
+   "tid": "episode_collect",
+   "file": "entry/src/main/ets/pages/detail/DetailComponent.ets",
+   "line": 150
+  }
+ ],
+ "apis": [],
+ "claims": [],
+ "notes": "Jellyfin client. main_pages.json (15 pages, exhaustive) + UIContext.getRouter().pushUrl({url:\"pages/...\"}) literals. Player page pushed via PlayerRouter from git submodule framewrok (not cloned / empty dir) - not labelled. Jellyfin HTTP API lives in sdk submodule (empty in clone) -> zero in-repo APIs (FP probe). testIDs exhaustive (8 .id() calls, 6 distinct ids; duplicates across ShowSeasonPage/ShowEpisodePage). No skills.uris."
+}

@@ -1,0 +1,314 @@
+{
+ "repo": "android/compose-samples",
+ "url": "https://github.com/android/compose-samples",
+ "commit": "0bc770fd28510b5a16395349e7281f11386ac82f",
+ "platform_roots": {
+  "android": [
+   "Jetsnack/app",
+   "Jetcaster/mobile",
+   "Jetcaster/tv",
+   "Jetcaster/wear",
+   "JetNews/app",
+   "Reply/app",
+   "Jetchat/app",
+   "JetLagged/app"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "android",
+   "route_id": "home/feed",
+   "symbol": "HomeSections.FEED",
+   "file": "Jetsnack/app/src/main/java/com/example/jetsnack/ui/home/Home.kt",
+   "kind": "compose-route",
+   "screen_fn": "Feed",
+   "app": "Jetsnack"
+  },
+  {
+   "platform": "android",
+   "route_id": "home/search",
+   "symbol": "HomeSections.SEARCH",
+   "file": "Jetsnack/app/src/main/java/com/example/jetsnack/ui/home/Home.kt",
+   "kind": "compose-route",
+   "screen_fn": "Search",
+   "app": "Jetsnack"
+  },
+  {
+   "platform": "android",
+   "route_id": "home/cart",
+   "symbol": "HomeSections.CART",
+   "file": "Jetsnack/app/src/main/java/com/example/jetsnack/ui/home/Home.kt",
+   "kind": "compose-route",
+   "screen_fn": "Cart",
+   "app": "Jetsnack"
+  },
+  {
+   "platform": "android",
+   "route_id": "home/profile",
+   "symbol": "HomeSections.PROFILE",
+   "file": "Jetsnack/app/src/main/java/com/example/jetsnack/ui/home/Home.kt",
+   "kind": "compose-route",
+   "screen_fn": "Profile",
+   "app": "Jetsnack"
+  },
+  {
+   "platform": "android",
+   "route_id": "snack/{snackId}?origin={origin}",
+   "symbol": "MainDestinations.SNACK_DETAIL_ROUTE",
+   "file": "Jetsnack/app/src/main/java/com/example/jetsnack/ui/JetsnackApp.kt",
+   "kind": "compose-route",
+   "screen_fn": "SnackDetail",
+   "app": "Jetsnack",
+   "note": "route built by string concatenation of constants"
+  },
+  {
+   "platform": "android",
+   "route_id": "home",
+   "symbol": "MainDestinations.HOME_ROUTE",
+   "file": "Jetsnack/app/src/main/java/com/example/jetsnack/ui/navigation/JetsnackNavController.kt",
+   "kind": "compose-route",
+   "app": "Jetsnack",
+   "note": "nested graph root"
+  },
+  {
+   "platform": "android",
+   "route_id": "home",
+   "symbol": "Screen.Home",
+   "file": "Jetcaster/mobile/src/main/java/com/example/jetcaster/ui/JetcasterAppState.kt",
+   "kind": "compose-route",
+   "screen_fn": "MainScreen",
+   "app": "Jetcaster",
+   "aliases": [
+    "Jetcaster:home"
+   ]
+  },
+  {
+   "platform": "android",
+   "route_id": "player/{episodeUri}",
+   "symbol": "Screen.Player",
+   "file": "Jetcaster/mobile/src/main/java/com/example/jetcaster/ui/JetcasterAppState.kt",
+   "kind": "compose-route",
+   "screen_fn": "PlayerScreen",
+   "app": "Jetcaster"
+  },
+  {
+   "platform": "android",
+   "route_id": "podcast/{podcastUri}",
+   "symbol": "Screen.PodcastDetails",
+   "file": "Jetcaster/mobile/src/main/java/com/example/jetcaster/ui/JetcasterAppState.kt",
+   "kind": "compose-route",
+   "screen_fn": "PodcastDetailsScreen",
+   "app": "Jetcaster"
+  },
+  {
+   "platform": "android",
+   "route_id": "Route.Inbox",
+   "symbol": "Inbox",
+   "file": "Reply/app/src/main/java/com/example/reply/ui/navigation/ReplyNavigationActions.kt",
+   "kind": "compose-route",
+   "app": "Reply",
+   "note": "type-safe composable<Route.Inbox>"
+  },
+  {
+   "platform": "android",
+   "route_id": "Route.Articles",
+   "symbol": "Articles",
+   "file": "Reply/app/src/main/java/com/example/reply/ui/navigation/ReplyNavigationActions.kt",
+   "kind": "compose-route",
+   "app": "Reply"
+  },
+  {
+   "platform": "android",
+   "route_id": "Route.DirectMessages",
+   "symbol": "DirectMessages",
+   "file": "Reply/app/src/main/java/com/example/reply/ui/navigation/ReplyNavigationActions.kt",
+   "kind": "compose-route",
+   "app": "Reply"
+  },
+  {
+   "platform": "android",
+   "route_id": "Route.Groups",
+   "symbol": "Groups",
+   "file": "Reply/app/src/main/java/com/example/reply/ui/navigation/ReplyNavigationActions.kt",
+   "kind": "compose-route",
+   "app": "Reply"
+  },
+  {
+   "platform": "android",
+   "route_id": "HomeKey",
+   "symbol": "HomeKey",
+   "file": "JetNews/app/src/main/java/com/example/jetnews/ui/home/HomeScreens.kt",
+   "kind": "nav3-navkey",
+   "screen_fn": "HomeFeedScreen",
+   "app": "JetNews"
+  },
+  {
+   "platform": "android",
+   "route_id": "InterestsKey",
+   "symbol": "InterestsKey",
+   "file": "JetNews/app/src/main/java/com/example/jetnews/ui/interests/InterestsScreen.kt",
+   "kind": "nav3-navkey",
+   "screen_fn": "InterestsScreen",
+   "app": "JetNews"
+  },
+  {
+   "platform": "android",
+   "route_id": "PostKey",
+   "symbol": "PostKey",
+   "file": "JetNews/app/src/main/java/com/example/jetnews/ui/post/PostScreen.kt",
+   "kind": "nav3-navkey",
+   "app": "JetNews",
+   "note": "DeepLinkKey"
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "android",
+   "symbol": "HomeSections",
+   "file": "Jetsnack/app/src/main/java/com/example/jetsnack/ui/home/Home.kt",
+   "reason": "enum holding routes (container, not a screen)"
+  },
+  {
+   "platform": "android",
+   "symbol": "JetsnackBottomBar",
+   "file": "Jetsnack/app/src/main/java/com/example/jetsnack/ui/home/Home.kt",
+   "reason": "bottom bar component"
+  },
+  {
+   "platform": "android",
+   "symbol": "VerticalGrid",
+   "file": "Jetsnack/app/src/main/java/com/example/jetsnack/ui/components/Grid.kt",
+   "reason": "layout component"
+  },
+  {
+   "platform": "android",
+   "symbol": "CollapsingImageLayout",
+   "file": "Jetsnack/app/src/main/java/com/example/jetsnack/ui/snackdetail/SnackDetail.kt",
+   "reason": "custom layout"
+  },
+  {
+   "platform": "android",
+   "symbol": "DeepLinkPattern",
+   "file": "JetNews/app/src/main/java/com/example/jetnews/deeplink/util/DeepLinkPattern.kt",
+   "reason": "deeplink utility class"
+  },
+  {
+   "platform": "android",
+   "symbol": "ReplyInboxScreen",
+   "file": "Reply/app/src/main/java/com/example/reply/ui/ReplyListContent.kt",
+   "reason": "content composable rendered for Route.Inbox; the route key is Route.Inbox",
+   "borderline": true
+  }
+ ],
+ "deeplinks": [
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "developer.android.com",
+   "path": "/jetnews",
+   "file": "JetNews/app/src/main/AndroidManifest.xml",
+   "source": "intent-filter pathPrefix"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "developer.android.com",
+   "path": "/jetnews/interests",
+   "file": "JetNews/app/src/main/java/com/example/jetnews/ui/interests/InterestsScreen.kt",
+   "source": "DeepLinkPattern uriPattern (Nav3 custom deeplink matcher)"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "developer.android.com",
+   "path": "/jetnews/posts/{postId}",
+   "file": "JetNews/app/src/main/java/com/example/jetnews/ui/post/PostScreen.kt",
+   "source": "DeepLinkPattern uriPattern"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "jetsnack.example.com",
+   "path": "/home/cart",
+   "file": "Jetsnack/app/src/main/java/com/example/jetsnack/ui/home/Home.kt",
+   "source": "navDeepLink uriPattern (no manifest intent-filter -> only internal)",
+   "optional": true
+  }
+ ],
+ "testids": [],
+ "apis": [],
+ "claims": [
+  {
+   "id": "C1",
+   "text": "Jetcaster: Custom theme based on cover art (Jetcaster/app/src/main/java/com/example/jetcaster/util/DynamicTheming.kt)",
+   "source": "README.md",
+   "label": "conflict",
+   "evidence": "Jetcaster/app no longer exists (mobile/ tv/ wear/); no DynamicTheming in Jetcaster"
+  },
+  {
+   "id": "C2",
+   "text": "Jetsnack: Grid (Jetsnack/.../ui/components/Grid.kt)",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "Jetsnack/app/src/main/java/com/example/jetsnack/ui/components/Grid.kt:27 VerticalGrid"
+  },
+  {
+   "id": "C3",
+   "text": "Jetsnack: CollapsingImageLayout (SnackDetail.kt)",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "Jetsnack/app/src/main/java/com/example/jetsnack/ui/snackdetail/SnackDetail.kt:483"
+  },
+  {
+   "id": "C4",
+   "text": "Jetsnack: Custom Design System (ui/theme/Theme.kt)",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "Jetsnack/app/src/main/java/com/example/jetsnack/ui/theme/Theme.kt JetsnackColors"
+  },
+  {
+   "id": "C5",
+   "text": "Jetchat: AnimatedFabContent (components/AnimatingFabContent.kt)",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "Jetchat/app/src/main/java/com/example/compose/jetchat/components/AnimatingFabContent.kt"
+  },
+  {
+   "id": "C6",
+   "text": "Jetcaster - Supporting Pane (ui/home/Home.kt)",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "Jetcaster/mobile/src/main/java/com/example/jetcaster/ui/home/Home.kt:65 SupportingPaneScaffold"
+  },
+  {
+   "id": "C7",
+   "text": "Jetnews - Window Size Classes (ui/MainActivity.kt)",
+   "source": "README.md",
+   "label": "conflict",
+   "evidence": "JetNews/app/src/main/java/com/example/jetnews/ui/MainActivity.kt (no WindowSizeClass usage in MainActivity)"
+  },
+  {
+   "id": "C8",
+   "text": "Jetsurvey: AnimatedContent",
+   "source": "README.md",
+   "label": "conflict",
+   "evidence": "no Jetsurvey directory in repo",
+   "note": "sample removed; link points to an old PR"
+  },
+  {
+   "id": "C9",
+   "text": "Jetcaster - TV and Wear apps",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "Jetcaster/tv, Jetcaster/wear"
+  },
+  {
+   "id": "C10",
+   "text": "Jetsnack: Animating Bottom Bar (ui/home/Home.kt)",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "Jetsnack/app/src/main/java/com/example/jetsnack/ui/home/Home.kt JetsnackBottomBar"
+  }
+ ],
+ "notes": "Multi-app repo: same route_id \"home\" appears in Jetsnack and Jetcaster (disambiguated by file). Mixes string routes (Jetsnack/Jetcaster), type-safe routes (Reply composable<Route.X>) and Navigation3 NavKeys with a custom DeepLinkPattern matcher (JetNews). No testTags in main sources; no network APIs labelled (Jetcaster fetches arbitrary RSS URLs). Clone reused read-only from oss2."
+}

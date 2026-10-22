@@ -1,0 +1,396 @@
+{
+  "algo": {
+    "budget_tokens": 2000,
+    "cluster": "leiden-v1",
+    "gamma": 1,
+    "max_core": 40,
+    "min_core": 3,
+    "seed": "sha256(module key)",
+    "weights": "3/2/2/1/0.5"
+  },
+  "generated_by": "kb 0.2.0",
+  "head": "26c59386aa41217a9a47b56f600e2341fe8f6c70",
+  "root": {
+    "children": [
+      {
+        "build": "gradle",
+        "children": [
+          {
+            "core": [
+              "android://app/src/main/java/com/minishop/navigation/MiniShopNavHost.kt#MiniShopNavHost",
+              "android://app/src/main/java/com/minishop/navigation/Routes.kt#Routes",
+              "android://app/src/main/java/com/minishop/ui/cart/CartScreen.kt#CartScreen",
+              "android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel",
+              "android://app/src/main/java/com/minishop/ui/checkout/CheckoutScreen.kt#CheckoutScreen",
+              "android://app/src/main/java/com/minishop/ui/components/MiniShopTopBar.kt#MiniShopTopBar",
+              "android://app/src/main/java/com/minishop/ui/order/OrderDetailScreen.kt#OrderDetailScreen",
+              "android://app/src/main/java/com/minishop/ui/products/ProductDetailScreen.kt#ProductDetailScreen"
+            ],
+            "id": "shop-android/c-2fbaebfe",
+            "importance": "high",
+            "kind": "cluster",
+            "level": 3,
+            "members_hash": "c20b5acbe9bc23661e3037ce430b1e87a0f3ecdb7bb865da0abb1c29869c115a",
+            "page": "pages/shop-android/cart-view-model.md",
+            "related": [
+              "shop-android/c-6fe46617",
+              "shop-android/c-4c13e15b",
+              "shop-android/c-96e5ede0"
+            ],
+            "routes": [
+              "cart",
+              "checkout",
+              "order_detail",
+              "product_detail"
+            ],
+            "slug": "cart-view-model",
+            "summary": "Cart view model：8 个核心符号（6 个 composable、1 个 class、1 个 object），位于 8 个文件；主要符号 MiniShopNavHost、Routes、CartScreen；路由 cart, checkout, order_detail, product_detail。",
+            "title": "Cart view model",
+            "title_source": "det",
+            "tokens": 1870
+          },
+          {
+            "core": [
+              "android://app/src/main/java/com/minishop/MainActivity.kt#MainActivity",
+              "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore",
+              "android://app/src/main/java/com/minishop/ui/login/LoginScreen.kt#LoginScreen",
+              "android://app/src/main/java/com/minishop/ui/login/LoginViewModel.kt#LoginViewModel"
+            ],
+            "id": "shop-android/c-4c13e15b",
+            "importance": "low",
+            "kind": "cluster",
+            "level": 3,
+            "members_hash": "5399daf2a3e7f85348bceac2fc18fd1048c90b4a6cfdab8376f9307b2937df9c",
+            "page": "pages/shop-android/login-view-model.md",
+            "related": [
+              "shop-android/c-2fbaebfe",
+              "shop-android/c-6fe46617",
+              "shop-android/c-96e5ede0"
+            ],
+            "routes": [
+              "MainActivity",
+              "login"
+            ],
+            "slug": "login-view-model",
+            "summary": "Login view model：4 个核心符号（3 个 class、1 个 composable），位于 4 个文件；主要符号 MainActivity、TokenStore、LoginScreen；路由 MainActivity, login。",
+            "title": "Login view model",
+            "title_source": "det",
+            "tokens": 822
+          },
+          {
+            "core": [
+              "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiClient",
+              "android://app/src/main/java/com/minishop/ui/checkout/CheckoutScreen.kt#placeOrder",
+              "android://app/src/main/java/com/minishop/ui/products/ProductsScreen.kt#ProductsScreen",
+              "android://app/src/main/java/com/minishop/ui/products/ProductsViewModel.kt#ProductsViewModel"
+            ],
+            "id": "shop-android/c-6fe46617",
+            "importance": "medium",
+            "kind": "cluster",
+            "level": 3,
+            "members_hash": "a3cc204f5c953be65f4de374361bbdfabcdfd7cd3575c472086fce3118961414",
+            "page": "pages/shop-android/products-view-model.md",
+            "related": [
+              "shop-android/c-96e5ede0",
+              "shop-android/c-2fbaebfe",
+              "shop-android/c-4c13e15b"
+            ],
+            "routes": [
+              "products"
+            ],
+            "slug": "products-view-model",
+            "summary": "Products view model：4 个核心符号（1 个 class、1 个 composable、1 个 function、1 个 object），位于 4 个文件；主要符号 ApiClient、placeOrder、ProductsScreen；路由 products。",
+            "title": "Products view model",
+            "title_source": "det",
+            "tokens": 811
+          },
+          {
+            "core": [
+              "android://app/src/main/java/com/minishop/data/ApiService.kt#ApiService",
+              "android://app/src/main/java/com/minishop/data/Models.kt#CartRequest",
+              "android://app/src/main/java/com/minishop/data/Models.kt#CartResponse",
+              "android://app/src/main/java/com/minishop/data/Models.kt#LoginRequest",
+              "android://app/src/main/java/com/minishop/data/Models.kt#LoginResponse",
+              "android://app/src/main/java/com/minishop/data/Models.kt#OrderRequest",
+              "android://app/src/main/java/com/minishop/data/Models.kt#OrderResponse",
+              "android://app/src/main/java/com/minishop/data/Models.kt#Product"
+            ],
+            "id": "shop-android/c-96e5ede0",
+            "importance": "medium",
+            "kind": "cluster",
+            "level": 3,
+            "members_hash": "7819f9b8ba8bb979aea5ed03e12145f07b613cec75579cac9c8997da73a12150",
+            "page": "pages/shop-android/data.md",
+            "related": [
+              "shop-android/c-6fe46617",
+              "shop-android/c-2fbaebfe",
+              "shop-android/c-4c13e15b"
+            ],
+            "slug": "data",
+            "summary": "Data：8 个核心符号（7 个 class、1 个 interface），位于 2 个文件；主要符号 ApiService、CartRequest、CartResponse。",
+            "title": "Data",
+            "title_source": "det",
+            "tokens": 322
+          }
+        ],
+        "children_digest": "5fb625bfd6ed0575446f2498871664745a0ff08bf9794def3b02e25faaaec399",
+        "files": [
+          "apps/shop-android/app/src/main/java/com/minishop/MainActivity.kt",
+          "apps/shop-android/app/src/main/java/com/minishop/data/ApiService.kt",
+          "apps/shop-android/app/src/main/java/com/minishop/data/Models.kt",
+          "apps/shop-android/app/src/main/java/com/minishop/data/TokenStore.java",
+          "apps/shop-android/app/src/main/java/com/minishop/navigation/MiniShopNavHost.kt",
+          "apps/shop-android/app/src/main/java/com/minishop/navigation/Routes.kt",
+          "apps/shop-android/app/src/main/java/com/minishop/ui/cart/CartScreen.kt",
+          "apps/shop-android/app/src/main/java/com/minishop/ui/cart/CartViewModel.kt",
+          "apps/shop-android/app/src/main/java/com/minishop/ui/checkout/CheckoutScreen.kt",
+          "apps/shop-android/app/src/main/java/com/minishop/ui/components/MiniShopTopBar.kt",
+          "apps/shop-android/app/src/main/java/com/minishop/ui/login/LoginScreen.kt",
+          "apps/shop-android/app/src/main/java/com/minishop/ui/login/LoginViewModel.kt",
+          "apps/shop-android/app/src/main/java/com/minishop/ui/order/OrderDetailScreen.kt",
+          "apps/shop-android/app/src/main/java/com/minishop/ui/products/ProductDetailScreen.kt",
+          "apps/shop-android/app/src/main/java/com/minishop/ui/products/ProductsScreen.kt",
+          "apps/shop-android/app/src/main/java/com/minishop/ui/products/ProductsViewModel.kt"
+        ],
+        "id": "shop-android",
+        "importance": "low",
+        "index": "pages/shop-android/index.md",
+        "key": "gradle:apps/shop-android:::app",
+        "kind": "project",
+        "level": 1,
+        "module_type": "android-app",
+        "page": "pages/shop-android/overview.md",
+        "paths": [
+          "apps/shop-android/app"
+        ],
+        "platform": "android",
+        "root": "apps/shop-android",
+        "slug": "shop-android",
+        "summary": "minishop（gradle · android · android-app）：4 个功能簇（Cart view model、Login view model、Products view model、Data），24 个核心符号。",
+        "title": "minishop",
+        "tokens": 3360
+      },
+      {
+        "build": "swiftpm",
+        "children": [
+          {
+            "core": [],
+            "files": [
+              "apps/shop-ios/Package.swift"
+            ],
+            "id": "shop-ios/_root",
+            "importance": "low",
+            "key": "swiftpm:apps/shop-ios::(root)",
+            "kind": "module",
+            "level": 2,
+            "members_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "module_type": "project-root",
+            "page": "pages/shop-ios/_root/overview.md",
+            "paths": [
+              "apps/shop-ios"
+            ],
+            "slug": "_root",
+            "summary": "MiniShop (root)：0 个核心符号（），位于 1 个文件；主要符号 。",
+            "title": "MiniShop (root)",
+            "tokens": 54
+          },
+          {
+            "children": [
+              {
+                "core": [
+                  "ios://MiniShop/Features/Login/LoginViewModel.swift#LoginViewModel",
+                  "ios://MiniShop/Networking/APIClient.swift#APIClient",
+                  "ios://MiniShop/Networking/APIClient.swift#HTTPMethod",
+                  "ios://MiniShop/Networking/APIClient.swift#LoginRequest",
+                  "ios://MiniShop/Networking/APIClient.swift#LoginResponse",
+                  "ios://MiniShop/Networking/APIClient.swift#TokenStore"
+                ],
+                "id": "shop-ios/mini-shop/c-5feb53c3",
+                "importance": "medium",
+                "kind": "cluster",
+                "level": 3,
+                "members_hash": "ded4c4b3031f50992636d0722c1024848b0ff08fdf9c097e8e04c48069fcc579",
+                "page": "pages/shop-ios/mini-shop/api-client.md",
+                "related": [
+                  "shop-ios/mini-shop/c-b27ee65e",
+                  "shop-ios/mini-shop/c-6f7527c8",
+                  "shop-ios/mini-shop/c-a58fadb9"
+                ],
+                "slug": "api-client",
+                "summary": "Api client：6 个核心符号（3 个 class、2 个 struct、1 个 enum），位于 2 个文件；主要符号 LoginViewModel、APIClient、HTTPMethod。",
+                "title": "Api client",
+                "title_source": "det",
+                "tokens": 558
+              },
+              {
+                "core": [
+                  "ios://MiniShop/App/MiniShopApp.swift#MiniShopApp",
+                  "ios://MiniShop/Features/Cart/CartView.swift#CartView",
+                  "ios://MiniShop/Features/Login/LoginView.swift#LoginView",
+                  "ios://MiniShop/Navigation/AppRouter.swift#AppRouter",
+                  "ios://MiniShop/Navigation/AppRouter.swift#RootView",
+                  "ios://MiniShop/Navigation/Route.swift#Destination",
+                  "ios://MiniShop/Navigation/Route.swift#Route"
+                ],
+                "id": "shop-ios/mini-shop/c-6f7527c8",
+                "importance": "high",
+                "kind": "cluster",
+                "level": 3,
+                "members_hash": "d649107e7c608045903e212dceaaab68b00d0006b42a2f716fd252e391ce33c4",
+                "page": "pages/shop-ios/mini-shop/app-router.md",
+                "related": [
+                  "shop-ios/mini-shop/c-a58fadb9",
+                  "shop-ios/mini-shop/c-b27ee65e",
+                  "shop-ios/mini-shop/c-5feb53c3"
+                ],
+                "routes": [
+                  "RootView",
+                  "cart",
+                  "login"
+                ],
+                "slug": "app-router",
+                "summary": "App router：7 个核心符号（5 个 struct、1 个 class、1 个 enum），位于 5 个文件；主要符号 MiniShopApp、CartView、LoginView；路由 RootView, cart, login。",
+                "title": "App router",
+                "title_source": "det",
+                "tokens": 1001
+              },
+              {
+                "core": [
+                  "ios://MiniShop/Components/BackButton.swift#BackButton",
+                  "ios://MiniShop/Features/Checkout/CheckoutView.swift#CheckoutView",
+                  "ios://MiniShop/Features/Order/OrderDetailView.swift#OrderDetailView",
+                  "ios://MiniShop/Networking/APIClient.swift#OrderRequest",
+                  "ios://MiniShop/Networking/APIClient.swift#OrderResponse"
+                ],
+                "id": "shop-ios/mini-shop/c-a58fadb9",
+                "importance": "low",
+                "kind": "cluster",
+                "level": 3,
+                "members_hash": "f70655809800b927b2a7d939e2cd0788cffd3624eaab2533f7b30773439d329b",
+                "page": "pages/shop-ios/mini-shop/checkout-view.md",
+                "related": [
+                  "shop-ios/mini-shop/c-6f7527c8",
+                  "shop-ios/mini-shop/c-5feb53c3",
+                  "shop-ios/mini-shop/c-b27ee65e"
+                ],
+                "routes": [
+                  "checkout",
+                  "order_detail"
+                ],
+                "slug": "checkout-view",
+                "summary": "Checkout view：5 个核心符号（5 个 struct），位于 4 个文件；主要符号 BackButton、CheckoutView、OrderDetailView；路由 checkout, order_detail。",
+                "title": "Checkout view",
+                "title_source": "det",
+                "tokens": 685
+              },
+              {
+                "core": [
+                  "ios://MiniShop/Features/Cart/CartViewModel.swift#CartViewModel",
+                  "ios://MiniShop/Networking/APIClient.swift#CartRequest",
+                  "ios://MiniShop/Networking/APIClient.swift#CartResponse"
+                ],
+                "id": "shop-ios/mini-shop/c-aef82694",
+                "importance": "low",
+                "kind": "cluster",
+                "level": 3,
+                "members_hash": "a7c21fb11b03f156a0448ff6ce26fbec7dbf636db5dd6f6a54df396c71573831",
+                "page": "pages/shop-ios/mini-shop/cart-view-model.md",
+                "related": [
+                  "shop-ios/mini-shop/c-6f7527c8",
+                  "shop-ios/mini-shop/c-b27ee65e",
+                  "shop-ios/mini-shop/c-5feb53c3"
+                ],
+                "slug": "cart-view-model",
+                "summary": "Cart view model：3 个核心符号（2 个 struct、1 个 class），位于 2 个文件；主要符号 CartViewModel、CartRequest、CartResponse。",
+                "title": "Cart view model",
+                "title_source": "det",
+                "tokens": 563
+              },
+              {
+                "core": [
+                  "ios://MiniShop/Features/Products/ProductDetailView.swift#ProductDetailView",
+                  "ios://MiniShop/Features/Products/ProductsView.swift#ProductsView",
+                  "ios://MiniShop/Features/Products/ProductsViewModel.swift#ProductsViewModel",
+                  "ios://MiniShop/Networking/APIClient.swift#Product"
+                ],
+                "id": "shop-ios/mini-shop/c-b27ee65e",
+                "importance": "low",
+                "kind": "cluster",
+                "level": 3,
+                "members_hash": "66925f3d6a63bc0ea6ad0f5387486417eaed18402b62064e654afbe24a74e1f5",
+                "page": "pages/shop-ios/mini-shop/products-view-model.md",
+                "related": [
+                  "shop-ios/mini-shop/c-6f7527c8",
+                  "shop-ios/mini-shop/c-5feb53c3",
+                  "shop-ios/mini-shop/c-aef82694"
+                ],
+                "routes": [
+                  "product_detail",
+                  "products"
+                ],
+                "slug": "products-view-model",
+                "summary": "Products view model：4 个核心符号（3 个 struct、1 个 class），位于 4 个文件；主要符号 ProductDetailView、ProductsView、ProductsViewModel；路由 product_detail, products。",
+                "title": "Products view model",
+                "title_source": "det",
+                "tokens": 777
+              }
+            ],
+            "children_digest": "6f1165b31c33a94a37244cb9000e38f82bfe9ac1c082803c8033a893c7c193d4",
+            "files": [
+              "apps/shop-ios/MiniShop/App/MiniShopApp.swift",
+              "apps/shop-ios/MiniShop/Components/BackButton.swift",
+              "apps/shop-ios/MiniShop/Features/Cart/CartView.swift",
+              "apps/shop-ios/MiniShop/Features/Cart/CartViewModel.swift",
+              "apps/shop-ios/MiniShop/Features/Checkout/CheckoutView.swift",
+              "apps/shop-ios/MiniShop/Features/Login/LoginView.swift",
+              "apps/shop-ios/MiniShop/Features/Login/LoginViewModel.swift",
+              "apps/shop-ios/MiniShop/Features/Order/OrderDetailView.swift",
+              "apps/shop-ios/MiniShop/Features/Products/ProductDetailView.swift",
+              "apps/shop-ios/MiniShop/Features/Products/ProductsView.swift",
+              "apps/shop-ios/MiniShop/Features/Products/ProductsViewModel.swift",
+              "apps/shop-ios/MiniShop/Navigation/AppRouter.swift",
+              "apps/shop-ios/MiniShop/Navigation/Route.swift",
+              "apps/shop-ios/MiniShop/Networking/APIClient.swift"
+            ],
+            "id": "shop-ios/mini-shop",
+            "importance": "medium",
+            "index": "pages/shop-ios/mini-shop/index.md",
+            "key": "swiftpm:apps/shop-ios::MiniShop",
+            "kind": "module",
+            "level": 2,
+            "module_type": "swift-executable",
+            "page": "pages/shop-ios/mini-shop/overview.md",
+            "paths": [
+              "apps/shop-ios/MiniShop"
+            ],
+            "slug": "mini-shop",
+            "summary": "MiniShop（swift-executable）：5 个功能簇（Api client、App router、Checkout view、Cart view model 等），25 个核心符号。",
+            "title": "MiniShop",
+            "tokens": 2423
+          }
+        ],
+        "children_digest": "14947e4fcba192bdb0ac2ba933f6e7776062996955d628978908905349d8f9d7",
+        "id": "shop-ios",
+        "importance": "medium",
+        "index": "pages/shop-ios/index.md",
+        "kind": "project",
+        "level": 1,
+        "page": "pages/shop-ios/overview.md",
+        "platform": "ios",
+        "root": "apps/shop-ios",
+        "slug": "shop-ios",
+        "summary": "MiniShop（swiftpm · ios）：2 个模块（MiniShop (root)、MiniShop），25 个核心符号。",
+        "title": "MiniShop"
+      }
+    ],
+    "children_digest": "998b7dfba0d1fa3f9ef72efda885c7864884c1712f4aae7e065e58c21cbc9bba",
+    "id": "repo",
+    "index": "index.md",
+    "kind": "repo",
+    "level": 0,
+    "page": "pages/overview.md",
+    "summary": "monoshop：2 个项目（minishop、MiniShop），共 49 个核心符号、14 条路由。",
+    "title": "monoshop"
+  },
+  "version": 2
+}

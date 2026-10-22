@@ -1,0 +1,809 @@
+{
+ "repo": "kickstarter/ios-oss",
+ "url": "https://github.com/kickstarter/ios-oss",
+ "commit": "5f5463cfb830413d253efed45bfcec0322c9f152",
+ "platform_roots": {
+  "ios": [
+   "Kickstarter-iOS",
+   "Kickstarter-Framework",
+   "Library",
+   "KsApi"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "ios",
+   "route_id": "MessageThreadsViewController",
+   "symbol": "MessageThreadsViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/MessageThreads/Controller/MessageThreadsViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "ProjectUpdatesViewController",
+   "symbol": "ProjectUpdatesViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/ProjectPage/Controller/ProjectUpdatesViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "ProjectPageViewController",
+   "symbol": "ProjectPageViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/ProjectPage/Controller/ProjectPageViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "RestrictedCreatorViewController",
+   "symbol": "RestrictedCreatorViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/ProjectPage/Controller/RestrictedCreatorViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "VideoViewController",
+   "symbol": "VideoViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/ProjectPage/Controller/VideoViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "RootTabBarViewController",
+   "symbol": "RootTabBarViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/RootTabBar/RootTabBarViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "ManagePledgeViewController",
+   "symbol": "ManagePledgeViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/ManagePledge/Controllers/ManagePledgeViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "CommentsViewController",
+   "symbol": "CommentsViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/Comments/Controllers/CommentsViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "SettingsViewController",
+   "symbol": "SettingsViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/Settings/Controller/SettingsViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "MessagesViewController",
+   "symbol": "MessagesViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/Messages/Controller/MessagesViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "SearchViewController",
+   "symbol": "SearchViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/Search/Controller/SearchViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "SettingsNotificationsViewController",
+   "symbol": "SettingsNotificationsViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/SettingsNotifications/Controller/SettingsNotificationsViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "PledgeViewController",
+   "symbol": "PledgeViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/PledgeView/Controllers/PledgeViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "UpdateViewController",
+   "symbol": "UpdateViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/Update/Controller/UpdateViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "MessageDialogViewController",
+   "symbol": "MessageDialogViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/MessageDialog/Controller/MessageDialogViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "LoginToutViewController",
+   "symbol": "LoginToutViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/LoginTout/Controller/LoginToutViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "BackerDashboardViewController",
+   "symbol": "BackerDashboardViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/BackerDashboardPages/Controller/BackerDashboardViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "ActivitiesViewController",
+   "symbol": "ActivitiesViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/Activities/Controller/ActivitiesViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "DiscoveryViewController",
+   "symbol": "DiscoveryViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/Discovery/Controller/DiscoveryViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "ThanksViewController",
+   "symbol": "ThanksViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/ThanksProjects/Controller/ThanksViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "HelpWebViewController",
+   "symbol": "HelpWebViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/HelpWeb/Controller/HelpWebViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "PostCampaignCheckoutViewController",
+   "symbol": "PostCampaignCheckoutViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/PledgeView/Controllers/PostCampaignCheckoutViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "VideoFeedViewController",
+   "symbol": "VideoFeedViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/VideoFeed/Controller/VideoFeedViewController.swift",
+   "kind": "uikit-vc"
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "ios",
+   "symbol": "WebViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Library/WebViewController.swift",
+   "reason": "base class for web VCs"
+  },
+  {
+   "platform": "ios",
+   "symbol": "SortPagerViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/SortPager/SortPagerViewController.swift",
+   "reason": "child VC embedded in DiscoveryViewController"
+  },
+  {
+   "platform": "ios",
+   "symbol": "DiscoveryNavigationHeaderViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/Discovery/Controller/DiscoveryNavigationHeaderViewController.swift",
+   "reason": "embedded header child VC"
+  },
+  {
+   "platform": "ios",
+   "symbol": "DiscoveryPageViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/Discovery/Controller/DiscoveryPageViewController.swift",
+   "reason": "page child inside DiscoveryViewController UIPageViewController",
+   "borderline": true
+  },
+  {
+   "platform": "ios",
+   "symbol": "BackerDashboardProjectsViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/BackerDashboardProjects/Controller/BackerDashboardProjectsViewController.swift",
+   "reason": "child page of BackerDashboardViewController"
+  },
+  {
+   "platform": "ios",
+   "symbol": "MessageBannerViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/MessageBanner/Controller/MessageBannerViewController.swift",
+   "reason": "banner overlay child VC"
+  },
+  {
+   "platform": "ios",
+   "symbol": "CommentDialogViewController",
+   "file": "Kickstarter-Framework/Sources/Kickstarter-Framework/Kickstarter-iOS/Features/Comments/Controllers/CommentDialogViewController.swift",
+   "reason": "modal composer dialog",
+   "borderline": true
+  }
+ ],
+ "deeplinks": [
+  {
+   "platform": "ios",
+   "scheme": "ksr",
+   "host": "",
+   "path": "",
+   "file": "Kickstarter-iOS/Info.plist",
+   "source": "CFBundleURLSchemes"
+  },
+  {
+   "platform": "ios",
+   "scheme": "fb69103156693",
+   "host": "",
+   "path": "",
+   "file": "Kickstarter-iOS/Info.plist",
+   "source": "CFBundleURLSchemes (Facebook login callback)",
+   "optional": true
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "",
+   "file": "Kickstarter-iOS/Release.entitlements",
+   "source": "applinks"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "kickstarter.com",
+   "path": "",
+   "file": "Kickstarter-iOS/Alpha.entitlements",
+   "source": "applinks"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "emails.kickstarter.com",
+   "path": "",
+   "file": "Kickstarter-iOS/Alpha.entitlements",
+   "source": "applinks"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "clicks.kickstarter.com",
+   "path": "",
+   "file": "Kickstarter-iOS/Alpha.entitlements",
+   "source": "applinks"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/activity",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/authorize",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/checkouts/:checkout_param/payments",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/checkouts/:checkout_param/payments/new",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/checkouts/:checkout_param/payments/apple-pay",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/checkouts/:checkout_param/payments/use_stored_card",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/discover",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/discover/advanced",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/discover/categories/:category_id",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/discover/categories/:parent_category_id/:category_id",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/messages/:message_thread_id",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/profile/:user_param",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/profile/verify_email",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/search",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/signup",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/projects/:creator_param/:project_param",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/projects/:creator_param/:project_param/backing/:backing_tab",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/projects/:creator_param/:project_param/checkouts/:checkout_param/thanks",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/projects/:creator_param/:project_param/comments",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/projects/:creator_param/:project_param/creator_bio",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/projects/:creator_param/:project_param/description",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/projects/:creator_param/:project_param/faqs",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/projects/:creator_param/:project_param/friends",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/projects/:creator_param/:project_param/messages/new",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/projects/:creator_param/:project_param/pledge",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/projects/:creator_param/:project_param/pledge/big_print",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/projects/:creator_param/:project_param/pledge/change_method",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/projects/:creator_param/:project_param/pledge/destroy",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/projects/:creator_param/:project_param/pledge/edit",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/projects/:creator_param/:project_param/pledge/new",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/projects/:creator_param/:project_param/posts",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/projects/:creator_param/:project_param/posts/:update_param",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/projects/:creator_param/:project_param/updates",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/projects/:creator_param/:project_param/posts/:update_param/comments",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/projects/:creator_param/:project_param/surveys/:survey_param",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/projects/:creator_param/:project_param/surveys/:survey_param/edit",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/projects/:creator_param/:project_param/surveys/:survey_param/edit_address",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/settings/:notification_param/:enabled_param",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/users/:user_param/surveys/:survey_response_id",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/projects/:creator_param/:project_param/order_edits/:order_edit_id/checkout",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "www.kickstarter.com",
+   "path": "/projects/:creator_param/:project_param/order_edits/new",
+   "file": "Library/Sources/Library/Library/Navigation.swift",
+   "source": "Navigation.swift route table (pattern -> parser)",
+   "kind": "route-pattern"
+  }
+ ],
+ "testids": [],
+ "apis": [
+  {
+   "method": "GET",
+   "path": "/v1/activities",
+   "file": "KsApi/Sources/KsApi/lib/Route.swift",
+   "note": ""
+  },
+  {
+   "method": "GET",
+   "path": "/v1/projects/{projectId}/backers/{backerId}",
+   "file": "KsApi/Sources/KsApi/lib/Route.swift",
+   "note": ""
+  },
+  {
+   "method": "PUT",
+   "path": "/v1/projects/{projectId}/backers/{backerId}",
+   "file": "KsApi/Sources/KsApi/lib/Route.swift",
+   "note": ""
+  },
+  {
+   "method": "GET",
+   "path": "/v1/app/ios/config",
+   "file": "KsApi/Sources/KsApi/lib/Route.swift",
+   "note": ""
+  },
+  {
+   "method": "POST",
+   "path": "/v1/oauth/authorizations/exchange",
+   "file": "KsApi/Sources/KsApi/lib/Route.swift",
+   "note": "literal lacks leading slash"
+  },
+  {
+   "method": "GET",
+   "path": "/v1/discover",
+   "file": "KsApi/Sources/KsApi/lib/Route.swift",
+   "note": ""
+  },
+  {
+   "method": "PUT",
+   "path": "/v1/facebook/connect",
+   "file": "KsApi/Sources/KsApi/lib/Route.swift",
+   "note": "no leading slash"
+  },
+  {
+   "method": "POST",
+   "path": "/xauth/access_token",
+   "file": "KsApi/Sources/KsApi/lib/Route.swift",
+   "note": ""
+  },
+  {
+   "method": "GET",
+   "path": "/v1/message_threads/{messageThreadId}/messages",
+   "file": "KsApi/Sources/KsApi/lib/Route.swift",
+   "note": ""
+  },
+  {
+   "method": "GET",
+   "path": "/v1/users/self/notifications",
+   "file": "KsApi/Sources/KsApi/lib/Route.swift",
+   "note": ""
+  },
+  {
+   "method": "POST",
+   "path": "/v1/users/reset",
+   "file": "KsApi/Sources/KsApi/lib/Route.swift",
+   "note": ""
+  },
+  {
+   "method": "DELETE",
+   "path": "/v1/users/self/friends/{userId}",
+   "file": "KsApi/Sources/KsApi/lib/Route.swift",
+   "note": ""
+  },
+  {
+   "method": "POST",
+   "path": "{statsURL}",
+   "file": "KsApi/Sources/KsApi/lib/Route.swift",
+   "dynamic": true,
+   "expect": false,
+   "note": "statsURL?.absoluteString; dynamic"
+  }
+ ],
+ "claims": [
+  {
+   "id": "C1",
+   "text": "To provide a mock version, set KsApi.Secrets.isOSS = true",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "Kickstarter-iOS/AppDelegate.swift:73"
+  },
+  {
+   "id": "C2",
+   "text": "Run all tests from the command line by running make test-all",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "Makefile:40"
+  },
+  {
+   "id": "C3",
+   "text": "The snapshots directory ... holds nearly 600 screenshots",
+   "source": "README.md",
+   "label": "conflict",
+   "evidence": "1609 __Snapshots__ png files in git ls-files"
+  },
+  {
+   "id": "C4",
+   "text": "a creator looking at their dashboard in German on an iPad (DashboardViewControllerTests/testView.lang_de_device_pad.png)",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "Kickstarter-Framework/Sources/Kickstarter-Framework-iOSTests/Kickstarter-iOS/Features/Dashboard/Controller/__Snapshots__/DashboardViewControllerTests/testView.lang_de_device_pad.png",
+   "note": "path in README link is outdated (Kickstarter-iOS/Features/...) but file exists under Kickstarter-Framework"
+  },
+  {
+   "id": "C5",
+   "text": "We use view models ... Library/ViewModels",
+   "source": "README.md",
+   "label": "conflict",
+   "evidence": "Library/ViewModels does not exist; view models live elsewhere (e.g. Kickstarter-Framework/.../AppDelegateViewModel.swift)",
+   "note": "concept true, linked path stale"
+  },
+  {
+   "id": "C6",
+   "text": "We make heavy use of Apollo",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "apollo-codegen-config.json; GraphAPI/"
+  },
+  {
+   "id": "C7",
+   "text": "We make heavy use of Kingfisher",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "Kickstarter.xcodeproj/project.pbxproj (Kingfisher package)"
+  },
+  {
+   "id": "C8",
+   "text": "We make heavy use of Appboy (Appboy-segment-ios)",
+   "source": "README.md",
+   "label": "conflict",
+   "evidence": "no Appboy reference in project/packages (Braze naming instead)"
+  },
+  {
+   "id": "C9",
+   "text": "We make heavy use of PerimeterX",
+   "source": "README.md",
+   "label": "conflict",
+   "evidence": "no PerimeterX/px-iOS reference in project/packages"
+  },
+  {
+   "id": "C10",
+   "text": "We currently support Xcode 26.6",
+   "source": "README.md",
+   "label": "unverifiable",
+   "evidence": "no .xcode-version file; toolchain version not encoded in source"
+  }
+ ],
+ "notes": "UIKit app. Deep links: exhaustive 42 route patterns from Navigation.swift allRoutes table (host-agnostic, matched against www.kickstarter.com and ksr://). API (REST v1) from KsApi Route enum tuples (.GET, \"/v1/...\") with \\(interp) params -> normalized to {param}; some literals lack a leading slash. Also GraphQL via Apollo (not labelled). No accessibilityIdentifier anywhere -> testids empty. Clone reused read-only from oss2."
+}

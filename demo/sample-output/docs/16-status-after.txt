@@ -1,0 +1,27 @@
+managed   shop-android   apps/shop-android/docs/architecture.md  [architecture]  scanned 2026-10-21
+managed   shop-android   apps/shop-android/docs/contracts.md  [api-contracts]  scanned 2026-10-21
+managed   shop-android   apps/shop-android/docs/design-patterns.md  [design-patterns]  scanned 2026-10-21
+managed   shop-android   apps/shop-android/docs/features.md  [features]  scanned 2026-10-21
+managed   shop-android   apps/shop-android/docs/navigation.md  [navigation]  scanned 2026-10-21
+adopted   shop-android   apps/shop-android/docs/notes.md  [extra]
+managed   shop-android   apps/shop-android/docs/product-specs.md  [product-specs]  scanned 2026-10-21
+managed   shop-android   apps/shop-android/docs/testing.md  [testing]  scanned 2026-10-21
+managed   shop-ios       apps/shop-ios/docs/architecture.md  [architecture]  scanned 2026-10-21
+managed   shop-ios       apps/shop-ios/docs/contracts.md  [api-contracts]  scanned 2026-10-21
+managed   shop-ios       apps/shop-ios/docs/design-patterns.md  [design-patterns]  scanned 2026-10-21
+managed   shop-ios       apps/shop-ios/docs/features.md  [features]  scanned 2026-10-21
+managed   shop-ios       apps/shop-ios/docs/navigation.md  [navigation]  scanned 2026-10-21
+managed   shop-ios       apps/shop-ios/docs/testing.md  [testing]  scanned 2026-10-21
+adopted   repo           docs/adr/0001-native-ui-per-platform.md  [knowledge-layer]  (knowledge layer)
+adopted   repo           docs/adr/0002-login.md  [knowledge-layer]  (knowledge layer)
+adopted   repo           docs/adr/0003-cart.md  [knowledge-layer]  (knowledge layer)
+managed   repo           docs/architecture.md  [architecture]  scanned 2026-10-21
+managed   repo           docs/contracts.md  [api-contracts]  scanned 2026-10-21
+managed   repo           docs/design-patterns.md  [design-patterns]  scanned 2026-10-21
+managed   repo           docs/features.md  [features]  scanned 2026-10-21
+frozen    repo           docs/onboarding.md  [extra]
+managed   repo           docs/product-specs.md  [product-specs]  scanned 2026-10-21
+managed   repo           docs/requirements.md  [requirements]  scanned 2026-10-21
+adopted   repo           docs/tech-debt.md  [knowledge-layer]  (knowledge layer)
+managed   repo           docs/testing.md  [testing]  scanned 2026-10-21
+extra registry .kb/docs-schema-extra.yaml: docs/onboarding.md (frozen), apps/shop-android/docs/notes.md

@@ -7,12 +7,14 @@
 # lock and always compounds the branch head, so queued pushes are caught up.
 #   demo/hook-demo.sh [outdir]
 set -euo pipefail
+export KB_LLM_FACTS="${KB_LLM_FACTS:-0}"   # rules-only facts: no default-on LLM facts fallback (KB_LLM_FACTS=1 to enable)
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/.." && pwd)"
 OUT="${1:-$ROOT/demo/output/hook-$(date -u +%Y%m%dT%H%M%SZ)}"
 rm -rf "$OUT"; mkdir -p "$OUT/bin"
 KB="$OUT/bin/kb"
-( cd "$ROOT" && CGO_CFLAGS="${CGO_CFLAGS:--O2 -w}" go build -o "$KB" ./cmd/kb )
+( cd "$ROOT" && { [ -d node_modules ] || npm ci --ignore-scripts >/dev/null; } && npm run --silent build )
+mkdir -p "$(dirname "$KB")" && printf '#!/bin/sh\nexec node "%s/dist/cli.js" "$@"\n' "$(cd "$ROOT" && pwd)" >"$KB" && chmod +x "$KB"
 log() { printf '\n== %s\n' "$*" | tee -a "$OUT/transcript.txt" >&2; }
 run() { echo "\$ $*" >>"$OUT/transcript.txt"; "$@" >>"$OUT/transcript.txt" 2>&1; }
 gitc() { git -c user.name="dev" -c user.email="dev@codewiki.local" -c commit.gpgsign=false "$@"; }

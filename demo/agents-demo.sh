@@ -12,6 +12,7 @@
 #    (project trusted in a throwaway CODEX_HOME), and the exact `codex exec` line is printed.
 # Outputs: $OUT (default demo/output/<ts>-agents).
 set -euo pipefail
+export KB_LLM_FACTS="${KB_LLM_FACTS:-0}"   # rules-only facts: no default-on LLM facts fallback (KB_LLM_FACTS=1 to enable)
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/.." && pwd)"
 TS="$(date -u +%Y%m%dT%H%M%SZ)"
@@ -20,7 +21,8 @@ MODEL="${AGENTS_MODEL:-haiku}"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 mkdir -p "$OUT" "$WORK/bin"
-( cd "$ROOT" && CGO_CFLAGS="${CGO_CFLAGS:--O2 -w}" go build -o "$WORK/bin/kb" ./cmd/kb )
+( cd "$ROOT" && { [ -d node_modules ] || npm ci --ignore-scripts >/dev/null; } && npm run --silent build )
+mkdir -p "$(dirname "$WORK/bin/kb")" && printf '#!/bin/sh\nexec node "%s/dist/cli.js" "$@"\n' "$(cd "$ROOT" && pwd)" >"$WORK/bin/kb" && chmod +x "$WORK/bin/kb"
 export PATH="$WORK/bin:$PATH"
 REPO="$WORK/minishop"
 cp -r "$ROOT/examples/minishop" "$REPO"

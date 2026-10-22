@@ -1,0 +1,2 @@
+pages/evil-gemini.md: reverted by kb (not in the published wiki)
+run_shell_command not offered to the model (auto_edit, headless)

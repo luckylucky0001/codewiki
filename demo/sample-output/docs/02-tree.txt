@@ -1,0 +1,16 @@
+L0 repo     monoshop  [repo] → pages/overview.md
+  L1 project  minishop  [shop-android] → pages/shop-android/overview.md
+    L3 cluster  Cart view model  [shop-android/c-2fbaebfe] → pages/shop-android/cart-view-model.md  (8 core)
+    L3 cluster  Login view model  [shop-android/c-4c13e15b] → pages/shop-android/login-view-model.md  (4 core)
+    L3 cluster  Products view model  [shop-android/c-6fe46617] → pages/shop-android/products-view-model.md  (4 core)
+    L3 cluster  Data  [shop-android/c-96e5ede0] → pages/shop-android/data.md  (8 core)
+  L1 project  MiniShop  [shop-ios] → pages/shop-ios/overview.md
+    L2 module   MiniShop (root)  [shop-ios/_root] → pages/shop-ios/_root/overview.md
+    L2 module   MiniShop  [shop-ios/mini-shop] → pages/shop-ios/mini-shop/overview.md
+      L3 cluster  Api client  [shop-ios/mini-shop/c-5feb53c3] → pages/shop-ios/mini-shop/api-client.md  (6 core)
+      L3 cluster  App router  [shop-ios/mini-shop/c-6f7527c8] → pages/shop-ios/mini-shop/app-router.md  (7 core)
+      L3 cluster  Checkout view  [shop-ios/mini-shop/c-a58fadb9] → pages/shop-ios/mini-shop/checkout-view.md  (5 core)
+      L3 cluster  Cart view model  [shop-ios/mini-shop/c-aef82694] → pages/shop-ios/mini-shop/cart-view-model.md  (3 core)
+      L3 cluster  Products view model  [shop-ios/mini-shop/c-b27ee65e] → pages/shop-ios/mini-shop/products-view-model.md  (4 core)
+
+depth 3; nodes {"L0":1,"L1":2,"L3":9,"L2":2}; clusters 9 (p50 5, max 8)

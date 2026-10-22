@@ -1,8 +1,60 @@
 # codewiki — 把三端代码 compound 成可被验证的 LLM Wiki
 
-`codewiki` 是一个 Go CLI（`kb`）加一组 Claude Code skills：它把一个移动端 monorepo 的代码（Android Kotlin/Java、iOS Swift、HarmonyOS ArkTS，另有 JS/TS 支持）和旧文档/规格 **compound**（持续复利式沉淀）成 agent 友好的 LLM Wiki。每次 merge 到 master 都增量更新，而且**知识必须可证明地与当前代码一致**：每个页面通过锚点（符号 ID + 内容 hash）绑定代码，CI 中 `kb verify` 不通过就不发布。
+`codewiki` 是一个 TypeScript CLI（`kb`，Node ≥ 20）加一个 agent skill（`codewiki`）：它把一个移动端 monorepo 的代码（Android Kotlin/Java、iOS Swift、HarmonyOS ArkTS，另有 JS/TS 支持）和旧文档/规格 **compound**（持续复利式沉淀）成 agent 友好的 LLM Wiki。每次 merge 到 master 都增量更新，而且**知识必须可证明地与当前代码一致**：每个页面通过锚点（符号 ID + 内容 hash）绑定代码，CI 中 `kb verify` 不通过就不发布。
 
 > 设计取向：**确定性交给 CLI，理解交给 LLM，一致性靠硬校验。**
+
+## v2 有什么变化
+
+| | v1（Go） | v2（本分支） |
+|---|---|---|
+| 实现 | Go 1.24 + cgo tree-sitter | **TypeScript**（Node ≥ 20），web-tree-sitter 加 WASM 语法，`npm i -g codewiki`，不需要 C 编译器。符号 ID、hash 和符号图与 Go 版逐字节一致（`test/parity.test.ts`）；facts 在 v2 有意扩展，minishop 的 facts golden 已更新，因此与 Go 不再相同。Go 源码保留在 `legacy-go/` |
+| Agent 接入 | 4 个 skill（kb-compound / ingest / query / lint） | **1 个 `codewiki` skill**：SKILL.md 负责路由，细节在 `references/*.md`；CLAUDE.md / AGENTS.md 指引块把常见问题映射到具体命令 |
+| Wiki 结构 | `pages/features/*` 平铺 | **多级目录**：L0 仓库 → L1 项目 → L2 模块 → L3 功能簇（`module_tree.json`）。每层有页面和 index，kb 维护的块带新鲜度校验；提供 `kb tree show/explain/deps/patch` |
+| 仓库 docs | 只读 ingest（断言核对） | **SFK 文档所有权**：`kb docs compound` 往仓库 `docs/` 和项目 `docs/` 写带来源的条目，人写内容一字不改；另有 ADR / 技术债提案、过期 spec、`kb links`、`kb verify --docs` |
+| 事实抽取准确率 | 见下 | 见下 |
+| 热扫描（HarmonyOS-Cases） | Go 约 1.1 s | 约 1.15 s（`kb scan` 整个进程）：并行引用解析，加上引用 / facts / call sites 三层缓存 |
+
+**事实抽取准确率（训练集数字）**：数字来自 `bench/accuracy/`，16 个人工标注仓库，详见 [bench/accuracy/RESULTS.md](bench/accuracy/RESULTS.md)。抽取规则是对着这批仓库调出来的，所以这些是**训练集上的数字**，存在过拟合风险。泛化结果看下面的"盲测"表。
+
+| 指标 | Go `go-final` | TS v2 |
+|---|---|---|
+| routes recall | 51.6% | 98.6% |
+| not_screen FP | 12.8% | 7.0% |
+| deeplinks recall | 4.8% | 92.4% |
+| testIDs recall | 55.6% | 95.8% |
+| APIs recall | 18.1% | 96.2% |
+
+**泛化（盲测）**：另外做了两套独立的盲标集，标注时不看抽取器代码，打分脚本是统一过的 `score-harmonized.mjs`，材料在 `bench/accuracy/heldout2/` 和 `heldout3/`。
+
+- heldout2：10 个新仓库。B 列是第一次盲测的成绩。之后又按 B 漏掉的条目所属的**类别**补了通用规则，得到 D，所以 D 在 heldout2 上**已不算盲测**。
+- heldout3：4 个新仓库（ReadYou、MovieSwiftUI、Shopping-By-KMP、HarmonyStudy），从没参与过任何调优，D 在这套集上是**真盲测**。这 4 个仓库几乎没有深链和 testID，所以 heldout3 只衡量 routes、APIs 和误报。
+
+| 指标 | 训练集（D） | heldout2 盲测（B） | heldout2 调整后（D，非盲） | **heldout3 盲测（D）** | heldout3 Go 基线 |
+|---|---|---|---|---|---|
+| routes recall | 98.6% | 85.3% | 90.9% | **48.4%** | 42.2% |
+| not_screen FP | 7.0% | 12.2% | 8.2% | **13.3%** | 0% |
+| deeplinks recall | 92.4% | 100% | 100% | n/a | n/a |
+| testIDs recall | 95.8% | 59.5% | 94.6% | n/a | n/a |
+| APIs recall | 96.2% | 33.3% | 38.1% | **19.7%** | 16.7% |
+
+**LLM 兜底（`kb compound` 内置，`kb facts suggest` 可单独运行；默认开启，可用 `--no-llm-facts` / `llm.facts: false` / `KB_LLM_FACTS=0` 关闭；无 agent 时自动降级为仅规则）**：没有 agent CLI（默认 `claude`）或调用失败（认证、网络）时，`kb compound` 在 stderr 打一行 `llm-facts: skipped (<原因>), rules only` 后照常完成，已缓存的答案仍会生效；`--dry-run` 从不调用 LLM。先挑出规则几乎没抽到东西的导航类、网络类文件，交给 agent 提出候选。每条候选都要经过确定性核对才写入：证据必须原文出现在给定行 ±5 行内，路由名或路径片段也必须出现在该范围内。核对不通过的候选一律丢弃，写入的条目带 `"source":"llm"` 标记；规则结果和 LLM 候选冲突时以规则为准；结果按文件 hash 缓存。下表是在 heldout3 上做的真盲测，只评测一次（haiku，总成本约 $0.16）：
+
+| 指标 | 仅规则 | 规则 + LLM |
+|---|---|---|
+| routes recall | 48.4% | **89.1%** |
+| APIs recall | 19.7% | **39.4%** |
+| not_screen FP | 13.3% | 13.3% |
+
+运行中共采纳 93 条路由候选、23 条 API 候选，核对拒绝 17 条。另做了一次独立人工审核（[bench/accuracy/llm-audit/AUDIT.md](bench/accuracy/llm-audit/AUDIT.md)），逐条核对最终写入 facts 的 60 条 LLM 条目，严格精确率为 78.3%（routes 85%，APIs 65%）。错误主要有两类：一是静态资源 URL 被当成了 API，二是同一路由的不同写法造成重复。据此加了 5 条通用核对规则（必须有 HTTP 调用、过滤资源路径、校验 host 和参数、id 归一化后去重、只认注册点），精确率升到 **97.9%**，召回不变。这一轮是在看过审核结果之后调整的，因此不算盲测。置信度分为 `verified-call` 和 `evidence-token` 两档。需要注意三点：LLM 额外写入的、标注里没有的条目无法评分；KMP 仓库的 API 仍是 0/20；关闭 LLM 兜底时，16 仓库训练集的输出与之前逐字节相同。
+
+**结论**：规则抽取遇到没见过的写法，效果会明显下降，heldout3 上整类条目整体漏掉。漏掉的包括 Navigation 3 的 `NavKey` 路由、有具名路由时被忽略的 `main_pages`、Ktor 调用、自封装的 ArkTS HTTP 工具，以及 OkHttp 模板 URL。训练集上的高分不能当成通用准确率。改进方向有三条：一是给规则加一层由 LLM 提议、再用锚点证据核对的兜底（`kb facts suggest`，见下）；二是持续扩充盲测集；三是每接入一个新仓库，先跑一遍盲测，再动手补规则。
+
+v2 的验证材料：
+
+- 真实仓库上的 SFK、真实 LLM 路径、架构类 A/B 和性能：[docs/validation-v2.md](docs/validation-v2.md)；
+- 设计说明：[DESIGN.md](DESIGN.md)、[docs/tree.md](docs/tree.md)、[docs/ownership.md](docs/ownership.md)；
+- 使用手册：[docs/codewiki-manual.pdf](docs/codewiki-manual.pdf)。
 
 ## 为什么
 
@@ -38,32 +90,32 @@ flowchart LR
 
 | 层 | 负责 | 产出 |
 |---|---|---|
-| 事实层 | Go CLI（tree-sitter，确定性） | `facts/{android,ios,harmony}/*.md`、`facts/routes.json`、`testids.json`、`apis.json`、`requirements.json` |
-| 理解层 | LLM（`kb-compound` skill，或离线 template writer） | `pages/features/*`、`pages/overview.md`、`pages/_conflicts.md` … |
+| 事实层 | kb CLI（tree-sitter，确定性） | `facts/{android,ios,harmony}/*.md`、`facts/routes.json`、`testids.json`、`apis.json`、`requirements.json` |
+| 理解层 | LLM（`codewiki` skill 的 compound 流程，或离线 template writer） | `pages/features/*`、`pages/overview.md`、`pages/_conflicts.md` … |
 | 校验层 | `kb verify`（CI 门禁） | 锚点 hash 全部匹配 HEAD、符号存在、无死链、无孤儿页、index 覆盖、facts 新鲜 |
 
 ## 复杂仓库的业务知识沉淀
 
-使用 `kb compound --knowledge --agent codex --workers 3 --keep-work`：由 agent 阅读源码并规划模块页、跨模块业务链路，再由写作 agent 深入取证。计划保存模块映射、待回答问题和增量监视范围；不依赖路由识别成功，也不允许用模板充当业务知识。新增模块用 `--replan`。验收和边界见 [Agent 知识规划](docs/agent-knowledge.md)。
+使用 `kb compound --knowledge --agent claude --workers 3 --keep-work`（或 `--agent codex|gemini`，IDE 内用 `--llm-cmd` 文件交接）：由 agent 阅读源码并规划模块页（`pages/modules/`）、跨模块业务链路（`pages/flows/`），再由写作 agent 在各自独立的 staging 中深入取证。计划（`.kb/knowledge-plan.json`）保存模块映射、待回答问题和增量监视范围；不依赖路由识别成功，也不允许用模板充当业务知识，过时 hash 直接拒绝而不是重盖。新增模块用 `--replan`；定向修订 `--knowledge-pages … --feedback …`；退役旧页 `--retire-pages … --retire-reason …`；中断续跑 `--resume-result run.json`。这些页面与 v2 模块树页（`pages/<project>/…`）并存，总览页变为知识导航。验收和边界见 [Agent 知识规划](docs/agent-knowledge.md)。
 
 ## 安装
 
-需要 Go 1.24 与 C 编译器（tree-sitter 语法通过 cgo 编译）。
+需要 Node.js ≥ 20（无需 C 编译器：tree-sitter 语法以预编译的 WASM 随包发布在 `grammars/`）。
 
 ```bash
-go install github.com/luckylucky0001/codewiki/cmd/kb@latest
-# 或从 checkout 安装（装到 $(go env GOPATH)/bin，确保该目录在 PATH 中）
-git clone https://github.com/luckylucky0001/codewiki && cd codewiki && go install ./cmd/kb
-# 或者只构建二进制，再自行放进 PATH：go build -o ~/bin/kb ./cmd/kb
+npm i -g codewiki            # 安装全局命令 kb
+npx -y codewiki --help       # 或不安装，直接 npx（包名 codewiki，命令 kb）
+# 从 checkout 安装：
+git clone https://github.com/luckylucky0001/codewiki && cd codewiki && npm ci && npm run build && npm link
 ```
 
 下面的命令都直接调用 `kb`，所以它必须在 PATH 中。
 
 **git 是可选的。** 不在 git 仓库里时，`kb init / scan / ingest / compound / verify / context` 同样可以运行，输出中的 head 显示为 `(no git)`。但增量 compound（与上次的 `last_sha` 比较）、`kb diff --base`、`kb hook` 和 `kb eval` 需要 git。
 
-ArkTS 语法以源码形式 vendored 在模块内部（`internal/grammars/arkts`，含 MIT LICENSE 与 VENDORED.md），`go.mod` 不含任何 `replace`，因此远程 `go install …@latest` 可用。
+语法（Kotlin、Java、Swift、TypeScript/TSX、JavaScript、ArkTS）由 `tree-sitter-cli` 0.27.1 从与旧 Go 版完全相同的语法源码编译为 WASM（见 `grammars/VENDORED.md`），因此符号 ID、hash 与 Go 版逐字节一致（facts 在 v2 有意扩展，不再与 Go 相同）；ArkTS 语法源码（含本地 trailing-comma 补丁）在 `legacy-go/internal/grammars/arkts`。
 
-提示：Swift 语法的 C 代码在编译时会打印 `TOKEN_COUNT redefined` 警告，无害；可用 `CGO_CFLAGS="-O2 -w"` 静默。
+原 Go 实现保留在 `legacy-go/`（tag `go-final`），仅用于对照与重新生成 `test/golden/`。
 
 ## 快速开始
 
@@ -87,7 +139,7 @@ cd your-monorepo                 # 含 android/ ios/ harmony/
 kb init                          # 生成 codewiki.yaml、wiki/ 骨架与 wiki/AGENTS.md schema
 kb discover-docs --json > /tmp/docs.json
 kb ingest --manifest /tmp/docs.json --kinds spec,design,adr,agent-guide,doc   # 文档断言逐条核对
-kb compound                      # 首次：全量；之后：增量（默认 template 写作器，离线确定性）
+kb compound                      # 首次：全量；之后：增量（默认 template 写作器；facts 的 LLM 兜底默认开启，无 agent 时自动跳过，--no-llm-facts 则完全离线确定）
 kb compound --llm claude         # 使用真实 LLM（claude -p）写页面
 kb verify                        # CI 门禁：exit 0 = wiki 与 HEAD 一致
 kb search "购物车 上限"; kb get features/cart
@@ -122,6 +174,10 @@ llm:
   # model: gpt-5-codex
   cmd: claude -p --permission-mode acceptEdits --allowedTools "Read,Write,Edit,Glob,Grep,Bash(kb anchor:*),Bash(kb get:*),Bash(kb search:*)" --output-format text
   timeout_sec: 600
+  facts: true                    # kb compound 的 LLM 兜底抽取 routes/APIs（默认开启；false / --no-llm-facts / KB_LLM_FACTS=0 关闭）
+  # facts_agent: claude          # 兜底用的 agent（默认 claude；不在 PATH 上时自动降级为仅规则）
+  # facts_model: haiku
+  # facts_max_files: 40          # 每次送给 agent 的候选文件上限
 plan:
   hops: 1                        # 签名变化沿引用边传播的跳数 k
   rebuild_module_ratio: 0.5      # >50% 模块变化 → 全量重建
@@ -142,7 +198,8 @@ docs:
 | `kb scan [--out graph.json] [--symbols]` | tree-sitter 抽取符号与 facts，报告 `parse_failures` |
 | `kb diff [--base <sha>]` | 与上次 compound 的符号图（或 `--base` 版本）按符号 ID 比对：unchanged / body / signature / added / deleted / renamed（含 body 相似度） |
 | `kb plan [--base] [--full] [--dry-run]` | 受影响页面 = 自身锚点变化 ∪ 签名变化沿引用边 k 跳传播 ∪ 新路由；每个任务带显式 write set；超阈值全量重建；写 `wiki/.kb/plan.json` |
-| `kb compound [--llm template\|cmd] [--agent claude\|codex\|gemini] [--model m] [--llm-cmd ...] [--fallback] [--max-llm-tasks N] [--full] [--dry-run] [--keep-work]` | scan→diff→plan→LLM→verify→原子发布；更新 `.kb/state.json`（last_sha）、`.kb/update_record.json`、追加 `log.md` |
+| `kb compound [--llm template\|cmd] [--agent claude\|codex\|gemini] [--model m] [--llm-cmd ...] [--fallback] [--max-llm-tasks N] [--full] [--dry-run] [--keep-work] [--no-llm-facts]` | scan→diff→plan→LLM→verify→原子发布；默认先跑 LLM 兜底抽取 facts（见上文，无 agent 时只用规则）；更新 `.kb/state.json`（last_sha）、`.kb/update_record.json`、追加 `log.md`；任一任务失败则不发布（`E_TASK_FAILED`，staging 保留） |
+| `kb compound --knowledge [--replan] [--workers N] [--knowledge-pages p,… --feedback f] [--retire-pages p,… --retire-reason r] [--resume-result run.json]` | agent 规划并撰写模块/业务链路知识页（见 [docs/agent-knowledge.md](docs/agent-knowledge.md)） |
 | `kb verify [--fix-index]` | 锚点 hash 匹配 HEAD、正文提到的符号存在、无死链、无孤儿页、index 覆盖、facts 与重新抽取一致、requirements 锚点新鲜 |
 | `kb status` | 列出 stale 页面（exit 1 表示存在） |
 | `kb discover-docs [--out f]` | 按业界约定发现并分类文档（spec/design/tasks/adr/agent-guide/readme/doc），记录 path + hash |
@@ -157,12 +214,82 @@ docs:
 | `kb routes [--dangling]` | 所有路由按模块汇总（router_map / NavHost / Route 枚举），给出总数；`--dangling` 列出 buildFunction 找不到实现的条目 |
 | `kb lint-tid --pages` / `--top N` | 哪些路由页面在源文件里设置了 testID（`--json` 给出完整清单）；使用次数最多的 N 个 testID 及其次数 |
 | `kb install-skills <repo> [--no-agents-md]` | 把 skills 安装到 `<repo>/.claude/skills/`。同时在 `AGENTS.md` 和 `CLAUDE.md` 中写入或更新一段 `<!-- codewiki:begin -->…<!-- codewiki:end -->` 指引块，把各类问题映射到对应命令：路由/深链 → facts、testID → `kb lint-tid`、三端差异 → `kb parity`、过时文档 → `kb conflicts`、改文件前 → `kb context`。重复运行结果不变，块外内容保持原样 |
-| `kb install --agent claude,codex,gemini,cursor,copilot\|all [--target repo] [--mcp] [--dry-run]` | 让各 agent 用上 wiki：写入各自的指令文件块、skills 和 MCP 注册（JSON/TOML 安全合并），可重复运行。见 [docs/agents.md](docs/agents.md) |
+| `kb install --agent claude,codex,gemini,cursor,copilot,trae-cn,generic\|all [--target repo] [--mcp] [--dry-run]` | 让各 agent 用上 wiki：写入各自的指令文件块、skills 和 MCP 注册（JSON/TOML 安全合并），可重复运行。见 [docs/agents.md](docs/agents.md) |
 | `kb agents [name]` | 支持矩阵：每个 agent 的后端命令行、消费者文件、验证等级 |
 | `kb bench [--synthetic N]` | 冷/热扫描基准（合成仓库或 `--root` 指定的真实仓库） |
 | `kb eval [--llm …]` | 用人工标注的 golden set 评测断言核对与 plan 影响面（precision/recall） |
 | `kb hook install --mode post-receive\|post-merge [--repo <git dir>]` | 安装 git 钩子：服务端 push 到 master 或客户端 merge 后自动 compound（串行 + 追平） |
-| `kb mcp` | stdio MCP server（JSON-RPC 2.0），工具：`kb_search`、`kb_get`、`kb_context`、`kb_anchor`、`kb_status`、`kb_parity`、`kb_conflicts` |
+| `kb mcp` | stdio MCP server（JSON-RPC 2.0），工具：`kb_search`、`kb_get`、`kb_context`、`kb_anchor`、`kb_status`、`kb_parity`、`kb_conflicts`、`kb_routes` |
+| `kb tree build\|show\|explain <symbol\|file>\|deps [<module>] [--top N]\|patch <ops.json>` | 多级目录：`wiki/module_tree.json`（L0 仓库 → L1 项目 → L2 模块 → L3 功能簇）的构建 / 展示 / 定位；模块的构建依赖、被依赖和 fan-in 排名；带校验的 rename·merge·split |
+| `kb docs scope\|status\|compound\|stale-specs\|adr\|debt` | 仓库 `docs/` 与 `<project>/docs/` 的所有权工作流（SFK）：人写内容逐字节不变 |
+| `kb links [paths…]` / `kb verify --docs` | docs 链接检查（只报告）；owned 条目的 Source 是否仍存在 |
+
+`kb agents install|skills|mcp|list|hook` 是 `install` / `install-skills` / `mcp` / `agents` / `hook` 的分组别名；只有一个 CLI（`kb`），新能力都是子命令。
+
+## 多级目录（模块树，v2）
+
+`kb compound` 每次都会构建（首次 / `--full`）或修复（增量）`wiki/module_tree.json`，并生成分层页面：
+
+| 层 | 节点 | 页面 | 索引 |
+|---|---|---|---|
+| L0 | 仓库 | `pages/overview.md`（v1 三端路由矩阵 + 项目表 / 依赖图） | `index.md` 的“模块树”一节 |
+| L1 | 项目（Gradle settings、Package.swift、Xcode、hvigor；无标记时按平台启发式） | `pages/<p>/overview.md` | `pages/<p>/index.md` |
+| L2 | 构建模块（Gradle module、SwiftPM/Xcode target、HAP/HAR/HSP） | `pages/<p>/<m>/overview.md` | `pages/<p>/<m>/index.md` |
+| L3 | 功能簇（核心符号图 Leiden 聚类，模块超过 `tree.budget_tokens` 才拆） | `pages/<holder>/<slug>.md` | — |
+
+- 只有一个项目 / 一个模块时自动折叠该层；簇 id 稳定（Jaccard 继承），增量修复走规则链（rename → delete → same_file → same_dir → neighbor_majority → misc），`tau_grow` / `tau_tree` 触发重聚类 / 重建。
+- 每页 frontmatter 增加 `level`、`tree_node`、`parent`、`summary`、`importance`、`children_digest`（父页）或 `sources`（叶页）。正文中由 kb 维护的块：`kb:breadcrumb`、`kb:children`（子页表 + 摘要）、`kb:symbols`（L4 符号表）、`kb:routes`（关联功能页）、`kb:diagram`（mermaid：项目 / 模块依赖 / 导航 / 簇关系，带 hash）、`kb:sources`（`Sources: path:起-止`）。LLM 只写块外的叙述，块在写后由 kb 覆盖。
+- 写作自底向上：叶页读源码，父页只读子页摘要；子摘要变化 → `children_digest` 变化 → 父页 stale。template 模式全部确定性生成。
+- `kb verify` 额外检查：树文件可解析、每个节点页面存在、kb 块与 mermaid hash 新鲜（`E_KB_BLOCK_STALE`）、`children_digest` 与树一致（`E_TREE_STALE`）。
+- 每层的 `index.md` 和分层的 `llms.txt` 由 kb 渲染。
+- `kb tree explain <symbol|file>` 告诉 agent 某段代码在哪一页。
+- `kb tree deps <:module|path>` 列出某个模块依赖谁、被谁依赖；`kb tree deps --top N` 列出依赖最多和被依赖最多的模块。
+
+```bash
+kb compound --llm template && kb tree show
+kb tree explain android/app/src/main/java/com/minishop/ui/cart/CartViewModel.kt
+```
+
+小仓库（如 minishop）可在 `codewiki.yaml` 里设 `tree: {budget_tokens: 2000}` 让模块拆成 L3 簇；`demo/run.sh` 就是这样得到 L0 → L1 → L3 三层的。
+
+模块页（L1 / L2）另有 `kb:dependents` 块，列出“被依赖”的模块（反向构建依赖）。它和其他 kb 块一样每次运行都会重算，所以别的模块新增依赖时也不会过期。
+
+**真实 LLM 路径**（`demo/llm-demo.sh`，claude haiku，输出见 `demo/sample-output/llm-claude/`，总花费约 $0.15）：
+
+- **L3 簇页**：在 examples/monorepo 上合入购物车上限的改动后，`kb compound --agent claude --max-llm-tasks 6` 重写了 3 个功能页和 1 个 L3 簇页（`cart-view-model`）。
+- **L1 / L2 页**：删掉 shop-ios 的 L1、L2 页后再跑一次，agent 只根据子页摘要重写了这两页。
+- **校验**：每一步 verify 都 PASS，kb 块（面包屑、子页表、符号表、mermaid、Sources）由 kb 覆盖、hash 新鲜，没有触发写集回滚。
+- **质量**：叙述具体，能写出路由表、跳转关系、各 ViewModel 的职责和常量（`MAX_CART_ITEMS = 20`）。缺点是会说“三端对照未包含在输入中”，因为 L3 簇只覆盖一端。
+
+## 文档所有权（SFK）：`kb docs`
+
+`wiki/` 归 kb 所有；仓库 `docs/` 与各项目 `<project>/docs/` 是**人机共写**的。核心承诺：**人写的内容一个字节都不改、不删、不重排**（`checkHumanContentPreserved` 在每次写入前校验）。详见 [docs/ownership.md](docs/ownership.md)。
+
+- **作用域**：一个 repository + 若干 project（`apps/*` 等容器目录、`android/ ios/ harmony/`、`codewiki.yaml scopes.projects`）；`--project id`、`--no-root-write`、`--no-root-read`。
+- **文件状态**：`new`（只用已验证条目新建）、`managed`（frontmatter `last_compound_scan`：按 key 替换 / 追加）、`skeleton`（只剩标题和 TODO/TBD 占位：去占位、按节插入）、`adopted`（有任何人写内容：只追加）、`frozen`（`.kb/docs-schema-extra.yaml` 里 `enabled: false` 或未登记的自定义文档：一字不动）。
+- **条目来源**：template 模式从 facts、模块树和 specs 确定性生成架构 / 模块图、导航、接口契约、testID、设计模式、功能目录、spec 索引、需求条目，每条带 `**Source**: \`path\` [Code Direct] [Verified]`；`--agent …` 时 agent 按契约格式补充条目，kb 校验来源、路由和预算后才合并。
+- **归属**：根证据或 ≥2 个选中项目的匹配证据 → 仓库 docs（各项目只写一行 `xref:` 交叉引用）；单项目证据 → 该项目 docs；跨项目取值不同 → 仓库条目标记 parity 差异。
+- **spec 信任**：`**Status**:` Implemented / Verified / Archived 可信；Draft 只能产出 `[Unconfirmed]` 需求条目；`specs/` 永不写入。`kb docs stale-specs` 报告过期 Draft、从未 Verified 的 Implemented、与代码冲突的 Implemented。
+- **ADR / 技术债**：`kb docs adr`、`kb docs debt` 默认只给提案，`--write` 才新建 `docs/adr/NNNN-*.md` / 追加 `docs/tech-debt.md` 的 `TD-NNN` 行；已有 ADR 永不编辑。
+- 状态：`.kb/docs-state.json`（每个作用域的增量基准）、`.kb/run-state.json`（`--resume` / `--restart`）。
+
+```bash
+kb docs scope && kb docs status
+kb docs compound --dry-run && kb docs compound
+kb docs stale-specs; kb docs adr; kb docs debt --write
+kb links && kb verify --docs
+```
+
+`demo/docs-demo.sh`（示例 `examples/monorepo`）演示首次运行（adopted / skeleton / new）、人写内容逐字节保留的证明、无变化重跑为 noop、代码变更后的增量运行、ADR / 技术债提案、过期 spec 与链接检查；输出见 `demo/sample-output/docs/SUMMARY.md`。
+
+**真实仓库验证**（详见 [docs/validation-v2.md](docs/validation-v2.md)）：在 8 个真实仓库的 `git clone --shared` 副本上运行 `demo/sfk-real-repo.sh`，原始 clone 不写入。这 8 个仓库是 nowinandroid、element-x-android、kotlinconf-app、HarmonyOS-Cases、sunflower、wikipedia-ios、NextE、DroidconKotlin。
+
+- **人写文档没有被破坏**：共检查 708 个人写 `.md`，0 个被改动或删除。独立检查脚本 `demo/human-content-check.mjs` 和 kb 自己的 guard 都报告 0 违规。
+- **为什么 0 改动**：这些仓库原有的 docs 文件名都不在默认 schema 里，所以全部是 `frozen`，kb 只在旁边新建文件。
+- **adopted 实测**：用 `codewiki.yaml` 的 `docs_schema` 把维度指向真实文档后，kb 对它们只追加。涉及的文档是 nowinandroid 的 `ArchitectureLearningJourney.md`、element-x 的 `design.md` / `screenshot_testing.md`、wikipedia-ios 的 `ci.md`。
+- **第二次运行**：要么是 noop，要么是写入上一轮因行数预算推迟（deferred）的条目，输出里会注明。
+- **其他检查结果**：链接检查找到的坏链全部在人写正文里，kb 写的内容没有坏链；stale specs、review 均为 0。
+- **修掉的问题**：这批运行发现并修复了 8 个问题，包括 Gradle 子模块被当成项目、HarmonyOS 应用在子目录时检测不到平台、`index` 路由和树索引冲突，以及 `--json` 经管道输出时在 64 KiB 处被截断。
 
 ## Wiki 布局
 
@@ -298,14 +425,31 @@ e2epilot 侧的典型用法：
 ```bash
 ROUTES=$(kb diff --json | jq -r '.changed_route_ids | join(",")')
 e2e graph invalidate --changed-routes "$ROUTES"
-e2e impact --changed-routes "$ROUTES" --requirements wiki/facts/requirements.json
+e2e impact --codewiki-diff wiki/.kb/plan.json          # 选出受影响的 flows（changed_files / changed_routes / changed_testids）
+e2e seed --routes wiki/facts/routes.json --testids wiki/facts/testids.json --platform android
+e2e trace --specs wiki/facts/requirements.json         # 需求 → flow 追踪矩阵
 ```
+
+**互通实测（TypeScript 版 kb，2026-10-21）**：在 scratch 目录 clone e2epilot（`fefd111`），执行 `go build ./cmd/e2e`，然后对 `demo/run.sh` 产出的 minishop wiki 依次运行下列命令，全部 exit 0，不需要改 e2epilot：
+
+- `e2e seed`：三端分别得到 8 / 7 / 7 条深链边和 3 条静态 tap 边（来源 8 / 8 / 7 条路由、13 个 testID）；
+- `e2e path --to cart`：L0 为深链直达，L1 为 product_detail → `#add_to_cart`；
+- `e2e graph invalidate --changed-routes cart,MainActivity`：失效 5 条边；
+- `e2e impact --codewiki-diff wiki/.kb/plan.json`：识别出 changed routes `MainActivity RootView profile`、changed testIDs，并把 `profile` 列为新路由；
+- `e2e trace --specs wiki/facts/requirements.json`：33 条需求，其中 10 条冲突。
+
+TypeScript 版有两处 schema 变化，都向后兼容：
+
+- 路由新增 `name` 和 `deeplinks`（多个深链）两个字段；e2epilot 只读 `route_id / pattern / deeplink`，会忽略新字段。
+- 类型化路由（Activity、SwiftUI 根视图）以类名作为 `route_id`，例如 `MainActivity`、`RootView`。它们在 e2epilot 里就是普通路由节点。
+
+（旧版 README 写的 `e2e impact --changed-routes … --requirements …` 与当前 e2epilot 的参数不符，已改为 `--codewiki-diff`。）
 
 ## 增量扫描缓存与性能
 
-`kb` 在 `wiki/.kb/cache/scan.gob.gz` 中按文件保存解析结果（键 = 仓库相对路径 + 内容 sha256 + 语言/平台；缓存版本由抽取器指纹自动派生：`internal/extract` 的 Go 源码通过 `go:embed` 计入 hash，再加上各语言节点表、语法 ABI 版本与 node kind 数量，因此改了抽取器而忘记手动 bump 也不会读到旧缓存），未变化的文件不再调用 tree-sitter；删除的文件会被清理。解析在 `GOMAXPROCS` 个 goroutine 上并行（每个 worker 自己的 parser），引用解析为索引查找（线性）。缓存目录由 `kb init` 加入 `.gitignore`，CI 模板用 `actions/cache` 持久化；`KB_NO_CACHE=1` 可禁用。
+`kb` 在 `wiki/.kb/cache/scan.v8.gz` 中按文件保存解析结果（键 = 仓库相对路径 + 内容 sha256 + 语言/平台；缓存版本由抽取器指纹自动派生：`src/extract` 的编译产物、各语言节点表与语法 WASM 计入 hash，因此改了抽取器而忘记手动 bump 也不会读到旧缓存），未变化的文件不再调用 tree-sitter；删除的文件会被清理。缓存未命中 ≥150 个文件时，解析在 worker_threads 上并行（每个 worker 自己加载 WASM 语法与 parser），引用解析为索引查找（线性）。缓存目录由 `kb init` 加入 `.gitignore`，CI 模板用 `actions/cache` 持久化；`KB_NO_CACHE=1` 可禁用。
 
-`kb bench` 测量冷/热扫描（4 核容器，Go 1.24，2026-10-20 实测）：
+`kb bench` 测量冷/热扫描（4 核容器；下表为旧 Go 版 2026-10-20 实测，TypeScript 版对照见表后）：
 
 | 仓库 | 文件 | 符号 | 冷扫描（无缓存） | 热扫描（全命中） | 1% 文件变化 |
 |---|---|---|---|---|---|
@@ -313,6 +457,26 @@ e2e impact --changed-routes "$ROUTES" --requirements wiki/facts/requirements.jso
 | axios `lib/**/*.js` + `index.js` | 70 | 323 | 191 ms | 25 ms | — |
 | axios 全仓（含 tests、`.d.ts`、examples） | 243 | 1009 | 993 ms | 69 ms | — |
 | examples/minishop（三端） | 42 | 214 | 91 ms | 8 ms | — |
+
+TypeScript 版（Node 22，WASM 语法，同一 4 核容器，2026-10-21）：
+
+| 仓库 | 文件 | 符号 | 冷扫描 | 热扫描 | 1% 变化 | 同机 Go |
+|---|---|---|---|---|---|---|
+| 合成 3000 | 3000 | 21000 | 3493 ms | 774 ms | 1253 ms | 3550 / 1227 / 1366 ms |
+| HarmonyOS-Cases（`kb scan` 全进程墙钟） | 2267 | 20141 | 5.7 s | 2.2 s | — | 5.2 s / 1.1 s |
+
+热扫描做了以下优化，输出都与无缓存扫描逐字节一致：
+
+- **并行引用解析**：引用解析分片在 worker_threads 上并行。图只序列化一次，放进 SharedArrayBuffer 供各 worker 读取。
+- **引用缓存**：解析出的引用写进扫描缓存，键是所有输入文件的 hash。文件全部未变时直接复用，不再解析。
+- **facts 结果缓存**：键是全部输入、平台根目录下所有文件的 (path, size, mtime) 和配置。
+- **call sites 按需加载**：call sites 单独存为 `scan.calls.v8.gz`，只在需要重算 facts 时才读。
+
+在 Cases 上，`kb scan` 热扫描的整个进程从 2.16–2.94 s 降到 **1.15–1.33 s**（新旧版本交替运行，load average 约 11.5）。Go 版约 1.1 s（低负载下测得）。三项改动：
+
+- 并行引用解析，约快 10%；
+- 引用缓存，省约 0.6 s；
+- facts 结果缓存，加上 call sites 拆成单独的缓存文件、按需加载，再省约 1 s。见 [docs/validation-v2.md](docs/validation-v2.md) §4。
 
 ```bash
 kb bench --synthetic 3000                       # 合成仓库，临时目录
@@ -373,20 +537,22 @@ post-receive 钩子的行为：
 - 第二次 push 的钩子一次处理了 4 个新提交，第三次的钩子输出 `already compounded`；
 - 最终 `wiki last_sha == master`，verify 通过。
 
-## 在 Claude Code 中使用 skills
+## 在 Claude Code 中使用 skill
 
-`skills/` 下有 4 个符合 [Agent Skills 规范](https://agentskills.io) 的 skill（frontmatter `name` = 目录名、`description` 说明做什么 + 何时用、正文 < 500 行、`references/` 按需加载）：
+`skills/codewiki/` 是唯一的 skill（符合 [Agent Skills 规范](https://agentskills.io)：description < 1024 字符、SKILL.md < 500 行）。SKILL.md 是路由：前置检查 → 判断任务 → 精确命令；细节按需加载 `references/`：
 
-| skill | 用途 |
+| 任务 | reference |
 |---|---|
-| `kb-compound` | 合并后增量更新 wiki；也是 `kb compound --llm claude` 时单个任务的写作规范 |
-| `kb-ingest` | 发现并核对 spec/旧文档，产出 `_conflicts.md` 与 requirements 追踪 |
-| `kb-query` | 回答“X 在三端怎么实现”、改代码前 `kb context <file>` |
-| `kb-lint` | `kb verify` / `--fix-index` / `kb lint-tid` |
+| 回答“X 在三端怎么实现”、路由/testID/接口/常量、过时文档、改代码前 `kb context <file>` | `references/query.md` |
+| 发现并核对 spec/旧文档，产出 `_conflicts.md` 与 requirements 追踪 | `references/ingest.md`（+ `conventions.md`） |
+| 合并后增量更新 wiki；`kb compound --agent …` 时单个任务的写作规范 | `references/compound.md`（+ `page-contract.md`） |
+| `kb verify` / `--fix-index` / `kb lint-tid` / `kb parity` 门禁 | `references/lint.md` |
 
 ```bash
-kb install-skills /path/to/app-repo     # 复制到 /path/to/app-repo/.claude/skills/
-# 本仓库内：.claude/skills/* 是指向 skills/* 的符号链接，Claude Code 可直接发现
+kb install --agent claude --target /path/to/app-repo   # skill → .claude/skills/codewiki/，CLAUDE.md 指引块
+kb install --agent all --mcp --target /path/to/app-repo # 所有 agent：指引块、skill、MCP 注册
+kb install-skills /path/to/app-repo                     # 旧命令，保留为别名
+# 本仓库内：.claude/skills/codewiki 是指向 skills/codewiki 的符号链接
 ```
 
 skills 只驱动 CLI，不重新实现逻辑。
@@ -406,7 +572,7 @@ claude mcp add codewiki -- kb mcp --root /path/to/app-repo
 
 ## 多 Agent 支持
 
-除了 Claude Code，wiki 也可以给 Codex、Gemini CLI、Cursor、Copilot 和任何支持 AGENTS.md 的 agent 使用。`kb compound`、`kb ingest`、`kb eval` 的写作和核对步骤也可以交给 Codex 或 Gemini 完成。
+除了 Claude Code，wiki 也可以给 Codex、Gemini CLI、Cursor、Copilot、TRAE CN 和任何支持 AGENTS.md 的 agent 使用。`kb compound`、`kb ingest`、`kb eval` 的写作和核对步骤也可以交给 Codex 或 Gemini 完成。
 
 ```bash
 kb install --agent all --mcp      # CLAUDE.md / AGENTS.md / GEMINI.md / .cursor/rules / copilot-instructions + skills + MCP
@@ -421,6 +587,7 @@ kb agents                         # 支持矩阵和实际执行的命令行
 - Claude：实跑。
 - Codex 和 Gemini：真实 CLI 二进制配合 mock 模型 API 端到端运行，包括 Codex 的 `debug prompt-input` 和 `mcp list` 核对。
 - Cursor 和 Copilot：只依据文档。
+- TRAE CN：`kb install --agent trae-cn` 只安装 skill 到 `.trae/skills/`（路径依据官方文档）；没有内置后端，业务知识通过 skill 的 IDE 文件交接（`scripts/file-agent.py`）由 IDE 当前 agent 完成。安装与交接协议有测试，IDE 实跑尚未验证。
 
 支持矩阵、CI 示例和安全说明见 [docs/agents.md](docs/agents.md)，调研来源见 [docs/agents-research.md](docs/agents-research.md)。
 
@@ -519,6 +686,24 @@ kb eval --doc my-old-spec.md --golden my-labels.yaml                    # 任意
 **第 6 轮：新增 `kb conflicts` 命令，并在 skill 描述的第一句就指向它。** 只对 A 组重跑这一题 3 次，结果 3 次都调用了 `kb conflicts`（其中 1 次经由 kb-query skill）：**平均 25.3 → 4.7 turns，92 → 20 s，$0.069 → $0.018**，检查点仍然全部命中。这说明 agent 不是不愿意用 wiki，而是要有一个名字直接对应问题的命令。
 
 **大仓库变体（HarmonyOS Cases，1952 个 .ets 文件，5 题 × 2 次）**：A 10/10、平均 5.9 turns、$0.039；B 10/10、平均 5.9 turns、$0.040，**没有差别**。这些问题都能用一个唯一的字符串直接 grep 到答案，grep 在大仓库上也很快，A 组也几乎没用 wiki。所以“仓库越大 wiki 越有用”这个推测，这次**没有得到支持**。
+
+### 架构类问题：element-x-android（268 个 Gradle 模块，多级目录）
+
+5 道题：某模块的依赖、反向依赖、模块用途、依赖最多的 feature 模块、fan-in。标准答案直接从 `build.gradle.kts` 算出。用 haiku，每题每组 2 次。
+
+| | 通过 | 平均 turns | 总费用 | 用到 kb |
+|---|---|---|---|---|
+| A：wiki + skill + 指引块 | 10/10 | 5.9 | $0.064 | 4/10 |
+| B：只有源码 | 10/10 | 7.8 | $0.078 | — |
+| A + `kb tree deps`（只重跑依赖类 4 题） | 8/8 | 6.4（同 4 题：之前 A 6.4、B 8.3） | $0.052 | **7/8** |
+
+**结论如实写：**
+
+- 多级目录和新命令 `kb tree deps` 给出的答案与标准答案完全一致，agent 也确实会调用。
+- 但在 haiku 上**没有可测的效率提升**：依赖关系本来就能从 build 文件 grep 到，agent 拿到 kb 的答案后还会再 grep 一遍核对。
+- A 组比 B 组少的 turns，在没有用到 kb 的运行里同样存在，所以视为噪声。
+
+详见 [bench/agent-qa/README.md](bench/agent-qa/README.md)（第 10 轮）。
 
 ### 最终结果：大仓库 + 汇总类问题（HarmonyOS Cases，最终代码）
 
@@ -676,7 +861,7 @@ codewiki 的 LLM 会读取不可信的内容：旧文档、第三方代码里的
 
 ## 局限
 
-- **cgo**：tree-sitter 语法是 C 代码，需要 C 编译器；交叉编译需相应工具链。
+- **WASM 语法**：tree-sitter 语法以预编译 WASM 发布（web-tree-sitter 0.27），无需 C 编译器；重新编译语法需 `tree-sitter-cli` 0.27.1（自动下载 wasi-sdk）。
 - **ArkTS 语法**：使用 `harmony-contrib/tree-sitter-arkts`（vendored 于 `internal/grammars/arkts`，MIT）。上游报告约 94% 的真实工程文件可无错解析，我们在 3858 个真实 .ets 文件上实测为 99.9%，失败均来自 ArkUI 调用参数中的尾逗号。修补语法后为 100%；出错文件记录在 `parse_failures`（仍尽量抽取符号），不会中断扫描。
 - Swift 语法来自 `alex-pinkus/tree-sitter-swift`（使用带生成文件的 tag 版本）；Kotlin 为 `tree-sitter-grammars/tree-sitter-kotlin` v1.1.0；Java/JS/TS 为官方语法。
 - 引用边为名称级解析，没有类型推断；跨平台不建立边。
@@ -698,11 +883,11 @@ codewiki 的 LLM 会读取不可信的内容：旧文档、第三方代码里的
 ## 开发
 
 ```bash
-CGO_CFLAGS="-O2 -w" go test ./...      # 单测 + 集成测试（template 流程、写集回滚、失败不发布）
-go vet ./... && gofmt -l cmd internal skills
-DEMO_LLM=template demo/run.sh           # 端到端 demo
+npm ci && npm test                      # 构建 + vitest（Go 对照 golden、CLI 集成、写集回滚、MCP）
+npm run typecheck
+DEMO_LLM=template demo/run.sh           # 端到端 demo（verify PASS）
 ```
 
-目录：`cmd/kb`（入口）、`internal/extract`（tree-sitter 符号/调用点）、`internal/scan`（遍历 + 引用解析）、`internal/facts`（三端事实）、`internal/engine`（diff/plan/compound/claims/docs）、`internal/wiki`（页面/索引/日志/verify）、`internal/cli`、`skills/`、`examples/`、`demo/`、`internal/grammars/arkts`（vendored ArkTS 语法 + cgo binding）。
+目录：`src/cli`（`kb` 命令、install、hook）、`src/config`、`src/scan`（遍历 + 引用解析 + worker_threads）、`src/extract`（WASM tree-sitter 符号/调用点）、`src/facts`（三端事实）、`src/engine`（diff/plan/compound/claims/docs/eval）、`src/wiki`（页面/索引/日志/verify）、`src/mcp`、`src/agents`、`grammars/`（WASM）、`skills/codewiki/`、`test/`（含 `test/golden/`）、`legacy-go/`（原 Go 实现）。
 
-客户使用 TRAE CN 时：`kb install --agent trae-cn` 安装项目 skill，并按 [通用 IDE 交接流程](skills/kb-compound/references/ide-handoff.md) 执行。无需安装 Codex；TRAE 安装适配不表示已经完成 IDE 实跑验收。
+客户使用 TRAE CN 时：`npm i -g codewiki` 后 `kb install --agent trae-cn` 安装项目 skill（`.trae/skills/codewiki/`），并按 [通用 IDE 交接流程](skills/codewiki/references/ide-handoff.md) 执行。无需安装 Codex；TRAE 安装适配不表示已经完成 IDE 实跑验收。

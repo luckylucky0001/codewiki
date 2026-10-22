@@ -1,0 +1,4 @@
+{"version":1,"requirements":[
+ {"id":"R1","source":"README.md","text":"AndroidViewBinding API is used to embed a TextView (PlantDescription composable)","status":"verified","anchors":[]},
+ {"id":"R2","source":"README.md","text":"Sunflower uses ktlint to enforce Kotlin coding styles.","status":"conflict","anchors":[]},
+ {"id":"R3","source":"README.md","text":"Add unsplash_access_key to gradle.properties","status":"unverified","anchors":[]}]}

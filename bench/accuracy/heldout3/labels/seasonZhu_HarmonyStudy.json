@@ -1,0 +1,322 @@
+{
+ "repo": "seasonZhu/HarmonyStudy",
+ "url": "https://github.com/seasonZhu/HarmonyStudy",
+ "commit": "b55e58c962e9b39d5211337590bdd45f2c2349b3",
+ "platform_roots": {
+  "harmony": [
+   "entry"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "harmony",
+   "route_id": "pages/Splash",
+   "symbol": "Splash",
+   "file": "entry/src/main/ets/pages/Splash.ets",
+   "kind": "main_pages",
+   "struct": "Splash"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/Index",
+   "symbol": "Index",
+   "file": "entry/src/main/ets/pages/Index.ets",
+   "kind": "main_pages",
+   "struct": "Index",
+   "note": "@Entry({routeName: RouterName.Index}) + main_pages"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/Home",
+   "symbol": "Home",
+   "file": "entry/src/main/ets/pages/Home.ets",
+   "kind": "main_pages",
+   "struct": "Home",
+   "note": "@Entry but used as Tabs child of Index"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/My",
+   "symbol": "My",
+   "file": "entry/src/main/ets/pages/My.ets",
+   "kind": "main_pages",
+   "struct": "My"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/HotKey",
+   "symbol": "HotKey",
+   "file": "entry/src/main/ets/pages/HotKey.ets",
+   "kind": "main_pages",
+   "struct": "HotKey"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/Tree",
+   "symbol": "Tree",
+   "file": "entry/src/main/ets/pages/Tree.ets",
+   "kind": "main_pages",
+   "struct": "Tree"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/TabScaffold",
+   "symbol": "TabScaffold",
+   "file": "entry/src/main/ets/pages/TabScaffold.ets",
+   "kind": "main_pages",
+   "struct": "TabScaffold"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/WebPage",
+   "symbol": "WebPage",
+   "file": "entry/src/main/ets/pages/WebPage.ets",
+   "kind": "main_pages",
+   "struct": "WebPage",
+   "note": "PagesConstant.Web / RouterName.Web"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/TreeDetail",
+   "symbol": "TreeDetail",
+   "file": "entry/src/main/ets/pages/TreeDetail.ets",
+   "kind": "main_pages",
+   "struct": "TreeDetail"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/SearchResult",
+   "symbol": "SearchResult",
+   "file": "entry/src/main/ets/pages/SearchResult.ets",
+   "kind": "main_pages",
+   "struct": "SearchResult"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/Login",
+   "symbol": "Login",
+   "file": "entry/src/main/ets/pages/Login.ets",
+   "kind": "main_pages",
+   "struct": "Login"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/Rank",
+   "symbol": "Rank",
+   "file": "entry/src/main/ets/pages/Rank.ets",
+   "kind": "main_pages",
+   "struct": "Rank"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/MyCoin",
+   "symbol": "MyCoin",
+   "file": "entry/src/main/ets/pages/MyCoin.ets",
+   "kind": "main_pages",
+   "struct": "MyCoin"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/MyCollect",
+   "symbol": "MyCollect",
+   "file": "entry/src/main/ets/pages/MyCollect.ets",
+   "kind": "main_pages",
+   "struct": "MyCollect"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/Setting",
+   "symbol": "Setting",
+   "file": "entry/src/main/ets/pages/Setting.ets",
+   "kind": "main_pages",
+   "struct": "Setting"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/Register",
+   "symbol": "Register",
+   "file": "entry/src/main/ets/pages/Register.ets",
+   "kind": "main_pages",
+   "struct": "Register"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/WebExample",
+   "symbol": "WebExample",
+   "file": "entry/src/main/ets/pages/WebExample.ets",
+   "kind": "main_pages",
+   "struct": "WebExample",
+   "optional": true,
+   "note": "demo page"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/WebComponent",
+   "symbol": "WebComponent",
+   "file": "entry/src/main/ets/pages/WebComponent.ets",
+   "kind": "main_pages",
+   "struct": "WebComponent",
+   "optional": true,
+   "note": "demo page"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/ObservedV2TestPage",
+   "symbol": "ObservedV2TestPage",
+   "file": "entry/src/main/ets/pages/ObservedV2TestPage.ets",
+   "kind": "main_pages",
+   "struct": "ObservedV2TestPage",
+   "optional": true,
+   "note": "test/demo page"
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "harmony",
+   "symbol": "TabsDetail",
+   "file": "entry/src/main/ets/pages/TabsDetail.ets",
+   "reason": "@Entry decorated but NOT in main_pages; embedded as Tabs content of TabScaffold",
+   "borderline": true
+  },
+  {
+   "platform": "harmony",
+   "symbol": "SearchIcon",
+   "file": "entry/src/main/ets/pages/Home.ets",
+   "reason": "private sub-component struct inside Home.ets"
+  },
+  {
+   "platform": "harmony",
+   "symbol": "MyCoinCell",
+   "file": "entry/src/main/ets/pages/MyCoin.ets",
+   "reason": "list cell struct inside MyCoin.ets"
+  },
+  {
+   "platform": "harmony",
+   "symbol": "PagesConstant",
+   "file": "entry/src/main/ets/router/PagesConstant.ets",
+   "reason": "route constant table"
+  },
+  {
+   "platform": "harmony",
+   "symbol": "TreeCell",
+   "file": "entry/src/main/ets/views/TreeCell.ets",
+   "reason": "shared view"
+  }
+ ],
+ "deeplinks": [],
+ "testids": [
+  {
+   "platform": "harmony",
+   "tid": "SplashHelloWorld",
+   "file": "entry/src/main/ets/pages/Splash.ets",
+   "line": 13
+  }
+ ],
+ "apis": [
+  {
+   "method": "GET",
+   "path": "banner/json",
+   "file": "entry/src/main/ets/viewModel/HomeViewModel.ets"
+  },
+  {
+   "method": "GET",
+   "path": "article/top/json",
+   "file": "entry/src/main/ets/viewModel/HomeViewModel.ets"
+  },
+  {
+   "method": "GET",
+   "path": "article/list/{page}/json",
+   "file": "entry/src/main/ets/viewModel/HomeViewModel.ets",
+   "note": "'article/list/' + pageString + '/json'; also TabsDetailViewModel with ?cid="
+  },
+  {
+   "method": "POST",
+   "path": "user/login",
+   "file": "entry/src/main/ets/viewModel/LoginViewModel.ets",
+   "alt_files": [
+    "entry/src/main/ets/viewModel/HomeViewModel.ets"
+   ],
+   "note": "query string params concatenated"
+  },
+  {
+   "method": "POST",
+   "path": "user/register",
+   "file": "entry/src/main/ets/viewModel/LoginViewModel.ets"
+  },
+  {
+   "method": "GET",
+   "path": "user/logout/json",
+   "file": "entry/src/main/ets/viewModel/LoginViewModel.ets"
+  },
+  {
+   "method": "GET",
+   "path": "lg/coin/userinfo/json",
+   "file": "entry/src/main/ets/viewModel/IndexViewModel.ets",
+   "alt_files": [
+    "entry/src/main/ets/viewModel/MyCollectViewModel.ets"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "lg/coin/list/{page}/json",
+   "file": "entry/src/main/ets/viewModel/MyCoinViewModel.ets"
+  },
+  {
+   "method": "GET",
+   "path": "lg/collect/list/{page}/json",
+   "file": "entry/src/main/ets/viewModel/MyCollectViewModel.ets"
+  },
+  {
+   "method": "POST",
+   "path": "lg/collect/{id}/json",
+   "file": "entry/src/main/ets/viewModel/MyCollectViewModel.ets"
+  },
+  {
+   "method": "POST",
+   "path": "lg/uncollect_originId/{id}/json",
+   "file": "entry/src/main/ets/viewModel/MyCollectViewModel.ets"
+  },
+  {
+   "method": "GET",
+   "path": "coin/rank/{page}/json",
+   "file": "entry/src/main/ets/viewModel/RankViewModel.ets"
+  },
+  {
+   "method": "POST",
+   "path": "article/query/{page}/json",
+   "file": "entry/src/main/ets/viewModel/SearchResultViewModel.ets"
+  },
+  {
+   "method": "GET",
+   "path": "hotkey/json",
+   "file": "entry/src/main/ets/viewModel/HotKeyViewModel.ets"
+  },
+  {
+   "method": "GET",
+   "path": "project/tree/json",
+   "file": "entry/src/main/ets/viewModel/TabScaffoldViewModel.ets",
+   "optional": true,
+   "note": "assigned in switch(contentType) then httpClient.get(api)"
+  },
+  {
+   "method": "GET",
+   "path": "wxarticle/chapters/json",
+   "file": "entry/src/main/ets/viewModel/TabScaffoldViewModel.ets",
+   "optional": true
+  },
+  {
+   "method": "GET",
+   "path": "tree/json",
+   "file": "entry/src/main/ets/viewModel/TabScaffoldViewModel.ets",
+   "optional": true
+  },
+  {
+   "method": "GET",
+   "path": "wxarticle/list/{id}/{page}/json",
+   "file": "entry/src/main/ets/viewModel/TabsDetailViewModel.ets",
+   "optional": true
+  }
+ ],
+ "claims": [],
+ "notes": "HarmonyOS Next WanAndroid client. router.pushUrl wrapper Router.push({url: PagesConstant.X}) + named routes @Entry({routeName: RouterName.X}) with dynamic import(); route_id = main_pages path. baseURL https://www.wanandroid.com/ (axios). No skills.uris deep links. Only one .id()."
+}

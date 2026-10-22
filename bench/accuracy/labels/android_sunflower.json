@@ -1,0 +1,218 @@
+{
+ "repo": "android/sunflower",
+ "url": "https://github.com/android/sunflower",
+ "commit": "2a357a31551bb53f3fe80382a9ce6d30bcc8b960",
+ "platform_roots": {
+  "android": [
+   "app"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "android",
+   "route_id": "home",
+   "symbol": "Screen.Home",
+   "file": "app/src/main/java/com/google/samples/apps/sunflower/compose/Screen.kt",
+   "kind": "compose-route",
+   "screen_fn": "HomeScreen",
+   "pattern": "home"
+  },
+  {
+   "platform": "android",
+   "route_id": "plantDetail/{plantId}",
+   "symbol": "Screen.PlantDetail",
+   "file": "app/src/main/java/com/google/samples/apps/sunflower/compose/Screen.kt",
+   "kind": "compose-route",
+   "screen_fn": "PlantDetailsScreen",
+   "pattern": "plantDetail/{plantId}"
+  },
+  {
+   "platform": "android",
+   "route_id": "gallery/{plantName}",
+   "symbol": "Screen.Gallery",
+   "file": "app/src/main/java/com/google/samples/apps/sunflower/compose/Screen.kt",
+   "kind": "compose-route",
+   "screen_fn": "GalleryScreen",
+   "pattern": "gallery/{plantName}"
+  },
+  {
+   "platform": "android",
+   "route_id": "HomeScreen",
+   "symbol": "HomeScreen",
+   "file": "app/src/main/java/com/google/samples/apps/sunflower/compose/home/HomeScreen.kt",
+   "kind": "compose-screen",
+   "alt_of": "home"
+  },
+  {
+   "platform": "android",
+   "route_id": "PlantDetailsScreen",
+   "symbol": "PlantDetailsScreen",
+   "file": "app/src/main/java/com/google/samples/apps/sunflower/compose/plantdetail/PlantDetailView.kt",
+   "kind": "compose-screen",
+   "alt_of": "plantDetail/{plantId}"
+  },
+  {
+   "platform": "android",
+   "route_id": "GalleryScreen",
+   "symbol": "GalleryScreen",
+   "file": "app/src/main/java/com/google/samples/apps/sunflower/compose/gallery/GalleryScreen.kt",
+   "kind": "compose-screen",
+   "alt_of": "gallery/{plantName}"
+  },
+  {
+   "platform": "android",
+   "route_id": "GardenActivity",
+   "symbol": "GardenActivity",
+   "file": "app/src/main/java/com/google/samples/apps/sunflower/GardenActivity.kt",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "GardenScreen",
+   "symbol": "GardenScreen",
+   "file": "app/src/main/java/com/google/samples/apps/sunflower/compose/garden/GardenScreen.kt",
+   "kind": "pager-page",
+   "optional": true,
+   "note": "HorizontalPager page (SunflowerPage.MY_GARDEN) inside HomeScreen, not a nav route"
+  },
+  {
+   "platform": "android",
+   "route_id": "PlantListScreen",
+   "symbol": "PlantListScreen",
+   "file": "app/src/main/java/com/google/samples/apps/sunflower/compose/plantlist/PlantListScreen.kt",
+   "kind": "pager-page",
+   "optional": true,
+   "note": "HorizontalPager page (SunflowerPage.PLANT_LIST)"
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "android",
+   "symbol": "Screen",
+   "file": "app/src/main/java/com/google/samples/apps/sunflower/compose/Screen.kt",
+   "reason": "sealed base class of routes"
+  },
+  {
+   "platform": "android",
+   "symbol": "GardenScreenPreview",
+   "file": "app/src/main/java/com/google/samples/apps/sunflower/compose/garden/GardenScreen.kt",
+   "reason": "@Preview"
+  },
+  {
+   "platform": "android",
+   "symbol": "PlantListScreenPreview",
+   "file": "app/src/main/java/com/google/samples/apps/sunflower/compose/plantlist/PlantListScreen.kt",
+   "reason": "@Preview"
+  },
+  {
+   "platform": "android",
+   "symbol": "PlantListItem",
+   "file": "app/src/main/java/com/google/samples/apps/sunflower/compose/plantlist/PlantListItemView.kt",
+   "reason": "list item"
+  },
+  {
+   "platform": "android",
+   "symbol": "PlantDetailsScroller",
+   "file": "app/src/main/java/com/google/samples/apps/sunflower/compose/plantdetail/PlantDetailScroller.kt",
+   "reason": "scroll helper"
+  },
+  {
+   "platform": "android",
+   "symbol": "TextSnackbarContainer",
+   "file": "app/src/main/java/com/google/samples/apps/sunflower/compose/utils/TextSnackbarContainer.kt",
+   "reason": "utility container"
+  }
+ ],
+ "deeplinks": [],
+ "testids": [
+  {
+   "platform": "android",
+   "tid": "plant_list",
+   "file": "app/src/main/java/com/google/samples/apps/sunflower/compose/plantlist/PlantListScreen.kt",
+   "line": 59
+  }
+ ],
+ "apis": [
+  {
+   "method": "GET",
+   "path": "search/photos",
+   "file": "app/src/main/java/com/google/samples/apps/sunflower/api/UnsplashService.kt",
+   "note": "Retrofit @GET, BASE_URL https://api.unsplash.com/"
+  }
+ ],
+ "claims": [
+  {
+   "id": "C1",
+   "text": "The AndroidViewBinding API is used to embed a TextView in Compose. See the PlantDescription composable in PlantDetailView",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "app/src/main/java/com/google/samples/apps/sunflower/compose/plantdetail/PlantDetailView.kt:549"
+  },
+  {
+   "id": "C2",
+   "text": "add unsplash_access_key=<key> to gradle.properties",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "app/build.gradle.kts:166"
+  },
+  {
+   "id": "C3",
+   "text": "Sunflower uses the Unsplash API to load pictures on the gallery screen",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "app/src/main/java/com/google/samples/apps/sunflower/api/UnsplashService.kt"
+  },
+  {
+   "id": "C4",
+   "text": "migrate an existing View-based app (Material 2) to Compose (Material 3)",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "gradle/libs.versions.toml:46 material3"
+  },
+  {
+   "id": "C5",
+   "text": "Sunflower uses ktlint to enforce Kotlin coding styles",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "gradle/libs.versions.toml:42 ktlint"
+  },
+  {
+   "id": "C6",
+   "text": "The app is still usable without an API key, though you will not be able to navigate to the gallery screen",
+   "source": "README.md",
+   "label": "unverifiable",
+   "evidence": "app/src/main/java/com/google/samples/apps/sunflower/compose/SunflowerApp.kt",
+   "note": "runtime behaviour; gallery route is always registered - would need runtime check"
+  },
+  {
+   "id": "C7",
+   "text": "see the migration journey document docs/MigrationJourney.md",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "docs/MigrationJourney.md"
+  },
+  {
+   "id": "C8",
+   "text": "Gallery screen receives plantName argument",
+   "source": "(derived from Screen.kt doc comment / route)",
+   "label": "verified",
+   "evidence": "app/src/main/java/com/google/samples/apps/sunflower/compose/Screen.kt",
+   "synthetic": true
+  },
+  {
+   "id": "C9",
+   "text": "To see the original View implementation, checkout the views branch",
+   "source": "README.md",
+   "label": "unverifiable",
+   "evidence": "(git branch, not in tree)"
+  },
+  {
+   "id": "C10",
+   "text": "For development, the latest version of Android Studio is required",
+   "source": "README.md",
+   "label": "unverifiable",
+   "evidence": "(tooling requirement)"
+  }
+ ],
+ "notes": "Navigation-compose string routes defined in sealed class Screen (route strings with {args}); route_id = route string; symbol = Screen.X; screen composables listed with alt_of. Garden/PlantList are HorizontalPager pages (optional). Only 1 testTag. No deep links. Clone reused read-only from oss2."
+}

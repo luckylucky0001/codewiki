@@ -14,7 +14,8 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUT="${2:-$HERE/output/skills-$(date -u +%Y%m%dT%H%M%SZ)}"
 MODEL="${SKILLS_MODEL:-haiku}"
 mkdir -p "$OUT/bin"
-( cd "$HERE/.." && CGO_CFLAGS="${CGO_CFLAGS:--O2 -w}" go build -o "$OUT/bin/kb" ./cmd/kb )
+( cd "$HERE/.." && { [ -d node_modules ] || npm ci --ignore-scripts >/dev/null; } && npm run --silent build )
+mkdir -p "$(dirname "$OUT/bin/kb")" && printf '#!/bin/sh\nexec node "%s/dist/cli.js" "$@"\n' "$(cd "$HERE/.." && pwd)" >"$OUT/bin/kb" && chmod +x "$OUT/bin/kb"
 export PATH="$OUT/bin:$PATH"
 cd "$REPO"
 kb install-skills . >"$OUT/00-install-skills.txt"

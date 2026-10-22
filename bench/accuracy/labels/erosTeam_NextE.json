@@ -1,0 +1,495 @@
+{
+ "repo": "erosTeam/NextE",
+ "url": "https://github.com/erosTeam/NextE",
+ "commit": "7cc8d638458bd808b1cfeebf23b3e1947b1f5be4",
+ "platform_roots": {
+  "harmony": [
+   "entry",
+   "feature",
+   "shared"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "harmony",
+   "route_id": "GalleryDetail",
+   "symbol": "GalleryDetailPage",
+   "file": "feature/gallery/src/main/ets/pages/GalleryDetailPage.ets",
+   "kind": "NavDestination",
+   "builder": "IndexGalleryDetailRoute",
+   "builder_file": "entry/src/main/ets/pages/Index.ets",
+   "note": "pushPathByName('GalleryDetail') -> IndexRouteCoordinator key -> wrapBuilder(IndexGalleryDetailRoute) in Index.ets -> GalleryDetailPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "GalleryInfo",
+   "symbol": "GalleryInfoPage",
+   "file": "feature/gallery/src/main/ets/pages/GalleryInfoPage.ets",
+   "kind": "NavDestination",
+   "builder": "IndexGalleryInfoRoute",
+   "builder_file": "entry/src/main/ets/pages/Index.ets",
+   "note": "pushPathByName('GalleryInfo') -> IndexRouteCoordinator key -> wrapBuilder(IndexGalleryInfoRoute) in Index.ets -> GalleryInfoPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "GalleryTorrents",
+   "symbol": "GalleryTorrentsPage",
+   "file": "feature/gallery/src/main/ets/pages/GalleryTorrentsPage.ets",
+   "kind": "NavDestination",
+   "builder": "IndexGalleryTorrentsRoute",
+   "builder_file": "entry/src/main/ets/pages/Index.ets",
+   "note": "pushPathByName('GalleryTorrents') -> IndexRouteCoordinator key -> wrapBuilder(IndexGalleryTorrentsRoute) in Index.ets -> GalleryTorrentsPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "Search",
+   "symbol": "GallerySearchPage",
+   "file": "feature/search/src/main/ets/pages/GallerySearchPage.ets",
+   "kind": "NavDestination",
+   "builder": "IndexSearchRoute",
+   "builder_file": "entry/src/main/ets/pages/Index.ets",
+   "note": "pushPathByName('Search') -> IndexRouteCoordinator key -> wrapBuilder(IndexSearchRoute) in Index.ets -> GallerySearchPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "EhLogin",
+   "symbol": "EhLoginWebPage",
+   "file": "entry/src/main/ets/pages/EhLoginWebPage.ets",
+   "kind": "NavDestination",
+   "builder": "IndexEhLoginRoute",
+   "builder_file": "entry/src/main/ets/pages/Index.ets",
+   "note": "pushPathByName('EhLogin') -> IndexRouteCoordinator key -> wrapBuilder(IndexEhLoginRoute) in Index.ets -> EhLoginWebPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "MyTags",
+   "symbol": "MyTagsPage",
+   "file": "feature/user/src/main/ets/pages/MyTagsPage.ets",
+   "kind": "NavDestination",
+   "builder": "IndexMyTagsRoute",
+   "builder_file": "entry/src/main/ets/pages/Index.ets",
+   "note": "pushPathByName('MyTags') -> IndexRouteCoordinator key -> wrapBuilder(IndexMyTagsRoute) in Index.ets -> MyTagsPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "History",
+   "symbol": "ViewedHistoryPage",
+   "file": "feature/user/src/main/ets/pages/ViewedHistoryPage.ets",
+   "kind": "NavDestination",
+   "builder": "IndexHistoryRoute",
+   "builder_file": "entry/src/main/ets/pages/Index.ets",
+   "note": "pushPathByName('History') -> IndexRouteCoordinator key -> wrapBuilder(IndexHistoryRoute) in Index.ets -> ViewedHistoryPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "FavoriteSelector",
+   "symbol": "FavoriteSelectorPage",
+   "file": "feature/user/src/main/ets/pages/FavoriteSelectorPage.ets",
+   "kind": "NavDestination",
+   "builder": "IndexFavoriteSelectorRoute",
+   "builder_file": "entry/src/main/ets/pages/Index.ets",
+   "note": "pushPathByName('FavoriteSelector') -> IndexRouteCoordinator key -> wrapBuilder(IndexFavoriteSelectorRoute) in Index.ets -> FavoriteSelectorPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "TabManager",
+   "symbol": "TabManagerPage",
+   "file": "feature/home/src/main/ets/pages/TabManagerPage.ets",
+   "kind": "NavDestination",
+   "builder": "IndexTabManagerRoute",
+   "builder_file": "entry/src/main/ets/pages/Index.ets",
+   "note": "pushPathByName('TabManager') -> IndexRouteCoordinator key -> wrapBuilder(IndexTabManagerRoute) in Index.ets -> TabManagerPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "AllThumbnails",
+   "symbol": "GalleryAllThumbnailsPage",
+   "file": "feature/gallery/src/main/ets/pages/GalleryAllThumbnailsPage.ets",
+   "kind": "NavDestination",
+   "builder": "IndexAllThumbnailsRoute",
+   "builder_file": "entry/src/main/ets/pages/Index.ets",
+   "note": "pushPathByName('AllThumbnails') -> IndexRouteCoordinator key -> wrapBuilder(IndexAllThumbnailsRoute) in Index.ets -> GalleryAllThumbnailsPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "GalleryComments",
+   "symbol": "GalleryCommentsPage",
+   "file": "feature/gallery/src/main/ets/pages/GalleryCommentsPage.ets",
+   "kind": "NavDestination",
+   "builder": "IndexGalleryCommentsRoute",
+   "builder_file": "entry/src/main/ets/pages/Index.ets",
+   "note": "pushPathByName('GalleryComments') -> IndexRouteCoordinator key -> wrapBuilder(IndexGalleryCommentsRoute) in Index.ets -> GalleryCommentsPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "EhSettings",
+   "symbol": "EhSettingsPage",
+   "file": "feature/settings/src/main/ets/pages/EhSettingsPage.ets",
+   "kind": "NavDestination",
+   "builder": "IndexEhSettingsRoute",
+   "builder_file": "entry/src/main/ets/pages/Index.ets",
+   "note": "pushPathByName('EhSettings') -> IndexRouteCoordinator key -> wrapBuilder(IndexEhSettingsRoute) in Index.ets -> EhSettingsPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "Account",
+   "symbol": "AccountPage",
+   "file": "feature/settings/src/main/ets/pages/AccountPage.ets",
+   "kind": "NavDestination",
+   "builder": "IndexAccountRoute",
+   "builder_file": "entry/src/main/ets/pages/Index.ets",
+   "note": "pushPathByName('Account') -> IndexRouteCoordinator key -> wrapBuilder(IndexAccountRoute) in Index.ets -> AccountPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "LayoutSettings",
+   "symbol": "LayoutSettingsPage",
+   "file": "feature/settings/src/main/ets/pages/LayoutSettingsPage.ets",
+   "kind": "NavDestination",
+   "builder": "IndexLayoutSettingsRoute",
+   "builder_file": "entry/src/main/ets/pages/Index.ets",
+   "note": "pushPathByName('LayoutSettings') -> IndexRouteCoordinator key -> wrapBuilder(IndexLayoutSettingsRoute) in Index.ets -> LayoutSettingsPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "CacheSettings",
+   "symbol": "CacheSettingsPage",
+   "file": "feature/settings/src/main/ets/pages/CacheSettingsPage.ets",
+   "kind": "NavDestination",
+   "builder": "IndexCacheSettingsRoute",
+   "builder_file": "entry/src/main/ets/pages/Index.ets",
+   "note": "pushPathByName('CacheSettings') -> IndexRouteCoordinator key -> wrapBuilder(IndexCacheSettingsRoute) in Index.ets -> CacheSettingsPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "DownloadSettings",
+   "symbol": "DownloadSettingsPage",
+   "file": "feature/settings/src/main/ets/pages/DownloadSettingsPage.ets",
+   "kind": "NavDestination",
+   "builder": "IndexDownloadSettingsRoute",
+   "builder_file": "entry/src/main/ets/pages/Index.ets",
+   "note": "pushPathByName('DownloadSettings') -> IndexRouteCoordinator key -> wrapBuilder(IndexDownloadSettingsRoute) in Index.ets -> DownloadSettingsPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "SyncSettings",
+   "symbol": "SyncSettingsPage",
+   "file": "feature/settings/src/main/ets/pages/SyncSettingsPage.ets",
+   "kind": "NavDestination",
+   "builder": "IndexSyncSettingsRoute",
+   "builder_file": "entry/src/main/ets/pages/Index.ets",
+   "note": "pushPathByName('SyncSettings') -> IndexRouteCoordinator key -> wrapBuilder(IndexSyncSettingsRoute) in Index.ets -> SyncSettingsPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "About",
+   "symbol": "AboutPage",
+   "file": "feature/settings/src/main/ets/pages/AboutPage.ets",
+   "kind": "NavDestination",
+   "builder": "IndexAboutRoute",
+   "builder_file": "entry/src/main/ets/pages/Index.ets",
+   "note": "pushPathByName('About') -> IndexRouteCoordinator key -> wrapBuilder(IndexAboutRoute) in Index.ets -> AboutPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "SecuritySettings",
+   "symbol": "SecuritySettingsPage",
+   "file": "feature/settings/src/main/ets/pages/SecuritySettingsPage.ets",
+   "kind": "NavDestination",
+   "builder": "IndexSecuritySettingsRoute",
+   "builder_file": "entry/src/main/ets/pages/Index.ets",
+   "note": "pushPathByName('SecuritySettings') -> IndexRouteCoordinator key -> wrapBuilder(IndexSecuritySettingsRoute) in Index.ets -> SecuritySettingsPage"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "Reader",
+   "symbol": "ReaderPage",
+   "file": "feature/reader/src/main/ets/pages/ReaderPage.ets",
+   "kind": "NavDestination",
+   "note": "Index.routerMap @Builder if/else name === 'Reader' (overlay stack)"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "ReaderSettings",
+   "symbol": "ReaderSettingsPage",
+   "file": "feature/settings/src/main/ets/pages/ReaderSettingsPage.ets",
+   "kind": "NavDestination",
+   "note": "name === 'ReaderSettings'"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "pages/Index",
+   "symbol": "Index",
+   "file": "entry/src/main/ets/pages/Index.ets",
+   "kind": "main_pages",
+   "note": "only main_pages entry; HdsNavigation shell"
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "harmony",
+   "symbol": "IndexGalleryDetailRoute",
+   "file": "entry/src/main/ets/pages/Index.ets",
+   "reason": "@Builder wrapper function, not itself a screen (the route is GalleryDetail)"
+  },
+  {
+   "platform": "harmony",
+   "symbol": "SettingsPage row nexte-settings-reader-row",
+   "file": "feature/settings/src/main/ets/pages/SettingsPage.ets",
+   "reason": "row component, not a route",
+   "borderline": true
+  },
+  {
+   "platform": "harmony",
+   "symbol": "GalleryCommentsCard",
+   "file": "feature/gallery/src/main/ets/components/GalleryCommentsCard.ets",
+   "reason": "card component used in detail page"
+  },
+  {
+   "platform": "harmony",
+   "symbol": "IndexReaderOverlayBackdropRoute",
+   "file": "entry/src/main/ets/pages/Index.ets",
+   "reason": "overlay backdrop builder for name 'ReaderOverlayBackdrop' - visual layer, not a screen",
+   "borderline": true
+  },
+  {
+   "platform": "harmony",
+   "symbol": "IndexEmptyDestinationRoute",
+   "file": "entry/src/main/ets/pages/Index.ets",
+   "reason": "empty placeholder destination builder (emptyDestinationBuilder fallback)"
+  }
+ ],
+ "deeplinks": [
+  {
+   "platform": "harmony",
+   "scheme": "https",
+   "host": "e-hentai.org",
+   "path": "/g/",
+   "file": "entry/src/main/module.json5",
+   "source": "skills uris pathStartWith (ohos.want.action.viewData)"
+  },
+  {
+   "platform": "harmony",
+   "scheme": "https",
+   "host": "e-hentai.org",
+   "path": "/s/",
+   "file": "entry/src/main/module.json5",
+   "source": "skills uris pathStartWith"
+  },
+  {
+   "platform": "harmony",
+   "scheme": "https",
+   "host": "exhentai.org",
+   "path": "/g/",
+   "file": "entry/src/main/module.json5",
+   "source": "skills uris pathStartWith"
+  },
+  {
+   "platform": "harmony",
+   "scheme": "https",
+   "host": "exhentai.org",
+   "path": "/s/",
+   "file": "entry/src/main/module.json5",
+   "source": "skills uris pathStartWith"
+  }
+ ],
+ "testids": [
+  {
+   "platform": "harmony",
+   "tid": "reader-overlay-backdrop",
+   "file": "entry/src/main/ets/pages/Index.ets",
+   "line": 274
+  },
+  {
+   "platform": "harmony",
+   "tid": "nexte-reader-opening-root-proxy",
+   "file": "entry/src/main/ets/pages/Index.ets",
+   "line": 354
+  },
+  {
+   "platform": "harmony",
+   "tid": "rkit-entry-source-pending",
+   "file": "entry/src/main/ets/pages/Index.ets",
+   "line": 653
+  },
+  {
+   "platform": "harmony",
+   "tid": "nexte-root-navigation",
+   "file": "entry/src/main/ets/pages/Index.ets",
+   "line": 2896
+  },
+  {
+   "platform": "harmony",
+   "tid": "reader-overlay-navigation",
+   "file": "entry/src/main/ets/pages/Index.ets",
+   "line": 3076
+  },
+  {
+   "platform": "harmony",
+   "tid": "nexte-settings-reader-row",
+   "file": "feature/settings/src/main/ets/pages/SettingsPage.ets",
+   "line": 175
+  },
+  {
+   "platform": "harmony",
+   "tid": "comment-block-action",
+   "file": "feature/gallery/src/main/ets/components/GalleryCommentsCard.ets",
+   "line": 2212
+  },
+  {
+   "platform": "harmony",
+   "tid": "gallery-detail-pane",
+   "file": "feature/gallery/src/main/ets/pages/GalleryDetailPage.ets",
+   "line": 3046
+  },
+  {
+   "platform": "harmony",
+   "tid": "comment-word-flow",
+   "file": "feature/gallery/src/main/ets/pages/GalleryCommentsPage.ets",
+   "line": 1457
+  },
+  {
+   "platform": "harmony",
+   "tid": "nexte-download-queue-root",
+   "file": "feature/download/src/main/ets/pages/DownloadQueuePage.ets",
+   "line": 2068
+  }
+ ],
+ "apis": [
+  {
+   "method": "GET",
+   "path": "/uconfig.php",
+   "file": "shared/src/main/ets/network/EhApiService.ets",
+   "note": "`${EhConstants.baseUrl(isEx)}/uconfig.php` host e-hentai.org|exhentai.org (template literal with base URL variable; path suffix is static)"
+  },
+  {
+   "method": "POST",
+   "path": "/uconfig.php",
+   "file": "shared/src/main/ets/network/EhApiService.ets",
+   "note": "saveUserConfig postFormUrlEncoded (template literal with base URL variable; path suffix is static)"
+  },
+  {
+   "method": "GET",
+   "path": "/home.php",
+   "file": "shared/src/main/ets/network/EhApiService.ets",
+   "note": "EH_BASE_URL (template literal with base URL variable; path suffix is static)"
+  },
+  {
+   "method": "GET",
+   "path": "/exchange.php",
+   "file": "shared/src/main/ets/network/EhApiService.ets",
+   "note": "?t=gp (template literal with base URL variable; path suffix is static)"
+  },
+  {
+   "method": "GET",
+   "path": "/gallerytorrents.php",
+   "file": "shared/src/main/ets/network/EhApiService.ets",
+   "note": " (template literal with base URL variable; path suffix is static)"
+  },
+  {
+   "method": "GET",
+   "path": "/favorites.php",
+   "file": "shared/src/main/ets/network/EhApiService.ets",
+   "note": " (template literal with base URL variable; path suffix is static)"
+  },
+  {
+   "method": "GET",
+   "path": "/toplist.php",
+   "file": "shared/src/main/ets/network/EhApiService.ets",
+   "note": " (template literal with base URL variable; path suffix is static)"
+  },
+  {
+   "method": "GET",
+   "path": "/gallerypopups.php",
+   "file": "shared/src/main/ets/network/EhApiService.ets",
+   "note": " (template literal with base URL variable; path suffix is static)"
+  },
+  {
+   "method": "GET",
+   "path": "/archiver.php",
+   "file": "shared/src/main/ets/network/EhApiService.ets",
+   "note": " (template literal with base URL variable; path suffix is static)"
+  },
+  {
+   "method": "POST",
+   "path": "/api.php",
+   "file": "shared/src/main/ets/network/EhApiService.ets",
+   "note": "EhConstants.API_PATH used by several JSON API calls (template literal with base URL variable; path suffix is static)",
+   "optional": true
+  }
+ ],
+ "claims": [
+  {
+   "id": "C1",
+   "text": "NextE 包名为 com.erosteam.nexte",
+   "source": "docs/architecture.md",
+   "label": "verified",
+   "evidence": "AppScope/app.json5:3"
+  },
+  {
+   "id": "C2",
+   "text": "build-profile.json5 在原有 10 个模块之外增加 reader_core、reader_ui 两个实验 HAR",
+   "source": "docs/architecture.md",
+   "label": "verified",
+   "evidence": "build-profile.json5:18-29 (12 modules)"
+  },
+  {
+   "id": "C3",
+   "text": "7 个 feature 只依赖 shared，彼此不互相 import",
+   "source": "docs/architecture.md",
+   "label": "conflict",
+   "evidence": "feature/reader/oh-package.json5 also depends on @reader-kit/core and @reader-kit/ui"
+  },
+  {
+   "id": "C4",
+   "text": "默认产品的 targetSdkVersion 为 26.0.0、compatibleSdkVersion 为 6.1.0(23)",
+   "source": "docs/architecture.md",
+   "label": "verified",
+   "evidence": "build-profile.json5:6-7"
+  },
+  {
+   "id": "C5",
+   "text": "Index.ets 使用 HdsNavigation + HdsTabs",
+   "source": "docs/architecture.md",
+   "label": "verified",
+   "evidence": "entry/src/main/ets/pages/Index.ets:11-12"
+  },
+  {
+   "id": "C6",
+   "text": "命名路由由 IndexRouteCoordinator/routerMap 统一登记",
+   "source": "docs/architecture.md",
+   "label": "verified",
+   "evidence": "entry/src/main/ets/model/IndexRouteCoordinator.ets"
+  },
+  {
+   "id": "C7",
+   "text": "EntryAbility 接收 /g/、/s/ 深链",
+   "source": "docs/architecture.md",
+   "label": "verified",
+   "evidence": "entry/src/main/module.json5 skills uris"
+  },
+  {
+   "id": "C8",
+   "text": "搜索是从标题栏进入的命名路由，不是根 Tab",
+   "source": "docs/architecture.md",
+   "label": "verified",
+   "evidence": "entry/src/main/ets/pages/Index.ets:1501 pushPathByName('Search')"
+  },
+  {
+   "id": "C9",
+   "text": "entry/, feature/ and shared/ use V2 state only (no V1 decorators)",
+   "source": "AGENTS.md",
+   "label": "unverifiable",
+   "evidence": "scripts/test_v1_decorator_inventory_contract.mjs",
+   "note": "requires running the contract script / full decorator scan"
+  },
+  {
+   "id": "C10",
+   "text": "Before any push, run bash scripts/run_ci_preflight.sh",
+   "source": "AGENTS.md",
+   "label": "verified",
+   "evidence": "scripts/run_ci_preflight.sh"
+  }
+ ],
+ "notes": "No router_map.json: routes are dispatched in-code (pushPathByName name -> IndexRouteCoordinator string map -> wrapBuilder table -> Index*Route @Builder -> feature Page struct). Very indirect; a route_id match on name or symbol (Page struct) both count. API URLs are template literals over EhConstants.baseUrl(isEx). Clone reused read-only from oss2."
+}

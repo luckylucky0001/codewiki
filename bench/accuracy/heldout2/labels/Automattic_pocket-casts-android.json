@@ -1,0 +1,530 @@
+{
+ "repo": "Automattic/pocket-casts-android",
+ "url": "https://github.com/Automattic/pocket-casts-android",
+ "commit": "87dc00b7bd31dcfaab14549fa4baa2caae1be687",
+ "platform_roots": {
+  "android": [
+   "app",
+   "modules",
+   "automotive",
+   "wear",
+   "tv"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "android",
+   "route_id": "MainActivity",
+   "symbol": "MainActivity",
+   "file": "app/src/main/java/au/com/shiftyjelly/pocketcasts/ui/MainActivity.kt",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "AccountActivity",
+   "symbol": "AccountActivity",
+   "file": "modules/features/account/src/main/java/au/com/shiftyjelly/pocketcasts/account/AccountActivity.kt",
+   "kind": "activity",
+   "note": "declared in profile module manifest with FQCN"
+  },
+  {
+   "platform": "android",
+   "route_id": "OnboardingActivity",
+   "symbol": "OnboardingActivity",
+   "file": "modules/features/account/src/main/java/au/com/shiftyjelly/pocketcasts/account/onboarding/OnboardingActivity.kt",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "StoriesActivity",
+   "symbol": "StoriesActivity",
+   "file": "modules/features/endofyear/src/main/java/au/com/shiftyjelly/pocketcasts/endofyear/StoriesActivity.kt",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "VideoActivity",
+   "symbol": "VideoActivity",
+   "file": "modules/features/player/src/main/java/au/com/shiftyjelly/pocketcasts/player/view/video/VideoActivity.kt",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "BookmarkActivity",
+   "symbol": "BookmarkActivity",
+   "file": "modules/features/player/src/main/java/au/com/shiftyjelly/pocketcasts/player/view/bookmark/BookmarkActivity.kt",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "ShareListCreateActivity",
+   "symbol": "ShareListCreateActivity",
+   "file": "modules/features/podcasts/src/main/java/au/com/shiftyjelly/pocketcasts/podcasts/view/share/ShareListCreateActivity.kt",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "AddFileActivity",
+   "symbol": "AddFileActivity",
+   "file": "modules/features/profile/src/main/java/au/com/shiftyjelly/pocketcasts/profile/cloud/AddFileActivity.kt",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "WebViewActivity",
+   "symbol": "WebViewActivity",
+   "file": "modules/services/views/src/main/java/au/com/shiftyjelly/pocketcasts/views/activity/WebViewActivity.kt",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "SonosAppLinkActivity",
+   "symbol": "SonosAppLinkActivity",
+   "file": "modules/features/profile/src/main/java/au/com/shiftyjelly/pocketcasts/profile/sonos/SonosAppLinkActivity.kt",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "NotificationOpenReceiverActivity",
+   "symbol": "NotificationOpenReceiverActivity",
+   "file": "modules/services/repositories/src/main/java/au/com/shiftyjelly/pocketcasts/repositories/notification/NotificationOpenReceiverActivity.kt",
+   "kind": "activity",
+   "optional": true,
+   "note": "trampoline activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "ActivityConfigPlayPlaylist",
+   "symbol": "ActivityConfigPlayPlaylist",
+   "file": "modules/features/taskerplugin/src/main/java/au/com/shiftyjelly/pocketcasts/taskerplugin/playplaylist/config/ActivityConfigPlayPlaylist.kt",
+   "kind": "activity",
+   "optional": true,
+   "note": "Tasker plugin config activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "PodcastFragment",
+   "symbol": "PodcastFragment",
+   "file": "modules/features/podcasts/src/main/java/au/com/shiftyjelly/pocketcasts/podcasts/view/podcast/PodcastFragment.kt",
+   "kind": "fragment"
+  },
+  {
+   "platform": "android",
+   "route_id": "EpisodeFragment",
+   "symbol": "EpisodeFragment",
+   "file": "modules/features/podcasts/src/main/java/au/com/shiftyjelly/pocketcasts/podcasts/view/episode/EpisodeFragment.kt",
+   "kind": "fragment"
+  },
+  {
+   "platform": "android",
+   "route_id": "PodcastsFragment",
+   "symbol": "PodcastsFragment",
+   "file": "modules/features/podcasts/src/main/java/au/com/shiftyjelly/pocketcasts/podcasts/view/podcasts/PodcastsFragment.kt",
+   "kind": "fragment"
+  },
+  {
+   "platform": "android",
+   "route_id": "DiscoverFragment",
+   "symbol": "DiscoverFragment",
+   "file": "modules/features/discover/src/main/java/au/com/shiftyjelly/pocketcasts/discover/view/DiscoverFragment.kt",
+   "kind": "fragment"
+  },
+  {
+   "platform": "android",
+   "route_id": "ProfileFragment",
+   "symbol": "ProfileFragment",
+   "file": "modules/features/profile/src/main/java/au/com/shiftyjelly/pocketcasts/profile/ProfileFragment.kt",
+   "kind": "fragment"
+  },
+  {
+   "platform": "android",
+   "route_id": "SettingsFragment",
+   "symbol": "SettingsFragment",
+   "file": "modules/features/settings/src/main/java/au/com/shiftyjelly/pocketcasts/settings/SettingsFragment.kt",
+   "kind": "fragment",
+   "note": "same class name exists in filters module (playlists.SettingsFragment)"
+  },
+  {
+   "platform": "android",
+   "route_id": "SettingsFragment",
+   "symbol": "SettingsFragment",
+   "file": "modules/features/filters/src/main/java/au/com/shiftyjelly/pocketcasts/playlists/SettingsFragment.kt",
+   "kind": "fragment",
+   "note": "internal playlist settings fragment; same simple name as settings.SettingsFragment"
+  },
+  {
+   "platform": "android",
+   "route_id": "SearchFragment",
+   "symbol": "SearchFragment",
+   "file": "modules/features/search/src/main/java/au/com/shiftyjelly/pocketcasts/search/SearchFragment.kt",
+   "kind": "fragment"
+  },
+  {
+   "platform": "android",
+   "route_id": "UpNextFragment",
+   "symbol": "UpNextFragment",
+   "file": "modules/features/player/src/main/java/au/com/shiftyjelly/pocketcasts/player/view/UpNextFragment.kt",
+   "kind": "fragment"
+  },
+  {
+   "platform": "android",
+   "route_id": "StatsFragment",
+   "symbol": "StatsFragment",
+   "file": "modules/features/settings/src/main/java/au/com/shiftyjelly/pocketcasts/settings/stats/StatsFragment.kt",
+   "kind": "fragment"
+  },
+  {
+   "platform": "android",
+   "route_id": "HelpFragment",
+   "symbol": "HelpFragment",
+   "file": "modules/features/settings/src/main/java/au/com/shiftyjelly/pocketcasts/settings/HelpFragment.kt",
+   "kind": "fragment"
+  },
+  {
+   "platform": "android",
+   "route_id": "CloudFilesFragment",
+   "symbol": "CloudFilesFragment",
+   "file": "modules/features/profile/src/main/java/au/com/shiftyjelly/pocketcasts/profile/cloud/CloudFilesFragment.kt",
+   "kind": "fragment"
+  },
+  {
+   "platform": "android",
+   "route_id": "PlaylistFragment",
+   "symbol": "PlaylistFragment",
+   "file": "modules/features/filters/src/main/java/au/com/shiftyjelly/pocketcasts/playlists/PlaylistFragment.kt",
+   "kind": "fragment"
+  },
+  {
+   "platform": "android",
+   "route_id": "BookmarksFragment",
+   "symbol": "BookmarksFragment",
+   "file": "modules/features/player/src/main/java/au/com/shiftyjelly/pocketcasts/player/view/bookmark/BookmarksFragment.kt",
+   "kind": "fragment",
+   "optional": true,
+   "note": "hosted inside player/BookmarkActivity as well as player tabs"
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "android",
+   "symbol": "MainActivity_1",
+   "file": "app/src/main/AndroidManifest.xml",
+   "reason": "<activity-alias> for alternate app icon, targets MainActivity"
+  },
+  {
+   "platform": "android",
+   "symbol": "BaseFragment",
+   "file": "modules/services/views/src/main/java/au/com/shiftyjelly/pocketcasts/views/fragments/BaseFragment.kt",
+   "reason": "abstract base class"
+  },
+  {
+   "platform": "android",
+   "symbol": "BaseDialogFragment",
+   "file": "modules/services/views/src/main/java/au/com/shiftyjelly/pocketcasts/views/fragments/BaseDialogFragment.kt",
+   "reason": "base class"
+  },
+  {
+   "platform": "android",
+   "symbol": "SwipeableStarsPreview",
+   "file": "modules/features/podcasts/src/main/java/au/com/shiftyjelly/pocketcasts/podcasts/view/components/ratings/SwipeableStars.kt",
+   "reason": "@Preview"
+  },
+  {
+   "platform": "android",
+   "symbol": "PodcastViewHolder",
+   "file": "modules/features/podcasts/src/main/java/au/com/shiftyjelly/pocketcasts/podcasts/view/share/ShareListIncomingAdapter.kt",
+   "reason": "RecyclerView ViewHolder"
+  }
+ ],
+ "deeplinks": [
+  {
+   "platform": "android",
+   "scheme": "pktc",
+   "host": "*",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "intent-filter@96"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "pca.st",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "intent-filter@104"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "pcast.pocketcasts.net",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "intent-filter@112"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "pocketcasts.com",
+   "path": "/pair",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "intent-filter@120"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "pocketcasts.net",
+   "path": "/pair",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "intent-filter@129"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "play.pocketcasts.com",
+   "path": "/podcasts/",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "intent-filter@138",
+   "kind": "pathPrefix"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "play.pocketcasts.net",
+   "path": "/podcasts/",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "intent-filter@147",
+   "kind": "pathPrefix"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "pocketcasts.com",
+   "path": "/podcasts/",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "intent-filter@156",
+   "kind": "pathPrefix"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "pocketcasts.net",
+   "path": "/podcasts/",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "intent-filter@165",
+   "kind": "pathPrefix"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "pocket-casts-main-development.mystagingwebsite.com",
+   "path": "/redeem",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "intent-filter@174",
+   "kind": "pathPrefix"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "pocketcasts.com",
+   "path": "/redeem",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "intent-filter@183",
+   "kind": "pathPrefix"
+  },
+  {
+   "platform": "android",
+   "scheme": "itpc",
+   "host": "",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "intent-filter@246"
+  },
+  {
+   "platform": "android",
+   "scheme": "pcast",
+   "host": "",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "intent-filter@246"
+  },
+  {
+   "platform": "android",
+   "scheme": "feed",
+   "host": "",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "intent-filter@246"
+  },
+  {
+   "platform": "android",
+   "scheme": "rss",
+   "host": "",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "intent-filter@246"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "itunes.apple.com",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "intent-filter@255",
+   "note": "pathPattern /.*/podcast/.*"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "podcasts.apple.com",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "intent-filter@255",
+   "note": "pathPattern /.*/podcast/.*"
+  },
+  {
+   "platform": "android",
+   "scheme": "http",
+   "host": "podcasts.apple.com",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "intent-filter@255",
+   "optional": true
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "subscribeonandroid.com",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "intent-filter@307",
+   "note": "pathPattern; scheme/host split across <data> tags"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "www.subscribeonandroid.com",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "intent-filter@307"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "lists.pocketcasts.com",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "intent-filter@319"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "pocketcasts.com",
+   "path": "/get",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "intent-filter@327",
+   "note": "split <data> tags: path=/get + pathPrefix=/get/"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "pocket-casts-main-development.mystagingwebsite.com",
+   "path": "/get",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "intent-filter@337"
+  },
+  {
+   "platform": "android",
+   "scheme": "file",
+   "host": "*",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "intent-filter@65",
+   "optional": true,
+   "note": "mime-type opml file open"
+  },
+  {
+   "platform": "android",
+   "scheme": "content",
+   "host": "*",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "intent-filter@79",
+   "optional": true,
+   "note": "mime text/xml"
+  }
+ ],
+ "testids": [
+  {
+   "platform": "android",
+   "tid": "option_$index",
+   "file": "modules/services/compose/src/main/java/au/com/shiftyjelly/pocketcasts/compose/dialogs/OptionsDialogComponent.kt",
+   "line": 87,
+   "dynamic": true,
+   "note": "only testTag in main sources"
+  }
+ ],
+ "apis": [
+  {
+   "method": "GET",
+   "path": "/discover/{platform}/content_v{version}.json",
+   "file": "modules/services/servers/src/main/java/au/com/shiftyjelly/pocketcasts/servers/server/ListWebService.kt"
+  },
+  {
+   "method": "POST",
+   "path": "import/opml",
+   "file": "modules/services/servers/src/main/java/au/com/shiftyjelly/pocketcasts/servers/refresh/RefreshService.kt"
+  },
+  {
+   "method": "GET",
+   "path": "api/v1/update_podcast",
+   "file": "modules/services/servers/src/main/java/au/com/shiftyjelly/pocketcasts/servers/refresh/RefreshService.kt"
+  },
+  {
+   "method": "GET",
+   "path": "/autocomplete/search",
+   "file": "modules/services/servers/src/main/java/au/com/shiftyjelly/pocketcasts/servers/search/AutoCompleteSearchService.kt"
+  },
+  {
+   "method": "GET",
+   "path": "/mobile/podcast/full/{podcastUuid}",
+   "file": "modules/services/servers/src/main/java/au/com/shiftyjelly/pocketcasts/servers/podcast/PodcastCacheService.kt"
+  },
+  {
+   "method": "GET",
+   "path": "/mobile/episode/url/{podcastUuid}/{episodeUuid}",
+   "file": "modules/services/servers/src/main/java/au/com/shiftyjelly/pocketcasts/servers/podcast/PodcastCacheService.kt"
+  },
+  {
+   "method": "POST",
+   "path": "/user/stats/summary",
+   "file": "modules/services/servers/src/main/java/au/com/shiftyjelly/pocketcasts/servers/sync/SyncService.kt"
+  },
+  {
+   "method": "DELETE",
+   "path": "/files/{uuid}",
+   "file": "modules/services/servers/src/main/java/au/com/shiftyjelly/pocketcasts/servers/sync/SyncService.kt"
+  },
+  {
+   "method": "PUT",
+   "path": "/user/whats_new/read",
+   "file": "modules/services/servers/src/main/java/au/com/shiftyjelly/pocketcasts/servers/sync/SyncService.kt"
+  },
+  {
+   "method": "GET",
+   "path": "{listId}.json",
+   "file": "modules/services/servers/src/main/java/au/com/shiftyjelly/pocketcasts/servers/list/ListDownloadService.kt",
+   "optional": true,
+   "note": "path is only a placeholder + .json"
+  },
+  {
+   "method": "GET",
+   "path": "{url}",
+   "file": "modules/services/servers/src/main/java/au/com/shiftyjelly/pocketcasts/servers/server/ListWebService.kt",
+   "dynamic": true,
+   "expect": false,
+   "note": "@Url full dynamic URL (getListFeed)"
+  }
+ ],
+ "claims": [],
+ "notes": "Fragment-based navigation (addFragment/showBottomSheet) + Activities in multi-module manifests. MainActivity_1..18 are activity-alias (icons), not screens. Deep links: app manifest, sampled non-MIME filters nearly exhaustively (wear:// MESSAGE_RECEIVED excluded; several filters split scheme/host/path across separate <data> tags -> cartesian). Only one testTag in main sources (dynamic \"option_$index\"; scorer tidNorm patched to treat Kotlin $ident as wildcard). APIs: Retrofit, many leading \"/\" with different base URLs."
+}

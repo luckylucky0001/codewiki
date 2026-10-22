@@ -1,0 +1,372 @@
+{
+ "repo": "Automattic/simplenote-ios",
+ "url": "https://github.com/Automattic/simplenote-ios",
+ "commit": "29bd22351aaa45934c5dce41577571c64e1cbfbe",
+ "platform_roots": {
+  "ios": [
+   "Simplenote",
+   "SimplenoteShare",
+   "SimplenoteWidgets",
+   "SimplenoteIntents"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "ios",
+   "route_id": "SPNoteListViewController",
+   "symbol": "SPNoteListViewController",
+   "file": "Simplenote/Classes/SPNoteListViewController.m",
+   "kind": "uikit-vc",
+   "lang": "objc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "SPNoteEditorViewController",
+   "symbol": "SPNoteEditorViewController",
+   "file": "Simplenote/Classes/SPNoteEditorViewController.m",
+   "kind": "uikit-vc",
+   "lang": "objc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "SPSettingsViewController",
+   "symbol": "SPSettingsViewController",
+   "file": "Simplenote/Classes/SPSettingsViewController.m",
+   "kind": "uikit-vc",
+   "lang": "objc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "TagListViewController",
+   "symbol": "TagListViewController",
+   "file": "Simplenote/TagListViewController.swift",
+   "kind": "uikit-vc",
+   "note": "sidebar"
+  },
+  {
+   "platform": "ios",
+   "route_id": "SPAuthViewController",
+   "symbol": "SPAuthViewController",
+   "file": "Simplenote/Classes/SPAuthViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "SPOnboardingViewController",
+   "symbol": "SPOnboardingViewController",
+   "file": "Simplenote/Classes/SPOnboardingViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "SPAboutViewController",
+   "symbol": "SPAboutViewController",
+   "file": "Simplenote/Classes/SPAboutViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "SPPrivacyViewController",
+   "symbol": "SPPrivacyViewController",
+   "file": "Simplenote/SPPrivacyViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "SPThemeViewController",
+   "symbol": "SPThemeViewController",
+   "file": "Simplenote/Classes/SPThemeViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "SPSortOrderViewController",
+   "symbol": "SPSortOrderViewController",
+   "file": "Simplenote/Classes/SPSortOrderViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "SPNoteHistoryViewController",
+   "symbol": "SPNoteHistoryViewController",
+   "file": "Simplenote/Classes/SPNoteHistoryViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "NoteInformationViewController",
+   "symbol": "NoteInformationViewController",
+   "file": "Simplenote/Information/NoteInformationViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "PinLockViewController",
+   "symbol": "PinLockViewController",
+   "file": "Simplenote/Classes/PinLock/PinLockViewController.swift",
+   "kind": "uikit-vc",
+   "note": "xib-backed; driven by PinLockSetup/Verify/Remove controllers"
+  },
+  {
+   "platform": "ios",
+   "route_id": "SPMarkdownPreviewViewController",
+   "symbol": "SPMarkdownPreviewViewController",
+   "file": "Simplenote/Classes/SPMarkdownPreviewViewController.m",
+   "kind": "uikit-vc",
+   "lang": "objc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "SPAddCollaboratorsViewController",
+   "symbol": "SPAddCollaboratorsViewController",
+   "file": "Simplenote/Classes/SPAddCollaboratorsViewController.m",
+   "kind": "uikit-vc",
+   "lang": "objc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "AccountVerificationViewController",
+   "symbol": "AccountVerificationViewController",
+   "file": "Simplenote/Verification/AccountVerificationViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "OptionsViewController",
+   "symbol": "OptionsViewController",
+   "file": "Simplenote/Classes/OptionsViewController.swift",
+   "kind": "uikit-vc",
+   "note": "note options sheet"
+  },
+  {
+   "platform": "ios",
+   "route_id": "SignupVerificationViewController",
+   "symbol": "SignupVerificationViewController",
+   "file": "Simplenote/Classes/SignupVerificationViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "SPDebugViewController",
+   "symbol": "SPDebugViewController",
+   "file": "Simplenote/Classes/SPDebugViewController.m",
+   "kind": "uikit-vc",
+   "lang": "objc",
+   "optional": true,
+   "note": "debug-only"
+  },
+  {
+   "platform": "ios",
+   "route_id": "SPDiagnosticsViewController",
+   "symbol": "SPDiagnosticsViewController",
+   "file": "Simplenote/Classes/SPDiagnosticsViewController.swift",
+   "kind": "uikit-vc",
+   "optional": true
+  },
+  {
+   "platform": "ios",
+   "route_id": "SortModePickerViewController",
+   "symbol": "SortModePickerViewController",
+   "file": "Simplenote/Classes/SortModePickerViewController.swift",
+   "kind": "uikit-vc",
+   "optional": true,
+   "note": "popover picker"
+  },
+  {
+   "platform": "ios",
+   "route_id": "NoteEditorTagListViewController",
+   "symbol": "NoteEditorTagListViewController",
+   "file": "Simplenote/Tags/NoteEditorTagListViewController.swift",
+   "kind": "uikit-vc",
+   "optional": true,
+   "note": "embedded tag bar in editor"
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "ios",
+   "symbol": "SPTableViewController",
+   "file": "Simplenote/Classes/SPTableViewController.m",
+   "reason": "base class"
+  },
+  {
+   "platform": "ios",
+   "symbol": "SPSidebarContainerViewController",
+   "file": "Simplenote/Classes/SPSidebarContainerViewController.m",
+   "reason": "container that hosts list+sidebar",
+   "borderline": true
+  },
+  {
+   "platform": "ios",
+   "symbol": "SpinnerViewController",
+   "file": "Simplenote/SpinnerViewController.swift",
+   "reason": "loading overlay"
+  },
+  {
+   "platform": "ios",
+   "symbol": "InterlinkViewController",
+   "file": "Simplenote/Classes/InterlinkViewController.swift",
+   "reason": "autocomplete popover child"
+  },
+  {
+   "platform": "ios",
+   "symbol": "PopoverViewController",
+   "file": "Simplenote/Classes/PopoverViewController.swift",
+   "reason": "generic popover container"
+  },
+  {
+   "platform": "ios",
+   "symbol": "PinLockSetupController",
+   "file": "Simplenote/Classes/PinLock/PinLockSetupController.swift",
+   "reason": "controller/presenter object, not a UIViewController"
+  }
+ ],
+ "deeplinks": [
+  {
+   "platform": "ios",
+   "scheme": "simplenote",
+   "host": "",
+   "path": "",
+   "file": "Simplenote/Supporting Files/Simplenote-Info.plist",
+   "source": "CFBundleURLSchemes"
+  },
+  {
+   "platform": "ios",
+   "scheme": "simplenote",
+   "host": "note",
+   "path": "/{key}",
+   "file": "Simplenote/Classes/NSURL+Links.swift",
+   "source": "SimplenoteConstants.simplenoteInterlinkHost",
+   "kind": "in-app-url"
+  },
+  {
+   "platform": "ios",
+   "scheme": "simplenote",
+   "host": "list",
+   "path": "",
+   "file": "Simplenote/SPAppDelegate.m",
+   "source": "handleOpenTagListWithUrl / simplenoteInternalTagHost",
+   "kind": "in-app-url"
+  },
+  {
+   "platform": "ios",
+   "scheme": "simplenote",
+   "host": "new",
+   "path": "",
+   "file": "Simplenote/SPAppDelegate.m",
+   "source": "openURL host isEqualToString:@\"new\"",
+   "kind": "in-app-url"
+  },
+  {
+   "platform": "ios",
+   "scheme": "simplenote",
+   "host": "widgetNew",
+   "path": "",
+   "file": "Simplenote/SPAppDelegate.m",
+   "source": "openURL host widgetNew",
+   "kind": "in-app-url"
+  },
+  {
+   "platform": "ios",
+   "scheme": "simplenote",
+   "host": "login",
+   "path": "",
+   "file": "Simplenote/Classes/MagicLinkAuthenticator.swift",
+   "source": "AllowedHosts.hostForSimplenoteSchema",
+   "kind": "in-app-url"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "app.simplenote.com",
+   "path": "",
+   "file": "Simplenote/Supporting Files/Simplenote.entitlements",
+   "source": "applinks"
+  }
+ ],
+ "testids": [
+  {
+   "platform": "ios",
+   "tid": "Main Action",
+   "file": "Simplenote/Classes/SPAuthViewController.swift",
+   "line": 107
+  },
+  {
+   "platform": "ios",
+   "tid": "menu",
+   "file": "Simplenote/Classes/SPNoteListViewController.m",
+   "line": 296
+  },
+  {
+   "platform": "ios",
+   "tid": "search-bar",
+   "file": "Simplenote/Classes/SPNoteListViewController.m",
+   "line": 350
+  },
+  {
+   "platform": "ios",
+   "tid": "passcode-cell",
+   "file": "Simplenote/Classes/SPSettingsViewController.m",
+   "line": 407
+  },
+  {
+   "platform": "ios",
+   "tid": "note-menu",
+   "file": "Simplenote/Classes/SPNoteEditorViewController+Extensions.swift",
+   "line": 37
+  },
+  {
+   "platform": "ios",
+   "tid": "all-notes",
+   "file": "Simplenote/TagListViewController.swift",
+   "line": 350
+  },
+  {
+   "platform": "ios",
+   "tid": "settings",
+   "file": "Simplenote/TagListViewController.swift",
+   "line": 358
+  }
+ ],
+ "apis": [
+  {
+   "method": "POST",
+   "path": "{base}/{appId}/{bucket}/i/{key}",
+   "file": "SimplenoteShare/Simperium/Uploader.swift",
+   "note": "String(format:\"%@/%@/%@/i/%@\", kSimperiumBaseURL, ...)"
+  },
+  {
+   "method": "GET",
+   "path": "{base}/{appId}/{bucket}/i/{key}",
+   "file": "SimplenoteShare/Simperium/Downloader.swift"
+  },
+  {
+   "method": "ANY",
+   "path": "/account/request-login",
+   "file": "Simplenote/Classes/SimplenoteConstants.swift",
+   "optional": true,
+   "note": "constant appended to runtime engine URL; unused in-repo (AccountRemote/LoginRemote live in external SimplenoteEndpoints package)"
+  },
+  {
+   "method": "ANY",
+   "path": "/account/request-signup",
+   "file": "Simplenote/Classes/SimplenoteConstants.swift",
+   "optional": true
+  },
+  {
+   "method": "ANY",
+   "path": "/account/request-delete/",
+   "file": "Simplenote/Classes/SimplenoteConstants.swift",
+   "optional": true
+  },
+  {
+   "method": "GET",
+   "path": "/settings",
+   "file": "Simplenote/Classes/SimplenoteConstants.swift",
+   "optional": true,
+   "note": "opened in browser, not an API call"
+  }
+ ],
+ "claims": [],
+ "notes": "Mixed ObjC (.h/.m) + Swift UIKit app; ObjC VCs labelled with .m file (extractor reporting .h should still match via id). URL scheme simplenote:// with hosts dispatched in SPAppDelegate openURL (new/widgetNew) and helpers (note/list/login). Real network layer is external SPM package SimplenoteEndpoints + Simperium -> very few in-repo API literals; share extension builds URL via String(format:). testIDs exhaustive (7 literal accessibilityIdentifier)."
+}

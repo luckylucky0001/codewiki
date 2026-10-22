@@ -1,0 +1,27 @@
+compound 20261021T194222-1635584: base 6edf52f → head 1635584, mode incremental, llm cmd (agent gemini)
+mode incremental — anchors changed ∪ signature changes propagated along reference edges
+changed_route_ids: [cart product_detail]; changed_files: 6
+stats: symbols=214 changes=map[body:2 unchanged:212] module_ratio=0.10 structural_ratio=0.00 hops=1 propagated=0
+  t01-features-cart update  pages/features/cart.md         p1 write_set=[pages/features/cart.md] reasons=[anchor_body_changed:CartViewModel.MAX_CART_ITEMS]
+  t02-features-product_detail update  pages/features/product_detail.md p2 write_set=[pages/features/product_detail.md] reasons=[anchor_body_changed:CartViewModel.MAX_CART_ITEMS]
+tree repair: depth 1 {"L0":1,"L1":3}; 0 tree page task(s)
+  task t01-features-cart            violation cmd reverted writes outside write set: pages/evil-gemini.md (in 2700 / out 90 tok, reasoning 12)
+  task t02-features-product_detail  violation cmd reverted writes outside write set: pages/evil-gemini.md (in 2700 / out 90 tok, reasoning 12)
+agent usage: (in 5400 / out 180 tok, reasoning 24)
+changed files: 13
+  .kb/graph.json.gz
+  .kb/plan.json
+  .kb/state.json
+  .kb/update_record.json
+  index.md
+  llms.txt
+  log.md
+  module_tree.json
+  pages/android/overview.md
+  pages/features/cart.md
+  pages/features/product_detail.md
+  pages/ios/overview.md
+  pages/parity.md
+verify PASS: 27 pages, 262 anchors, 0 errors, 0 warnings
+published 13 changed file(s) to <tmp>/minishop/wiki
+exit 0

@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "run_id": "2026-10-21T18:19:25Z-26c5938",
+  "head": "26c59386aa41217a9a47b56f600e2341fe8f6c70",
+  "status": "done",
+  "phase": "publish",
+  "scopes": [
+    {
+      "id": "repo",
+      "mode": "full"
+    },
+    {
+      "id": "shop-android",
+      "mode": "full"
+    },
+    {
+      "id": "shop-ios",
+      "mode": "full"
+    }
+  ],
+  "agents": [],
+  "completed_docs": [
+    "apps/shop-android/docs/architecture.md",
+    "apps/shop-android/docs/contracts.md",
+    "apps/shop-android/docs/design-patterns.md",
+    "apps/shop-android/docs/features.md",
+    "apps/shop-android/docs/navigation.md",
+    "apps/shop-android/docs/product-specs.md",
+    "apps/shop-android/docs/testing.md",
+    "apps/shop-ios/docs/architecture.md",
+    "apps/shop-ios/docs/contracts.md",
+    "apps/shop-ios/docs/design-patterns.md",
+    "apps/shop-ios/docs/features.md",
+    "apps/shop-ios/docs/navigation.md",
+    "apps/shop-ios/docs/testing.md",
+    "docs/architecture.md",
+    "docs/contracts.md",
+    "docs/design-patterns.md",
+    "docs/features.md",
+    "docs/product-specs.md",
+    "docs/requirements.md",
+    "docs/testing.md"
+  ],
+  "tasks_done": []
+}

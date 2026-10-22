@@ -1,0 +1,2 @@
+gemini: 0.65.0
+backend command: gemini --skip-trust --approval-mode auto_edit --output-format json -p 'Complete the codewiki task described above. Do not ask questions.'

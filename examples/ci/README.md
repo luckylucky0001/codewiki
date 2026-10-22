@@ -12,7 +12,7 @@
 | 成本控制 | `--max-llm-tasks N`：超过 N 的任务改用 template；`--fallback`：LLM 失败时回退 template |
 | 门禁 | `kb verify` 退出码 1 → job 失败；`kb compound` 自身在 staging 上 verify 失败时不会发布 |
 | 防循环 | `paths-ignore: wiki/**` + 提交信息带 `[skip ci]` |
-| 缓存 | `actions/setup-go` 缓存模块；`kb` 二进制按版本缓存（cgo 编译 tree-sitter 语法较慢） |
+| 缓存 | `kb` 通过 npm 安装（WASM 语法随包发布，无需编译）；扫描缓存 `wiki/.kb/cache` 按 commit 缓存 |
 
 ## 方案 A：wiki 与代码同仓（默认）
 

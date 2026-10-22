@@ -1,0 +1,268 @@
+{
+  "version": 1,
+  "base": "",
+  "head": "",
+  "mode": "incremental",
+  "reason": "anchors changed ∪ signature changes propagated along reference edges",
+  "stats": {
+    "symbols": 224,
+    "changes": {
+      "added": 10,
+      "body": 4,
+      "unchanged": 210
+    },
+    "module_ratio": 0.22,
+    "structural_ratio": 0.04,
+    "hops": 1,
+    "propagated_symbols": 0
+  },
+  "tasks": [
+    {
+      "id": "t01-concepts-navigation",
+      "op": "update",
+      "kind": "concept",
+      "page": "pages/concepts/navigation.md",
+      "title": "导航与深链",
+      "write_set": [
+        "pages/concepts/navigation.md"
+      ],
+      "reasons": [
+        {
+          "code": "anchor_body_changed",
+          "sym": "android://app/src/main/java/com/minishop/navigation/MiniShopNavHost.kt#MiniShopNavHost"
+        },
+        {
+          "code": "anchor_body_changed",
+          "sym": "android://app/src/main/java/com/minishop/navigation/Routes.kt#Routes"
+        },
+        {
+          "code": "anchor_body_changed",
+          "sym": "ios://MiniShop/Navigation/Route.swift#Route"
+        },
+        {
+          "code": "anchor_added",
+          "sym": "android://app/src/main/java/com/minishop/navigation/Routes.kt#Routes.PROFILE"
+        },
+        {
+          "code": "anchor_added",
+          "sym": "harmony://entry/src/main/ets/pages/ProfilePage.ets#ProfilePage.pathStack"
+        },
+        {
+          "code": "anchor_added",
+          "sym": "ios://MiniShop/Navigation/Route.swift#Route.profile"
+        }
+      ],
+      "context": [
+        "android://app/src/main/java/com/minishop/navigation/MiniShopNavHost.kt#DEEPLINK_BASE",
+        "android://app/src/main/java/com/minishop/navigation/MiniShopNavHost.kt#MiniShopNavHost",
+        "android://app/src/main/java/com/minishop/navigation/Routes.kt#Routes",
+        "android://app/src/main/java/com/minishop/navigation/Routes.kt#Routes.CART",
+        "android://app/src/main/java/com/minishop/navigation/Routes.kt#Routes.CHECKOUT",
+        "android://app/src/main/java/com/minishop/navigation/Routes.kt#Routes.LOGIN",
+        "android://app/src/main/java/com/minishop/navigation/Routes.kt#Routes.ORDER_DETAIL",
+        "android://app/src/main/java/com/minishop/navigation/Routes.kt#Routes.PRODUCTS",
+        "android://app/src/main/java/com/minishop/navigation/Routes.kt#Routes.PRODUCT_DETAIL",
+        "android://app/src/main/java/com/minishop/navigation/Routes.kt#Routes.PROFILE",
+        "harmony://entry/src/main/ets/common/BackButton.ets#BackButton.pathStack",
+        "harmony://entry/src/main/ets/entryability/EntryAbility.ets#EntryAbility.applyTestParams",
+        "harmony://entry/src/main/ets/pages/CartPage.ets#CartPage.pathStack",
+        "harmony://entry/src/main/ets/pages/CheckoutPage.ets#CheckoutPage.pathStack",
+        "harmony://entry/src/main/ets/pages/Index.ets#Index.openDeepLink",
+        "harmony://entry/src/main/ets/pages/Index.ets#Index.pathStack",
+        "harmony://entry/src/main/ets/pages/LoginPage.ets#LoginPage.pathStack",
+        "harmony://entry/src/main/ets/pages/OrderDetailPage.ets#OrderDetailPage.pathStack",
+        "harmony://entry/src/main/ets/pages/ProductDetailPage.ets#ProductDetailPage.pathStack",
+        "harmony://entry/src/main/ets/pages/ProductsPage.ets#ProductsPage.pathStack",
+        "harmony://entry/src/main/ets/pages/ProfilePage.ets#ProfilePage.pathStack",
+        "ios://MiniShop/App/MiniShopApp.swift#MiniShopApp.router",
+        "ios://MiniShop/Navigation/AppRouter.swift#AppRouter",
+        "ios://MiniShop/Navigation/AppRouter.swift#AppRouter.handle",
+        "ios://MiniShop/Navigation/AppRouter.swift#AppRouter.match",
+        "ios://MiniShop/Navigation/AppRouter.swift#AppRouter.path",
+        "ios://MiniShop/Navigation/Route.swift#Destination",
+        "ios://MiniShop/Navigation/Route.swift#Destination.params",
+        "ios://MiniShop/Navigation/Route.swift#Destination.route",
+        "ios://MiniShop/Navigation/Route.swift#Route",
+        "ios://MiniShop/Navigation/Route.swift#Route.cart",
+        "ios://MiniShop/Navigation/Route.swift#Route.checkout",
+        "ios://MiniShop/Navigation/Route.swift#Route.login",
+        "ios://MiniShop/Navigation/Route.swift#Route.orderDetail",
+        "ios://MiniShop/Navigation/Route.swift#Route.productDetail",
+        "ios://MiniShop/Navigation/Route.swift#Route.products",
+        "ios://MiniShop/Navigation/Route.swift#Route.profile"
+      ],
+      "priority": 4
+    },
+    {
+      "id": "t02-features-MainActivity",
+      "op": "update",
+      "kind": "feature",
+      "page": "pages/features/MainActivity.md",
+      "title": "MainActivity",
+      "route_id": "MainActivity",
+      "write_set": [
+        "pages/features/MainActivity.md"
+      ],
+      "reasons": [
+        {
+          "code": "anchor_added",
+          "sym": "android://app/src/main/java/com/minishop/ui/profile/ProfileScreen.kt#ProfileScreen"
+        }
+      ],
+      "context": [
+        "android://app/src/main/java/com/minishop/MainActivity.kt#MainActivity",
+        "android://app/src/main/java/com/minishop/MainActivity.kt#MainActivity.applyTestParams",
+        "android://app/src/main/java/com/minishop/MainActivity.kt#MainActivity.onCreate",
+        "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.TokenStore",
+        "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.instance",
+        "android://app/src/main/java/com/minishop/ui/cart/CartScreen.kt#CartScreen",
+        "android://app/src/main/java/com/minishop/ui/checkout/CheckoutScreen.kt#CheckoutScreen",
+        "android://app/src/main/java/com/minishop/ui/login/LoginScreen.kt#LoginScreen",
+        "android://app/src/main/java/com/minishop/ui/order/OrderDetailScreen.kt#OrderDetailScreen",
+        "android://app/src/main/java/com/minishop/ui/products/ProductDetailScreen.kt#ProductDetailScreen",
+        "android://app/src/main/java/com/minishop/ui/products/ProductsScreen.kt#ProductsScreen",
+        "android://app/src/main/java/com/minishop/ui/profile/ProfileScreen.kt#ProfileScreen"
+      ],
+      "priority": 1
+    },
+    {
+      "id": "t03-features-RootView",
+      "op": "update",
+      "kind": "feature",
+      "page": "pages/features/RootView.md",
+      "title": "RootView",
+      "route_id": "RootView",
+      "write_set": [
+        "pages/features/RootView.md"
+      ],
+      "reasons": [
+        {
+          "code": "anchor_body_changed",
+          "sym": "ios://MiniShop/Navigation/AppRouter.swift#RootView.body"
+        }
+      ],
+      "context": [
+        "ios://MiniShop/Features/Order/OrderDetailView.swift#OrderDetailView.id",
+        "ios://MiniShop/Features/Products/ProductDetailView.swift#ProductDetailView.cart",
+        "ios://MiniShop/Features/Products/ProductDetailView.swift#ProductDetailView.id",
+        "ios://MiniShop/Navigation/AppRouter.swift#RootView",
+        "ios://MiniShop/Navigation/AppRouter.swift#RootView.body",
+        "ios://MiniShop/Navigation/AppRouter.swift#RootView.router"
+      ],
+      "priority": 2
+    },
+    {
+      "id": "t04-features-profile",
+      "op": "create",
+      "kind": "feature",
+      "page": "pages/features/profile.md",
+      "title": "profile",
+      "route_id": "profile",
+      "write_set": [
+        "pages/features/profile.md"
+      ],
+      "reasons": [
+        {
+          "code": "route_added",
+          "detail": "profile"
+        }
+      ],
+      "context": [
+        "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.TokenStore",
+        "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.instance",
+        "android://app/src/main/java/com/minishop/data/TokenStore.java#TokenStore.isLoggedIn",
+        "android://app/src/main/java/com/minishop/ui/profile/ProfileScreen.kt#ProfileScreen",
+        "harmony://entry/src/main/ets/common/TokenStore.ets#TokenStore.isLoggedIn",
+        "harmony://entry/src/main/ets/common/TokenStore.ets#TokenStore.save",
+        "harmony://entry/src/main/ets/pages/ProfilePage.ets#ProfileBuilder",
+        "harmony://entry/src/main/ets/pages/ProfilePage.ets#ProfilePage.build",
+        "ios://MiniShop/Features/Profile/ProfileView.swift#ProfileView",
+        "ios://MiniShop/Features/Profile/ProfileView.swift#ProfileView.body",
+        "ios://MiniShop/Features/Profile/ProfileView.swift#ProfileView.router"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "t05-overview",
+      "op": "update",
+      "kind": "overview",
+      "page": "pages/overview.md",
+      "title": "总览",
+      "write_set": [
+        "pages/overview.md"
+      ],
+      "reasons": [
+        {
+          "code": "route_set_changed"
+        }
+      ],
+      "context": [],
+      "priority": 5
+    }
+  ],
+  "changed_route_ids": [
+    "MainActivity",
+    "RootView",
+    "profile"
+  ],
+  "changed_routes": [
+    {
+      "route_id": "MainActivity",
+      "platforms": [
+        "android"
+      ],
+      "reasons": [
+        "symbol_changed"
+      ],
+      "symbols": [
+        "android://app/src/main/java/com/minishop/navigation/MiniShopNavHost.kt#MiniShopNavHost",
+        "android://app/src/main/java/com/minishop/navigation/Routes.kt#Routes.PROFILE",
+        "android://app/src/main/java/com/minishop/ui/profile/ProfileScreen.kt#ProfileScreen"
+      ]
+    },
+    {
+      "route_id": "RootView",
+      "platforms": [
+        "ios"
+      ],
+      "reasons": [
+        "symbol_changed"
+      ],
+      "symbols": [
+        "ios://MiniShop/Navigation/AppRouter.swift#RootView.body",
+        "ios://MiniShop/Navigation/Route.swift#Route.profile"
+      ]
+    },
+    {
+      "route_id": "profile",
+      "platforms": [
+        "android",
+        "harmony",
+        "ios"
+      ],
+      "reasons": [
+        "route_added",
+        "symbol_changed",
+        "testid_changed"
+      ],
+      "symbols": [
+        "android://app/src/main/java/com/minishop/ui/profile/ProfileScreen.kt#ProfileScreen",
+        "harmony://entry/src/main/ets/pages/ProfilePage.ets#ProfileBuilder",
+        "harmony://entry/src/main/ets/pages/ProfilePage.ets#ProfilePage.build",
+        "harmony://entry/src/main/ets/pages/ProfilePage.ets#ProfilePage.pathStack",
+        "ios://MiniShop/Features/Profile/ProfileView.swift#ProfileView",
+        "ios://MiniShop/Features/Profile/ProfileView.swift#ProfileView.body",
+        "ios://MiniShop/Features/Profile/ProfileView.swift#ProfileView.router"
+      ]
+    }
+  ],
+  "changed_files": [
+    "android/app/src/main/java/com/minishop/navigation/MiniShopNavHost.kt",
+    "android/app/src/main/java/com/minishop/navigation/Routes.kt",
+    "android/app/src/main/java/com/minishop/ui/profile/ProfileScreen.kt",
+    "harmony/entry/src/main/ets/pages/ProfilePage.ets",
+    "ios/MiniShop/Features/Profile/ProfileView.swift",
+    "ios/MiniShop/Navigation/AppRouter.swift",
+    "ios/MiniShop/Navigation/Route.swift"
+  ]
+}

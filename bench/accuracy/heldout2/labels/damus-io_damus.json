@@ -1,0 +1,492 @@
+{
+ "repo": "damus-io/damus",
+ "url": "https://github.com/damus-io/damus",
+ "commit": "4a94f666d7e159e380e10b4dbbb2967d1688709e",
+ "platform_roots": {
+  "ios": [
+   "damus",
+   "share extension",
+   "highlighter action extension",
+   "DamusNotificationService"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "ios",
+   "route_id": "Route.ProfileByKey",
+   "symbol": "Route.ProfileByKey",
+   "file": "damus/Shared/Utilities/Router.swift",
+   "kind": "swiftui-route-enum",
+   "screen_fn": "ProfileView",
+   "view_file": "damus/Features/Profile/Views/ProfileView.swift",
+   "note": "Profile and ProfileByKey both render ProfileView"
+  },
+  {
+   "platform": "ios",
+   "route_id": "Route.Followers",
+   "symbol": "Route.Followers",
+   "file": "damus/Shared/Utilities/Router.swift",
+   "kind": "swiftui-route-enum",
+   "screen_fn": "FollowersView",
+   "view_file": "damus/Features/Follows/Views/FollowingView.swift",
+   "note": "FollowersView struct is declared inside FollowingView.swift"
+  },
+  {
+   "platform": "ios",
+   "route_id": "Route.RelayDetail",
+   "symbol": "Route.RelayDetail",
+   "file": "damus/Shared/Utilities/Router.swift",
+   "kind": "swiftui-route-enum",
+   "screen_fn": "RelayDetailView",
+   "view_file": "damus/Features/Relays/Views/RelayDetailView.swift"
+  },
+  {
+   "platform": "ios",
+   "route_id": "Route.MuteList",
+   "symbol": "Route.MuteList",
+   "file": "damus/Shared/Utilities/Router.swift",
+   "kind": "swiftui-route-enum",
+   "screen_fn": "MutelistView",
+   "view_file": "damus/Features/Muting/Views/MutelistView.swift"
+  },
+  {
+   "platform": "ios",
+   "route_id": "Route.RelayConfig",
+   "symbol": "Route.RelayConfig",
+   "file": "damus/Shared/Utilities/Router.swift",
+   "kind": "swiftui-route-enum",
+   "screen_fn": "RelayConfigView",
+   "view_file": "damus/Features/Relays/Views/RelayConfigView.swift"
+  },
+  {
+   "platform": "ios",
+   "route_id": "Route.Bookmarks",
+   "symbol": "Route.Bookmarks",
+   "file": "damus/Shared/Utilities/Router.swift",
+   "kind": "swiftui-route-enum",
+   "screen_fn": "BookmarksView",
+   "view_file": "damus/Features/Bookmarks/Views/BookmarksView.swift"
+  },
+  {
+   "platform": "ios",
+   "route_id": "Route.Config",
+   "symbol": "Route.Config",
+   "file": "damus/Shared/Utilities/Router.swift",
+   "kind": "swiftui-route-enum",
+   "screen_fn": "ConfigView",
+   "view_file": "damus/Features/Settings/Views/ConfigView.swift"
+  },
+  {
+   "platform": "ios",
+   "route_id": "Route.EditMetadata",
+   "symbol": "Route.EditMetadata",
+   "file": "damus/Shared/Utilities/Router.swift",
+   "kind": "swiftui-route-enum",
+   "screen_fn": "EditMetadataView",
+   "view_file": "damus/Features/Profile/Views/EditMetadataView.swift"
+  },
+  {
+   "platform": "ios",
+   "route_id": "Route.DMChat",
+   "symbol": "Route.DMChat",
+   "file": "damus/Shared/Utilities/Router.swift",
+   "kind": "swiftui-route-enum",
+   "screen_fn": "DMChatView",
+   "view_file": "damus/Features/DMs/Views/DMChatView.swift"
+  },
+  {
+   "platform": "ios",
+   "route_id": "Route.KeySettings",
+   "symbol": "Route.KeySettings",
+   "file": "damus/Shared/Utilities/Router.swift",
+   "kind": "swiftui-route-enum",
+   "screen_fn": "KeySettingsView",
+   "view_file": "damus/Features/Settings/Views/KeySettingsView.swift"
+  },
+  {
+   "platform": "ios",
+   "route_id": "Route.Thread",
+   "symbol": "Route.Thread",
+   "file": "damus/Shared/Utilities/Router.swift",
+   "kind": "swiftui-route-enum",
+   "screen_fn": "ChatroomThreadView",
+   "view_file": "damus/Features/Chat/ChatroomThreadView.swift",
+   "note": "old ThreadView call is commented out"
+  },
+  {
+   "platform": "ios",
+   "route_id": "Route.Zaps",
+   "symbol": "Route.Zaps",
+   "file": "damus/Shared/Utilities/Router.swift",
+   "kind": "swiftui-route-enum",
+   "screen_fn": "ZapsView",
+   "view_file": "damus/Features/Zaps/Views/ZapsView.swift"
+  },
+  {
+   "platform": "ios",
+   "route_id": "Route.Search",
+   "symbol": "Route.Search",
+   "file": "damus/Shared/Utilities/Router.swift",
+   "kind": "swiftui-route-enum",
+   "screen_fn": "SearchView",
+   "view_file": "damus/Features/Search/Views/SearchView.swift"
+  },
+  {
+   "platform": "ios",
+   "route_id": "Route.EULA",
+   "symbol": "Route.EULA",
+   "file": "damus/Shared/Utilities/Router.swift",
+   "kind": "swiftui-route-enum",
+   "screen_fn": "EULAView",
+   "view_file": "damus/Features/Onboarding/Views/EULAView.swift"
+  },
+  {
+   "platform": "ios",
+   "route_id": "Route.Login",
+   "symbol": "Route.Login",
+   "file": "damus/Shared/Utilities/Router.swift",
+   "kind": "swiftui-route-enum",
+   "screen_fn": "LoginView",
+   "view_file": "damus/Features/Onboarding/Views/LoginView.swift"
+  },
+  {
+   "platform": "ios",
+   "route_id": "Route.CreateAccount",
+   "symbol": "Route.CreateAccount",
+   "file": "damus/Shared/Utilities/Router.swift",
+   "kind": "swiftui-route-enum",
+   "screen_fn": "CreateAccountView",
+   "view_file": "damus/Features/Onboarding/Views/CreateAccountView.swift"
+  },
+  {
+   "platform": "ios",
+   "route_id": "Route.SaveKeys",
+   "symbol": "Route.SaveKeys",
+   "file": "damus/Shared/Utilities/Router.swift",
+   "kind": "swiftui-route-enum",
+   "screen_fn": "SaveKeysView",
+   "view_file": "damus/Features/Onboarding/Views/SaveKeysView.swift"
+  },
+  {
+   "platform": "ios",
+   "route_id": "Route.Wallet",
+   "symbol": "Route.Wallet",
+   "file": "damus/Shared/Utilities/Router.swift",
+   "kind": "swiftui-route-enum",
+   "screen_fn": "WalletView",
+   "view_file": "damus/Features/Wallet/Views/WalletView.swift"
+  },
+  {
+   "platform": "ios",
+   "route_id": "Route.FollowPack",
+   "symbol": "Route.FollowPack",
+   "file": "damus/Shared/Utilities/Router.swift",
+   "kind": "swiftui-route-enum",
+   "screen_fn": "FollowPackView",
+   "view_file": "damus/Features/FollowPack/Views/FollowPackView.swift"
+  },
+  {
+   "platform": "ios",
+   "route_id": "Route.LiveEvent",
+   "symbol": "Route.LiveEvent",
+   "file": "damus/Shared/Utilities/Router.swift",
+   "kind": "swiftui-route-enum",
+   "screen_fn": "LiveStreamView",
+   "view_file": "damus/Features/Live/LiveStream/Views/LiveStreamView.swift"
+  },
+  {
+   "platform": "ios",
+   "route_id": "Route.DamusPurple",
+   "symbol": "Route.DamusPurple",
+   "file": "damus/Shared/Utilities/Router.swift",
+   "kind": "swiftui-route-enum",
+   "screen_fn": "DamusPurpleView",
+   "view_file": "damus/Features/Purple/Views/DamusPurpleView.swift"
+  },
+  {
+   "platform": "ios",
+   "route_id": "Route.Script",
+   "symbol": "Route.Script",
+   "file": "damus/Shared/Utilities/Router.swift",
+   "kind": "swiftui-route-enum",
+   "screen_fn": "LoadScript",
+   "note": "view is LoadScript (no View suffix)"
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "ios",
+   "symbol": "Route",
+   "file": "damus/Shared/Utilities/Router.swift",
+   "reason": "the route enum itself"
+  },
+  {
+   "platform": "ios",
+   "symbol": "NavigationCoordinator",
+   "file": "damus/Shared/Utilities/Router.swift",
+   "reason": "navigation state object"
+  },
+  {
+   "platform": "ios",
+   "symbol": "ProfileView_Previews",
+   "file": "damus/Features/Profile/Views/ProfileView.swift",
+   "reason": "PreviewProvider"
+  },
+  {
+   "platform": "ios",
+   "symbol": "ProfilePicView",
+   "file": "damus/Features/Profile/Views/ProfilePicView.swift",
+   "reason": "avatar component"
+  },
+  {
+   "platform": "ios",
+   "symbol": "EventView",
+   "file": "damus/Features/Events/EventView.swift",
+   "reason": "timeline row component"
+  }
+ ],
+ "deeplinks": [
+  {
+   "platform": "ios",
+   "scheme": "damus",
+   "host": "",
+   "path": "",
+   "file": "damus/Info.plist",
+   "source": "CFBundleURLSchemes"
+  },
+  {
+   "platform": "ios",
+   "scheme": "nostr",
+   "host": "",
+   "path": "",
+   "file": "damus/Info.plist",
+   "source": "CFBundleURLSchemes"
+  },
+  {
+   "platform": "ios",
+   "scheme": "nostrwalletconnect",
+   "host": "",
+   "path": "",
+   "file": "damus/Info.plist",
+   "source": "CFBundleURLSchemes"
+  },
+  {
+   "platform": "ios",
+   "scheme": "nostr+walletconnect",
+   "host": "",
+   "path": "",
+   "file": "damus/Info.plist",
+   "source": "CFBundleURLSchemes"
+  },
+  {
+   "platform": "ios",
+   "scheme": "https",
+   "host": "damus.io",
+   "path": "",
+   "file": "damus/damus.entitlements",
+   "source": "applinks"
+  },
+  {
+   "platform": "ios",
+   "scheme": "damus",
+   "host": "",
+   "path": "purple:verify",
+   "file": "damus/Features/Purple/Models/DamusPurpleURL.swift",
+   "source": "components.path switch",
+   "kind": "in-app-url",
+   "optional": true,
+   "note": "opaque URL damus:purple:verify?id=.."
+  },
+  {
+   "platform": "ios",
+   "scheme": "damus",
+   "host": "",
+   "path": "purple:welcome",
+   "file": "damus/Features/Purple/Models/DamusPurpleURL.swift",
+   "source": "components.path switch",
+   "kind": "in-app-url",
+   "optional": true
+  },
+  {
+   "platform": "ios",
+   "scheme": "damus",
+   "host": "",
+   "path": "purple:landing",
+   "file": "damus/Features/Purple/Models/DamusPurpleURL.swift",
+   "source": "components.path switch",
+   "kind": "in-app-url",
+   "optional": true
+  }
+ ],
+ "testids": [
+  {
+   "platform": "ios",
+   "tid": "sign_in_option_button",
+   "file": "damus/AppAccessibilityIdentifiers.swift",
+   "line": 21,
+   "alt_files": [
+    "damus/Features/Onboarding/Views/SetupView.swift"
+   ],
+   "use_line": 60,
+   "note": "enum AppAccessibilityIdentifiers: String case; used as .rawValue"
+  },
+  {
+   "platform": "ios",
+   "tid": "sign_in_nsec_key_entry_field",
+   "file": "damus/AppAccessibilityIdentifiers.swift",
+   "line": 23,
+   "alt_files": [
+    "damus/Features/Onboarding/Views/LoginView.swift"
+   ],
+   "use_line": 382,
+   "note": "enum AppAccessibilityIdentifiers: String case; used as .rawValue"
+  },
+  {
+   "platform": "ios",
+   "tid": "sign_in_confirm_button",
+   "file": "damus/AppAccessibilityIdentifiers.swift",
+   "line": 25,
+   "alt_files": [
+    "damus/Features/Onboarding/Views/LoginView.swift"
+   ],
+   "use_line": 107,
+   "note": "enum AppAccessibilityIdentifiers: String case; used as .rawValue"
+  },
+  {
+   "platform": "ios",
+   "tid": "sign_up_option_button",
+   "file": "damus/AppAccessibilityIdentifiers.swift",
+   "line": 32,
+   "alt_files": [
+    "damus/Features/Onboarding/Views/SetupView.swift"
+   ],
+   "use_line": 47,
+   "note": "enum AppAccessibilityIdentifiers: String case; used as .rawValue"
+  },
+  {
+   "platform": "ios",
+   "tid": "onboarding_interest_option_button",
+   "file": "damus/AppAccessibilityIdentifiers.swift",
+   "line": 49,
+   "alt_files": [
+    "damus/Features/Onboarding/Views/InterestSelectionView.swift"
+   ],
+   "use_line": 86,
+   "note": "enum AppAccessibilityIdentifiers: String case; used as .rawValue"
+  },
+  {
+   "platform": "ios",
+   "tid": "onboarding_interest_page_next_page",
+   "file": "damus/AppAccessibilityIdentifiers.swift",
+   "line": 52,
+   "alt_files": [
+    "damus/Features/Onboarding/Views/InterestSelectionView.swift"
+   ],
+   "use_line": 55,
+   "note": "enum AppAccessibilityIdentifiers: String case; used as .rawValue"
+  },
+  {
+   "platform": "ios",
+   "tid": "post_button",
+   "file": "damus/AppAccessibilityIdentifiers.swift",
+   "line": 82,
+   "alt_files": [
+    "damus/Shared/Buttons/PostButton.swift"
+   ],
+   "use_line": 34,
+   "note": "enum AppAccessibilityIdentifiers: String case; used as .rawValue"
+  },
+  {
+   "platform": "ios",
+   "tid": "main_side_menu_button",
+   "file": "damus/AppAccessibilityIdentifiers.swift",
+   "line": 88,
+   "alt_files": [
+    "damus/ContentView.swift"
+   ],
+   "use_line": 895,
+   "note": "enum AppAccessibilityIdentifiers: String case; used as .rawValue"
+  },
+  {
+   "platform": "ios",
+   "tid": "main_timeline_filter_accessory",
+   "file": "damus/AppAccessibilityIdentifiers.swift",
+   "line": 95,
+   "alt_files": [
+    "damus/Shared/Components/TimelineFilterAccessory.swift"
+   ],
+   "use_line": 90,
+   "note": "enum AppAccessibilityIdentifiers: String case; used as .rawValue"
+  },
+  {
+   "platform": "ios",
+   "tid": "own_profile_banner_image_edit_button",
+   "file": "damus/AppAccessibilityIdentifiers.swift",
+   "line": 118,
+   "alt_files": [
+    "damus/Shared/Media/Images/BannerImageView.swift"
+   ],
+   "use_line": 47,
+   "note": "enum AppAccessibilityIdentifiers: String case; used as .rawValue"
+  }
+ ],
+ "apis": [
+  {
+   "method": "GET",
+   "path": "accounts/{pubkey}",
+   "file": "damus/Features/Purple/Models/DamusPurple.swift",
+   "note": "api_base_url().appendingPathComponent(\"accounts/\\(pubkey.hex())\")"
+  },
+  {
+   "method": "GET",
+   "path": "/accounts/{pubkey}/account-uuid",
+   "file": "damus/Features/Purple/Models/DamusPurple.swift"
+  },
+  {
+   "method": "POST",
+   "path": "accounts/{pubkey}/apple-iap/app-store-receipt",
+   "file": "damus/Features/Purple/Models/DamusPurple.swift"
+  },
+  {
+   "method": "GET",
+   "path": "ln-checkout/{checkout_id}",
+   "file": "damus/Features/Purple/Models/DamusPurple.swift"
+  },
+  {
+   "method": "POST",
+   "path": "ln-checkout",
+   "file": "damus/Features/Purple/Models/DamusPurple.swift"
+  },
+  {
+   "method": "POST",
+   "path": "https://coinos.io/api/register",
+   "file": "damus/Features/Wallet/Models/CoinosDeterministicAccountClient.swift"
+  },
+  {
+   "method": "POST",
+   "path": "https://coinos.io/api/login",
+   "file": "damus/Features/Wallet/Models/CoinosDeterministicAccountClient.swift"
+  },
+  {
+   "method": "PUT",
+   "path": "user-info/{pubkey}/{token}",
+   "file": "damus/Features/Notifications/Models/PushNotificationClient.swift",
+   "optional": true,
+   "note": "chained appendingPathComponent"
+  },
+  {
+   "method": "POST",
+   "path": "/translate",
+   "file": "damus/Features/Translations/Models/Translator.swift",
+   "note": "nostr.wine / nokyctranslate / libretranslate makeURL(base, path:\"/translate\")"
+  },
+  {
+   "method": "POST",
+   "path": "/v2/translate",
+   "file": "damus/Features/Translations/Models/Translator.swift",
+   "note": "DeepL"
+  }
+ ],
+ "claims": [],
+ "notes": "SwiftUI NavigationStack driven by `enum Route: Hashable` (Router.swift, ~50 cases sampled 22) with `func view()` switch mapping case->View; route_id = Route.Case, screen_fn = View struct (FollowersView lives in FollowingView.swift; Profile/ProfileByKey share ProfileView). testIDs centralized in enum AppAccessibilityIdentifiers (rawValue = case name), used via .accessibilityIdentifier(X.rawValue). Deep links: 4 Info.plist schemes + applinks damus.io; damus:purple:* opaque in-app URLs optional. APIs via appendingPathComponent on runtime base (Purple api.damus.io), Coinos literals, translator makeURL(path:)."
+}

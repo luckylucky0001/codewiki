@@ -1,0 +1,8 @@
+frozen    shop-android   apps/shop-android/docs/notes.md
+skeleton  shop-ios       apps/shop-ios/docs/navigation.md  [navigation]
+adopted   repo           docs/adr/0001-native-ui-per-platform.md  [knowledge-layer]  (knowledge layer)
+adopted   repo           docs/architecture.md  [architecture]
+frozen    repo           docs/onboarding.md  [extra]
+skeleton  repo           docs/testing.md  [testing]
+extra registry .kb/docs-schema-extra.yaml: docs/onboarding.md (frozen)
+unregistered custom docs (registered on the next kb docs compound): apps/shop-android/docs/notes.md

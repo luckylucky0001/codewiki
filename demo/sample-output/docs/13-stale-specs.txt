@@ -1,0 +1,2 @@
+implemented-never-verified   Implemented  specs/001-cart/spec.md — Implemented but never marked Verified
+implemented-conflict         Implemented  specs/001-cart/spec.md — Implemented but the code contradicts it

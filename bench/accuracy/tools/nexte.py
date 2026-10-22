@@ -1,0 +1,34 @@
+import sys; sys.path.insert(0,'.')
+from mk import *
+I='entry/src/main/ets/pages/Index.ets'
+rt=[('GalleryDetail','GalleryDetailPage','feature/gallery/src/main/ets/pages/GalleryDetailPage.ets'),('GalleryInfo','GalleryInfoPage','feature/gallery/src/main/ets/pages/GalleryInfoPage.ets'),('GalleryTorrents','GalleryTorrentsPage','feature/gallery/src/main/ets/pages/GalleryTorrentsPage.ets'),('Search','GallerySearchPage','feature/search/src/main/ets/pages/GallerySearchPage.ets'),('EhLogin','EhLoginWebPage','entry/src/main/ets/pages/EhLoginWebPage.ets'),('MyTags','MyTagsPage','feature/user/src/main/ets/pages/MyTagsPage.ets'),('History','ViewedHistoryPage','feature/user/src/main/ets/pages/ViewedHistoryPage.ets'),('FavoriteSelector','FavoriteSelectorPage','feature/user/src/main/ets/pages/FavoriteSelectorPage.ets'),('TabManager','TabManagerPage','feature/home/src/main/ets/pages/TabManagerPage.ets'),('AllThumbnails','GalleryAllThumbnailsPage','feature/gallery/src/main/ets/pages/GalleryAllThumbnailsPage.ets'),('GalleryComments','GalleryCommentsPage','feature/gallery/src/main/ets/pages/GalleryCommentsPage.ets'),('EhSettings','EhSettingsPage','feature/settings/src/main/ets/pages/EhSettingsPage.ets'),('Account','AccountPage','feature/settings/src/main/ets/pages/AccountPage.ets'),('LayoutSettings','LayoutSettingsPage','feature/settings/src/main/ets/pages/LayoutSettingsPage.ets'),('CacheSettings','CacheSettingsPage','feature/settings/src/main/ets/pages/CacheSettingsPage.ets'),('DownloadSettings','DownloadSettingsPage','feature/settings/src/main/ets/pages/DownloadSettingsPage.ets'),('SyncSettings','SyncSettingsPage','feature/settings/src/main/ets/pages/SyncSettingsPage.ets'),('About','AboutPage','feature/settings/src/main/ets/pages/AboutPage.ets'),('SecuritySettings','SecuritySettingsPage','feature/settings/src/main/ets/pages/SecuritySettingsPage.ets')]
+scr=[S('harmony',r,f,'NavDestination',symbol=p,builder='Index%sRoute'%r,builder_file=I,note='pushPathByName(%r) -> IndexRouteCoordinator key -> wrapBuilder(Index%sRoute) in Index.ets -> %s'%(r,r,p)) for r,p,f in rt]
+scr+=[S('harmony','Reader','feature/reader/src/main/ets/pages/ReaderPage.ets','NavDestination',symbol='ReaderPage',note="Index.routerMap @Builder if/else name === 'Reader' (overlay stack)"),
+S('harmony','ReaderSettings','feature/settings/src/main/ets/pages/ReaderSettingsPage.ets','NavDestination',symbol='ReaderSettingsPage',note="name === 'ReaderSettings'"),
+S('harmony','pages/Index',I,'main_pages',symbol='Index',note='only main_pages entry; HdsNavigation shell')]
+ns=[N('harmony','IndexGalleryDetailRoute',I,'@Builder wrapper function, not itself a screen (the route is GalleryDetail)'),
+N('harmony','SettingsPage row nexte-settings-reader-row','feature/settings/src/main/ets/pages/SettingsPage.ets','row component, not a route',borderline=True),
+N('harmony','GalleryCommentsCard','feature/gallery/src/main/ets/components/GalleryCommentsCard.ets','card component used in detail page'),
+N('harmony','IndexReaderOverlayBackdropRoute',I,"overlay backdrop builder for name 'ReaderOverlayBackdrop' - visual layer, not a screen",borderline=True),
+N('harmony','GalleryCommentsCard (dup removed)','feature/gallery/src/main/ets/components/GalleryCommentsCard.ets','placeholder',skip=True)][:-1]+[N('harmony','IndexEmptyDestinationRoute',I,'empty placeholder destination builder (emptyDestinationBuilder fallback)')]
+M='entry/src/main/module.json5'
+dl=[D('harmony','https','e-hentai.org','/g/',M,'skills uris pathStartWith (ohos.want.action.viewData)'),D('harmony','https','e-hentai.org','/s/',M,'skills uris pathStartWith'),D('harmony','https','exhentai.org','/g/',M,'skills uris pathStartWith'),D('harmony','https','exhentai.org','/s/',M,'skills uris pathStartWith')]
+tt=lambda tid,f,l: T('harmony',tid,f,l)
+tids=[tt('reader-overlay-backdrop',I,274),tt('nexte-reader-opening-root-proxy',I,354),tt('rkit-entry-source-pending',I,653),tt('nexte-root-navigation',I,2896),tt('reader-overlay-navigation',I,3076),tt('nexte-settings-reader-row','feature/settings/src/main/ets/pages/SettingsPage.ets',175),tt('comment-block-action','feature/gallery/src/main/ets/components/GalleryCommentsCard.ets',2212),tt('gallery-detail-pane','feature/gallery/src/main/ets/pages/GalleryDetailPage.ets',3046),tt('comment-word-flow','feature/gallery/src/main/ets/pages/GalleryCommentsPage.ets',1457),tt('nexte-download-queue-root','feature/download/src/main/ets/pages/DownloadQueuePage.ets',2068)]
+E='shared/src/main/ets/network/EhApiService.ets'
+apis=[A('GET','/uconfig.php',E,note='`${EhConstants.baseUrl(isEx)}/uconfig.php` host e-hentai.org|exhentai.org'),A('POST','/uconfig.php',E,note='saveUserConfig postFormUrlEncoded'),A('GET','/home.php',E,note='EH_BASE_URL'),A('GET','/exchange.php',E,note='?t=gp'),A('GET','/gallerytorrents.php',E),A('GET','/favorites.php',E),A('GET','/toplist.php',E),A('GET','/gallerypopups.php',E),A('GET','/archiver.php',E),A('POST','/api.php',E,note='EhConstants.API_PATH used by several JSON API calls',optional=True)]
+for a in apis: a.setdefault('note',''); a['note']+=' (template literal with base URL variable; path suffix is static)'
+AR='docs/architecture.md'
+cl=[C('C1','NextE 包名为 com.erosteam.nexte',AR,'verified','AppScope/app.json5:3'),
+C('C2','build-profile.json5 在原有 10 个模块之外增加 reader_core、reader_ui 两个实验 HAR',AR,'verified','build-profile.json5:18-29 (12 modules)'),
+C('C3','7 个 feature 只依赖 shared，彼此不互相 import',AR,'conflict','feature/reader/oh-package.json5 also depends on @reader-kit/core and @reader-kit/ui'),
+C('C4','默认产品的 targetSdkVersion 为 26.0.0、compatibleSdkVersion 为 6.1.0(23)',AR,'verified','build-profile.json5:6-7'),
+C('C5','Index.ets 使用 HdsNavigation + HdsTabs',AR,'verified',I+':11-12'),
+C('C6','命名路由由 IndexRouteCoordinator/routerMap 统一登记',AR,'verified','entry/src/main/ets/model/IndexRouteCoordinator.ets'),
+C('C7','EntryAbility 接收 /g/、/s/ 深链',AR,'verified',M+' skills uris'),
+C('C8','搜索是从标题栏进入的命名路由，不是根 Tab',AR,'verified',I+":1501 pushPathByName('Search')"),
+C('C9','entry/, feature/ and shared/ use V2 state only (no V1 decorators)','AGENTS.md','unverifiable','scripts/test_v1_decorator_inventory_contract.mjs',note='requires running the contract script / full decorator scan'),
+C('C10','Before any push, run bash scripts/run_ci_preflight.sh','AGENTS.md','verified','scripts/run_ci_preflight.sh')]
+write('erosTeam_NextE',repo='erosTeam/NextE',url='https://github.com/erosTeam/NextE',commit='7cc8d638458bd808b1cfeebf23b3e1947b1f5be4',
+platform_roots={'harmony':['entry','feature','shared']},screens=scr,not_screens=ns,deeplinks=dl,testids=tids,apis=apis,claims=cl,
+notes='No router_map.json: routes are dispatched in-code (pushPathByName name -> IndexRouteCoordinator string map -> wrapBuilder table -> Index*Route @Builder -> feature Page struct). Very indirect; a route_id match on name or symbol (Page struct) both count. API URLs are template literals over EhConstants.baseUrl(isEx). Clone reused read-only from oss2.')

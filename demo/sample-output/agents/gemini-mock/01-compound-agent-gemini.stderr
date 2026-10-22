@@ -1,0 +1,3 @@
+kb compound: head=1635584 base=6edf52f mode=incremental tasks=2 (anchors changed ∪ signature changes propagated along reference edges)
+  [violation] update   pages/features/cart.md             cmd reverted writes outside write set: pages/evil-gemini.md (in 2700 / out 90 tok, reasoning 12)
+  [violation] update   pages/features/product_detail.md   cmd reverted writes outside write set: pages/evil-gemini.md (in 2700 / out 90 tok, reasoning 12)

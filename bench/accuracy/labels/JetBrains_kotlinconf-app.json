@@ -1,0 +1,528 @@
+{
+ "repo": "JetBrains/kotlinconf-app",
+ "url": "https://github.com/JetBrains/kotlinconf-app",
+ "commit": "907ce238e1ffe2472991eeb2d2bfa386bdb4ea8f",
+ "platform_roots": {
+  "kmp": [
+   "app/shared",
+   "core"
+  ],
+  "android": [
+   "app/androidApp"
+  ],
+  "ios": [
+   "app/iosApp"
+  ],
+  "desktop": [
+   "app/desktopApp"
+  ],
+  "web": [
+   "app/webApp",
+   "app/adminApp"
+  ],
+  "server": [
+   "backend"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "kmp",
+   "route_id": "ScheduleScreen",
+   "symbol": "ScheduleScreen",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/navigation/Routes.kt",
+   "kind": "compose-route",
+   "serial_name": "Schedule",
+   "aliases": [
+    "Schedule"
+   ],
+   "note": "@Serializable @SerialName('Schedule') route : AppRoute (Navigation3/typed nav)"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "SpeakersScreen",
+   "symbol": "SpeakersScreen",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/navigation/Routes.kt",
+   "kind": "compose-route",
+   "serial_name": "Speakers",
+   "aliases": [
+    "Speakers"
+   ],
+   "note": "@Serializable @SerialName('Speakers') route : AppRoute (Navigation3/typed nav)"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "MapScreen",
+   "symbol": "MapScreen",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/navigation/Routes.kt",
+   "kind": "compose-route",
+   "serial_name": "Map",
+   "aliases": [
+    "Map"
+   ],
+   "note": "@Serializable @SerialName('Map') route : AppRoute (Navigation3/typed nav)"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "GoldenKodeeScreen",
+   "symbol": "GoldenKodeeScreen",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/navigation/Routes.kt",
+   "kind": "compose-route",
+   "serial_name": "GoldenKodee",
+   "aliases": [
+    "GoldenKodee"
+   ],
+   "note": "@Serializable @SerialName('GoldenKodee') route : AppRoute (Navigation3/typed nav)"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "InfoScreen",
+   "symbol": "InfoScreen",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/navigation/Routes.kt",
+   "kind": "compose-route",
+   "serial_name": "Info",
+   "aliases": [
+    "Info"
+   ],
+   "note": "@Serializable @SerialName('Info') route : AppRoute (Navigation3/typed nav)"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "AboutConferenceScreen",
+   "symbol": "AboutConferenceScreen",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/navigation/Routes.kt",
+   "kind": "compose-route",
+   "serial_name": "AboutConference",
+   "aliases": [
+    "AboutConference"
+   ],
+   "note": "@Serializable @SerialName('AboutConference') route : AppRoute (Navigation3/typed nav)"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "CodeOfConductScreen",
+   "symbol": "CodeOfConductScreen",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/navigation/Routes.kt",
+   "kind": "compose-route",
+   "serial_name": "CodeOfConduct",
+   "aliases": [
+    "CodeOfConduct"
+   ],
+   "note": "@Serializable @SerialName('CodeOfConduct') route : AppRoute (Navigation3/typed nav)"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "AboutAppScreen",
+   "symbol": "AboutAppScreen",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/navigation/Routes.kt",
+   "kind": "compose-route",
+   "serial_name": "AboutApp",
+   "aliases": [
+    "AboutApp"
+   ],
+   "note": "@Serializable @SerialName('AboutApp') route : AppRoute (Navigation3/typed nav)"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "StartPrivacyNoticeScreen",
+   "symbol": "StartPrivacyNoticeScreen",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/navigation/Routes.kt",
+   "kind": "compose-route",
+   "serial_name": "WelcomePrivacyNotice",
+   "aliases": [
+    "WelcomePrivacyNotice"
+   ],
+   "note": "@Serializable @SerialName('WelcomePrivacyNotice') route : AppRoute (Navigation3/typed nav)"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "StartNotificationsScreen",
+   "symbol": "StartNotificationsScreen",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/navigation/Routes.kt",
+   "kind": "compose-route",
+   "serial_name": "WelcomeSetupNotifications",
+   "aliases": [
+    "WelcomeSetupNotifications"
+   ],
+   "note": "@Serializable @SerialName('WelcomeSetupNotifications') route : AppRoute (Navigation3/typed nav)"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "SettingsScreen",
+   "symbol": "SettingsScreen",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/navigation/Routes.kt",
+   "kind": "compose-route",
+   "serial_name": "Settings",
+   "aliases": [
+    "Settings"
+   ],
+   "note": "@Serializable @SerialName('Settings') route : AppRoute (Navigation3/typed nav)"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "VisitorPrivacyNoticeScreen",
+   "symbol": "VisitorPrivacyNoticeScreen",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/navigation/Routes.kt",
+   "kind": "compose-route",
+   "serial_name": "VisitorPrivacyNotice",
+   "aliases": [
+    "VisitorPrivacyNotice"
+   ],
+   "note": "@Serializable @SerialName('VisitorPrivacyNotice') route : AppRoute (Navigation3/typed nav)"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "AppPrivacyNoticeScreen",
+   "symbol": "AppPrivacyNoticeScreen",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/navigation/Routes.kt",
+   "kind": "compose-route",
+   "serial_name": "AppPrivacyNotice",
+   "aliases": [
+    "AppPrivacyNotice"
+   ],
+   "note": "@Serializable @SerialName('AppPrivacyNotice') route : AppRoute (Navigation3/typed nav)"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "TermsOfUseScreen",
+   "symbol": "TermsOfUseScreen",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/navigation/Routes.kt",
+   "kind": "compose-route",
+   "serial_name": "TermsOfUse",
+   "aliases": [
+    "TermsOfUse"
+   ],
+   "note": "@Serializable @SerialName('TermsOfUse') route : AppRoute (Navigation3/typed nav)"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "LicensesScreen",
+   "symbol": "LicensesScreen",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/navigation/Routes.kt",
+   "kind": "compose-route",
+   "serial_name": "Licenses",
+   "aliases": [
+    "Licenses"
+   ],
+   "note": "@Serializable @SerialName('Licenses') route : AppRoute (Navigation3/typed nav)"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "SingleLicenseScreen",
+   "symbol": "SingleLicenseScreen",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/navigation/Routes.kt",
+   "kind": "compose-route",
+   "serial_name": "License",
+   "aliases": [
+    "License"
+   ],
+   "note": "@Serializable @SerialName('License') route : AppRoute (Navigation3/typed nav)"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "PartnersScreen",
+   "symbol": "PartnersScreen",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/navigation/Routes.kt",
+   "kind": "compose-route",
+   "serial_name": "Partners",
+   "aliases": [
+    "Partners"
+   ],
+   "note": "@Serializable @SerialName('Partners') route : AppRoute (Navigation3/typed nav)"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "PartnerDetailScreen",
+   "symbol": "PartnerDetailScreen",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/navigation/Routes.kt",
+   "kind": "compose-route",
+   "serial_name": "Partner",
+   "aliases": [
+    "Partner"
+   ],
+   "note": "@Serializable @SerialName('Partner') route : AppRoute (Navigation3/typed nav)"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "SessionScreen",
+   "symbol": "SessionScreen",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/navigation/Routes.kt",
+   "kind": "compose-route",
+   "serial_name": "Session",
+   "aliases": [
+    "Session"
+   ],
+   "note": "@Serializable @SerialName('Session') route : AppRoute (Navigation3/typed nav)"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "SpeakerDetailScreen",
+   "symbol": "SpeakerDetailScreen",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/navigation/Routes.kt",
+   "kind": "compose-route",
+   "serial_name": "Speaker",
+   "aliases": [
+    "Speaker"
+   ],
+   "note": "@Serializable @SerialName('Speaker') route : AppRoute (Navigation3/typed nav)"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "NestedMapScreen",
+   "symbol": "NestedMapScreen",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/navigation/Routes.kt",
+   "kind": "compose-route",
+   "serial_name": "MapDetail",
+   "aliases": [
+    "MapDetail"
+   ],
+   "note": "@Serializable @SerialName('MapDetail') route : AppRoute (Navigation3/typed nav)"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "GoldenKodeeFinalistScreen",
+   "symbol": "GoldenKodeeFinalistScreen",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/navigation/Routes.kt",
+   "kind": "compose-route",
+   "serial_name": "GoldenKodeeFinalist",
+   "aliases": [
+    "GoldenKodeeFinalist"
+   ],
+   "note": "@Serializable @SerialName('GoldenKodeeFinalist') route : AppRoute (Navigation3/typed nav)"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "DeveloperMenuScreen",
+   "symbol": "DeveloperMenuScreen",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/navigation/Routes.kt",
+   "kind": "compose-route",
+   "serial_name": "DeveloperMenu",
+   "aliases": [
+    "DeveloperMenu"
+   ],
+   "note": "@Serializable @SerialName('DeveloperMenu') route : AppRoute (Navigation3/typed nav)"
+  },
+  {
+   "platform": "kmp",
+   "route_id": "AppPrivacyNoticePrompt",
+   "symbol": "AppPrivacyNoticePrompt",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/navigation/Routes.kt",
+   "kind": "compose-route",
+   "serial_name": "AppPrivacyNoticePrompt",
+   "aliases": [
+    "AppPrivacyNoticePrompt"
+   ],
+   "note": "@Serializable @SerialName('AppPrivacyNoticePrompt') route : AppRoute (Navigation3/typed nav)"
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "kmp",
+   "symbol": "AppRoute",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/navigation/Routes.kt",
+   "reason": "sealed base interface"
+  },
+  {
+   "platform": "kmp",
+   "symbol": "TopLevelRoute",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/navigation/Routes.kt",
+   "reason": "marker interface"
+  },
+  {
+   "platform": "kmp",
+   "symbol": "DaySeparatorItem",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/screens/ScheduleViewModel.kt",
+   "reason": "list item model"
+  },
+  {
+   "platform": "kmp",
+   "symbol": "PrivacyNoticeState.Idle",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/screens/PrivacyNoticeViewModel.kt",
+   "reason": "UI state object"
+  },
+  {
+   "platform": "web",
+   "symbol": "Screen.Overview",
+   "file": "app/adminApp/src/jsMain/kotlin/org/jetbrains/kotlinconf/admin/Main.kt",
+   "reason": "admin web app (JS) screen enum, not part of mobile app",
+   "borderline": true
+  },
+  {
+   "platform": "server",
+   "symbol": "AdminVoteInfo",
+   "file": "backend/src/main/kotlin/org/jetbrains/kotlinconf/backend/routes/AdminDtos.kt",
+   "reason": "backend DTO in a routes/ folder"
+  }
+ ],
+ "deeplinks": [],
+ "testids": [],
+ "apis": [
+  {
+   "method": "GET",
+   "path": "/time",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/network/ApplicationApi.kt",
+   "note": "client.get { apiUrl(\"x\") } where apiUrl sets encodedPath = \"$year/$path\" (Yearly) ; backend mirrors in backend/src/main/kotlin/.../routes/*.kt under route(\"/{year}\")"
+  },
+  {
+   "method": "GET",
+   "path": "/config",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/network/ApplicationApi.kt",
+   "note": "client.get { apiUrl(\"x\") } where apiUrl sets encodedPath = \"$year/$path\" (Yearly) ; backend mirrors in backend/src/main/kotlin/.../routes/*.kt under route(\"/{year}\")"
+  },
+  {
+   "method": "GET",
+   "path": "/{year}/conference",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/network/YearlyApi.kt",
+   "note": "client.get { apiUrl(\"x\") } where apiUrl sets encodedPath = \"$year/$path\" (Yearly) ; backend mirrors in backend/src/main/kotlin/.../routes/*.kt under route(\"/{year}\")"
+  },
+  {
+   "method": "GET",
+   "path": "/{year}/conference-info",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/network/YearlyApi.kt",
+   "note": "client.get { apiUrl(\"x\") } where apiUrl sets encodedPath = \"$year/$path\" (Yearly) ; backend mirrors in backend/src/main/kotlin/.../routes/*.kt under route(\"/{year}\")"
+  },
+  {
+   "method": "GET",
+   "path": "/{year}/golden-kodee",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/network/YearlyApi.kt",
+   "note": "client.get { apiUrl(\"x\") } where apiUrl sets encodedPath = \"$year/$path\" (Yearly) ; backend mirrors in backend/src/main/kotlin/.../routes/*.kt under route(\"/{year}\")"
+  },
+  {
+   "method": "POST",
+   "path": "/{year}/sign",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/network/YearlyApi.kt",
+   "note": "client.get { apiUrl(\"x\") } where apiUrl sets encodedPath = \"$year/$path\" (Yearly) ; backend mirrors in backend/src/main/kotlin/.../routes/*.kt under route(\"/{year}\")"
+  },
+  {
+   "method": "GET",
+   "path": "/{year}/sign",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/network/YearlyApi.kt",
+   "note": "client.get { apiUrl(\"x\") } where apiUrl sets encodedPath = \"$year/$path\" (Yearly) ; backend mirrors in backend/src/main/kotlin/.../routes/*.kt under route(\"/{year}\")"
+  },
+  {
+   "method": "POST",
+   "path": "/{year}/vote",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/network/YearlyApi.kt",
+   "note": "client.get { apiUrl(\"x\") } where apiUrl sets encodedPath = \"$year/$path\" (Yearly) ; backend mirrors in backend/src/main/kotlin/.../routes/*.kt under route(\"/{year}\")"
+  },
+  {
+   "method": "GET",
+   "path": "/{year}/vote",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/network/YearlyApi.kt",
+   "note": "client.get { apiUrl(\"x\") } where apiUrl sets encodedPath = \"$year/$path\" (Yearly) ; backend mirrors in backend/src/main/kotlin/.../routes/*.kt under route(\"/{year}\")"
+  },
+  {
+   "method": "POST",
+   "path": "/{year}/feedback",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/network/YearlyApi.kt",
+   "note": "client.get { apiUrl(\"x\") } where apiUrl sets encodedPath = \"$year/$path\" (Yearly) ; backend mirrors in backend/src/main/kotlin/.../routes/*.kt under route(\"/{year}\")"
+  },
+  {
+   "method": "GET",
+   "path": "{path}",
+   "file": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/network/YearlyApi.kt",
+   "dynamic": true,
+   "expect": false,
+   "note": "apiUrl(path) with variable path"
+  },
+  {
+   "method": "GET",
+   "path": "/{year}/conference",
+   "file": "backend/src/main/kotlin/org/jetbrains/kotlinconf/backend/routes/ScheduleRoutes.kt",
+   "side": "server",
+   "note": "Ktor server route; extractor may or may not index server routes"
+  },
+  {
+   "method": "POST",
+   "path": "/{year}/sessionizeSync",
+   "file": "backend/src/main/kotlin/org/jetbrains/kotlinconf/backend/routes/AdminRoutes.kt",
+   "side": "server",
+   "optional": true
+  }
+ ],
+ "claims": [
+  {
+   "id": "C1",
+   "text": "a Kotlin Multiplatform project serving Android, iOS, JVM desktop, and WebAssembly clients, backed by a Ktor server",
+   "source": "CLAUDE.md",
+   "label": "verified",
+   "evidence": "app/shared/build.gradle.kts; backend/build.gradle.kts"
+  },
+  {
+   "id": "C2",
+   "text": "The app uses Metro (not Koin) for DI on the client",
+   "source": "CLAUDE.md",
+   "label": "verified",
+   "evidence": "gradle/libs.versions.toml:32 metro; koin only used by backend (backend/build.gradle.kts:53)"
+  },
+  {
+   "id": "C3",
+   "text": ":app:shared targets: android, jvm, iosArm64, iosSimulatorArm64, wasmJs, js",
+   "source": "CLAUDE.md",
+   "label": "verified",
+   "evidence": "app/shared/build.gradle.kts:25-41"
+  },
+  {
+   "id": "C4",
+   "text": ":backend — Ktor/Netty server",
+   "source": "CLAUDE.md",
+   "label": "verified",
+   "evidence": "backend/build.gradle.kts:12 io.ktor.server.netty.EngineMain"
+  },
+  {
+   "id": "C5",
+   "text": "YearGraph — a scoped sub-graph created per active conference year; holds YearlyApi",
+   "source": "CLAUDE.md",
+   "label": "verified",
+   "evidence": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/di/YearGraph.kt:11"
+  },
+  {
+   "id": "C6",
+   "text": "ViewModels are registered into Metro map multibinding with @ContributesIntoMap(AppScope::class)",
+   "source": "CLAUDE.md",
+   "label": "verified",
+   "evidence": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/screens/InfoViewModel.kt:15"
+  },
+  {
+   "id": "C7",
+   "text": "Bump version across all platforms: ./gradlew prepareRelease",
+   "source": "CLAUDE.md",
+   "label": "verified",
+   "evidence": "gradle/releases.gradle.kts:24"
+  },
+  {
+   "id": "C8",
+   "text": "ConferenceService is the central app singleton; fetches AppConfig from the backend on startup",
+   "source": "CLAUDE.md",
+   "label": "verified",
+   "evidence": "app/shared/src/commonMain/kotlin/org/jetbrains/kotlinconf/ConferenceService.kt; network/ApplicationApi.kt:41 apiUrl(\"config\")"
+  },
+  {
+   "id": "C9",
+   "text": "Platform-specific graph (e.g. AndroidAppGraph) — annotated @DependencyGraph(AppScope::class)",
+   "source": "CLAUDE.md",
+   "label": "verified",
+   "evidence": "app/androidApp/src/main/kotlin/org/jetbrains/kotlinconf/android/AndroidAppGraph.kt:12"
+  },
+  {
+   "id": "C10",
+   "text": ":app:ui-components has its own resource class (UiRes) separate from the main app",
+   "source": "CLAUDE.md",
+   "label": "unverifiable",
+   "evidence": "app/ui-components/build.gradle.kts",
+   "note": "generated resource class name; not verified by labeller"
+  }
+ ],
+ "notes": "All routes in one Routes.kt; each has a class name AND a @SerialName (route_id may be either; listed in aliases). Route data object ScheduleScreen collides with composable fun ScheduleScreen in screens/ScheduleScreen.kt (same name, different symbol). No testTag in app; no deep links (only LAUNCHER intent-filter, no CFBundleURLTypes). Client API paths are relative (\"$year/$path\") - labelled with {year} placeholder. Platform kmp: scorer treats kmp/android/ios/common as equivalent for this repo (platform_aliases).",
+ "platform_aliases": {
+  "kmp": [
+   "kmp",
+   "common",
+   "android",
+   "ios",
+   "desktop",
+   "jvm",
+   "wasm",
+   "web"
+  ]
+ }
+}

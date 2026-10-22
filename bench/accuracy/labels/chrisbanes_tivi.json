@@ -1,0 +1,402 @@
+{
+ "repo": "chrisbanes/tivi",
+ "url": "https://github.com/chrisbanes/tivi",
+ "commit": "a0c62c2c763c83e3a0ecf79b283224374bb06c4a",
+ "platform_roots": {
+  "kmp": [
+   "common",
+   "ui",
+   "shared",
+   "data",
+   "domain",
+   "api"
+  ],
+  "android": [
+   "android-app/app"
+  ],
+  "ios": [
+   "ios-app/Tivi"
+  ],
+  "desktop": [
+   "desktop-app"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "android",
+   "route_id": "AnticipatedShowsScreen",
+   "symbol": "AnticipatedShowsScreen",
+   "file": "common/ui/screens/src/commonMain/kotlin/app/tivi/screens/Screens.kt",
+   "kind": "circuit-screen",
+   "note": "Slack Circuit Screen (KMP commonMain, shared by android/ios/desktop)"
+  },
+  {
+   "platform": "android",
+   "route_id": "AccountScreen",
+   "symbol": "AccountScreen",
+   "file": "common/ui/screens/src/commonMain/kotlin/app/tivi/screens/Screens.kt",
+   "kind": "circuit-screen",
+   "note": "Slack Circuit Screen (KMP commonMain, shared by android/ios/desktop)"
+  },
+  {
+   "platform": "android",
+   "route_id": "DiscoverScreen",
+   "symbol": "DiscoverScreen",
+   "file": "common/ui/screens/src/commonMain/kotlin/app/tivi/screens/Screens.kt",
+   "kind": "circuit-screen",
+   "note": "Slack Circuit Screen (KMP commonMain, shared by android/ios/desktop)"
+  },
+  {
+   "platform": "android",
+   "route_id": "EpisodeDetailsScreen",
+   "symbol": "EpisodeDetailsScreen",
+   "file": "common/ui/screens/src/commonMain/kotlin/app/tivi/screens/Screens.kt",
+   "kind": "circuit-screen",
+   "note": "Slack Circuit Screen (KMP commonMain, shared by android/ios/desktop)"
+  },
+  {
+   "platform": "android",
+   "route_id": "EpisodeTrackScreen",
+   "symbol": "EpisodeTrackScreen",
+   "file": "common/ui/screens/src/commonMain/kotlin/app/tivi/screens/Screens.kt",
+   "kind": "circuit-screen",
+   "note": "Slack Circuit Screen (KMP commonMain, shared by android/ios/desktop)"
+  },
+  {
+   "platform": "android",
+   "route_id": "LibraryScreen",
+   "symbol": "LibraryScreen",
+   "file": "common/ui/screens/src/commonMain/kotlin/app/tivi/screens/Screens.kt",
+   "kind": "circuit-screen",
+   "note": "Slack Circuit Screen (KMP commonMain, shared by android/ios/desktop)"
+  },
+  {
+   "platform": "android",
+   "route_id": "PopularShowsScreen",
+   "symbol": "PopularShowsScreen",
+   "file": "common/ui/screens/src/commonMain/kotlin/app/tivi/screens/Screens.kt",
+   "kind": "circuit-screen",
+   "note": "Slack Circuit Screen (KMP commonMain, shared by android/ios/desktop)"
+  },
+  {
+   "platform": "android",
+   "route_id": "RecommendedShowsScreen",
+   "symbol": "RecommendedShowsScreen",
+   "file": "common/ui/screens/src/commonMain/kotlin/app/tivi/screens/Screens.kt",
+   "kind": "circuit-screen",
+   "note": "Slack Circuit Screen (KMP commonMain, shared by android/ios/desktop)"
+  },
+  {
+   "platform": "android",
+   "route_id": "SearchScreen",
+   "symbol": "SearchScreen",
+   "file": "common/ui/screens/src/commonMain/kotlin/app/tivi/screens/Screens.kt",
+   "kind": "circuit-screen",
+   "note": "Slack Circuit Screen (KMP commonMain, shared by android/ios/desktop)"
+  },
+  {
+   "platform": "android",
+   "route_id": "SettingsScreen",
+   "symbol": "SettingsScreen",
+   "file": "common/ui/screens/src/commonMain/kotlin/app/tivi/screens/Screens.kt",
+   "kind": "circuit-screen",
+   "note": "Slack Circuit Screen (KMP commonMain, shared by android/ios/desktop)"
+  },
+  {
+   "platform": "android",
+   "route_id": "LicensesScreen",
+   "symbol": "LicensesScreen",
+   "file": "common/ui/screens/src/commonMain/kotlin/app/tivi/screens/Screens.kt",
+   "kind": "circuit-screen",
+   "note": "Slack Circuit Screen (KMP commonMain, shared by android/ios/desktop)"
+  },
+  {
+   "platform": "android",
+   "route_id": "DevSettingsScreen",
+   "symbol": "DevSettingsScreen",
+   "file": "common/ui/screens/src/commonMain/kotlin/app/tivi/screens/Screens.kt",
+   "kind": "circuit-screen",
+   "note": "Slack Circuit Screen (KMP commonMain, shared by android/ios/desktop)"
+  },
+  {
+   "platform": "android",
+   "route_id": "DevNotificationsScreen",
+   "symbol": "DevNotificationsScreen",
+   "file": "common/ui/screens/src/commonMain/kotlin/app/tivi/screens/Screens.kt",
+   "kind": "circuit-screen",
+   "note": "Slack Circuit Screen (KMP commonMain, shared by android/ios/desktop)"
+  },
+  {
+   "platform": "android",
+   "route_id": "DevLogScreen",
+   "symbol": "DevLogScreen",
+   "file": "common/ui/screens/src/commonMain/kotlin/app/tivi/screens/Screens.kt",
+   "kind": "circuit-screen",
+   "note": "Slack Circuit Screen (KMP commonMain, shared by android/ios/desktop)"
+  },
+  {
+   "platform": "android",
+   "route_id": "UrlScreen",
+   "symbol": "UrlScreen",
+   "file": "common/ui/screens/src/commonMain/kotlin/app/tivi/screens/Screens.kt",
+   "kind": "circuit-screen",
+   "note": "Slack Circuit Screen (KMP commonMain, shared by android/ios/desktop)"
+  },
+  {
+   "platform": "android",
+   "route_id": "ShowDetailsScreen",
+   "symbol": "ShowDetailsScreen",
+   "file": "common/ui/screens/src/commonMain/kotlin/app/tivi/screens/Screens.kt",
+   "kind": "circuit-screen",
+   "note": "Slack Circuit Screen (KMP commonMain, shared by android/ios/desktop)"
+  },
+  {
+   "platform": "android",
+   "route_id": "ShowSeasonsScreen",
+   "symbol": "ShowSeasonsScreen",
+   "file": "common/ui/screens/src/commonMain/kotlin/app/tivi/screens/Screens.kt",
+   "kind": "circuit-screen",
+   "note": "Slack Circuit Screen (KMP commonMain, shared by android/ios/desktop)"
+  },
+  {
+   "platform": "android",
+   "route_id": "TrendingShowsScreen",
+   "symbol": "TrendingShowsScreen",
+   "file": "common/ui/screens/src/commonMain/kotlin/app/tivi/screens/Screens.kt",
+   "kind": "circuit-screen",
+   "note": "Slack Circuit Screen (KMP commonMain, shared by android/ios/desktop)"
+  },
+  {
+   "platform": "android",
+   "route_id": "UpNextScreen",
+   "symbol": "UpNextScreen",
+   "file": "common/ui/screens/src/commonMain/kotlin/app/tivi/screens/Screens.kt",
+   "kind": "circuit-screen",
+   "note": "Slack Circuit Screen (KMP commonMain, shared by android/ios/desktop)"
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "android",
+   "symbol": "TiviScreen",
+   "file": "common/ui/screens/src/commonMain/kotlin/app/tivi/screens/Screens.kt",
+   "reason": "abstract base class of all Circuit screens"
+  },
+  {
+   "platform": "android",
+   "symbol": "TrendingShowsUiFactory",
+   "file": "ui/trending/src/commonMain/kotlin/app/tivi/home/trending/Trending.kt",
+   "reason": "Circuit Ui.Factory, not a screen key (the screen is TrendingShowsScreen)"
+  },
+  {
+   "platform": "android",
+   "symbol": "PreviewEpisodeDetails",
+   "file": "ui/episode/details/src/commonMain/kotlin/app/tivi/episodedetails/EpisodeDetails.kt",
+   "reason": "@Preview composable"
+  },
+  {
+   "platform": "android",
+   "symbol": "PreviewUserRow",
+   "file": "ui/account/src/commonMain/kotlin/app/tivi/account/AccountUi.kt",
+   "reason": "@Preview composable"
+  },
+  {
+   "platform": "ios",
+   "symbol": "ComposeView",
+   "file": "ios-app/Tivi/Tivi/ContentView.swift",
+   "reason": "UIViewControllerRepresentable wrapper hosting the shared Compose UI; not a destination"
+  },
+  {
+   "platform": "android",
+   "symbol": "RootViewModel",
+   "file": "ui/root/src/commonMain/kotlin/app/tivi/home/RootViewModel.kt",
+   "reason": "view model"
+  }
+ ],
+ "deeplinks": [
+  {
+   "platform": "android",
+   "scheme": "${applicationId}",
+   "host": "tivi",
+   "path": "",
+   "file": "android-app/app/src/main/AndroidManifest.xml",
+   "source": "intent-filter MainActivity",
+   "resolved_scheme": "app.tivi"
+  },
+  {
+   "platform": "android",
+   "scheme": "${applicationId}",
+   "host": "auth",
+   "path": "/oauth2callback",
+   "file": "android-app/app/src/main/AndroidManifest.xml",
+   "source": "intent-filter net.openid.appauth.RedirectUriReceiverActivity",
+   "resolved_scheme": "app.tivi"
+  }
+ ],
+ "testids": [
+  {
+   "platform": "android",
+   "tid": "episode_track",
+   "file": "ui/episode/track/src/commonMain/kotlin/app/tivi/episode/track/EpisodeTrack.kt",
+   "line": 131
+  },
+  {
+   "platform": "android",
+   "tid": "episode_details",
+   "file": "ui/episode/details/src/commonMain/kotlin/app/tivi/episodedetails/EpisodeDetails.kt",
+   "line": 190
+  },
+  {
+   "platform": "android",
+   "tid": "show_seasons",
+   "file": "ui/show/seasons/src/commonMain/kotlin/app/tivi/showdetails/seasons/ShowSeasons.kt",
+   "line": 239
+  },
+  {
+   "platform": "android",
+   "tid": "show_seasons_episode_item",
+   "file": "ui/show/seasons/src/commonMain/kotlin/app/tivi/showdetails/seasons/ShowSeasons.kt",
+   "line": 335
+  },
+  {
+   "platform": "android",
+   "tid": "show_details_follow_button",
+   "file": "ui/show/details/src/commonMain/kotlin/app/tivi/showdetails/details/ShowDetails.kt",
+   "line": 264
+  },
+  {
+   "platform": "android",
+   "tid": "show_details_lazycolumn",
+   "file": "ui/show/details/src/commonMain/kotlin/app/tivi/showdetails/details/ShowDetails.kt",
+   "line": 300
+  },
+  {
+   "platform": "android",
+   "tid": "show_details_season_item",
+   "file": "ui/show/details/src/commonMain/kotlin/app/tivi/showdetails/details/ShowDetails.kt",
+   "line": 457
+  },
+  {
+   "platform": "android",
+   "tid": "${tagPrefix}_carousel",
+   "file": "ui/discover/src/commonMain/kotlin/app/tivi/home/discover/Discover.kt",
+   "line": 468,
+   "dynamic": true,
+   "note": "string template; extractor may emit the template or skip it"
+  },
+  {
+   "platform": "android",
+   "tid": "${tagPrefix}_carousel_item",
+   "file": "ui/discover/src/commonMain/kotlin/app/tivi/home/discover/Discover.kt",
+   "line": 515,
+   "dynamic": true
+  },
+  {
+   "platform": "android",
+   "tid": "item.tag",
+   "file": "ui/root/src/commonMain/kotlin/app/tivi/home/Home.kt",
+   "line": 256,
+   "dynamic": true,
+   "expect": false,
+   "note": "variable tag; should NOT be expected as a literal"
+  }
+ ],
+ "apis": [
+  {
+   "method": "GET",
+   "path": "shows/anticipated",
+   "file": "api/trakt/src/commonMain/kotlin/app/tivi/trakt/Anticipated.kt",
+   "note": "Ktor client.get relative to Trakt base URL; only direct HTTP call in the repo"
+  },
+  {
+   "method": "GET",
+   "path": "https://trakt.tv/oauth/authorize",
+   "file": "ios-app/Tivi/Tivi/Auth.swift",
+   "expect": false,
+   "note": "OAuth endpoint URL constant (AppAuth), not an HTTP call site"
+  }
+ ],
+ "claims": [
+  {
+   "id": "C1",
+   "text": "Tivi is a TV show tracking application which connects to Trakt.tv",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "api/trakt/src/commonMain/kotlin/app/tivi/trakt/TraktComponent.kt"
+  },
+  {
+   "id": "C2",
+   "text": "built upon Kotlin Multiplatform and Compose Multiplatform",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "gradle/libs.versions.toml (compose-multiplatform 1.7.0)"
+  },
+  {
+   "id": "C3",
+   "text": "The Android application module is located at android-app/app/",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "android-app/app/build.gradle.kts"
+  },
+  {
+   "id": "C4",
+   "text": "The Desktop application module is located at desktop-app/",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "desktop-app/build.gradle.kts"
+  },
+  {
+   "id": "C5",
+   "text": "It currently uses CocoaPods to manage dependencies",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "ios-app/Tivi/Podfile"
+  },
+  {
+   "id": "C6",
+   "text": "This project uses ktlint, provided via the spotless gradle plugin",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "gradle/build-logic/convention/build.gradle.kts:19"
+  },
+  {
+   "id": "C7",
+   "text": "set the OAuth redirect uri to app.tivi://auth/oauth2callback for release build types",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "api/trakt/src/commonMain/kotlin/app/tivi/trakt/TraktComponent.kt:42; AndroidManifest.xml RedirectUriReceiverActivity"
+  },
+  {
+   "id": "C8",
+   "text": "set the OAuth redirect uri to app.tivi.debug://auth/oauth2callback for debug build types",
+   "source": "README.md",
+   "label": "unverifiable",
+   "evidence": "android-app/app/build.gradle.kts has applicationId app.tivi and no applicationIdSuffix; only fastlane/Fastfile mentions app.tivi.debug"
+  },
+  {
+   "id": "C9",
+   "text": "TIVI_TRAKT_CLIENT_ID / TIVI_TRAKT_CLIENT_SECRET set in ~/.gradle/gradle.properties",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "api/trakt/build.gradle.kts:32"
+  },
+  {
+   "id": "C10",
+   "text": "TIVI_TMDB_API_KEY from TMDb",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "api/tmdb/build.gradle.kts:21"
+  }
+ ],
+ "notes": "Circuit (slack) KMP app. Screens are Parcelize objects/data classes extending TiviScreen in one file; platform labelled 'android' but code is commonMain (scorer accepts kmp/android/ios/desktop as equivalent for this repo via platform_aliases). HTTP mostly via trakt/tmdb SDK libraries, so API recall is tiny by design.",
+ "platform_aliases": {
+  "android": [
+   "kmp",
+   "common",
+   "android",
+   "ios",
+   "desktop",
+   "jvm"
+  ]
+ }
+}

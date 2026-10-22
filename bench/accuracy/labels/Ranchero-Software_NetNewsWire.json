@@ -1,0 +1,471 @@
+{
+ "repo": "Ranchero-Software/NetNewsWire",
+ "url": "https://github.com/Ranchero-Software/NetNewsWire",
+ "commit": "94032d95fe04a05d44591450234c3c5da0a40842",
+ "platform_roots": {
+  "ios": [
+   "iOS",
+   "Shared",
+   "Widget"
+  ],
+  "macos": [
+   "Mac",
+   "Shared"
+  ],
+  "modules": [
+   "Modules"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "ios",
+   "route_id": "ArticleViewController",
+   "symbol": "ArticleViewController",
+   "file": "iOS/Article/ArticleViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "SettingsViewController",
+   "symbol": "SettingsViewController",
+   "file": "iOS/Settings/SettingsViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "ArticleThemesTableViewController",
+   "symbol": "ArticleThemesTableViewController",
+   "file": "iOS/Settings/ArticleThemesTableViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "MainFeedCollectionViewController",
+   "symbol": "MainFeedCollectionViewController",
+   "file": "iOS/MainFeed/MainFeedCollectionViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "MainTimelineViewController",
+   "symbol": "MainTimelineViewController",
+   "file": "iOS/MainTimeline/MainTimelineViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "AccountInspectorViewController",
+   "symbol": "AccountInspectorViewController",
+   "file": "iOS/Inspector/AccountInspectorViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "FeedInspectorViewController",
+   "symbol": "FeedInspectorViewController",
+   "file": "iOS/Inspector/FeedInspectorViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "ImageViewController",
+   "symbol": "ImageViewController",
+   "file": "iOS/Article/ImageViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "TimelineCustomizerCollectionViewController",
+   "symbol": "TimelineCustomizerCollectionViewController",
+   "file": "iOS/Settings/TimelineCustomizerCollectionViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "ShareViewController",
+   "symbol": "ShareViewController",
+   "file": "iOS/ShareExtension/ShareViewController.swift",
+   "kind": "uikit-vc"
+  },
+  {
+   "platform": "ios",
+   "route_id": "AboutView",
+   "symbol": "AboutView",
+   "file": "iOS/Settings/AboutView.swift",
+   "kind": "swiftui-destination"
+  },
+  {
+   "platform": "ios",
+   "route_id": "AddAccountView",
+   "symbol": "AddAccountView",
+   "file": "iOS/Settings/AddAccountView.swift",
+   "kind": "swiftui-destination"
+  },
+  {
+   "platform": "ios",
+   "route_id": "ErrorLogView",
+   "symbol": "ErrorLogView",
+   "file": "iOS/Settings/ErrorLogView.swift",
+   "kind": "swiftui-destination"
+  },
+  {
+   "platform": "ios",
+   "route_id": "DinosaursView",
+   "symbol": "DinosaursView",
+   "file": "iOS/Settings/DinosaursView.swift",
+   "kind": "swiftui-destination"
+  },
+  {
+   "platform": "macos",
+   "route_id": "MainWindowController",
+   "symbol": "MainWindowController",
+   "file": "Mac/MainWindow/MainWindowController.swift",
+   "kind": "appkit-window",
+   "note": "macOS target; scorer maps macos to the Apple (ios) family"
+  },
+  {
+   "platform": "macos",
+   "route_id": "PreferencesWindowController",
+   "symbol": "PreferencesWindowController",
+   "file": "Mac/Preferences/PreferencesWindowController.swift",
+   "kind": "appkit-window",
+   "note": "macOS target; scorer maps macos to the Apple (ios) family"
+  },
+  {
+   "platform": "macos",
+   "route_id": "AddFeedWindowController",
+   "symbol": "AddFeedWindowController",
+   "file": "Mac/MainWindow/AddFeed/AddFeedWindowController.swift",
+   "kind": "appkit-window",
+   "note": "macOS target; scorer maps macos to the Apple (ios) family"
+  },
+  {
+   "platform": "macos",
+   "route_id": "InspectorWindowController",
+   "symbol": "InspectorWindowController",
+   "file": "Mac/Inspector/InspectorWindowController.swift",
+   "kind": "appkit-window",
+   "note": "macOS target; scorer maps macos to the Apple (ios) family"
+  },
+  {
+   "platform": "macos",
+   "route_id": "AboutWindowController",
+   "symbol": "AboutWindowController",
+   "file": "Mac/About/AboutWindowController.swift",
+   "kind": "appkit-window",
+   "note": "macOS target; scorer maps macos to the Apple (ios) family"
+  },
+  {
+   "platform": "macos",
+   "route_id": "ImportOPMLWindowController",
+   "symbol": "ImportOPMLWindowController",
+   "file": "Mac/MainWindow/OPML/ImportOPMLWindowController.swift",
+   "kind": "appkit-window",
+   "note": "macOS target; scorer maps macos to the Apple (ios) family"
+  },
+  {
+   "platform": "macos",
+   "route_id": "GeneralPreferencesViewController",
+   "symbol": "GeneralPreferencesViewController",
+   "file": "Mac/Preferences/General/GeneralPrefencesViewController.swift",
+   "kind": "appkit-vc",
+   "note": "macOS target; scorer maps macos to the Apple (ios) family"
+  },
+  {
+   "platform": "macos",
+   "route_id": "AccountsPreferencesViewController",
+   "symbol": "AccountsPreferencesViewController",
+   "file": "Mac/Preferences/Accounts/AccountsPreferencesViewController.swift",
+   "kind": "appkit-vc",
+   "note": "macOS target; scorer maps macos to the Apple (ios) family"
+  },
+  {
+   "platform": "macos",
+   "route_id": "AdvancedPreferencesViewController",
+   "symbol": "AdvancedPreferencesViewController",
+   "file": "Mac/Preferences/Advanced/AdvancedPreferencesViewController.swift",
+   "kind": "appkit-vc",
+   "note": "macOS target; scorer maps macos to the Apple (ios) family"
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "ios",
+   "symbol": "ContextMenuPreviewViewController",
+   "file": "iOS/Article/ContextMenuPreviewViewController.swift",
+   "reason": "context-menu preview, not navigable"
+  },
+  {
+   "platform": "ios",
+   "symbol": "WebViewController",
+   "file": "iOS/Article/WebViewController.swift",
+   "reason": "child VC embedded inside ArticleViewController page view"
+  },
+  {
+   "platform": "ios",
+   "symbol": "RootSplitViewController",
+   "file": "iOS/RootSplitViewController.swift",
+   "reason": "container split VC",
+   "borderline": true
+  },
+  {
+   "platform": "ios",
+   "symbol": "DinosaurRowView",
+   "file": "iOS/Settings/DinosaurRowView.swift",
+   "reason": "row view"
+  },
+  {
+   "platform": "ios",
+   "symbol": "AboutCreditView",
+   "file": "iOS/Settings/AboutCreditView.swift",
+   "reason": "sub-view of AboutView"
+  },
+  {
+   "platform": "macos",
+   "symbol": "SidebarViewController",
+   "file": "Mac/MainWindow/Sidebar/SidebarViewController.swift",
+   "reason": "pane inside MainWindowController split view"
+  },
+  {
+   "platform": "macos",
+   "symbol": "TimelineContainerViewController",
+   "file": "Mac/MainWindow/Timeline/TimelineContainerViewController.swift",
+   "reason": "pane container"
+  },
+  {
+   "platform": "macos",
+   "symbol": "DetailWebViewController",
+   "file": "Mac/MainWindow/Detail/DetailWebViewController.swift",
+   "reason": "embedded web content of DetailViewController"
+  }
+ ],
+ "deeplinks": [
+  {
+   "platform": "ios",
+   "scheme": "feed",
+   "host": "",
+   "path": "",
+   "file": "iOS/Resources/Info.plist",
+   "source": "CFBundleURLSchemes"
+  },
+  {
+   "platform": "ios",
+   "scheme": "feeds",
+   "host": "",
+   "path": "",
+   "file": "iOS/Resources/Info.plist",
+   "source": "CFBundleURLSchemes"
+  },
+  {
+   "platform": "ios",
+   "scheme": "netnewswire",
+   "host": "",
+   "path": "",
+   "file": "iOS/Resources/Info.plist",
+   "source": "CFBundleURLSchemes"
+  },
+  {
+   "platform": "ios",
+   "scheme": "netnewswire",
+   "host": "theme",
+   "path": "?url=",
+   "file": "iOS/SceneDelegate.swift",
+   "source": "scene openURLContexts: scheme netnewswire host theme"
+  },
+  {
+   "platform": "macos",
+   "scheme": "netnewswire",
+   "host": "",
+   "path": "",
+   "file": "Mac/Resources/Info.plist",
+   "source": "CFBundleURLSchemes"
+  },
+  {
+   "platform": "macos",
+   "scheme": "feed",
+   "host": "",
+   "path": "",
+   "file": "Mac/Resources/Info.plist",
+   "source": "CFBundleURLSchemes"
+  },
+  {
+   "platform": "macos",
+   "scheme": "feeds",
+   "host": "",
+   "path": "",
+   "file": "Mac/Resources/Info.plist",
+   "source": "CFBundleURLSchemes"
+  },
+  {
+   "platform": "macos",
+   "scheme": "x-netnewswire-feed",
+   "host": "",
+   "path": "",
+   "file": "Mac/Resources/Info.plist",
+   "source": "CFBundleURLSchemes"
+  },
+  {
+   "platform": "ios",
+   "scheme": "nnw",
+   "host": "showunread",
+   "path": "",
+   "file": "Shared/Widget/WidgetDeepLinks.swift",
+   "source": "widgetURL (not registered in Info.plist; delivered by WidgetKit)",
+   "optional": true
+  },
+  {
+   "platform": "ios",
+   "scheme": "nnw",
+   "host": "showtoday",
+   "path": "",
+   "file": "Shared/Widget/WidgetDeepLinks.swift",
+   "source": "widgetURL",
+   "optional": true
+  },
+  {
+   "platform": "ios",
+   "scheme": "nnw",
+   "host": "showstarred",
+   "path": "",
+   "file": "Shared/Widget/WidgetDeepLinks.swift",
+   "source": "widgetURL",
+   "optional": true
+  }
+ ],
+ "testids": [],
+ "apis": [
+  {
+   "method": "GET",
+   "path": "/v2/authentication.json",
+   "file": "Modules/Account/Sources/Account/Feedbin/FeedbinAPICaller.swift",
+   "note": "feedbinBaseURL https://api.feedbin.com/v2/ + appendingPathComponent; method from session.send(method:) (GET default)"
+  },
+  {
+   "method": "POST",
+   "path": "/v2/imports.json",
+   "file": "Modules/Account/Sources/Account/Feedbin/FeedbinAPICaller.swift",
+   "note": "feedbinBaseURL https://api.feedbin.com/v2/ + appendingPathComponent; method from session.send(method:) (GET default)"
+  },
+  {
+   "method": "GET",
+   "path": "/v2/tags.json",
+   "file": "Modules/Account/Sources/Account/Feedbin/FeedbinAPICaller.swift",
+   "note": "feedbinBaseURL https://api.feedbin.com/v2/ + appendingPathComponent; method from session.send(method:) (GET default)"
+  },
+  {
+   "method": "GET",
+   "path": "/v2/subscriptions.json",
+   "file": "Modules/Account/Sources/Account/Feedbin/FeedbinAPICaller.swift",
+   "note": "feedbinBaseURL https://api.feedbin.com/v2/ + appendingPathComponent; method from session.send(method:) (GET default)"
+  },
+  {
+   "method": "POST",
+   "path": "/v2/subscriptions.json",
+   "file": "Modules/Account/Sources/Account/Feedbin/FeedbinAPICaller.swift",
+   "note": "feedbinBaseURL https://api.feedbin.com/v2/ + appendingPathComponent; method from session.send(method:) (GET default)"
+  },
+  {
+   "method": "DELETE",
+   "path": "/v2/subscriptions/{subscriptionID}.json",
+   "file": "Modules/Account/Sources/Account/Feedbin/FeedbinAPICaller.swift",
+   "note": "feedbinBaseURL https://api.feedbin.com/v2/ + appendingPathComponent; method from session.send(method:) (GET default)"
+  },
+  {
+   "method": "POST",
+   "path": "/v2/taggings.json",
+   "file": "Modules/Account/Sources/Account/Feedbin/FeedbinAPICaller.swift",
+   "note": "feedbinBaseURL https://api.feedbin.com/v2/ + appendingPathComponent; method from session.send(method:) (GET default)"
+  },
+  {
+   "method": "GET",
+   "path": "/v2/unread_entries.json",
+   "file": "Modules/Account/Sources/Account/Feedbin/FeedbinAPICaller.swift",
+   "note": "feedbinBaseURL https://api.feedbin.com/v2/ + appendingPathComponent; method from session.send(method:) (GET default)"
+  },
+  {
+   "method": "DELETE",
+   "path": "/v2/unread_entries.json",
+   "file": "Modules/Account/Sources/Account/Feedbin/FeedbinAPICaller.swift",
+   "note": "feedbinBaseURL https://api.feedbin.com/v2/ + appendingPathComponent; method from session.send(method:) (GET default)"
+  },
+  {
+   "method": "POST",
+   "path": "/v2/starred_entries.json",
+   "file": "Modules/Account/Sources/Account/Feedbin/FeedbinAPICaller.swift",
+   "note": "feedbinBaseURL https://api.feedbin.com/v2/ + appendingPathComponent; method from session.send(method:) (GET default)"
+  }
+ ],
+ "claims": [
+  {
+   "id": "C1",
+   "text": "NetNewsWire is a free and open-source feed reader for macOS and iOS",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "Mac/, iOS/"
+  },
+  {
+   "id": "C2",
+   "text": "It supports RSS, Atom, JSON Feed, and RSS-in-JSON",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "Modules/RSParser/Sources/RSParser/Feeds/JSON/RSSInJSONParser.swift"
+  },
+  {
+   "id": "C3",
+   "text": "You can do this using the included setup.sh script",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "setup.sh"
+  },
+  {
+   "id": "C4",
+   "text": "Full build and test: ./buildscripts/build_and_test.sh",
+   "source": "CLAUDE.md",
+   "label": "verified",
+   "evidence": "buildscripts/build_and_test.sh"
+  },
+  {
+   "id": "C5",
+   "text": "Quiet build and test: ./buildscripts/quiet_build_and_test.sh",
+   "source": "CLAUDE.md",
+   "label": "verified",
+   "evidence": "buildscripts/quiet_build_and_test.sh"
+  },
+  {
+   "id": "C6",
+   "text": "RSDatabase: SQLite database abstraction layer using FMDB",
+   "source": "CLAUDE.md",
+   "label": "verified",
+   "evidence": "Modules/RSDatabase/Sources/RSDatabaseObjC/FMDatabase.m"
+  },
+  {
+   "id": "C7",
+   "text": "Account: Account management (Local, Feedbin, Feedly, NewsBlur, Reader API, CloudKit)",
+   "source": "CLAUDE.md",
+   "label": "verified",
+   "evidence": "Modules/Account/Sources/Account/{LocalAccount,Feedbin,Feedly,NewsBlur,ReaderAPI,CloudKit}"
+  },
+  {
+   "id": "C8",
+   "text": "Smart Feeds: Virtual feeds (Today, All Unread, Starred) implemented as PseudoFeed protocol",
+   "source": "CLAUDE.md",
+   "label": "verified",
+   "evidence": "Shared/SmartFeeds/PseudoFeed.swift:16"
+  },
+  {
+   "id": "C9",
+   "text": "Run all tests: Use the NetNewsWire.xctestplan",
+   "source": "CLAUDE.md",
+   "label": "verified",
+   "evidence": "NetNewsWire.xctestplan"
+  },
+  {
+   "id": "C10",
+   "text": "Key Modules include RSCore, RSParser, RSWeb, RSDatabase, Account, Articles, ArticlesDatabase, SyncDatabase, Secrets",
+   "source": "CLAUDE.md",
+   "label": "verified",
+   "evidence": "Modules/"
+  }
+ ],
+ "notes": "iOS UIKit + some SwiftUI settings views; macOS AppKit window/VCs. Platform \"macos\" is mapped to the Apple family (same as ios) by the scorer. No accessibilityIdentifier in Swift or storyboards -> testids empty. nnw:// widget URLs are handled but not registered in Info.plist (optional). Clone reused read-only from oss2."
+}

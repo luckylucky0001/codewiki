@@ -1,4 +1,4 @@
-ingest 20261020T225917-2f2b132: base 2f2b132 → head 2f2b132, mode ingest, llm cmd (agent codex)
+ingest 20261021T193933-b186a9b: base b186a9b → head b186a9b, mode ingest, llm cmd (agent codex)
 mode ingest — check ingested documents against code
 changed_route_ids: []; changed_files: 0
 stats: symbols=214 changes=map[unchanged:214] module_ratio=0.00 structural_ratio=0.00 hops=1 propagated=0
@@ -16,6 +16,6 @@ changed files: 10
   pages/_conflicts.md
   raw/docs/docs/legacy/cart.md
   raw/docs/manifest.json
-verify PASS: 23 pages, 219 anchors, 0 errors, 0 warnings
+verify PASS: 28 pages, 302 anchors, 0 errors, 0 warnings
 published 10 changed file(s) to <tmp>/minishop/wiki
 exit 0

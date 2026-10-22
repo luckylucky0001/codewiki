@@ -1,0 +1,298 @@
+{
+ "repo": "pointfreeco/swift-composable-architecture",
+ "url": "https://github.com/pointfreeco/swift-composable-architecture",
+ "commit": "bc2db5ba8ad3a47deba5db32fa340637ba6c9a76",
+ "platform_roots": {
+  "ios": [
+   "Examples"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "ios",
+   "route_id": "AppView",
+   "symbol": "AppView",
+   "file": "Examples/SyncUps/SyncUps/AppFeature.swift",
+   "kind": "swiftui-root",
+   "note": "SyncUps root NavigationStack(path:); AppView name also in Todos and TicTacToe"
+  },
+  {
+   "platform": "ios",
+   "route_id": "SyncUpsListView",
+   "symbol": "SyncUpsListView",
+   "file": "Examples/SyncUps/SyncUps/SyncUpsList.swift",
+   "kind": "tca-stack-root",
+   "reducer": "SyncUpsList"
+  },
+  {
+   "platform": "ios",
+   "route_id": "SyncUpDetailView",
+   "symbol": "SyncUpDetailView",
+   "file": "Examples/SyncUps/SyncUps/SyncUpDetail.swift",
+   "kind": "tca-path",
+   "reducer": "SyncUpDetail",
+   "aliases": [
+    "AppFeature.Path.detail",
+    "Path.detail"
+   ]
+  },
+  {
+   "platform": "ios",
+   "route_id": "MeetingView",
+   "symbol": "MeetingView",
+   "file": "Examples/SyncUps/SyncUps/Meeting.swift",
+   "kind": "tca-path",
+   "aliases": [
+    "AppFeature.Path.meeting",
+    "Path.meeting"
+   ],
+   "note": "no reducer: Path case carries (Meeting, syncUp:)"
+  },
+  {
+   "platform": "ios",
+   "route_id": "RecordMeetingView",
+   "symbol": "RecordMeetingView",
+   "file": "Examples/SyncUps/SyncUps/RecordMeeting.swift",
+   "kind": "tca-path",
+   "reducer": "RecordMeeting",
+   "aliases": [
+    "AppFeature.Path.record",
+    "Path.record"
+   ]
+  },
+  {
+   "platform": "ios",
+   "route_id": "SyncUpFormView",
+   "symbol": "SyncUpFormView",
+   "file": "Examples/SyncUps/SyncUps/SyncUpForm.swift",
+   "kind": "tca-destination-sheet",
+   "reducer": "SyncUpForm",
+   "aliases": [
+    "SyncUpsList.Destination.add",
+    "SyncUpDetail.Destination.edit"
+   ],
+   "note": "presented as sheet from two Destination enums"
+  },
+  {
+   "platform": "ios",
+   "route_id": "CounterDemoView",
+   "symbol": "CounterDemoView",
+   "file": "Examples/CaseStudies/SwiftUICaseStudies/01-GettingStarted-Counter.swift",
+   "kind": "swiftui-destination"
+  },
+  {
+   "platform": "ios",
+   "route_id": "TwoCountersView",
+   "symbol": "TwoCountersView",
+   "file": "Examples/CaseStudies/SwiftUICaseStudies/01-GettingStarted-Composition-TwoCounters.swift",
+   "kind": "swiftui-destination"
+  },
+  {
+   "platform": "ios",
+   "route_id": "BindingBasicsView",
+   "symbol": "BindingBasicsView",
+   "file": "Examples/CaseStudies/SwiftUICaseStudies/01-GettingStarted-Bindings-Basics.swift",
+   "kind": "swiftui-destination"
+  },
+  {
+   "platform": "ios",
+   "route_id": "BindingFormView",
+   "symbol": "BindingFormView",
+   "file": "Examples/CaseStudies/SwiftUICaseStudies/01-GettingStarted-Bindings-Forms.swift",
+   "kind": "swiftui-destination"
+  },
+  {
+   "platform": "ios",
+   "route_id": "OptionalBasicsView",
+   "symbol": "OptionalBasicsView",
+   "file": "Examples/CaseStudies/SwiftUICaseStudies/01-GettingStarted-OptionalState.swift",
+   "kind": "swiftui-destination"
+  },
+  {
+   "platform": "ios",
+   "route_id": "FocusDemoView",
+   "symbol": "FocusDemoView",
+   "file": "Examples/CaseStudies/SwiftUICaseStudies/01-GettingStarted-FocusState.swift",
+   "kind": "swiftui-destination"
+  },
+  {
+   "platform": "ios",
+   "route_id": "AnimationsView",
+   "symbol": "AnimationsView",
+   "file": "Examples/CaseStudies/SwiftUICaseStudies/01-GettingStarted-Animations.swift",
+   "kind": "swiftui-destination"
+  },
+  {
+   "platform": "ios",
+   "route_id": "EffectsBasicsView",
+   "symbol": "EffectsBasicsView",
+   "file": "Examples/CaseStudies/SwiftUICaseStudies/03-Effects-Basics.swift",
+   "kind": "swiftui-destination"
+  },
+  {
+   "platform": "ios",
+   "route_id": "RefreshableView",
+   "symbol": "RefreshableView",
+   "file": "Examples/CaseStudies/SwiftUICaseStudies/03-Effects-Refreshable.swift",
+   "kind": "swiftui-destination"
+  },
+  {
+   "platform": "ios",
+   "route_id": "TimersView",
+   "symbol": "TimersView",
+   "file": "Examples/CaseStudies/SwiftUICaseStudies/03-Effects-Timers.swift",
+   "kind": "swiftui-destination"
+  },
+  {
+   "platform": "ios",
+   "route_id": "WebSocketView",
+   "symbol": "WebSocketView",
+   "file": "Examples/CaseStudies/SwiftUICaseStudies/03-Effects-WebSocket.swift",
+   "kind": "swiftui-destination"
+  },
+  {
+   "platform": "ios",
+   "route_id": "PresentAndLoadView",
+   "symbol": "PresentAndLoadView",
+   "file": "Examples/CaseStudies/SwiftUICaseStudies/04-Navigation-Sheet-PresentAndLoad.swift",
+   "kind": "swiftui-destination"
+  },
+  {
+   "platform": "ios",
+   "route_id": "CitiesView",
+   "symbol": "CitiesView",
+   "file": "Examples/CaseStudies/SwiftUICaseStudies/05-HigherOrderReducers-ResuableOfflineDownloads/ReusableComponents-Download.swift",
+   "kind": "swiftui-destination",
+   "note": "folder name typo Resuable"
+  },
+  {
+   "platform": "ios",
+   "route_id": "NestedView",
+   "symbol": "NestedView",
+   "file": "Examples/CaseStudies/SwiftUICaseStudies/05-HigherOrderReducers-Recursion.swift",
+   "kind": "swiftui-destination",
+   "note": "recursive: NestedView pushes NestedView"
+  },
+  {
+   "platform": "ios",
+   "route_id": "RootView",
+   "symbol": "RootView",
+   "file": "Examples/CaseStudies/SwiftUICaseStudies/00-RootView.swift",
+   "kind": "swiftui-root",
+   "optional": true,
+   "note": "CaseStudies index list of NavigationLink(\"...\") { Demo(store:) { XView } }"
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "ios",
+   "symbol": "MeetingHeaderView",
+   "file": "Examples/SyncUps/SyncUps/RecordMeeting.swift",
+   "reason": "subview of RecordMeetingView"
+  },
+  {
+   "platform": "ios",
+   "symbol": "MeetingTimerView",
+   "file": "Examples/SyncUps/SyncUps/RecordMeeting.swift",
+   "reason": "subview"
+  },
+  {
+   "platform": "ios",
+   "symbol": "MeetingFooterView",
+   "file": "Examples/SyncUps/SyncUps/RecordMeeting.swift",
+   "reason": "subview"
+  },
+  {
+   "platform": "ios",
+   "symbol": "CardView",
+   "file": "Examples/SyncUps/SyncUps/SyncUpsList.swift",
+   "reason": "list row"
+  },
+  {
+   "platform": "ios",
+   "symbol": "ThemePicker",
+   "file": "Examples/SyncUps/SyncUps/SyncUpForm.swift",
+   "reason": "form control"
+  },
+  {
+   "platform": "ios",
+   "symbol": "Demo",
+   "file": "Examples/CaseStudies/SwiftUICaseStudies/00-RootView.swift",
+   "reason": "generic wrapper that owns the Store for a case study",
+   "borderline": true
+  }
+ ],
+ "deeplinks": [
+  {
+   "platform": "ios",
+   "scheme": "integration",
+   "host": "",
+   "path": "",
+   "file": "Examples/Integration/Integration/Info.plist",
+   "source": "CFBundleURLSchemes",
+   "optional": true,
+   "note": "UI-test harness app only"
+  }
+ ],
+ "testids": [
+  {
+   "platform": "ios",
+   "tid": "composable-architecture.debug.logs",
+   "file": "Examples/Integration/Integration/IntegrationApp.swift",
+   "line": 13
+  },
+  {
+   "platform": "ios",
+   "tid": "isAppStorageOn1",
+   "file": "Examples/Integration/Integration/iOS 17/ObservableSharedStateTestCase.swift",
+   "line": 16
+  },
+  {
+   "platform": "ios",
+   "tid": "isAppStorageOn2",
+   "file": "Examples/Integration/Integration/iOS 17/ObservableSharedStateTestCase.swift",
+   "line": 21
+  },
+  {
+   "platform": "ios",
+   "tid": "isFileStorageOn1",
+   "file": "Examples/Integration/Integration/iOS 17/ObservableSharedStateTestCase.swift",
+   "line": 37
+  },
+  {
+   "platform": "ios",
+   "tid": "isFileStorageOn2",
+   "file": "Examples/Integration/Integration/iOS 17/ObservableSharedStateTestCase.swift",
+   "line": 42
+  },
+  {
+   "platform": "ios",
+   "tid": "isInMemoryOn1",
+   "file": "Examples/Integration/Integration/iOS 17/ObservableSharedStateTestCase.swift",
+   "line": 58
+  },
+  {
+   "platform": "ios",
+   "tid": "isInMemoryOn2",
+   "file": "Examples/Integration/Integration/iOS 17/ObservableSharedStateTestCase.swift",
+   "line": 63
+  }
+ ],
+ "apis": [
+  {
+   "method": "GET",
+   "path": "v1/forecast",
+   "file": "Examples/Search/Search/WeatherClient.swift",
+   "note": "URLComponents(string:\"https://api.open-meteo.com/v1/forecast\") + queryItems; URLSession.shared.data(from:)"
+  },
+  {
+   "method": "GET",
+   "path": "v1/search",
+   "file": "Examples/Search/Search/WeatherClient.swift",
+   "note": "geocoding-api.open-meteo.com"
+  }
+ ],
+ "claims": [],
+ "notes": "TCA examples. SyncUps: StackState<Path.State> + @Reducer enum Path {detail, meeting, record} mapped in NavigationStack destination: switch; @Reducer enum Destination {add/edit(SyncUpForm), alert} presented as sheets. route_id = View struct, aliases = Path/Destination case. CaseStudies: NavigationLink(\"title\"){ Demo(store:){ XView(store:) } } (sampled 14 of ~25). The SyncUpsList Destination.alert / RecordMeeting alert are not screens. testIDs only in Integration harness. APIs: open-meteo URLComponents literals only.",
+ "scope": "Examples/ only (sparse checkout); run extractor on Examples/ or ignore library Sources/"
+}

@@ -1,0 +1,169 @@
+{
+ "repo": "touchlab/KaMPKit",
+ "url": "https://github.com/touchlab/KaMPKit",
+ "commit": "4af02006be4be589e6848f097a92d97539300821",
+ "platform_roots": {
+  "kmp": [
+   "shared"
+  ],
+  "android": [
+   "app"
+  ],
+  "ios": [
+   "ios"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "android",
+   "route_id": "MainActivity",
+   "symbol": "MainActivity",
+   "file": "app/src/main/kotlin/co/touchlab/kampkit/android/MainActivity.kt",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "MainScreen",
+   "symbol": "MainScreen",
+   "file": "app/src/main/kotlin/co/touchlab/kampkit/android/ui/Composables.kt",
+   "kind": "compose-screen",
+   "note": "only screen composable, set from MainActivity.setContent"
+  },
+  {
+   "platform": "ios",
+   "route_id": "BreedListScreen",
+   "symbol": "BreedListScreen",
+   "file": "ios/KaMPKitiOS/BreedListScreen.swift",
+   "kind": "swiftui-destination",
+   "note": "root view from AppDelegate"
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "android",
+   "symbol": "MainScreenContentPreview_Success",
+   "file": "app/src/main/kotlin/co/touchlab/kampkit/android/ui/Composables.kt",
+   "reason": "@Preview"
+  },
+  {
+   "platform": "android",
+   "symbol": "MainScreenContentPreview_Empty",
+   "file": "app/src/main/kotlin/co/touchlab/kampkit/android/ui/Composables.kt",
+   "reason": "@Preview"
+  },
+  {
+   "platform": "android",
+   "symbol": "MainScreenContent",
+   "file": "app/src/main/kotlin/co/touchlab/kampkit/android/ui/Composables.kt",
+   "reason": "stateless content composable of MainScreen"
+  },
+  {
+   "platform": "android",
+   "symbol": "DogRow",
+   "file": "app/src/main/kotlin/co/touchlab/kampkit/android/ui/Composables.kt",
+   "reason": "list row"
+  },
+  {
+   "platform": "ios",
+   "symbol": "BreedListContent",
+   "file": "ios/KaMPKitiOS/BreedListScreen.swift",
+   "reason": "content subview"
+  },
+  {
+   "platform": "ios",
+   "symbol": "BreedListScreen_Previews",
+   "file": "ios/KaMPKitiOS/BreedListScreen.swift",
+   "reason": "PreviewProvider"
+  },
+  {
+   "platform": "ios",
+   "symbol": "BreedRowView",
+   "file": "ios/KaMPKitiOS/BreedListScreen.swift",
+   "reason": "row view"
+  }
+ ],
+ "deeplinks": [],
+ "testids": [],
+ "apis": [
+  {
+   "method": "GET",
+   "path": "/api/breeds/list/all",
+   "file": "shared/src/commonMain/kotlin/co/touchlab/kampkit/ktor/DogApiImpl.kt",
+   "note": "Ktor client.get { url { takeFrom(\"https://dog.ceo/\"); encodedPath = path } } via helper dogs(path); base https://dog.ceo/"
+  }
+ ],
+ "claims": [
+  {
+   "id": "C1",
+   "text": "Kermit - Logging",
+   "source": "docs/GENERAL_ARCHITECTURE.md",
+   "label": "verified",
+   "evidence": "gradle/libs.versions.toml:21 kermit"
+  },
+  {
+   "id": "C2",
+   "text": "SqlDelight - Database",
+   "source": "docs/GENERAL_ARCHITECTURE.md",
+   "label": "verified",
+   "evidence": "gradle/libs.versions.toml:26 sqlDelight"
+  },
+  {
+   "id": "C3",
+   "text": "Ktor - Networking",
+   "source": "docs/GENERAL_ARCHITECTURE.md",
+   "label": "verified",
+   "evidence": "shared/src/commonMain/kotlin/co/touchlab/kampkit/ktor/DogApiImpl.kt"
+  },
+  {
+   "id": "C4",
+   "text": "Multiplatform Settings - Settings",
+   "source": "docs/GENERAL_ARCHITECTURE.md",
+   "label": "verified",
+   "evidence": "gradle/libs.versions.toml:24"
+  },
+  {
+   "id": "C5",
+   "text": "Koin - Dependency Injection",
+   "source": "docs/GENERAL_ARCHITECTURE.md",
+   "label": "verified",
+   "evidence": "shared/src/commonMain/kotlin/co/touchlab/kampkit/Koin.kt"
+  },
+  {
+   "id": "C6",
+   "text": "it first checks to see if it has done a network request within the past hour",
+   "source": "docs/GENERAL_ARCHITECTURE.md",
+   "label": "verified",
+   "evidence": "shared/src/commonMain/kotlin/co/touchlab/kampkit/models/BreedRepository.kt:51 oneHourMS"
+  },
+  {
+   "id": "C7",
+   "text": "with SKIE, iOS code can reference the common BreedViewModel directly",
+   "source": "docs/GENERAL_ARCHITECTURE.md",
+   "label": "verified",
+   "evidence": "ios/KaMPKitiOS/BreedListScreen.swift; gradle/libs.versions.toml:22 skie"
+  },
+  {
+   "id": "C8",
+   "text": "BreedRepository references DogApiImpl (implementing DogApi) and DatabaseHelper",
+   "source": "docs/GENERAL_ARCHITECTURE.md",
+   "label": "verified",
+   "evidence": "shared/src/commonMain/kotlin/co/touchlab/kampkit/models/BreedRepository.kt"
+  },
+  {
+   "id": "C9",
+   "text": "You will need JVM 17",
+   "source": "README.md",
+   "label": "unverifiable",
+   "evidence": "app/build.gradle.kts:40 jvmToolchain(11)",
+   "note": "toolchain targets 11; JVM 17 is a host requirement for AGP, not checkable from code"
+  },
+  {
+   "id": "C10",
+   "text": "Turbine (testing library)",
+   "source": "docs/GENERAL_ARCHITECTURE.md",
+   "label": "verified",
+   "evidence": "gradle/libs.versions.toml:25 turbine"
+  }
+ ],
+ "notes": "Tiny KMP sample: single screen per platform, no deep links (no VIEW intent-filter, no CFBundleURLTypes), no testTag/accessibilityIdentifier. Good precision probe: everything extra is a false positive. Fewer than 15 screens because the app has only one."
+}

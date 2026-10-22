@@ -1,0 +1,564 @@
+{
+ "repo": "Joker-x-dev/CoolMallArkTS",
+ "url": "https://github.com/Joker-x-dev/CoolMallArkTS",
+ "commit": "17b6899086a57a4d48448842a14f9e325e3e35a3",
+ "platform_roots": {
+  "harmony": [
+   "entry",
+   "feature",
+   "core"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "harmony",
+   "route_id": "auth/login",
+   "symbol": "LoginPage",
+   "file": "feature/auth/src/main/ets/view/LoginPage.ets",
+   "kind": "route-build-register",
+   "struct": "LoginPage",
+   "builder": "LoginNav",
+   "const": "AuthRoutes.Login",
+   "registered_in": "feature/auth/src/main/ets/navigation/AuthGraph.ets",
+   "const_file": "core/navigation/src/main/ets/auth/AuthRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "auth/account-login",
+   "symbol": "AccountLoginPage",
+   "file": "feature/auth/src/main/ets/view/AccountLoginPage.ets",
+   "kind": "route-build-register",
+   "struct": "AccountLoginPage",
+   "builder": "AccountLoginNav",
+   "const": "AuthRoutes.AccountLogin",
+   "registered_in": "feature/auth/src/main/ets/navigation/AuthGraph.ets",
+   "const_file": "core/navigation/src/main/ets/auth/AuthRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "auth/sms-login",
+   "symbol": "SmsLoginPage",
+   "file": "feature/auth/src/main/ets/view/SmsLoginPage.ets",
+   "kind": "route-build-register",
+   "struct": "SmsLoginPage",
+   "builder": "SmsLoginNav",
+   "const": "AuthRoutes.SmsLogin",
+   "registered_in": "feature/auth/src/main/ets/navigation/AuthGraph.ets",
+   "const_file": "core/navigation/src/main/ets/auth/AuthRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "auth/register",
+   "symbol": "RegisterPage",
+   "file": "feature/auth/src/main/ets/view/RegisterPage.ets",
+   "kind": "route-build-register",
+   "struct": "RegisterPage",
+   "builder": "RegisterNav",
+   "const": "AuthRoutes.Register",
+   "registered_in": "feature/auth/src/main/ets/navigation/AuthGraph.ets",
+   "const_file": "core/navigation/src/main/ets/auth/AuthRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "auth/reset-password",
+   "symbol": "ResetPasswordPage",
+   "file": "feature/auth/src/main/ets/view/ResetPasswordPage.ets",
+   "kind": "route-build-register",
+   "struct": "ResetPasswordPage",
+   "builder": "ResetPasswordNav",
+   "const": "AuthRoutes.ResetPassword",
+   "registered_in": "feature/auth/src/main/ets/navigation/AuthGraph.ets",
+   "const_file": "core/navigation/src/main/ets/auth/AuthRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "common/about",
+   "symbol": "AboutPage",
+   "file": "feature/common/src/main/ets/view/AboutPage.ets",
+   "kind": "route-build-register",
+   "struct": "AboutPage",
+   "builder": "AboutNav",
+   "const": "CommonRoutes.About",
+   "registered_in": "feature/common/src/main/ets/navigation/CommonGraph.ets",
+   "const_file": "core/navigation/src/main/ets/common/CommonRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "common/web",
+   "symbol": "WebPage",
+   "file": "feature/common/src/main/ets/view/WebPage.ets",
+   "kind": "route-build-register",
+   "struct": "WebPage",
+   "builder": "WebNav",
+   "const": "CommonRoutes.Web",
+   "registered_in": "feature/common/src/main/ets/navigation/CommonGraph.ets",
+   "const_file": "core/navigation/src/main/ets/common/CommonRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "common/settings",
+   "symbol": "SettingsPage",
+   "file": "feature/common/src/main/ets/view/SettingsPage.ets",
+   "kind": "route-build-register",
+   "struct": "SettingsPage",
+   "builder": "SettingsNav",
+   "const": "CommonRoutes.Settings",
+   "registered_in": "feature/common/src/main/ets/navigation/CommonGraph.ets",
+   "const_file": "core/navigation/src/main/ets/common/CommonRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "common/user-agreement",
+   "symbol": "UserAgreementPage",
+   "file": "feature/common/src/main/ets/view/UserAgreementPage.ets",
+   "kind": "route-build-register",
+   "struct": "UserAgreementPage",
+   "builder": "UserAgreementNav",
+   "const": "CommonRoutes.UserAgreement",
+   "registered_in": "feature/common/src/main/ets/navigation/CommonGraph.ets",
+   "const_file": "core/navigation/src/main/ets/common/CommonRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "common/privacy-policy",
+   "symbol": "PrivacyPolicyPage",
+   "file": "feature/common/src/main/ets/view/PrivacyPolicyPage.ets",
+   "kind": "route-build-register",
+   "struct": "PrivacyPolicyPage",
+   "builder": "PrivacyPolicyNav",
+   "const": "CommonRoutes.PrivacyPolicy",
+   "registered_in": "feature/common/src/main/ets/navigation/CommonGraph.ets",
+   "const_file": "core/navigation/src/main/ets/common/CommonRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "common/contributors",
+   "symbol": "ContributorsPage",
+   "file": "feature/common/src/main/ets/view/ContributorsPage.ets",
+   "kind": "route-build-register",
+   "struct": "ContributorsPage",
+   "builder": "ContributorsNav",
+   "const": "CommonRoutes.Contributors",
+   "registered_in": "feature/common/src/main/ets/navigation/CommonGraph.ets",
+   "const_file": "core/navigation/src/main/ets/common/CommonRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "cs/chat",
+   "symbol": "ChatPage",
+   "file": "feature/cs/src/main/ets/view/ChatPage.ets",
+   "kind": "route-build-register",
+   "struct": "ChatPage",
+   "builder": "ChatNav",
+   "const": "CsRoutes.Chat",
+   "registered_in": "feature/cs/src/main/ets/navigation/CsGraph.ets",
+   "const_file": "core/navigation/src/main/ets/cs/CsRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "feedback/list",
+   "symbol": "FeedbackListPage",
+   "file": "feature/feedback/src/main/ets/view/FeedbackListPage.ets",
+   "kind": "route-build-register",
+   "struct": "FeedbackListPage",
+   "builder": "FeedbackListNav",
+   "const": "FeedbackRoutes.List",
+   "registered_in": "feature/feedback/src/main/ets/navigation/FeedbackGraph.ets",
+   "const_file": "core/navigation/src/main/ets/feedback/FeedbackRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "feedback/submit",
+   "symbol": "FeedbackSubmitPage",
+   "file": "feature/feedback/src/main/ets/view/FeedbackSubmitPage.ets",
+   "kind": "route-build-register",
+   "struct": "FeedbackSubmitPage",
+   "builder": "FeedbackSubmitNav",
+   "const": "FeedbackRoutes.Submit",
+   "registered_in": "feature/feedback/src/main/ets/navigation/FeedbackGraph.ets",
+   "const_file": "core/navigation/src/main/ets/feedback/FeedbackRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "goods/detail",
+   "symbol": "GoodsDetailPage",
+   "file": "feature/goods/src/main/ets/view/GoodsDetailPage.ets",
+   "kind": "route-build-register",
+   "struct": "GoodsDetailPage",
+   "builder": "GoodsDetailNav",
+   "const": "GoodsRoutes.Detail",
+   "registered_in": "feature/goods/src/main/ets/navigation/GoodsGraph.ets",
+   "const_file": "core/navigation/src/main/ets/goods/GoodsRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "goods/search",
+   "symbol": "GoodsSearchPage",
+   "file": "feature/goods/src/main/ets/view/GoodsSearchPage.ets",
+   "kind": "route-build-register",
+   "struct": "GoodsSearchPage",
+   "builder": "GoodsSearchNav",
+   "const": "GoodsRoutes.Search",
+   "registered_in": "feature/goods/src/main/ets/navigation/GoodsGraph.ets",
+   "const_file": "core/navigation/src/main/ets/goods/GoodsRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "goods/category",
+   "symbol": "GoodsCategoryPage",
+   "file": "feature/goods/src/main/ets/view/GoodsCategoryPage.ets",
+   "kind": "route-build-register",
+   "struct": "GoodsCategoryPage",
+   "builder": "GoodsCategoryNav",
+   "const": "GoodsRoutes.Category",
+   "registered_in": "feature/goods/src/main/ets/navigation/GoodsGraph.ets",
+   "const_file": "core/navigation/src/main/ets/goods/GoodsRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "goods/comment",
+   "symbol": "GoodsCommentPage",
+   "file": "feature/goods/src/main/ets/view/GoodsCommentPage.ets",
+   "kind": "route-build-register",
+   "struct": "GoodsCommentPage",
+   "builder": "GoodsCommentNav",
+   "const": "GoodsRoutes.Comment",
+   "registered_in": "feature/goods/src/main/ets/navigation/GoodsGraph.ets",
+   "const_file": "core/navigation/src/main/ets/goods/GoodsRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "launch/splash",
+   "symbol": "SplashPage",
+   "file": "feature/launch/src/main/ets/view/SplashPage.ets",
+   "kind": "route-build-register",
+   "struct": "SplashPage",
+   "builder": "SplashNav",
+   "const": "LaunchRoutes.Splash",
+   "registered_in": "feature/launch/src/main/ets/navigation/LaunchGraph.ets",
+   "const_file": "core/navigation/src/main/ets/launch/LaunchRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "launch/guide",
+   "symbol": "GuidePage",
+   "file": "feature/launch/src/main/ets/view/GuidePage.ets",
+   "kind": "route-build-register",
+   "struct": "GuidePage",
+   "builder": "GuideNav",
+   "const": "LaunchRoutes.Guide",
+   "registered_in": "feature/launch/src/main/ets/navigation/LaunchGraph.ets",
+   "const_file": "core/navigation/src/main/ets/launch/LaunchRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "main/main",
+   "symbol": "MainPage",
+   "file": "feature/main/src/main/ets/view/MainPage.ets",
+   "kind": "route-build-register",
+   "struct": "MainPage",
+   "builder": "MainNav",
+   "const": "MainRoutes.Main",
+   "registered_in": "feature/main/src/main/ets/navigation/MainGraph.ets",
+   "const_file": "core/navigation/src/main/ets/main/MainRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "main/home",
+   "symbol": "HomePage",
+   "file": "feature/main/src/main/ets/view/HomePage.ets",
+   "kind": "route-build-register",
+   "struct": "HomePage",
+   "builder": "HomeNav",
+   "const": "MainRoutes.Home",
+   "registered_in": "feature/main/src/main/ets/navigation/MainGraph.ets",
+   "const_file": "core/navigation/src/main/ets/main/MainRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "main/category",
+   "symbol": "CategoryPage",
+   "file": "feature/main/src/main/ets/view/CategoryPage.ets",
+   "kind": "route-build-register",
+   "struct": "CategoryPage",
+   "builder": "CategoryNav",
+   "const": "MainRoutes.Category",
+   "registered_in": "feature/main/src/main/ets/navigation/MainGraph.ets",
+   "const_file": "core/navigation/src/main/ets/main/MainRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "main/cart",
+   "symbol": "CartPage",
+   "file": "feature/main/src/main/ets/view/CartPage.ets",
+   "kind": "route-build-register",
+   "struct": "CartPage",
+   "builder": "CartNav",
+   "const": "MainRoutes.Cart",
+   "registered_in": "feature/main/src/main/ets/navigation/MainGraph.ets",
+   "const_file": "core/navigation/src/main/ets/main/MainRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "main/me",
+   "symbol": "MePage",
+   "file": "feature/main/src/main/ets/view/MePage.ets",
+   "kind": "route-build-register",
+   "struct": "MePage",
+   "builder": "MeNav",
+   "const": "MainRoutes.Me",
+   "registered_in": "feature/main/src/main/ets/navigation/MainGraph.ets",
+   "const_file": "core/navigation/src/main/ets/main/MainRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "market/coupon",
+   "symbol": "CouponPage",
+   "file": "feature/market/src/main/ets/view/CouponPage.ets",
+   "kind": "route-build-register",
+   "struct": "CouponPage",
+   "builder": "CouponNav",
+   "const": "MarketRoutes.Coupon",
+   "registered_in": "feature/market/src/main/ets/navigation/MarketGraph.ets",
+   "const_file": "core/navigation/src/main/ets/market/MarketRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "order/list",
+   "symbol": "OrderListPage",
+   "file": "feature/order/src/main/ets/view/OrderListPage.ets",
+   "kind": "route-build-register",
+   "struct": "OrderListPage",
+   "builder": "OrderListNav",
+   "const": "OrderRoutes.List",
+   "registered_in": "feature/order/src/main/ets/navigation/OrderGraph.ets",
+   "const_file": "core/navigation/src/main/ets/order/OrderRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "order/confirm",
+   "symbol": "OrderConfirmPage",
+   "file": "feature/order/src/main/ets/view/OrderConfirmPage.ets",
+   "kind": "route-build-register",
+   "struct": "OrderConfirmPage",
+   "builder": "OrderConfirmNav",
+   "const": "OrderRoutes.Confirm",
+   "registered_in": "feature/order/src/main/ets/navigation/OrderGraph.ets",
+   "const_file": "core/navigation/src/main/ets/order/OrderRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "order/detail",
+   "symbol": "OrderDetailPage",
+   "file": "feature/order/src/main/ets/view/OrderDetailPage.ets",
+   "kind": "route-build-register",
+   "struct": "OrderDetailPage",
+   "builder": "OrderDetailNav",
+   "const": "OrderRoutes.Detail",
+   "registered_in": "feature/order/src/main/ets/navigation/OrderGraph.ets",
+   "const_file": "core/navigation/src/main/ets/order/OrderRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "order/pay",
+   "symbol": "OrderPayPage",
+   "file": "feature/order/src/main/ets/view/OrderPayPage.ets",
+   "kind": "route-build-register",
+   "struct": "OrderPayPage",
+   "builder": "OrderPayNav",
+   "const": "OrderRoutes.Pay",
+   "registered_in": "feature/order/src/main/ets/navigation/OrderGraph.ets",
+   "const_file": "core/navigation/src/main/ets/order/OrderRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "order/refund",
+   "symbol": "OrderRefundPage",
+   "file": "feature/order/src/main/ets/view/OrderRefundPage.ets",
+   "kind": "route-build-register",
+   "struct": "OrderRefundPage",
+   "builder": "OrderRefundNav",
+   "const": "OrderRoutes.Refund",
+   "registered_in": "feature/order/src/main/ets/navigation/OrderGraph.ets",
+   "const_file": "core/navigation/src/main/ets/order/OrderRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "order/comment",
+   "symbol": "OrderCommentPage",
+   "file": "feature/order/src/main/ets/view/OrderCommentPage.ets",
+   "kind": "route-build-register",
+   "struct": "OrderCommentPage",
+   "builder": "OrderCommentNav",
+   "const": "OrderRoutes.Comment",
+   "registered_in": "feature/order/src/main/ets/navigation/OrderGraph.ets",
+   "const_file": "core/navigation/src/main/ets/order/OrderRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "order/logistics",
+   "symbol": "OrderLogisticsPage",
+   "file": "feature/order/src/main/ets/view/OrderLogisticsPage.ets",
+   "kind": "route-build-register",
+   "struct": "OrderLogisticsPage",
+   "builder": "OrderLogisticsNav",
+   "const": "OrderRoutes.Logistics",
+   "registered_in": "feature/order/src/main/ets/navigation/OrderGraph.ets",
+   "const_file": "core/navigation/src/main/ets/order/OrderRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "user/profile",
+   "symbol": "ProfilePage",
+   "file": "feature/user/src/main/ets/view/ProfilePage.ets",
+   "kind": "route-build-register",
+   "struct": "ProfilePage",
+   "builder": "ProfileNav",
+   "const": "UserRoutes.Profile",
+   "registered_in": "feature/user/src/main/ets/navigation/UserGraph.ets",
+   "const_file": "core/navigation/src/main/ets/user/UserRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "user/address-list",
+   "symbol": "AddressListPage",
+   "file": "feature/user/src/main/ets/view/AddressListPage.ets",
+   "kind": "route-build-register",
+   "struct": "AddressListPage",
+   "builder": "AddressListNav",
+   "const": "UserRoutes.AddressList",
+   "registered_in": "feature/user/src/main/ets/navigation/UserGraph.ets",
+   "const_file": "core/navigation/src/main/ets/user/UserRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "user/address-detail",
+   "symbol": "AddressDetailPage",
+   "file": "feature/user/src/main/ets/view/AddressDetailPage.ets",
+   "kind": "route-build-register",
+   "struct": "AddressDetailPage",
+   "builder": "AddressDetailNav",
+   "const": "UserRoutes.AddressDetail",
+   "registered_in": "feature/user/src/main/ets/navigation/UserGraph.ets",
+   "const_file": "core/navigation/src/main/ets/user/UserRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "user/footprint",
+   "symbol": "FootprintPage",
+   "file": "feature/user/src/main/ets/view/FootprintPage.ets",
+   "kind": "route-build-register",
+   "struct": "FootprintPage",
+   "builder": "FootprintNav",
+   "const": "UserRoutes.Footprint",
+   "registered_in": "feature/user/src/main/ets/navigation/UserGraph.ets",
+   "const_file": "core/navigation/src/main/ets/user/UserRoutes.ts"
+  },
+  {
+   "platform": "harmony",
+   "route_id": "view/EntryPage",
+   "symbol": "EntryPage",
+   "file": "entry/src/main/ets/view/EntryPage.ets",
+   "kind": "main_pages",
+   "optional": true,
+   "note": "main_pages shell hosting NavigationHost"
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "harmony",
+   "symbol": "AppNavDestination",
+   "file": "core/ui/src/main/ets/component/navdestination/AppNavDestination.ets",
+   "reason": "shared NavDestination wrapper component used by every page"
+  },
+  {
+   "platform": "harmony",
+   "symbol": "AddressCard",
+   "file": "core/ui/src/main/ets/component/address/AddressCard.ets",
+   "reason": "card component"
+  },
+  {
+   "platform": "harmony",
+   "symbol": "OrderCard",
+   "file": "feature/order/src/main/ets/component/OrderCard.ets",
+   "reason": "card component"
+  },
+  {
+   "platform": "harmony",
+   "symbol": "HomeBanner",
+   "file": "feature/main/src/main/ets/component/HomeBanner.ets",
+   "reason": "banner component"
+  },
+  {
+   "platform": "harmony",
+   "symbol": "NavigationHost",
+   "file": "entry/src/main/ets/navigation/NavigationHost.ets",
+   "reason": "Navigation host, not a page",
+   "borderline": true
+  },
+  {
+   "platform": "harmony",
+   "symbol": "RouteBuild",
+   "file": "core/navigation/src/main/ets/RouteBuild.ets",
+   "reason": "route registry class"
+  }
+ ],
+ "deeplinks": [],
+ "testids": [],
+ "apis": [
+  {
+   "method": "GET",
+   "path": "page/home",
+   "file": "core/network/src/main/ets/datasource/page/PageNetworkDataSourceImpl.ets"
+  },
+  {
+   "method": "GET",
+   "path": "page/goodsDetail",
+   "file": "core/network/src/main/ets/datasource/page/PageNetworkDataSourceImpl.ets",
+   "note": "?goodsId via params"
+  },
+  {
+   "method": "POST",
+   "path": "user/info/updatePerson",
+   "file": "core/network/src/main/ets/datasource/userinfo/UserInfoNetworkDataSourceImpl.ets"
+  },
+  {
+   "method": "GET",
+   "path": "user/info/person",
+   "file": "core/network/src/main/ets/datasource/userinfo/UserInfoNetworkDataSourceImpl.ets"
+  },
+  {
+   "method": "POST",
+   "path": "user/login/password",
+   "file": "core/network/src/main/ets/datasource/auth/AuthNetworkDataSourceImpl.ets"
+  },
+  {
+   "method": "GET",
+   "path": "user/login/captcha",
+   "file": "core/network/src/main/ets/datasource/auth/AuthNetworkDataSourceImpl.ets"
+  },
+  {
+   "method": "POST",
+   "path": "goods/info/page",
+   "file": "core/network/src/main/ets/datasource/goods/GoodsNetworkDataSourceImpl.ets"
+  },
+  {
+   "method": "GET",
+   "path": "goods/info/info",
+   "file": "core/network/src/main/ets/datasource/goods/GoodsNetworkDataSourceImpl.ets"
+  },
+  {
+   "method": "POST",
+   "path": "app/feedback/submit",
+   "file": "core/network/src/main/ets/datasource/feedback/FeedbackNetworkDataSourceImpl.ets",
+   "note": "BASE_URL already ends in /app/, so full path is /app/app/feedback/submit"
+  },
+  {
+   "method": "POST",
+   "path": "cs/msg/page",
+   "file": "core/network/src/main/ets/datasource/cs/CustomerServiceNetworkDataSourceImpl.ets"
+  }
+ ],
+ "claims": [],
+ "notes": "Custom Navigation registry: route strings in core/navigation/*/XRoutes.ts consts, registered via RouteBuild.register(XRoutes.Key, wrapBuilder(XNav)) in feature/*/navigation/XGraph.ets; XNav @Builder calls XPage(). No router_map, no @Entry pages besides EntryPage. Routes exhaustive (37). No .id() testIDs, no skills.uris deep links. APIs via axios NetworkClient.http.get/post(\"relative\") with BASE_URL https://mall.dusksnow.top/app/."
+}

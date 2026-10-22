@@ -1,0 +1,575 @@
+{
+ "repo": "AntennaPod/AntennaPod",
+ "url": "https://github.com/AntennaPod/AntennaPod",
+ "commit": "3d105d598dfa582c6cb22ba40b56d11780366890",
+ "platform_roots": {
+  "android": [
+   "app",
+   "ui",
+   "net",
+   "playback",
+   "storage",
+   "app-wearos"
+  ]
+ },
+ "screens": [
+  {
+   "platform": "android",
+   "route_id": "SplashActivity",
+   "symbol": "SplashActivity",
+   "file": "app/src/main/java/de/danoeh/antennapod/activity/SplashActivity.java",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "MainActivity",
+   "symbol": "MainActivity",
+   "file": "app/src/main/java/de/danoeh/antennapod/activity/MainActivity.java",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "PreferenceActivity",
+   "symbol": "PreferenceActivity",
+   "file": "app/src/main/java/de/danoeh/antennapod/ui/screen/preferences/PreferenceActivity.java",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "OpmlImportActivity",
+   "symbol": "OpmlImportActivity",
+   "file": "app/src/main/java/de/danoeh/antennapod/activity/OpmlImportActivity.java",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "VideoplayerActivity",
+   "symbol": "VideoplayerActivity",
+   "file": "app/src/main/java/de/danoeh/antennapod/ui/screen/playback/video/VideoplayerActivity.java",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "Media3VideoPlayerActivity",
+   "symbol": "Media3VideoPlayerActivity",
+   "file": "app/src/main/java/de/danoeh/antennapod/ui/screen/playback/video/Media3VideoPlayerActivity.java",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "OnlineFeedViewActivity",
+   "symbol": "OnlineFeedViewActivity",
+   "file": "app/src/main/java/de/danoeh/antennapod/ui/screen/onlinefeedview/OnlineFeedViewActivity.java",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "SelectSubscriptionActivity",
+   "symbol": "SelectSubscriptionActivity",
+   "file": "app/src/main/java/de/danoeh/antennapod/activity/SelectSubscriptionActivity.java",
+   "kind": "activity"
+  },
+  {
+   "platform": "android",
+   "route_id": "MainListActivity",
+   "symbol": "MainListActivity",
+   "file": "app-wearos/src/main/java/de/danoeh/antennapod/wearos/MainListActivity.kt",
+   "kind": "activity",
+   "note": "Wear OS module"
+  },
+  {
+   "platform": "android",
+   "route_id": "FeedListActivity",
+   "symbol": "FeedListActivity",
+   "file": "app-wearos/src/main/java/de/danoeh/antennapod/wearos/FeedListActivity.kt",
+   "kind": "activity",
+   "note": "Wear OS module"
+  },
+  {
+   "platform": "android",
+   "route_id": "EpisodeListActivity",
+   "symbol": "EpisodeListActivity",
+   "file": "app-wearos/src/main/java/de/danoeh/antennapod/wearos/EpisodeListActivity.kt",
+   "kind": "activity",
+   "note": "Wear OS module"
+  },
+  {
+   "platform": "android",
+   "route_id": "EpisodeDetailActivity",
+   "symbol": "EpisodeDetailActivity",
+   "file": "app-wearos/src/main/java/de/danoeh/antennapod/wearos/EpisodeDetailActivity.kt",
+   "kind": "activity",
+   "note": "Wear OS module"
+  },
+  {
+   "platform": "android",
+   "route_id": "HomeFragment",
+   "symbol": "HomeFragment",
+   "file": "app/src/main/java/de/danoeh/antennapod/ui/screen/home/HomeFragment.java",
+   "kind": "fragment",
+   "note": "top-level fragment swapped into MainActivity (MainActivity.createFragmentInstance switch on TAG)"
+  },
+  {
+   "platform": "android",
+   "route_id": "QueueFragment",
+   "symbol": "QueueFragment",
+   "file": "app/src/main/java/de/danoeh/antennapod/ui/screen/queue/QueueFragment.java",
+   "kind": "fragment",
+   "note": "top-level fragment swapped into MainActivity (MainActivity.createFragmentInstance switch on TAG)"
+  },
+  {
+   "platform": "android",
+   "route_id": "InboxFragment",
+   "symbol": "InboxFragment",
+   "file": "app/src/main/java/de/danoeh/antennapod/ui/screen/InboxFragment.java",
+   "kind": "fragment",
+   "note": "top-level fragment swapped into MainActivity (MainActivity.createFragmentInstance switch on TAG)"
+  },
+  {
+   "platform": "android",
+   "route_id": "AllEpisodesFragment",
+   "symbol": "AllEpisodesFragment",
+   "file": "app/src/main/java/de/danoeh/antennapod/ui/screen/AllEpisodesFragment.java",
+   "kind": "fragment",
+   "note": "top-level fragment swapped into MainActivity (MainActivity.createFragmentInstance switch on TAG)"
+  },
+  {
+   "platform": "android",
+   "route_id": "CompletedDownloadsFragment",
+   "symbol": "CompletedDownloadsFragment",
+   "file": "app/src/main/java/de/danoeh/antennapod/ui/screen/download/CompletedDownloadsFragment.java",
+   "kind": "fragment",
+   "note": "top-level fragment swapped into MainActivity (MainActivity.createFragmentInstance switch on TAG)"
+  },
+  {
+   "platform": "android",
+   "route_id": "PlaybackHistoryFragment",
+   "symbol": "PlaybackHistoryFragment",
+   "file": "app/src/main/java/de/danoeh/antennapod/ui/screen/PlaybackHistoryFragment.java",
+   "kind": "fragment",
+   "note": "top-level fragment swapped into MainActivity (MainActivity.createFragmentInstance switch on TAG)"
+  },
+  {
+   "platform": "android",
+   "route_id": "FavoritesFragment",
+   "symbol": "FavoritesFragment",
+   "file": "app/src/main/java/de/danoeh/antennapod/ui/screen/FavoritesFragment.java",
+   "kind": "fragment",
+   "note": "top-level fragment swapped into MainActivity (MainActivity.createFragmentInstance switch on TAG)"
+  },
+  {
+   "platform": "android",
+   "route_id": "AddFeedFragment",
+   "symbol": "AddFeedFragment",
+   "file": "app/src/main/java/de/danoeh/antennapod/ui/screen/AddFeedFragment.java",
+   "kind": "fragment",
+   "note": "top-level fragment swapped into MainActivity (MainActivity.createFragmentInstance switch on TAG)"
+  },
+  {
+   "platform": "android",
+   "route_id": "SubscriptionFragment",
+   "symbol": "SubscriptionFragment",
+   "file": "app/src/main/java/de/danoeh/antennapod/ui/screen/subscriptions/SubscriptionFragment.java",
+   "kind": "fragment",
+   "note": "top-level fragment swapped into MainActivity (MainActivity.createFragmentInstance switch on TAG)"
+  },
+  {
+   "platform": "android",
+   "route_id": "StatisticsFragment",
+   "symbol": "StatisticsFragment",
+   "file": "ui/statistics/src/main/java/de/danoeh/antennapod/ui/statistics/StatisticsFragment.java",
+   "kind": "fragment",
+   "note": "top-level fragment swapped into MainActivity (MainActivity.createFragmentInstance switch on TAG)"
+  },
+  {
+   "platform": "android",
+   "route_id": "DiscoveryFragment",
+   "symbol": "DiscoveryFragment",
+   "file": "ui/discovery/src/main/java/de/danoeh/antennapod/ui/discovery/DiscoveryFragment.java",
+   "kind": "fragment",
+   "note": "top-level fragment swapped into MainActivity (MainActivity.createFragmentInstance switch on TAG)"
+  },
+  {
+   "platform": "android",
+   "route_id": "FeedItemlistFragment",
+   "symbol": "FeedItemlistFragment",
+   "file": "app/src/main/java/de/danoeh/antennapod/ui/screen/feed/FeedItemlistFragment.java",
+   "kind": "fragment",
+   "note": "detail fragment pushed via MainActivity.loadChildFragment"
+  },
+  {
+   "platform": "android",
+   "route_id": "ItemPagerFragment",
+   "symbol": "ItemPagerFragment",
+   "file": "app/src/main/java/de/danoeh/antennapod/ui/screen/episode/ItemPagerFragment.java",
+   "kind": "fragment",
+   "note": "detail fragment pushed via MainActivity.loadChildFragment"
+  },
+  {
+   "platform": "android",
+   "route_id": "SearchFragment",
+   "symbol": "SearchFragment",
+   "file": "app/src/main/java/de/danoeh/antennapod/ui/screen/SearchFragment.java",
+   "kind": "fragment",
+   "note": "detail fragment pushed via MainActivity.loadChildFragment"
+  }
+ ],
+ "not_screens": [
+  {
+   "platform": "android",
+   "symbol": "EpisodesListFragment",
+   "file": "app/src/main/java/de/danoeh/antennapod/ui/episodeslist/EpisodesListFragment.java",
+   "reason": "abstract base class"
+  },
+  {
+   "platform": "android",
+   "symbol": "HomeSection",
+   "file": "app/src/main/java/de/danoeh/antennapod/ui/screen/home/HomeSection.java",
+   "reason": "abstract base for home sections embedded in HomeFragment"
+  },
+  {
+   "platform": "android",
+   "symbol": "EchoSection",
+   "file": "app/src/main/java/de/danoeh/antennapod/ui/screen/home/sections/EchoSection.java",
+   "reason": "embedded child section of HomeFragment"
+  },
+  {
+   "platform": "android",
+   "symbol": "NavDrawerFragment",
+   "file": "app/src/main/java/de/danoeh/antennapod/ui/screen/drawer/NavDrawerFragment.java",
+   "reason": "navigation drawer chrome, embedded"
+  },
+  {
+   "platform": "android",
+   "symbol": "CoverFragment",
+   "file": "app/src/main/java/de/danoeh/antennapod/ui/screen/playback/audio/CoverFragment.java",
+   "reason": "pager page inside AudioPlayerFragment"
+  },
+  {
+   "platform": "android",
+   "symbol": "ExternalPlayerFragment",
+   "file": "app/src/main/java/de/danoeh/antennapod/ui/screen/playback/audio/ExternalPlayerFragment.java",
+   "reason": "mini-player bar embedded in MainActivity"
+  }
+ ],
+ "deeplinks": [
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "antennapod.org",
+   "path": "/deeplink/main",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "MainActivity intent-filter pathPrefix"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "antennapod.org",
+   "path": "/deeplink/search",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "MainActivity intent-filter pathPrefix"
+  },
+  {
+   "platform": "android",
+   "scheme": "http",
+   "host": "antennapod.org",
+   "path": "/deeplink/subscribe",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "OnlineFeedViewActivity intent-filter pathPrefix (http+https)"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "antennapod.org",
+   "path": "/deeplink/subscribe",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "OnlineFeedViewActivity intent-filter pathPrefix (http+https)"
+  },
+  {
+   "platform": "android",
+   "scheme": "https",
+   "host": "www.subscribeonandroid.com",
+   "path": "/.*\\..*/.*",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "OnlineFeedViewActivity pathPattern"
+  },
+  {
+   "platform": "android",
+   "scheme": "itpc",
+   "host": "",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "OnlineFeedViewActivity scheme-only"
+  },
+  {
+   "platform": "android",
+   "scheme": "pcast",
+   "host": "",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "OnlineFeedViewActivity scheme-only"
+  },
+  {
+   "platform": "android",
+   "scheme": "feed",
+   "host": "",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "OnlineFeedViewActivity scheme-only"
+  },
+  {
+   "platform": "android",
+   "scheme": "antennapod-subscribe",
+   "host": "",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "OnlineFeedViewActivity scheme-only"
+  },
+  {
+   "platform": "android",
+   "scheme": "http",
+   "host": "",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "OnlineFeedViewActivity http(s)+rss/atom/xml mimeType filter",
+   "optional": true,
+   "note": "mime-type gated; extractor may skip"
+  },
+  {
+   "platform": "android",
+   "scheme": "file",
+   "host": "",
+   "path": "",
+   "file": "app/src/main/AndroidManifest.xml",
+   "source": "OpmlImportActivity file/content/http(s) + opml mimeType",
+   "optional": true
+  }
+ ],
+ "testids": [
+  {
+   "platform": "android",
+   "tid": "drawer_layout",
+   "file": "app/src/main/res/layout/main.xml",
+   "line": 17,
+   "kind": "resource-id",
+   "note": "android:id, referenced by Espresso tests in app/src/androidTest"
+  },
+  {
+   "platform": "android",
+   "tid": "butShowSettings",
+   "file": "app/src/main/res/layout/feeditemlist_header.xml",
+   "line": 75,
+   "kind": "resource-id",
+   "note": "android:id, referenced by Espresso tests in app/src/androidTest"
+  },
+  {
+   "platform": "android",
+   "tid": "bottomNavigationView",
+   "file": "app/src/main/res/layout-sw720dp/main.xml",
+   "line": 57,
+   "kind": "resource-id",
+   "note": "android:id, referenced by Espresso tests in app/src/androidTest"
+  },
+  {
+   "platform": "android",
+   "tid": "secondaryActionButton",
+   "file": "app/src/main/res/layout/secondary_action.xml",
+   "line": 6,
+   "kind": "resource-id",
+   "note": "android:id, referenced by Espresso tests in app/src/androidTest"
+  },
+  {
+   "platform": "android",
+   "tid": "fallbackTitleLabel",
+   "file": "app/src/main/res/layout/subscription_list_item.xml",
+   "line": 37,
+   "kind": "resource-id",
+   "note": "android:id, referenced by Espresso tests in app/src/androidTest"
+  },
+  {
+   "platform": "android",
+   "tid": "txtvTitle",
+   "file": "ui/discovery/src/main/res/layout/online_search_listitem.xml",
+   "line": 38,
+   "kind": "resource-id",
+   "note": "android:id, referenced by Espresso tests in app/src/androidTest"
+  },
+  {
+   "platform": "android",
+   "tid": "appBar",
+   "file": "app/src/main/res/layout/feed_item_list_fragment.xml",
+   "line": 11,
+   "kind": "resource-id",
+   "note": "android:id, referenced by Espresso tests in app/src/androidTest"
+  },
+  {
+   "platform": "android",
+   "tid": "recyclerView",
+   "file": "app/src/main/res/layout/queue_fragment.xml",
+   "line": 44,
+   "kind": "resource-id",
+   "note": "android:id, referenced by Espresso tests in app/src/androidTest"
+  },
+  {
+   "platform": "android",
+   "tid": "butPlay",
+   "file": "app/src/main/res/layout/audioplayer_fragment.xml",
+   "line": 142,
+   "kind": "resource-id",
+   "note": "android:id, referenced by Espresso tests in app/src/androidTest"
+  },
+  {
+   "platform": "android",
+   "tid": "toolbar",
+   "file": "app/src/main/res/layout/transcript_dialog.xml",
+   "line": 11,
+   "kind": "resource-id",
+   "note": "android:id, referenced by Espresso tests in app/src/androidTest"
+  }
+ ],
+ "apis": [
+  {
+   "method": "GET",
+   "path": "{baseFolder}/api/2/devices/{username}.json",
+   "file": "net/sync/gpoddernet/src/main/java/de/danoeh/antennapod/net/sync/gpoddernet/GpodnetService.java",
+   "dynamic": true,
+   "note": "String.format into URI; host user-configurable"
+  },
+  {
+   "method": "POST",
+   "path": "{baseFolder}/api/2/devices/{username}/{deviceId}.json",
+   "file": "net/sync/gpoddernet/src/main/java/de/danoeh/antennapod/net/sync/gpoddernet/GpodnetService.java",
+   "dynamic": true
+  },
+  {
+   "method": "POST",
+   "path": "{baseFolder}/api/2/subscriptions/{username}/{deviceId}.json",
+   "file": "net/sync/gpoddernet/src/main/java/de/danoeh/antennapod/net/sync/gpoddernet/GpodnetService.java",
+   "dynamic": true
+  },
+  {
+   "method": "GET",
+   "path": "{baseFolder}/api/2/subscriptions/{username}/{deviceId}.json",
+   "file": "net/sync/gpoddernet/src/main/java/de/danoeh/antennapod/net/sync/gpoddernet/GpodnetService.java",
+   "dynamic": true
+  },
+  {
+   "method": "POST",
+   "path": "{baseFolder}/api/2/episodes/{username}.json",
+   "file": "net/sync/gpoddernet/src/main/java/de/danoeh/antennapod/net/sync/gpoddernet/GpodnetService.java",
+   "dynamic": true
+  },
+  {
+   "method": "GET",
+   "path": "{baseFolder}/api/2/episodes/{username}.json",
+   "file": "net/sync/gpoddernet/src/main/java/de/danoeh/antennapod/net/sync/gpoddernet/GpodnetService.java",
+   "dynamic": true
+  },
+  {
+   "method": "POST",
+   "path": "{baseFolder}/api/2/auth/{username}/login.json",
+   "file": "net/sync/gpoddernet/src/main/java/de/danoeh/antennapod/net/sync/gpoddernet/GpodnetService.java",
+   "dynamic": true
+  },
+  {
+   "method": "GET",
+   "path": "https://api.fyyd.de/0.2/search/podcast",
+   "file": "net/discovery/src/main/java/de/danoeh/antennapod/net/discovery/FyydPodcastSearcher.java",
+   "note": "constant FYYD_API_URL with query"
+  },
+  {
+   "method": "GET",
+   "path": "https://itunes.apple.com/search",
+   "file": "net/discovery/src/main/java/de/danoeh/antennapod/net/discovery/ItunesPodcastSearcher.java",
+   "note": "constant ITUNES_API_URL"
+  },
+  {
+   "method": "GET",
+   "path": "https://itunes.apple.com/lookup",
+   "file": "net/discovery/src/main/java/de/danoeh/antennapod/net/discovery/ItunesPodcastSearcher.java"
+  },
+  {
+   "method": "HEAD",
+   "path": "{downloadUrl}",
+   "file": "net/common/src/main/java/de/danoeh/antennapod/net/common/RedirectChecker.java",
+   "dynamic": true,
+   "expect": false,
+   "note": "fully dynamic URL; should NOT be expected"
+  }
+ ],
+ "claims": [
+  {
+   "id": "C1",
+   "text": "Whenever you add a user-visible string, add it to :ui:i18n ... ui/i18n/src/main/res/values/strings.xml",
+   "source": "AGENTS.md",
+   "label": "verified",
+   "evidence": "ui/i18n/src/main/res/values/strings.xml"
+  },
+  {
+   "id": "C2",
+   "text": "To compile the code, use ./gradlew :app:assembleDebug",
+   "source": "AGENTS.md",
+   "label": "verified",
+   "evidence": "app/build.gradle (debug buildType)"
+  },
+  {
+   "id": "C3",
+   "text": "./gradlew :app:installPlayDebug && adb shell monkey -p de.danoeh.antennapod.debug",
+   "source": "AGENTS.md",
+   "label": "verified",
+   "evidence": "playFlavor.gradle (play flavor); app/build.gradle:32 applicationIdSuffix \".debug\""
+  },
+  {
+   "id": "C4",
+   "text": "check the code style using ./gradlew checkstyle lint",
+   "source": "AGENTS.md",
+   "label": "verified",
+   "evidence": "common.gradle:136 apply plugin checkstyle"
+  },
+  {
+   "id": "C5",
+   "text": "read the PR template at .github/pull_request_template.md",
+   "source": "AGENTS.md",
+   "label": "verified",
+   "evidence": ".github/pull_request_template.md"
+  },
+  {
+   "id": "C6",
+   "text": "follow one of the issue templates in .github/ISSUE_TEMPLATE/",
+   "source": "AGENTS.md",
+   "label": "verified",
+   "evidence": ".github/ISSUE_TEMPLATE/bug_report.yml"
+  },
+  {
+   "id": "C7",
+   "text": "AntennaPod is licensed under the GNU General Public License (GPL-3.0)",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "LICENSE"
+  },
+  {
+   "id": "C8",
+   "text": "open-source podcast manager for Android",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "app/src/main/AndroidManifest.xml"
+  },
+  {
+   "id": "C9",
+   "text": "Get it on Google Play ... details?id=de.danoeh.antennapod",
+   "source": "README.md",
+   "label": "verified",
+   "evidence": "app/build.gradle applicationId"
+  },
+  {
+   "id": "C10",
+   "text": "There is a Wear OS companion app",
+   "source": "(labeller-synthesised negative-free claim; not from docs)",
+   "label": "verified",
+   "evidence": "app-wearos/src/main/AndroidManifest.xml",
+   "synthetic": true,
+   "note": "synthetic; README has few technical claims"
+  }
+ ],
+ "notes": "Java/Kotlin View-based app: screens are Activities + Fragments switched by TAG in MainActivity. No Compose testTag; testids here are android:id resource-ids used by Espresso (kind=resource-id). Gpodnet APIs are built with String.format + new URI so paths contain placeholders. wear:// intent-filters in app/src/play and app-wearos belong to WearableListenerService (MESSAGE_RECEIVED), not deep links -> excluded."
+}

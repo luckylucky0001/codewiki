@@ -1,0 +1,7 @@
+modules 268
+E1 :features:login:impl deps 25 [':appconfig', ':features:enterprise:api', ':features:enterprise:test', ':features:login:api', ':features:preferences:api', ':features:preferences:test', ':features:rageshake:api', ':libraries:androidutils', ':libraries:architecture', ':libraries:core', ':libraries:designsystem', ':libraries:matrix:api', ':libraries:matrix:test', ':libraries:oauth:api', ':libraries:oauth:test', ':libraries:permissions:api', ':libraries:permissions:test', ':libraries:preferences:api', ':libraries:preferences:test', ':libraries:qrcode', ':libraries:session-storage:api', ':libraries:session-storage:test', ':libraries:testtags', ':libraries:ui-strings', ':libraries:ui-utils']
+E2 dependents of :libraries:qrcode [':features:linknewdevice:impl', ':features:login:impl']
+E4 feature impl with most project deps [(':features:messages:impl', 69), (':features:preferences:impl', 62), (':features:roomdetails:impl', 42)]
+E5 dependents of :libraries:matrix:api 147
+E3 :features:call:impl kotlin files 36
+85b63e571afc448068164d865285e11385e18723
