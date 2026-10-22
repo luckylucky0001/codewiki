@@ -28,7 +28,7 @@ export function agentsBlockFor(w: string, t: ToolWords): string {
 This repo has a code-anchored wiki in \`${w}/\` (generated from code, verified against HEAD in CI).
 For these questions do the listed action FIRST — one call usually answers it — then read code only to confirm.
 ${t.intro}
-If \`${w}/\` does not exist yet, build it once: ${run('kb init')}, then ${run('kb compound --llm template')} (deterministic, no LLM, seconds).
+If \`${w}/\` does not exist yet, build it once: ${run('kb init')}, then ${run('kb compound --llm template --no-llm-facts')} (deterministic, no LLM, seconds).
 \`kb routes\`, \`kb lint-tid\` and \`kb parity\` already work before that (zero-config mode).
 The \`codewiki\` skill (one skill for query / ingest / compound / lint) has the full recipes.
 

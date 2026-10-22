@@ -17,7 +17,8 @@ export interface Config {
   project: string;
   platforms: Platform[];
   exclude: string[];
-  llm: { cmd: string; agent?: string; model?: string; timeout_sec: number };
+  /** facts*: LLM fallback extraction of routes/APIs during `kb compound` (on by default; degrades to rules only without an agent) */
+  llm: { cmd: string; agent?: string; model?: string; timeout_sec: number; facts?: boolean; facts_agent?: string; facts_model?: string; facts_max_files?: number };
   plan: { hops: number; rebuild_module_ratio: number; rebuild_structural_ratio: number };
   docs: { exclude: string[] };
   facts: { uikit?: boolean };
@@ -41,7 +42,7 @@ export function defaultConfig(): Config {
     project: 'project',
     platforms: [],
     exclude: ['**/build/**', '**/node_modules/**', '**/.git/**', '**/Pods/**', '**/oh_modules/**', '**/.gradle/**', '**/.kb-work/**'],
-    llm: { cmd: DefaultLLMCmd, timeout_sec: 600 },
+    llm: { cmd: DefaultLLMCmd, timeout_sec: 600, facts: true },
     plan: { hops: 1, rebuild_module_ratio: 0.5, rebuild_structural_ratio: 0.3 },
     docs: { exclude: [] },
     facts: {},
@@ -104,9 +105,23 @@ export function loadConfig(root: string, configFile?: string): Config {
   if (!c.wiki_dir) c.wiki_dir = 'wiki';
   if (!c.plan.hops) c.plan.hops = 1;
   if (!c.llm.cmd) c.llm.cmd = DefaultLLMCmd;
+  c.llm.facts = boolValue(c.llm.facts, true);
   c.platforms = (c.platforms ?? []).map((p) => ({ name: String(p.name ?? ''), root: String(p.root ?? ''), ...(p.include ? { include: p.include.map(String) } : {}) }));
   c.root = abs;
   return c;
+}
+
+/** YAML/env-ish boolean: false / 0 / off / no (any case) are false; absent → def. */
+export function boolValue(v: unknown, def: boolean): boolean {
+  if (v === undefined || v === null || v === '') return def;
+  if (typeof v === 'boolean') return v;
+  return !/^(false|0|off|no|n)$/i.test(String(v).trim());
+}
+
+/** LLM facts fallback settings for `kb compound` (llm.facts*, defaults: on, claude, haiku, 40 files). */
+export function llmFactsSettings(c: Config): { enabled: boolean; agent: string; model: string; maxFiles: number } {
+  const n = Number(c.llm.facts_max_files);
+  return { enabled: boolValue(c.llm.facts, true), agent: String(c.llm.facts_agent || 'claude'), model: String(c.llm.facts_model || 'haiku'), maxFiles: Number.isFinite(n) && n > 0 ? n : 40 };
 }
 
 /** The configuration `kb init` would write for root, without writing anything (zero-config mode). */
@@ -263,6 +278,12 @@ export function renderConfig(c: Config): string {
   if (c.llm.agent) L.push(`    agent: ${q(c.llm.agent)}`);
   if (c.llm.model) L.push(`    model: ${q(c.llm.model)}`);
   L.push(`    timeout_sec: ${c.llm.timeout_sec}`);
+  L.push('    # LLM fallback extraction of routes/APIs in `kb compound` (every item verified against the source; cached).');
+  L.push('    # Default on; turn off with false, `--no-llm-facts` or KB_LLM_FACTS=0. Without the agent CLI it degrades to rules only.');
+  L.push(`    facts: ${c.llm.facts !== false}`);
+  if (c.llm.facts_agent) L.push(`    facts_agent: ${q(c.llm.facts_agent)}`);
+  if (c.llm.facts_model) L.push(`    facts_model: ${q(c.llm.facts_model)}`);
+  if (c.llm.facts_max_files) L.push(`    facts_max_files: ${c.llm.facts_max_files}`);
   L.push('plan:', `    hops: ${c.plan.hops}`, `    rebuild_module_ratio: ${c.plan.rebuild_module_ratio}`, `    rebuild_structural_ratio: ${c.plan.rebuild_structural_ratio}`);
   L.push('docs:');
   if (c.docs.exclude.length === 0) L.push('    exclude: []');

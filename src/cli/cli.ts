@@ -3,11 +3,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ConfigNotFoundError, DefaultLLMCmd, FileName, absRoot, defaultConfig, detect, detectedConfig, loadConfig, renderConfig, wikiPath, type Config } from '../config/config.js';
+import { ConfigNotFoundError, DefaultLLMCmd, FileName, absRoot, boolValue, defaultConfig, llmFactsSettings, detect, detectedConfig, loadConfig, renderConfig, wikiPath, type Config } from '../config/config.js';
 import { scanRepo, CacheFile } from '../scan/scan.js';
 import { extractFacts } from '../facts/facts.js';
 import { extractFactsCached } from '../engine/factscache.js';
-import { applyOverlay, suggest } from '../facts/llm.js';
+import { type SuggestOptions, applyOverlay, suggest } from '../facts/llm.js';
 import { factsJSON } from '../facts/render.js';
 import { symbolJSON, parseFailureJSON, getSym } from '../model.js';
 import type { Plan } from '../engine/plan.js';
@@ -176,6 +176,18 @@ function resolveBackend(f: Flags, cfg: Config): { mode: string; cmd: string; age
   return { mode: 'cmd', cmd, agent };
 }
 
+/** LLM facts fallback for compound: --no-llm-facts > --llm-facts > KB_LLM_FACTS > llm.facts (default on). */
+function llmFactsOptions(f: Flags, cfg: Config, env: NodeJS.ProcessEnv = process.env): SuggestOptions | undefined {
+  const s = llmFactsSettings(cfg);
+  let on: boolean;
+  if (f['no-llm-facts']) on = false;
+  else if (f['llm-facts']) on = true;
+  else if (env.KB_LLM_FACTS !== undefined && env.KB_LLM_FACTS !== '') on = boolValue(env.KB_LLM_FACTS, true);
+  else on = s.enabled;
+  if (!on) return undefined;
+  return { agent: String(f['facts-agent'] || s.agent), model: String(f['facts-model'] || s.model), maxFiles: Number(f['facts-max-files'] || s.maxFiles) };
+}
+
 const backendFlags = (what: string): Record<string, [FlagType, string, string | number | boolean]> => ({
   llm: ['string', what + ': template | cmd | claude | codex | gemini | generic', ''],
   'llm-cmd': ['string', 'override the LLM command line (prompt on stdin, cwd = staging)', ''],
@@ -316,10 +328,12 @@ register({
 });
 
 register({
-  name: 'compound', usage: "[--llm template|cmd] [--agent claude|codex|gemini] [--llm-cmd '...'] [--base sha] [--full] [--dry-run]", summary: 'scan→diff→plan→LLM→verify→atomic publish; updates state, update_record, log.md',
+  name: 'compound', usage: "[--llm template|cmd] [--agent claude|codex|gemini] [--llm-cmd '...'] [--base sha] [--full] [--dry-run] [--no-llm-facts]", summary: 'scan→diff→plan→LLM→verify→atomic publish; updates state, update_record, log.md',
   flags: {
     ...backendFlags('writer'), ...baseFlag, full: ['bool', 'force full rebuild', false], 'dry-run': ['bool', 'plan only; write nothing', false],
-    'llm-facts': ['bool', 'LLM-assisted fallback extraction of routes/APIs (every suggestion verified against the source; cached)', false], 'facts-agent': ['string', 'agent for --llm-facts (claude)', 'claude'], 'facts-model': ['string', 'model for --llm-facts', 'haiku'], 'facts-max-files': ['int', 'candidate file budget for --llm-facts', 40],
+    'llm-facts': ['bool', 'force the LLM fallback extraction of routes/APIs on (default on: llm.facts; every suggestion verified against the source; cached; skipped with a notice when the agent is unavailable)', false],
+    'no-llm-facts': ['bool', 'turn the LLM facts fallback off (also llm.facts: false or KB_LLM_FACTS=0)', false],
+    'facts-agent': ['string', 'agent for the facts fallback (default llm.facts_agent or claude)', ''], 'facts-model': ['string', 'model for the facts fallback (default llm.facts_model or haiku)', ''], 'facts-max-files': ['int', 'candidate file budget for the facts fallback (default llm.facts_max_files or 40)', 0],
     fallback: ['bool', 'fall back to the template writer when an LLM task fails', false], 'max-llm-tasks': ['int', 'cap LLM tasks per run (rest use template); 0 = unlimited', 0], 'keep-work': ['bool', 'keep .kb-work/<run>', false],
   },
   async run(a, f) {
@@ -332,7 +346,8 @@ register({
       return a.fail(ExitUsage, e as Error);
     }
     const { mode: llm, cmd: llmCmd, agent } = be;
-    const r = await compound({ cfg, llm, llmCmd, agent, base: String(f.base || ''), full: !!f.full, dryRun: !!f['dry-run'], fallback: !!f.fallback, maxTasks: Number(f['max-llm-tasks'] || 0), keep: !!f['keep-work'], log: a.log, kbPath: process.argv[1], llmFacts: f['llm-facts'] ? { agent: String(f['facts-agent'] || 'claude'), model: String(f['facts-model'] || ''), maxFiles: Number(f['facts-max-files'] || 40) } : undefined });
+    if (f['llm-facts'] && f['no-llm-facts']) return a.fail(ExitUsage, new Error('--llm-facts and --no-llm-facts are mutually exclusive'));
+    const r = await compound({ cfg, llm, llmCmd, agent, base: String(f.base || ''), full: !!f.full, dryRun: !!f['dry-run'], fallback: !!f.fallback, maxTasks: Number(f['max-llm-tasks'] || 0), keep: !!f['keep-work'], log: a.log, kbPath: process.argv[1], llmFacts: llmFactsOptions(f, cfg) });
     return reportRun(a, r);
   },
 });

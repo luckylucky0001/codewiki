@@ -55,6 +55,10 @@ export interface SuggestOptions {
   batchBytes?: number;
   kinds?: string[]; // routes, apis
   log?: (s: string) => void;
+  /** cached answers only: never call the agent (agent unavailable) */
+  offline?: boolean;
+  /** stop after the first failed agent call when nothing has succeeded yet (auth / network errors) */
+  stopOnError?: boolean;
 }
 
 export interface Rejected {
@@ -271,6 +275,43 @@ function agentArgv(o: SuggestOptions): string {
   const agent = o.agent || 'claude';
   if (agent !== 'claude') throw new Error(`kb facts suggest: unsupported agent ${JSON.stringify(agent)} (use claude or --llm-cmd)`);
   return ['claude', '-p', '--output-format', 'json', '--tools', '', ...(o.model ? ['--model', o.model] : [])].map(shellQuote).join(' ');
+}
+
+/** Whether an executable named bin is reachable (absolute/relative path, or a PATH entry). */
+export function onPath(bin: string, envPath = process.env.PATH ?? ''): boolean {
+  const exe = (f: string) => {
+    try {
+      fs.accessSync(f, fs.constants.X_OK);
+      return fs.statSync(f).isFile();
+    } catch {
+      return false;
+    }
+  };
+  if (bin.includes('/')) return exe(bin);
+  return envPath.split(path.delimiter).some((d) => d && exe(path.join(d, bin)));
+}
+
+/** First program word of a shell command line (leading VAR=value assignments and quotes skipped); '' if unclear. */
+export function commandProgram(cmd: string): string {
+  for (const t of cmd.trim().split(/\s+/)) {
+    if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(t)) continue;
+    const w = t.replace(/^['"]|['"]$/g, '');
+    return /^[A-Za-z0-9_./+@-]+$/.test(w) && !['exec', 'env', 'command', 'sh', 'bash'].includes(w) ? w : '';
+  }
+  return '';
+}
+
+/** Why the facts agent cannot run here (unsupported agent, binary not on PATH), or '' when it can. */
+export function agentUnavailable(o: SuggestOptions, envPath = process.env.PATH ?? ''): string {
+  let cmd: string;
+  try {
+    cmd = agentArgv(o);
+  } catch (e) {
+    return (e as Error).message.replace(/^kb facts suggest: /, '');
+  }
+  const prog = commandProgram(cmd);
+  if (prog && !onPath(prog, envPath)) return `${prog} not found on PATH`;
+  return '';
 }
 
 function runAgent(cmd: string, prompt: string): { out: string; err?: string } {
@@ -590,9 +631,10 @@ export function suggest(cfg: Config, res: ScanResult, facts: Facts, o: SuggestOp
   }
   if (cur.length) batches.push(cur);
   r.batches = batches.length;
-  const cmd = batches.length ? agentArgv(o) : '';
-  for (const b of batches) {
-    o.log?.(`llm-facts: batch of ${b.length} file(s): ${b.map((x) => x.file).join(', ')}\n`);
+  const cmd = batches.length && !o.offline ? agentArgv(o) : '';
+  for (const b of o.offline ? [] : batches) {
+    if (o.stopOnError && r.errors.length && r.errors.length === r.agent_calls) break;
+    o.log?.(`llm-facts: batch of ${b.length} file(s): ${b.map((x) => x.file).join(', ')}`);
     const res1 = runAgent(cmd, buildPrompt(b, kinds));
     r.agent_calls++;
     const u = (usageParsers[o.agent || 'claude'] ?? usageParsers.claude!)(res1.out);

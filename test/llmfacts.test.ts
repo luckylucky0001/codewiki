@@ -14,9 +14,25 @@ let tmp = '';
 let root = '';
 let bin = '';
 const rel = 'android/app/src/main/java/com/minishop/net/LegacyClient.kt';
-const kb = (args: string[]) => {
-  const r = spawnSync('node', [cli, '--root', root, ...args], { encoding: 'utf8', env: { ...process.env, PATH: bin + path.delimiter + process.env.PATH, KB_FAKE_DIR: tmp } });
+// test/setup-env.ts disables the facts fallback globally (KB_LLM_FACTS=0); this file uses the fake agent and enables it
+const kbAt = (dir: string, args: string[], env: NodeJS.ProcessEnv = {}) => {
+  const e: NodeJS.ProcessEnv = { ...process.env, PATH: bin + path.delimiter + process.env.PATH, KB_FAKE_DIR: tmp, KB_LLM_FACTS: '1', ...env };
+  for (const k of Object.keys(e)) if (e[k] === undefined) delete e[k];
+  const r = spawnSync(process.execPath, [cli, '--root', dir, ...args], { encoding: 'utf8', env: e });
   return { code: r.status ?? -1, out: r.stdout, err: r.stderr };
+};
+const kb = (args: string[], env: NodeJS.ProcessEnv = {}) => kbAt(root, args, env);
+const calls = () => (fs.existsSync(path.join(tmp, 'calls')) ? Number(fs.readFileSync(path.join(tmp, 'calls'), 'utf8')) : 0);
+/** fresh copy of the fixture repo (LegacyClient included) without a wiki, initialised */
+let copies = 0;
+const freshCopy = (yaml?: (s: string) => string) => {
+  const d = path.join(tmp, `copy${++copies}`);
+  fs.cpSync(root, d, { recursive: true });
+  fs.rmSync(path.join(d, 'wiki'), { recursive: true, force: true });
+  fs.rmSync(path.join(d, 'codewiki.yaml'), { force: true });
+  expect(kbAt(d, ['init']).code).toBe(0);
+  if (yaml) fs.writeFileSync(path.join(d, 'codewiki.yaml'), yaml(fs.readFileSync(path.join(d, 'codewiki.yaml'), 'utf8')));
+  return d;
 };
 
 beforeAll(() => {
@@ -122,8 +138,86 @@ describe('kb facts suggest', () => {
     // without the flag and without an overlay, facts carry no llm items
     const r = spawnSync('node', [cli, '--root', plain, 'init'], { encoding: 'utf8' });
     expect(r.status).toBe(0);
-    expect(spawnSync('node', [cli, '--root', plain, 'compound', '--llm', 'template'], { encoding: 'utf8' }).status).toBe(0);
+    expect(kbAt(plain, ['compound', '--llm', 'template', '--no-llm-facts']).code).toBe(0);
     expect(fs.readFileSync(path.join(plain, 'wiki/facts/apis.json'), 'utf8')).not.toContain('"llm"');
+  });
+});
+
+describe('compound: facts fallback on by default', () => {
+  const llmItems = (d: string) => (JSON.parse(fs.readFileSync(path.join(d, 'wiki/facts/apis.json'), 'utf8')).apis as { source?: string }[]).filter((a) => a.source === 'llm').length;
+
+  it('kb init writes llm.facts: true; default on when llm.facts is absent (fake agent on PATH, env unset)', () => {
+    const d = freshCopy((y) => {
+      expect(y).toMatch(/^llm:[\s\S]*\n {4}facts: true\n/m);
+      return y.replace(/^ {4}facts: true\n/m, '');
+    });
+    const n = calls();
+    const r = kbAt(d, ['compound', '--llm', 'template'], { KB_LLM_FACTS: undefined });
+    expect(r.code).toBe(0);
+    expect(r.err).toMatch(/llm-facts: \d+ candidate file\(s\), [1-9]\d* agent call\(s\)/);
+    expect(calls()).toBeGreaterThan(n);
+    expect(llmItems(d)).toBeGreaterThan(0);
+  });
+
+  it('--no-llm-facts, llm.facts: false and KB_LLM_FACTS=0 turn it off', () => {
+    const offs: [string, string[], NodeJS.ProcessEnv, ((s: string) => string) | undefined][] = [
+      ['flag', ['--no-llm-facts'], { KB_LLM_FACTS: undefined }, undefined],
+      ['config', [], { KB_LLM_FACTS: undefined }, (y) => y.replace(/^ {4}facts: true$/m, '    facts: false')],
+      ['env', [], { KB_LLM_FACTS: '0' }, undefined],
+    ];
+    for (const [what, flags, env, yaml] of offs) {
+      const d = freshCopy(yaml);
+      const n = calls();
+      const r = kbAt(d, ['compound', '--llm', 'template', ...flags], env);
+      expect(r.code, what).toBe(0);
+      expect(r.err, what).not.toContain('llm-facts');
+      expect(calls(), what).toBe(n);
+      expect(llmItems(d), what).toBe(0);
+    }
+    // --llm-facts forces it on over the config / env
+    const d = freshCopy((y) => y.replace(/^ {4}facts: true$/m, '    facts: false'));
+    expect(kbAt(d, ['compound', '--llm', 'template', '--llm-facts'], { KB_LLM_FACTS: '0' }).err).toMatch(/llm-facts: \d+ candidate/);
+    expect(kbAt(d, ['compound', '--llm-facts', '--no-llm-facts']).code).toBe(2);
+  });
+
+  it('--dry-run never calls the agent', () => {
+    const d = freshCopy();
+    const n = calls();
+    const r = kbAt(d, ['compound', '--llm', 'template', '--dry-run']);
+    expect(r.code).toBe(0);
+    expect(r.err).toContain('llm-facts: dry-run, agent not called');
+    expect(calls()).toBe(n);
+  });
+
+  it('missing agent binary: one skip line, rules only, exit 0; cached answers still apply', () => {
+    const d = freshCopy();
+    const empty = path.join(tmp, 'emptybin');
+    fs.mkdirSync(empty, { recursive: true });
+    const r = kbAt(d, ['compound', '--llm', 'template'], { PATH: empty });
+    expect(r.code).toBe(0);
+    expect(r.err.split('\n').filter((l) => l.startsWith('llm-facts:'))).toEqual(['llm-facts: skipped (claude not found on PATH), rules only']);
+    expect(llmItems(d)).toBe(0);
+    // with the agent: answer cached; then without it the cached answer is re-used (no call, item kept)
+    expect(kbAt(d, ['compound', '--llm', 'template', '--full']).code).toBe(0);
+    const k = llmItems(d);
+    expect(k).toBeGreaterThan(0);
+    const n = calls();
+    const r2 = kbAt(d, ['compound', '--llm', 'template', '--full'], { PATH: empty });
+    expect(r2.code).toBe(0);
+    expect(r2.err).toMatch(/llm-facts: skipped \(claude not found on PATH\), rules only \(\d+ cached file answer\(s\) applied\)/);
+    expect(calls()).toBe(n);
+    expect(llmItems(d)).toBe(k);
+  });
+
+  it('agent errors (auth / network) skip after the first failed call and never fail compound', () => {
+    const d = freshCopy();
+    const bad = path.join(tmp, 'badbin');
+    fs.mkdirSync(bad, { recursive: true });
+    fs.writeFileSync(path.join(bad, 'claude'), '#!/bin/sh\necho "Invalid API key" >&2\nexit 1\n', { mode: 0o755 });
+    const r = kbAt(d, ['compound', '--llm', 'template'], { PATH: bad + path.delimiter + '/usr/bin:/bin' });
+    expect(r.code).toBe(0);
+    expect(r.err).toContain('llm-facts: skipped (agent exit 1: Invalid API key), rules only');
+    expect(llmItems(d)).toBe(0);
   });
 });
 

@@ -10,7 +10,7 @@ import { GraphVersion, type Facts, type Graph, type Anchor, getSym, graphJSON, r
 import { scan, scanRepo, type ScanResult } from '../scan/scan.js';
 import { extractFactsCached } from './factscache.js';
 import { renderFacts } from '../facts/render.js';
-import { type SuggestOptions, applyOverlay, suggest } from '../facts/llm.js';
+import { type SuggestOptions, agentUnavailable, applyOverlay, suggest } from '../facts/llm.js';
 import { goJSON, cmpStr } from '../util/go.js';
 import { type Page, loadPages, parsePage, renderPage, writeFileAtomic, idFromPath, StatusCurrent } from '../wiki/page.js';
 import { appendLog, initWiki } from '../wiki/layout.js';
@@ -172,11 +172,21 @@ export async function analyze(o: Options): Promise<Analysis> {
   const res = await scanRepo(cfg);
   res.graph.commit = gitHead(cfg.root) || undefined;
   let facts = extractFactsCached(cfg, res);
-  if (o.llmFacts) {
+  if (o.llmFacts && o.dryRun) {
+    o.log?.('llm-facts: dry-run, agent not called (stored overlay only)');
+  } else if (o.llmFacts) {
+    // graceful degrade: no agent CLI / agent errors never fail compound; cached answers still apply
+    const why = agentUnavailable(o.llmFacts);
     // the overlay and answer cache live in <wiki>/.kb: create the skeleton first on a fresh wiki
-    if (!fs.existsSync(wikiPath(cfg)) && !o.dryRun) initWiki(wikiPath(cfg), false);
-    const sr = suggest(cfg, res, facts, { ...o.llmFacts, log: o.log });
-    o.log?.(`llm-facts: ${sr.candidates.length} candidate file(s), ${sr.agent_calls} agent call(s), ${sr.cached_files} cached; accepted ${sr.accepted.routes.length} route(s) / ${sr.accepted.apis.length} api(s), rejected ${sr.rejected.length}, rule conflicts ${sr.skipped_conflict}${sr.usage.cost_usd ? `, $${sr.usage.cost_usd.toFixed(4)}` : ''}${sr.errors.length ? ' — ' + sr.errors.join('; ') : ''}\n`);
+    if (!fs.existsSync(wikiPath(cfg))) initWiki(wikiPath(cfg), false);
+    try {
+      const sr = suggest(cfg, res, facts, { ...o.llmFacts, log: o.log, offline: !!why, stopOnError: true });
+      const failed = !why && sr.agent_calls > 0 && sr.errors.length === sr.agent_calls;
+      if (why || failed) o.log?.(`llm-facts: skipped (${why || sr.errors[0]!.replace(/\s+/g, ' ').slice(0, 200)}), rules only${sr.cached_files ? ` (${sr.cached_files} cached file answer(s) applied)` : ''}`);
+      else o.log?.(`llm-facts: ${sr.candidates.length} candidate file(s), ${sr.agent_calls} agent call(s), ${sr.cached_files} cached; accepted ${sr.accepted.routes.length} route(s) / ${sr.accepted.apis.length} api(s), rejected ${sr.rejected.length}, rule conflicts ${sr.skipped_conflict}${sr.usage.cost_usd ? `, $${sr.usage.cost_usd.toFixed(4)}` : ''}${sr.errors.length ? ' — ' + sr.errors.join('; ') : ''}`);
+    } catch (e) {
+      o.log?.(`llm-facts: skipped (${(e as Error).message.replace(/\s+/g, ' ').slice(0, 200)}), rules only`);
+    }
   }
   facts = applyOverlay(cfg, facts);
   let old: Graph | null = null;
