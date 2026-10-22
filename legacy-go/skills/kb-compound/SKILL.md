@@ -5,9 +5,10 @@ description: Incrementally update the code-anchored LLM Wiki after code changes 
 
 # kb-compound
 
-Keep `wiki/` provably in sync with the code. The CLI does everything deterministic
-(parsing, diffing, planning, verification, publishing); you only write prose inside
-the write set you are given.
+Keep `wiki/` grounded in current code. The CLI handles parsing, diffs, task
+selection, structural verification and atomic publishing. For business knowledge,
+the agent researches the page plan and writes evidence-backed explanations inside
+the assigned write set; semantic acceptance requires a separate review.
 
 ## Prerequisite: is the repo initialized?
 
@@ -33,7 +34,8 @@ kb compound --llm claude --fallback  # or --llm template for an offline, determi
 kb verify                            # exit 0 = wiki matches HEAD
 ```
 
-- Prefer `--max-llm-tasks N` to bound cost; remaining tasks use the template writer.
+- For legacy route pages, `--max-llm-tasks N` can bound cost with template fallback.
+  Business knowledge tasks fail when the budget is exhausted; they never fall back.
 - Never edit `wiki/` directly in orchestrator mode — always go through `kb compound`
   so the change is verified on a staging copy and published atomically.
 - If verify fails, read `.kb-work/<run>/tasks/*.log` (with `--keep-work`) and fix the cause;
@@ -45,7 +47,10 @@ kb verify                            # exit 0 = wiki matches HEAD
    and the task is marked `violation`.
 2. Use the frontmatter block from the prompt verbatim (`id`, `kind`, `routes`, `sources`,
    `source_commit`, `status: current`). You may drop sources that are irrelevant; never
-   add symbol ids that are not in the prompt. If unsure about a hash: `kb anchor <id>`.
+   invent symbol ids or hashes. Legacy route tasks use their supplied symbol set.
+   Business knowledge tasks may add symbols from the supplied full graph after
+   reading their implementation, following the knowledge-writing contract.
+   If unsure about a hash: `kb anchor <id>`.
 3. Write Chinese prose, keep identifiers in English. Reference symbols with their full id in
    backticks (e.g. `` `android://app/src/main/java/com/minishop/ui/cart/CartViewModel.kt#CartViewModel.addItem` ``).
 4. Facts beat prose: routes / deep links / testIDs / APIs must match the facts in the prompt.
@@ -58,3 +63,35 @@ kb verify                            # exit 0 = wiki matches HEAD
 
 See [references/page-contract.md](references/page-contract.md) for the page template and
 frontmatter contract.
+
+## Agent-led business knowledge (complex repositories)
+
+When routes are sparse or the user wants architecture/business understanding,
+use the current IDE agent through the [vendor-neutral IDE workflow](references/ide-handoff.md).
+This is the customer-facing path for TRAE CN and other skill hosts. No particular
+agent vendor or child-agent API is required; sequential research is supported.
+If an optional headless adapter is available, you may instead run
+`kb compound --knowledge --agent codex --workers 3 --keep-work` (or another backend).
+The planner agent researches source and proposes module/flow pages, questions,
+seed symbols and directory scopes. Writer agents must read full implementation
+and tests and explain responsibilities, execution, state/data, recovery,
+change/test guidance and unknowns. Do not substitute symbol inventories for prose.
+Use `--replan` for new modules or architectural regrouping. Existing scope changes
+and anchor drift trigger incremental rewrites. Semantic pages require agent writers;
+never silently fall back to template or restamp hashes without reviewing prose.
+Validate module mappings and use an independent source-grounded question set to
+measure whether the wiki answers real business questions; `verify` alone is not acceptance.
+Follow the [acceptance and repair contract](references/knowledge-acceptance.md)
+for source-grounded blind questions, coverage review, held-out checks and iteration.
+
+The planner and writer contracts are part of this skill, not ad-hoc chat prompts:
+- [Agent planning contract](references/knowledge-planner.md)
+- [Business knowledge writing contract](references/knowledge-writer.md)
+The CLI embeds these exact files and supplies task-specific repository paths,
+questions, evidence and write sets. Updates to these contracts require rebuilding kb.
+
+For interrupted or failed batches, retain the completed JSON report and workdir.
+Use `--resume-result /absolute/run.json` with the chosen backend after the original
+process exits. Only successful pages with identical source evidence can be reused.
+Do not reuse failed drafts or combine resume with review feedback; complete recovery
+first, then run the selected-page review separately.

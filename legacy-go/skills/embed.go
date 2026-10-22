@@ -34,3 +34,12 @@ func Files() ([]File, error) {
 	sort.Slice(out, func(i, j int) bool { return out[i].Path < out[j].Path })
 	return out, err
 }
+
+// Text returns a bundled instruction contract. A missing contract is a build bug.
+func Text(path string) string {
+	b, err := content.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+	return string(b)
+}

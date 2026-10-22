@@ -28,26 +28,34 @@ import (
 )
 
 // PromptVersion is recorded in state.json; bump when prompts change materially.
-const PromptVersion = "2026-10-20.1"
+const PromptVersion = "2026-10-21.knowledge.1"
 
 // Options configures a compound (or ingest) run.
 type Options struct {
-	Cfg        *config.Config
-	LLM        string // "template" | "cmd"
-	LLMCmd     string
-	Agent      string                         // backend adapter name (informational; recorded per task)
-	ParseUsage func(out []byte) *agents.Usage // parses the agent's stdout for tokens/cost (optional)
-	Base       string
-	Full       bool
-	DryRun     bool
-	Fallback   bool // fall back to the template writer when an LLM task fails
-	MaxTasks   int  // 0 = unlimited; extra tasks fall back to template
-	Kind       string
-	IngestDocs []DocEntry
-	Log        io.Writer
-	Date       string
-	KBPath     string
-	Keep       bool
+	ResumeResult   string
+	KnowledgePages string
+	RetirePages    string
+	RetireReason   string
+	FeedbackFile   string
+	Knowledge      bool
+	Replan         bool
+	Workers        int
+	Cfg            *config.Config
+	LLM            string // "template" | "cmd"
+	LLMCmd         string
+	Agent          string                         // backend adapter name (informational; recorded per task)
+	ParseUsage     func(out []byte) *agents.Usage // parses the agent's stdout for tokens/cost (optional)
+	Base           string
+	Full           bool
+	DryRun         bool
+	Fallback       bool // fall back to the template writer when an LLM task fails
+	MaxTasks       int  // 0 = unlimited; extra tasks fall back to template
+	Kind           string
+	IngestDocs     []DocEntry
+	Log            io.Writer
+	Date           string
+	KBPath         string
+	Keep           bool
 }
 
 // TaskResult records the outcome of one task.
@@ -235,6 +243,46 @@ func Analyze(o *Options) (*Analysis, error) {
 	a.Pages, _ = wiki.LoadPages(cfg.WikiPath())
 	hasDocs := len(LoadRawManifest(cfg.WikiPath()).Docs) > 0 || len(o.IngestDocs) > 0
 	a.Plan = BuildPlan(PlanInput{Cfg: cfg, Diff: a.Diff, Old: a.Old, Cur: a.Graph, Facts: a.Facts, Pages: a.Pages, ForceFull: o.Full, HasDocs: hasDocs})
+	if o.Kind != "ingest" {
+		if kp, err := loadKnowledgePlan(cfg.WikiPath()); err == nil {
+			applyKnowledgePlan(a, kp, o.Full)
+		} else if !os.IsNotExist(err) {
+			return nil, fmt.Errorf("load knowledge plan: %w", err)
+		}
+	}
+	if err := suppressRetiredPlaceholders(a, cfg.WikiPath()); err != nil {
+		return nil, err
+	}
+	if o.KnowledgePages != "" {
+		kp, err := loadKnowledgePlan(cfg.WikiPath())
+		if err != nil {
+			return nil, err
+		}
+		selected := map[string]bool{}
+		for _, p := range strings.Split(o.KnowledgePages, ",") {
+			selected[strings.TrimSpace(p)] = true
+		}
+		known := map[string]bool{}
+		for _, p := range kp.Pages {
+			known[p.Page] = true
+		}
+		for p := range selected {
+			if !known[p] {
+				return nil, fmt.Errorf("unknown knowledge page %s", p)
+			}
+		}
+		applyKnowledgePlan(a, kp, true)
+		var tasks []Task
+		for _, t := range a.Plan.Tasks {
+			if selected[t.Page] {
+				tasks = append(tasks, t)
+			}
+		}
+		a.Plan.Tasks = tasks
+		a.Plan.Mode = "incremental"
+		a.Plan.Reason = "explicit knowledge review iteration"
+		finalize(a.Plan)
+	}
 	if o.Kind == "ingest" {
 		// ingest only (re)checks documents
 		var keep []Task
@@ -283,9 +331,11 @@ func Compound(o *Options) (*Result, error) {
 		return nil, err
 	}
 	head := a.Graph.Commit
-	runID := time.Now().UTC().Format("20060102T150405") + "-" + short(head)
+	// Failed staging is retained. A second run in the same second must never
+	// reuse that directory and inherit files absent from the published wiki.
+	runID := time.Now().UTC().Format("20060102T150405.000000000") + "-" + short(head)
 	if head == "" {
-		runID = time.Now().UTC().Format("20060102T150405") + "-nogit"
+		runID = time.Now().UTC().Format("20060102T150405.000000000") + "-nogit"
 	}
 	r := &Result{RunID: runID, Kind: o.Kind, Base: a.Diff.Base, Head: head, Mode: a.Plan.Mode, LLM: o.LLM, Agent: o.Agent, Plan: a.Plan, Diff: a.Diff, Tasks: []TaskResult{}, Changed: []string{}}
 	o.logf("kb %s: head=%s base=%s mode=%s tasks=%d (%s)", o.Kind, shortHead(head), short(a.Diff.Base), a.Plan.Mode, len(a.Plan.Tasks), a.Plan.Reason)
@@ -341,7 +391,20 @@ func Compound(o *Options) (*Result, error) {
 	_ = os.WriteFile(graphPath, gb, 0o644)
 	// tasks
 	env := &taskEnv{o: o, a: a, staging: staging, work: work, graphPath: graphPath, head: head}
+	if err := env.prepareResume(); err != nil {
+		return r, err
+	}
+	if o.Knowledge || o.Replan || o.ResumeResult != "" {
+		if err := env.prepareKnowledge(r); err != nil {
+			return r, err
+		}
+	}
+	var knowledgeTasks []Task
 	for _, t := range a.Plan.Tasks {
+		if t.Knowledge {
+			knowledgeTasks = append(knowledgeTasks, t)
+			continue
+		}
 		writer := o.LLM
 		if o.MaxTasks > 0 && t.Priority > o.MaxTasks && writer != "template" {
 			writer = "template" // over budget: lower-value task
@@ -363,8 +426,37 @@ func Compound(o *Options) (*Result, error) {
 		}
 		o.logf("  [%s] %-8s %-34s %s %s%s", tr.Status, t.Op, t.Page, tr.Writer, tr.Error, usageNote(tr.Usage))
 	}
+	if len(knowledgeTasks) > 0 {
+		trs := env.runKnowledgeTasks(knowledgeTasks)
+		for _, tr := range trs {
+			r.Tasks = append(r.Tasks, tr)
+			if tr.Usage != nil {
+				if r.Usage == nil {
+					r.Usage = &agents.Usage{}
+				}
+				r.Usage.Add(tr.Usage)
+			}
+		}
+	}
+	semanticTasks := map[string]bool{}
+	for _, t := range knowledgeTasks {
+		semanticTasks[t.ID] = true
+	}
+	for _, tr := range r.Tasks {
+		if tr.Status == "failed" || (tr.Status == "violation" && semanticTasks[tr.ID]) {
+			r.Verify = &wiki.Report{OK: false, Errors: []wiki.Issue{{Code: "E_TASK_FAILED", Page: tr.Page, Detail: tr.Error}}}
+			r.Message = "task failed; staging retained, wiki NOT published"
+			return r, nil
+		}
+	}
 	// conflicts page + requirements.json are rendered by the CLI from verdicts
 	if err := env.renderClaims(); err != nil {
+		return nil, err
+	}
+	if err := env.renderKnowledgeOverview(); err != nil {
+		return nil, err
+	}
+	if err := env.retirePages(); err != nil {
 		return nil, err
 	}
 	// index, llms.txt
@@ -558,6 +650,7 @@ func changedFiles(a, b map[string]string) []string {
 // ---------- task execution ----------
 
 type taskEnv struct {
+	resume    *Result
 	o         *Options
 	a         *Analysis
 	staging   string
@@ -701,6 +794,12 @@ func (e *taskEnv) runCmd(t Task) ([]string, *agents.Usage, error) {
 		templ = e.templateClaims()
 	}
 	prompt := e.buildPrompt(t, templ)
+	if t.Kind == "knowledge-plan" {
+		prompt = e.knowledgePlanningPrompt()
+	}
+	if t.Knowledge {
+		prompt = e.knowledgeWritingPrompt(t)
+	}
 	tdir := filepath.Join(e.work, "tasks")
 	_ = os.MkdirAll(tdir, 0o755)
 	_ = os.WriteFile(filepath.Join(tdir, t.ID+".prompt.md"), []byte(prompt), 0o644)
@@ -770,6 +869,10 @@ func (e *taskEnv) runCmd(t Task) ([]string, *agents.Usage, error) {
 		}
 		return reverted, usage, fmt.Errorf("llm command failed: %v%s (see %s)", runErr, agentErr, filepath.Join(tdir, t.ID+".log"))
 	}
+	if t.Kind == "knowledge-plan" {
+		_, err := loadKnowledgePlan(e.staging)
+		return reverted, usage, err
+	}
 	if t.Kind == "conflicts" {
 		return reverted, usage, e.mergeVerdicts(templ)
 	}
@@ -804,14 +907,33 @@ func (e *taskEnv) postProcess(t Task) error {
 			continue
 		}
 		seen[s.ID] = true
-		if ctx[s.ID] || a.Hash != s.Hash {
+		if t.Knowledge && a.Hash != s.Hash {
+			return fmt.Errorf("knowledge page has stale or missing hash for %s; reread current evidence", s.ID)
+		}
+		if !t.Knowledge && (ctx[s.ID] || a.Hash != s.Hash) {
 			a.Hash = s.Hash // the LLM was shown the current body of context symbols
 		}
 		src = append(src, a)
 	}
-	if len(src) == 0 && t.Kind != "overview" {
+	if len(src) == 0 && t.Kind != "overview" && !t.Knowledge {
 		for _, id := range t.Context {
 			src = append(src, model.Anchor{Sym: id, Hash: e.a.Graph.Get(id).Hash})
+		}
+	}
+	if t.Knowledge {
+		cited := 0
+		for _, a := range src {
+			if strings.Contains(pg.Body, a.Sym) {
+				cited++
+			}
+		}
+		if cited < 3 || len(src) < 3 || len([]rune(pg.Body)) < 1200 {
+			return fmt.Errorf("knowledge page needs >=3 source anchors and >=1200 characters of explanation")
+		}
+		for _, section := range []string{"职责与边界", "执行链路", "状态与数据", "异常与恢复", "修改与测试", "证据与未知"} {
+			if !strings.Contains(pg.Body, "## "+section) {
+				return fmt.Errorf("knowledge page missing section %s", section)
+			}
 		}
 	}
 	pg.Front.Sources = src
